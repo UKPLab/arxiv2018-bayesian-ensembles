@@ -1,0 +1,19 @@
+\section{Introduction}\label{sec:intro}
+
+Scientific research relies on humans to recognise important patterns in data – even if we employ automated methods, these typically require training labels produced by human annotators. 
+Natural language processing (NLP) often requires people to annotate segments of text, which we then use to train machine learning algorithms and evaluate our results.
+Many NLP tasks require training data in the form of annotations of phrases and propositions in text. These annotations are spans of varying length, and different pieces of text may contain different numbers of spans. An example is highlighting claims in argumentative text. Annotators will typically make mistakes and may disagree with each other about the correct annotation, even if they are experts. When processing large datasets we may use crowdsourcing to reduce costs/time of experts, which increases the amount of noise and disagreements as the annotators are non-experts. Therefore, we require a method for aggregating text span annotations from multiple annotators.
+
+Heuristic rules could be applied, such as taking intersections of annotations, or majority labels for individual words to determine whether they form part of a span or not. However, this does not account for differing reliability between workers (e.g. there may be spammers, people who do not understand the task) and the theoretical justification for these rules is often unclear. Therefore it may not be possible to apply simple heuristics to obtain gold-standard labels from a crowd. 
+
+In this paper develop a Bayesian machine learning algorithm for combining multiple unreliable text annotations.
+The method we propose is based on the classifier combination method described by \cite{kim2012bayesian}, 
+which was shown to be effective for handling the unreliable classifications provided by a crowd of workers. A scalable implementation of this method using variational Bayes was described by \cite{simpsonlong}, which we use as the basis for our implementation in the current work. This paper provides the following contributions:
+\begin{itemize}
+  \item Propose a probabilistic model for combining classifications to combine annotations over sequences of words
+  \item Describes and tests a scalable inference algorithm for the proposed model that adapts the existing variational Bayes implementation for classifier combination
+  \item Compares the approach on real-world NLP datasets with simple heuristic methods (e.g. mode) and alternatives such as weighted combinations
+  \item Demonstrates how using the proposed Bayesian model enables an active learning approach that improves crowdsourcing efficiency
+\end{itemize}
+
+

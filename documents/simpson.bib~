@@ -1,0 +1,2310 @@
+% This file was created with JabRef 2.10b2.
+% Encoding: UTF-8
+
+@inproceedings{adams2009tractable,
+  title={Tractable nonparametric Bayesian inference in Poisson processes with Gaussian process intensities},
+  author={Adams, Ryan Prescott and Murray, Iain and MacKay, David JC},
+  booktitle={Proceedings of the 26th Annual International Conference on Machine Learning},
+  pages={9--16},
+  year={2009},
+  organization={ACM}
+}
+
+@article{kottas2007bayesian,
+  title={Bayesian mixture modeling for spatial Poisson process intensities, with applications to extreme value analysis},
+  author={Kottas, Athanasios and Sans{\'o}, Bruno},
+  journal={Journal of Statistical Planning and Inference},
+  volume={137},
+  number={10},
+  pages={3151--3163},
+  year={2007},
+  publisher={Elsevier}
+}
+
+@article{rosenblatt1956remarks,
+  title={Remarks on some nonparametric estimates of a density function},
+  author={Rosenblatt, Murray and others},
+  journal={The Annals of Mathematical Statistics},
+  volume={27},
+  number={3},
+  pages={832--837},
+  year={1956},
+  publisher={Institute of Mathematical Statistics}
+}
+
+@article{parzen1962estimation,
+  title={On estimation of a probability density function and mode},
+  author={Parzen, Emanuel},
+  journal={The annals of mathematical statistics},
+  volume={33},
+  number={3},
+  pages={1065--1076},
+  year={1962},
+  publisher={JSTOR}
+}
+
+@article{lintott2008galaxy,
+  title={Galaxy Zoo: morphologies derived from visual inspection of galaxies from the Sloan Digital Sky Survey},
+  author={Lintott, Chris J and Schawinski, Kevin and Slosar, An{\v{z}}e and Land, Kate and Bamford, Steven and Thomas, Daniel and Raddick, M Jordan and Nichol, Robert C and Szalay, Alex and Andreescu, Dan and others},
+  journal={Monthly Notices of the Royal Astronomical Society},
+  volume={389},
+  number={3},
+  pages={1179--1189},
+  year={2008},
+  publisher={Oxford University Press}
+}
+
+@article{corbane2011comprehensive,
+	Author = {Corbane, Christina and Saito, Keiko and Dell'Oro, Luca and Bjorgo, Einar and Gill, Stuart PD and Emmanuel Piard, Boby and Huyck, Charles K and Kemper, Thomas and Lemoine, Guido and Spence, Robin JS and others},
+	Journal = {Photogrammetric Engineering \& Remote Sensing},
+	Number = {10},
+	Pages = {997--1009},
+	Publisher = {American Society for Photogrammetry and Remote Sensing},
+	Title = {A Comprehensive Analysis of Building Damage in the 12 January 2010 {Mw7 Haiti} Earthquake Using High-Resolution Satellite and Aerial Imagery},
+	Volume = {77},
+	Year = {2011}}
+
+@article{morrow2011independent,
+	Author = {Morrow, N. and Mock, N. and Papendieck, A. and Kocmich, N.},
+	Journal = {Development Information Systems International},
+	Pages = {2011},
+	Title = {{Independent Evaluation of the Ushahidi Haiti Project}},
+	Volume = {8},
+	Year = {2011}}
+
+@article{girolami2006variational,
+  author={Girolami, Mark and Rogers, Simon},
+  journal={Neural Computation},
+  volume={18},
+  number={8},
+  pages={1790--1817},
+  year={2006},
+  publisher={MIT Press},
+    Title                    = {Variational {Bayesian} multinomial probit regression with {Gaussian} process priors},
+      ISSN                     = {0899-7667}
+}
+
+@inproceedings{girolami2007data,
+  title={Data Integration for Classification Problems Employing {Gaussian} Process Priors},
+  author={Girolami, Mark and Zhong, Mingjun},
+  booktitle={Advances in Neural Information Processing Systems 19: Proceedings of the 2006 Conference},
+  volume={19},
+  pages={465},
+  year={2007},
+  organization={MIT Press}
+}
+
+@inproceedings{steinberg2014extended,
+  title={Extended and Unscented Gaussian Processes},
+  author={Steinberg, Daniel M and Bonilla, Edwin V},
+  booktitle={Advances in Neural Information Processing Systems},
+  pages={1251--1259},
+  year={2014}
+}
+
+@article{samo2014scalable,
+  title = {Scalable nonparametric {B}ayesian inference on point processes with {G}aussian processes},
+  author = {Kom Samo, Y.-L. and Roberts, S. J.},
+  note = {arXiv:1510.02830},
+  journal = {International Conference on Machine Learning (ICML)},
+  url = {http://arxiv.org/abs/1510.02830},
+  year = {2015}
+}
+
+@article{mackay1992evidence,
+  title={The evidence framework applied to classification networks},
+  author={MacKay, David JC},
+  journal={Neural computation},
+  volume={4},
+  number={5},
+  pages={720--736},
+  year={1992},
+  publisher={MIT Press}
+}
+
+@InProceedings{abbeel_apprenticeship_2004,
+  Title                    = {Apprenticeship learning via inverse reinforcement learning},
+  Author                   = {Abbeel, Pieter and Ng, Andrew Y.},
+  Booktitle                = {Proceedings of the Twenty-First International Conference on Machine Learning},
+  Year                     = {2004},
+  Pages                    = {1--},
+  Publisher                = {{ACM}},
+  Series                   = {{ICML} '04}
+}
+
+@InProceedings{AdamsWG10,
+  Title                    = {Learning the Structure of Deep Sparse Graphical Models.},
+  Author                   = {Adams, Ryan Prescott and Wallach, Hanna M. and Ghahramani, Zoubin},
+  Booktitle                = {Proceedings of the 13th International Conference on Artificial Intelligence and Statistics (AISTATS)},
+  Year                     = {2010},
+  Editor                   = {Teh, Yee Whye and Titterington, D. Mike},
+  Pages                    = {1-8},
+  Publisher                = {JMLR.org},
+  Series                   = {JMLR Proceedings},
+  Volume                   = {9}
+}
+
+@Article{al-ani_new_2002,
+  Title                    = {A new technique for combining multiple classifiers using the {Dempster-Shafer} theory of evidence},
+  Author                   = {{Al-Ani}, A. and Deriche, M.},
+  Journal                  = {Journal of Artificial Intelligence Research},
+  Year                     = {2002},
+  Number                   = {1},
+  Pages                    = {333--361},
+  Volume                   = {17}
+}
+
+@InProceedings{Alonso2011,
+  Title                    = {Design and implementation of relevance assessments using crowdsourcing},
+  Author                   = {Alonso, Omar and Baeza-Yates, Ricardo},
+  Booktitle                = {Proceedings of the 33rd European conference on Advances in information retrieval},
+  Year                     = {2011},
+  Pages                    = {153--164},
+  Publisher                = {Springer},
+  Series                   = {ECIR'11},
+
+  Location                 = {Dublin, Ireland}
+}
+
+@Article{Amati2002,
+  Title                    = {Probabilistic models of information retrieval based on measuring the divergence from randomness},
+  Author                   = {Amati, Gianni and Van Rijsbergen, Cornelis Joost},
+  Journal                  = {ACM Trans. Information System},
+  Year                     = {2002},
+
+  Month                    = oct,
+  Number                   = {4},
+  Pages                    = {357--389},
+  Volume                   = {20},
+
+  ISSN                     = {1046-8188},
+  Issue_date               = {October 2002},
+  Numpages                 = {33},
+  Publisher                = {ACM}
+}
+
+@InProceedings{attias_advances_2000,
+  Title                    = {A Variational {Bayesian} Framework for Graphical Models},
+  Author                   = {Hagai Attias},
+  Booktitle                = {Advances in Neural Information Processing Systems 12},
+  Year                     = {2000},
+  Pages                    = {209--215},
+  Publisher                = {MIT Press}
+}
+
+@Book{baezayates_ribeironeto_1999,
+  Title                    = {Modern Information Retrieval},
+  Author                   = {Baeza-Yates, R. and Ribeiro-Neto, B.},
+  Publisher                = {Addison Wesley},
+  Year                     = {1999}
+}
+
+@InProceedings{ne_crowdsourcing,
+  Title                    = {Northeastern University Runs at the {TREC12} Crowdsourcing Track},
+  Author                   = {Bashir, Maryam and Anderton, Jesse and Wu, Jie and Ekstrand-Abueg,Matthew and Golbus, Peter B. and Pavlu, Virgil and Aslam, Javed A.},
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@Article{benediktsson_consensus_2002,
+  Title                    = {Consensus--theoretic classification methods},
+  Author                   = {Benediktsson, J. A and Swain, P. H},
+  Journal                  = {Systems, Man and Cybernetics, {IEEE} Transactions on},
+  Year                     = {2002},
+  Number                   = {4},
+  Pages                    = {688--704},
+  Volume                   = {22},
+
+  ISSN                     = {0018-9472}
+}
+
+@Book{berger_statistical_1985,
+  Title                    = {Statistical Decision Theory and {Bayesian} Analysis},
+  Author                   = {Berger, James O.},
+  Publisher                = {Springer Science+Business Media},
+  Year                     = {1985},
+  Month                    = aug,
+  Series                   = {Springer Series in Statistics},
+
+  Keywords                 = {Mathematics / Probability \& Statistics / General},
+  Language                 = {en}
+}
+
+@Article{bergstra_random_2011,
+  Title                    = {Random search for hyper-parameter optimization},
+  Author                   = {Bergstra, James and Bengio, Yoshua},
+  Journal                  = {The Journal of Machine Learning Research},
+  Year                     = {2012},
+  Pages                    = {281--305},
+  Volume                   = {13},
+
+  Publisher                = {JMLR.org}
+}
+
+@Article{berners2006linked,
+  Title                    = {{Linked data}},
+  Author                   = {T. Berners-Lee},
+  Journal                  = {International Journal on Semantic Web and Information Systems},
+  Year                     = {2006},
+  Number                   = {2},
+  Volume                   = {4},
+
+  ISSN                     = {1552-6283},
+  Publisher                = {W3C}
+}
+
+@Article{lee_semantic_2001,
+  Title                    = {The {Semantic Web}},
+  Author                   = {Berners-Lee, T. and Hendler, J. and Lassila, O. and others},
+  Journal                  = {Scientific American},
+  Year                     = {2001},
+  Number                   = {5},
+  Pages                    = {34--43},
+  Volume                   = {284}
+}
+
+@Article{bierman73,
+  Title                    = {Fixed interval smoothing with discrete measurements},
+  Author                   = {Gerald J. Bierman},
+  Journal                  = {International Journal of Control},
+  Year                     = {1973},
+  Number                   = {1},
+  Pages                    = {65--75},
+  Volume                   = {18},
+
+  ISSN                     = {0020-7179}
+}
+
+@Book{Bishop2006,
+  Title                    = {Pattern recognition and machine learning},
+  Author                   = {C. M. Bishop},
+  Publisher                = {Springer},
+  Year                     = {2006},
+  Edition                  = {4th},
+  Series                   = {Information Science and Statistics}
+}
+
+@Article{bishop_pattern_2007,
+  Title                    = {Pattern Recognition and Machine Learning},
+  Author                   = {Bishop, C. M and Nasrabadi, N. M},
+  Journal                  = {Journal of Electronic Imaging},
+  Year                     = {2007},
+  Number                   = {4},
+  Pages                    = {9901},
+  Volume                   = {16},
+
+  ISSN                     = {1017-9909}
+}
+
+@Article{blattenberger1985separating,
+  Title                    = {Separating the {Brier} score into calibration and refinement components: a graphical exposition},
+  Author                   = {Blattenberger, Gail and Lad, Frank},
+  Journal                  = {The American Statistician},
+  Year                     = {1985},
+  Number                   = {1},
+  Pages                    = {26--32},
+  Volume                   = {39},
+
+  Publisher                = {Taylor \& Francis}
+}
+
+@Article{Blei2003,
+  Title                    = {Latent {Dirichlet} allocation},
+  Author                   = {Blei, David M. and Ng, Andrew Y. and Jordan, Michael I.},
+  Journal                  = {The Journal of Machine Learning Research},
+  Year                     = {2003},
+
+  Month                    = mar,
+  Pages                    = {993--1022},
+  Volume                   = {3},
+
+  ISSN                     = {1532-4435},
+  Issue_date               = {3/1/2003},
+  Numpages                 = {30},
+  Publisher                = {JMLR.org}
+}
+
+@InProceedings{bloodgood_using_2010,
+  Title                    = {Using {Mechanical Turk} to build machine translation evaluation sets},
+  Author                   = {Bloodgood, M. and {Callison-Burch}, C.},
+  Booktitle                = {Proceedings of the {NAACL} {HLT} 2010 Workshop on Creating Speech and Language Data with Amazon’s Mechanical Turk},
+  Year                     = {2010},
+  Organization             = {Association for Computational Linguistics},
+  Pages                    = {208--211}
+}
+
+@Article{bordley_multiplicative_1982,
+  Title                    = {A multiplicative formula for aggregating probability assessments},
+  Author                   = {Bordley, R. F},
+  Journal                  = {Management Science},
+  Year                     = {1982},
+  Number                   = {10},
+  Pages                    = {1137--1148},
+  Volume                   = {28},
+
+  ISSN                     = {0025-1909},
+  Publisher                = {The Institute of Management Sciences}
+}
+
+@Article{bradley1952rank,
+  Title                    = {Rank analysis of incomplete block designs: I. The method of paired comparisons},
+  Author                   = {Bradley, Ralph Allan and Terry, Milton E},
+  Journal                  = {Biometrika},
+  Year                     = {1952},
+  Number                   = {3/4},
+  Pages                    = {324--345},
+  Volume                   = {39},
+
+  Publisher                = {JSTOR}
+}
+
+@Article{brier1950verification,
+  Title                    = {Verification of forecasts expressed in terms of probability},
+  Author                   = {Brier, Glenn W},
+  Journal                  = {Monthly weather review},
+  Year                     = {1950},
+  Number                   = {1},
+  Pages                    = {1--3},
+  Volume                   = {78}
+}
+
+@InProceedings{brochu_active_2007,
+  Title                    = {Active preference learning with discrete choice data},
+  Author                   = {Brochu, E. and de Freitas, N. and Ghosh, A.},
+  Booktitle                = {Advances in Neural Information Processing Systems 20},
+  Year                     = {2008},
+  Pages                    = {409--416},
+  Publisher                = {MIT Press},
+
+  Ignoreeditor             = {J.C. Platt and D. Koller and Y. Singer and S. Roweis}
+}
+
+@Article{brown2005diversity,
+  Title                    = {Diversity creation methods: a survey and categorisation},
+  Author                   = {Brown, Gavin and Wyatt, Jeremy and Harris, Rachel and Yao, Xin},
+  Journal                  = {Information Fusion},
+  Year                     = {2005},
+  Number                   = {1},
+  Pages                    = {5--20},
+  Volume                   = {6},
+
+  Publisher                = {Elsevier}
+}
+
+@InProceedings{chen2013,
+  Title                    = {Pairwise Ranking Aggregation in a Crowdsourced Setting},
+  Author                   = {Chen, Xi and Bennett, Paul N. and Collins-Thompson, Kevyn and Horvitz, Eric},
+  Booktitle                = {Proceedings of the sixth ACM international conference on Web search and data mining},
+  Year                     = {2013},
+  Organization             = {ACM},
+  Pages                    = {193--202},
+
+  Urldate                  = {2013-10-04}
+}
+
+@Article{choudrey03,
+  Title                    = {Variational Mixture of {B}ayesian Independent Component Analysers},
+  Author                   = {R. Choudrey and S. Roberts},
+  Journal                  = {Neural Computation },
+  Year                     = {2003},
+  Number                   = {1},
+  Volume                   = {15}
+}
+
+@InProceedings{chu_preference_2005,
+  Title                    = {Preference learning with {Gaussian} processes},
+  Author                   = {Chu, Wei and Ghahramani, Zoubin},
+  Booktitle                = {Proceedings of the 22nd International Conference on Machine learning},
+  Year                     = {2005},
+  Pages                    = {137--144},
+  Publisher                = {{ACM}},
+  Series                   = {{ICML} '05}
+}
+
+@Article{clarke2003comparing,
+  Title                    = {Comparing {Bayes} model averaging and stacking when model approximation error cannot be ignored},
+  Author                   = {Clarke, Bertrand},
+  Journal                  = {The Journal of Machine Learning Research},
+  Year                     = {2003},
+  Pages                    = {683--712},
+  Volume                   = {4},
+
+  Publisher                = {JMLR.org}
+}
+
+@InProceedings{dang_overlapping_2006,
+  Title                    = {Overlapping coalition formation for efficient data fusion in multi-sensor networks},
+  Author                   = {Dang, V. D and Dash, R. K and Rogers, A. and Jennings, N. R},
+  Booktitle                = {Proceedings of the National Conference on Artificial Intelligence},
+  Year                     = {2006},
+  Organization             = {{AAAI}},
+  Pages                    = {635},
+  Volume                   = {21}
+}
+
+@InProceedings{daniel2009airshield,
+  Title                    = {{AirShield}: a system-of-systems {MUAV} remote sensing architecture for disaster response},
+  Author                   = {Daniel, Kai and Dusza, Bjoern and Lewandowski, Andreas and Wietfeld, Christian},
+  Booktitle                = {Systems Conference, 2009 3rd Annual IEEE},
+  Year                     = {2009},
+  Organization             = {IEEE},
+  Pages                    = {196--200}
+}
+
+@InProceedings{dasgupta2004,
+  Title                    = {Analysis of a greedy active learning strategy},
+  Author                   = {Dasgupta, Sanjoy},
+  Booktitle                = {Advances in Neural Information Processing Systems 17},
+  Year                     = {2004},
+  Pages                    = {337--344},
+  Publisher                = {MIT Press}
+}
+
+@Article{dash_computational-mechanism_2003,
+  Title                    = {Computational-mechanism design: a call to arms},
+  Author                   = {Dash, R. K and Jennings, N. R and Parkes, D. C},
+  Journal                  = {{IEEE} Intelligent Systems},
+  Year                     = {2003},
+  Number                   = {6},
+  Pages                    = {40-- 47},
+  Volume                   = {18},
+
+  Shorttitle               = {Computational-mechanism design}
+}
+
+@InBook{abramowitz_handbook_1965,
+  Title                    = {Handbook of Mathematical Functions: with Formulas, Graphs, and Mathematical Tables},
+  Author                   = {Davis, P. J.},
+  Chapter                  = {6},
+  Pages                    = {258-259},
+  Publisher                = {Dover Publications},
+  Year                     = {1965},
+
+  Ignoreeditor             = {Abramowitz, M. and Stegun, I. A.}
+}
+
+@Article{dawid_maximum_1979,
+  Title                    = {Maximum Likelihood Estimation of Observer Error-Rates Using the {EM} Algorithm},
+  Author                   = {Dawid, A. P. and Skene, A. M.},
+  Journal                  = {Journal of the Royal Statistical Society. Series C {(Applied} Statistics)},
+  Year                     = {1979},
+
+  Month                    = jan,
+  Number                   = {1},
+  Pages                    = {20--28},
+  Volume                   = {28},
+
+  ISSN                     = {0035-9254},
+  Url                      = {http://www.jstor.org/stable/2346806}
+}
+
+@Article{dempster_maximum_1977,
+  Title                    = {Maximum Likelihood from Incomplete Data via the {EM} Algorithm},
+  Author                   = {Dempster, A. P. and Laird, N. M. and Rubin, D. B.},
+  Journal                  = {Journal of the Royal Statistical Society. Series B {(Methodological)}},
+  Year                     = {1977},
+
+  Month                    = jan,
+  Number                   = {1},
+  Pages                    = {1--38},
+  Volume                   = {39},
+
+  ISSN                     = {0035-9246}
+}
+
+@InCollection{dietterich2000ensemble,
+  Title                    = {Ensemble methods in {Machine Learning}},
+  Author                   = {Dietterich, Thomas G},
+  Booktitle                = {Multiple classifier systems},
+  Publisher                = {Springer},
+  Year                     = {2000},
+  Pages                    = {1--15}
+}
+
+@Article{dietterich_1997,
+  Title                    = {{Machine Learning} research: four current directions},
+  Author                   = {Dietterich, T. G},
+  Journal                  = {{AI} magazine},
+  Year                     = {1997},
+  Number                   = {4},
+  Pages                    = {97},
+  Volume                   = {18},
+
+  ISSN                     = {0738-4602},
+  Publisher                = {AAAI}
+}
+
+@InProceedings{donmez10,
+  Title                    = {A probabilistic framework to learn from multiple annotators with time-varying accuracy},
+  Author                   = {Donmez, Pinar and Carbonell, Jaime and Schneider, Jeff},
+  Booktitle                = {SIAM International Conference on Data Mining (SDM)},
+  Year                     = {2010},
+  Organization             = {Society for Industrial and Applied Mathematics},
+  Pages                    = {826--837}
+}
+
+@InCollection{ebden2012network,
+  Title                    = {Network analysis on provenance graphs from a crowdsourcing application},
+  Author                   = {Ebden, Mark and Huynh, Trung Dong and Moreau, Luc and Ramchurn, Sarvapali and Roberts, Stephen},
+  Booktitle                = {Provenance and Annotation of Data and Processes},
+  Publisher                = {Springer},
+  Year                     = {2012},
+  Pages                    = {168--182}
+}
+
+@InProceedings{ertin_maximum_2003,
+  Title                    = {Maximum mutual information principle for dynamic sensor query problems},
+  Author                   = {Ertin, E. and Fisher, J. and Potter, L.},
+  Booktitle                = {Information Processing in Sensor Networks},
+  Year                     = {2003},
+  Pages                    = {558--558}
+}
+
+@Article{fawcett_introduction_2006,
+  Title                    = {An introduction to {ROC} analysis},
+  Author                   = {Fawcett, T.},
+  Journal                  = {Pattern Recognition Letters},
+  Year                     = {2006},
+  Number                   = {8},
+  Pages                    = {861--874},
+  Volume                   = {27},
+
+  Publisher                = {Elsevier}
+}
+
+@InProceedings{florian_modeling_2002,
+  Title                    = {Modeling consensus: Classifier combination for word sense disambiguation},
+  Author                   = {Florian, R. and Yarowsky, D.},
+  Booktitle                = {Proceedings of the {ACL-02} conference on Empirical methods in natural language {processing-Volume} 10},
+  Year                     = {2002},
+  Pages                    = {25--32},
+
+  Shorttitle               = {Modeling consensus}
+}
+
+@Article{fortson2011galaxy,
+  Title                    = {{Galaxy Zoo}: morphological classification and citizen science},
+  Author                   = {Fortson, Lucy and Masters, Karen and Nichol, Robert and Borne, Kirk and Edmondson, Edd and Lintott, Chris and Raddick, Jordan and Schawinski, Kevin and Wallin, John},
+  Journal                  = {arXiv:1104.5513},
+  Year                     = {2011}
+}
+
+@Article{fox_tutorial_2011,
+  Title                    = {A tutorial on variational {Bayesian} inference},
+  Author                   = {Fox, C. and Roberts, S. J.},
+  Journal                  = {Artificial Intelligence Review},
+  Year                     = {2011},
+  Pages                    = {1--11},
+
+  Doi                      = {10.1007/s10462-011-9236-8},
+  ISSN                     = {0269-2821},
+  Keywords                 = {Computer Science},
+  Url                      = {http://www.springerlink.com/content/j5617xn756j27671/abstract/}
+}
+
+@Article{freund2004generalization,
+  Title                    = {Generalization bounds for averaged classifiers},
+  Author                   = {Freund, Yoav and Mansour, Yishay and Schapire, Robert E},
+  Journal                  = {Annals of Statistics},
+  Year                     = {2004},
+  Pages                    = {1698--1722},
+
+  Publisher                = {JSTOR}
+}
+
+@InProceedings{freund_desicion-theoretic_1995,
+  Title                    = {A desicion-theoretic generalization of on-line learning and an application to boosting},
+  Author                   = {Freund, Y. and Schapire, R.},
+  Booktitle                = {Computational learning theory, Second European Conference, EuroCOLT},
+  Year                     = {1995},
+  Pages                    = {23--37},
+  Publisher                = {Springer Berlin Heidelberg},
+
+  Seriers                  = {Lecture Notes in Artificial Intelligence}
+}
+
+@InProceedings{gallagher09,
+  Title                    = {Classification of {HTTP} attacks: a study on the {ECML/PKDD} 2007 discovery challenge},
+  Author                   = {Gallagher, Brian and Eliassi-Rad, Tina},
+  Booktitle                = {Center for Advanced Signal and Image Sciences ({CASIS)} Workshop},
+  Year                     = {2008},
+
+  Organizatio              = {Lawrence Livermore National Laboratory},
+  Shorttitle               = {Classification of {HTTP} attacks}
+}
+
+@InProceedings{garnett_bayesian_2010,
+  Title                    = {{Bayesian} optimization for sensor set selection},
+  Author                   = {Garnett, R. and Osborne, M. A. and Roberts, S. J.},
+  Booktitle                = {Proceedings of the 9th {ACM/IEEE} International Conference on Information Processing in Sensor Networks},
+  Year                     = {2010},
+  Pages                    = {209--219}
+}
+
+@Article{geman_stochastic_1984,
+  Title                    = {Stochastic Relaxation, {Gibbs} Distributions, and the {Bayesian} Restoration of Images},
+  Author                   = {Geman, S. and Geman, D.},
+  Journal                  = {Pattern Analysis and Machine Intelligence, {IEEE} Transactions on},
+  Year                     = {1984},
+
+  Month                    = nov,
+  Number                   = {6},
+  Pages                    = {721 --741},
+  Volume                   = {{PAMI-6}},
+
+  ISSN                     = {0162-8828}
+}
+
+@Article{genest_modeling_1985,
+  Title                    = {Modeling expert judgments for {Bayesian} updating},
+  Author                   = {Genest, C. and Schervish, M. J},
+  Journal                  = {The Annals of Statistics},
+  Year                     = {1985},
+  Number                   = {3},
+  Pages                    = {1198--1212},
+  Volume                   = {13},
+
+  ISSN                     = {0090-5364}
+}
+
+@Article{genest_combining_1986,
+  Title                    = {Combining probability distributions: A critique and an annotated bibliography},
+  Author                   = {Genest, C. and Zidek, J. V},
+  Journal                  = {Statistical Science},
+  Year                     = {1986},
+  Number                   = {1},
+  Pages                    = {114--135},
+  Volume                   = {1},
+
+  ISSN                     = {0883-4237},
+  Shorttitle               = {Combining probability distributions}
+}
+
+@Article{giacinto_dynamic_2001,
+  Title                    = {Dynamic classifier selection based on multiple classifier behaviour},
+  Author                   = {Giacinto, G. and Roli, F.},
+  Journal                  = {Pattern Recognition},
+  Year                     = {2001},
+  Number                   = {9},
+  Pages                    = {1879--1882},
+  Volume                   = {34},
+
+  ISSN                     = {0031-3203},
+  Publisher                = {Elsevier}
+}
+
+@Article{gilks_adaptive_1992,
+  Title                    = {Adaptive Rejection Sampling for {Gibbs} Sampling},
+  Author                   = {Gilks, W. R. and Wild, P.},
+  Journal                  = {Journal of the Royal Statistical Society. Series C {(Applied} Statistics)},
+  Year                     = {1992},
+
+  Month                    = jan,
+  Number                   = {2},
+  Pages                    = {337--348},
+  Volume                   = {41},
+
+  ISSN                     = {0035-9254}
+}
+
+@Article{girvan_community_2002,
+  Title                    = {Community Structure in Social and Biological Networks},
+  Author                   = {Girvan, M. and Newman, M. E. J},
+  Journal                  = {Proceedings of the National Academy of Sciences},
+  Year                     = {2002},
+  Number                   = {12},
+  Pages                    = {7821--7826},
+  Volume                   = {99},
+
+  Publisher                = {The National Academy of Sciences}
+}
+
+@Article{givens_logarithmic_1999,
+  Title                    = {Logarithmic pooling of priors linked by a deterministic simulation model},
+  Author                   = {Givens, G. H and Roback, P. J},
+  Journal                  = {Journal of Computational and Graphical Statistics},
+  Year                     = {1999},
+  Number                   = {3},
+  Pages                    = {452--478},
+  Volume                   = {8},
+
+  ISSN                     = {1061-8600}
+}
+
+@Article{gneiting2007strictly,
+  Title                    = {Strictly proper scoring rules, prediction, and estimation},
+  Author                   = {Gneiting, Tilmann and Raftery, Adrian E},
+  Journal                  = {Journal of the American Statistical Association},
+  Year                     = {2007},
+  Number                   = {477},
+  Pages                    = {359--378},
+  Volume                   = {102},
+
+  Publisher                = {Taylor \& Francis}
+}
+
+@InProceedings{gorman2009sensorpedia,
+  Title                    = {{Sensorpedia}: information sharing across incompatible sensor systems},
+  Author                   = {BL Gorman and DR Resseguie and C. Tomkins-Tinch},
+  Booktitle                = {Collaborative Technologies and Systems, 2009. CTS'09, International Symposium on},
+  Year                     = {2009},
+  Organization             = {IEEE},
+  Pages                    = {448--454}
+}
+
+@InProceedings{Grady2010,
+  Title                    = {Crowdsourcing document relevance assessment with Mechanical Turk},
+  Author                   = {Grady, Catherine and Lease, Matthew},
+  Booktitle                = {Proceedings of the NAACL HLT 2010 Workshop on Creating Speech and Language Data with Amazon's Mechanical Turk},
+  Year                     = {2010},
+  Pages                    = {172--179},
+  Publisher                = {Association for Computational Linguistics},
+  Series                   = {CSLDAMT '10},
+
+  Numpages                 = {8}
+}
+
+@InProceedings{haker_combining_2005,
+  Title                    = {Combining classifiers using their receiver operating characteristics and maximum likelihood estimation},
+  Author                   = {Haker, S. and Wells, W. M and Warfield, S. K and Talos, I. F and Bhagwat, J. G and {Goldberg-Zimring}, D. and Mian, A. and {Ohno-Machado}, L. and Zou, K. H},
+  Booktitle                = {Medical Image Computing and {Computer-Assisted} {Intervention--MICCAI} 2005},
+  Year                     = {2005},
+  Pages                    = {506--514},
+  Publisher                = {Springer},
+  Series                   = {Lecture notes in Computer Science}
+}
+
+@InProceedings{harris_crowdsourcing,
+  Title                    = {Using Hybrid Methods for Relevance Assessment in {TREC} {Crowd} '12},
+  Author                   = { Harris, Christopher and Srinivasan, Padmini},
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@InProceedings{hasselt2010double,
+  Title                    = {Double {Q-learning}},
+  Author                   = {Hasselt, Hado V},
+  Booktitle                = {Advances in Neural Information Processing Systems 23},
+  Year                     = {2010},
+  Pages                    = {2613--2621},
+  Publisher                = {MIT Press}
+}
+
+@Article{haupt1996optimal,
+  Title                    = {Optimal recursive iterative algorithm for discrete nonlinear least-squares estimation},
+  Author                   = {Haupt, Gordon T and Kasdin, N Jeremy and Keiser, George M and Parkinson, Bradford W},
+  Journal                  = {Journal of guidance, control, and dynamics},
+  Year                     = {1996},
+  Number                   = {3},
+  Pages                    = {643--649},
+  Volume                   = {19}
+}
+
+@Article{he_learning_2009,
+  Title                    = {Learning from Imbalanced Data},
+  Author                   = {He, Haibo and Garcia, {E.A.}},
+  Journal                  = {{IEEE} Transactions on Knowledge and Data Engineering},
+  Year                     = {2009},
+  Number                   = {9},
+  Pages                    = {1263--1284},
+  Volume                   = {21},
+
+  Doi                      = {10.1109/TKDE.2008.239},
+  ISSN                     = {1041-4347}
+}
+
+@Article{hendler_agents_2001,
+  Title                    = {Agents and the {Semantic Web}},
+  Author                   = {Hendler, J.},
+  Journal                  = {{IEEE} Intelligent systems},
+  Year                     = {2001},
+  Number                   = {2},
+  Pages                    = {30--37},
+  Volume                   = {16},
+
+  ISSN                     = {1541-1672}
+}
+
+@InProceedings{herbrich_learning_1998,
+  Title                    = {Learning Preference Relations for Information Retrieval},
+  Author                   = {Herbrich, Ralf and Graepel, Thore and Bollmann-sdorra, Peter and Obermayer, Klaus},
+  Booktitle                = {ICML-98 Workshop: text categorization and machine learning},
+  Year                     = {1998},
+  Organization             = {The International Machine Learning Society},
+  Pages                    = {80--84}
+}
+
+@InProceedings{heskes_selecting_1998,
+  Title                    = {Selecting weighting factors in logarithmic opinion pools},
+  Author                   = {Heskes, T.},
+  Booktitle                = {Advances in Neural Information Processing Systems 10},
+  Year                     = {1998},
+  Pages                    = {266},
+  Publisher                = {MIT Press},
+
+  ISBN                     = {0262100762}
+}
+
+@InProceedings{hinton_products_2002,
+  Title                    = {Products of experts},
+  Author                   = {Hinton, G. E},
+  Booktitle                = {Artificial Neural Networks 1999 (ICANN 99), Ninth International Conference on},
+  Year                     = {1999},
+  Organization             = {IET},
+  Pages                    = {1--6},
+  Volume                   = {1}
+}
+
+@Article{ho_multiple_2002,
+  Title                    = {Multiple classifier combination: lessons and next steps},
+  Author                   = {Ho, T. K},
+  Journal                  = {Hybrid methods in pattern recognition},
+  Year                     = {2002},
+  Number                   = {1},
+  Pages                    = {171--198},
+  Volume                   = {74},
+
+  Shorttitle               = {Multiple classifier combination}
+}
+
+@Article{ho_decision_2002,
+  Title                    = {Decision combination in multiple classifier systems},
+  Author                   = {Ho, T. K and Hull, J. J. and Srihari, S. N.},
+  Journal                  = {Pattern Analysis and Machine Intelligence, {IEEE} Transactions on},
+  Year                     = {2002},
+  Number                   = {1},
+  Pages                    = {66--75},
+  Volume                   = {16},
+
+  ISSN                     = {0162-8828}
+}
+
+@InProceedings{Hofmann1999,
+  Title                    = {Probabilistic Latent Semantic Analysis},
+  Author                   = {Thomas Hofmann},
+  Booktitle                = {UAI '99: Proceedings of the Fifteenth Conference on Uncertainty in Artificial Intelligence},
+  Year                     = {1999},
+  Pages                    = {289-296},
+  Publisher                = {Morgan Kaufmann}
+}
+
+@InProceedings{hofmann_latent_1999,
+  Title                    = {Latent class models for collaborative filtering},
+  Author                   = {Hofmann, T. and Puzicha, J.},
+  Booktitle                = {International Joint Conference on Artificial Intelligence, IJCAI 1999},
+  Year                     = {1999},
+  Organization             = {IJCAI},
+  Pages                    = {688--693},
+  Volume                   = {16}
+}
+
+@InProceedings{hovland_dynamic_2002,
+  Title                    = {Dynamic sensor selection for robotic systems},
+  Author                   = {Hovland, G. E. and {McCarragher}, B. J.},
+  Booktitle                = {Proceedings of Robotics and Automation 1997, {IEEE} International Conference on},
+  Year                     = {2002},
+  Organization             = {IEEE},
+  Pages                    = {272--277},
+  Volume                   = {1}
+}
+
+@InProceedings{york_crowdsourcing,
+  Title                    = {{York} University at {TREC} 2012: CrowdSourcing Track},
+  Author                   = { Hu, Qinmin and Xu, Zhi and Huang, Xanghi and Ye, Zheng },
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@Article{huang_method_2002,
+  Title                    = {A method of combining multiple experts for the recognition of unconstrained handwritten numerals},
+  Author                   = {Huang, Y. S. and Suen, C. Y.},
+  Journal                  = {Pattern Analysis and Machine Intelligence, {IEEE} Transactions on},
+  Year                     = {2002},
+  Number                   = {1},
+  Pages                    = {90--94},
+  Volume                   = {17},
+
+  ISSN                     = {0162-8828}
+}
+
+@InProceedings{huynh2013,
+  Title                    = {Interpretation of Crowdsourced Activities Using Provenance Network Analysis},
+  Author                   = {Huynh, Trung Dong and Ebden, Mark and Venanzi, Matteo and Ramchurn, Sarvapali and Roberts, Stephen and Moreau, Luc},
+  Booktitle                = {Proceedings of the First AAAI Conference on Human Computation and Crowdsourcing (HCOMP)},
+  Year                     = {2013},
+  Organization             = {AAAI}
+}
+
+@InProceedings{ipeirotis10,
+  Title                    = {Quality management on {Amazon Mechanical Turk}},
+  Author                   = {Ipeirotis, Panagiotis G and Provost, Foster and Wang, Jing},
+  Booktitle                = {Proceedings of the ACM SIGKDD Workshop on Human Computation},
+  Year                     = {2010},
+  Organization             = {ACM},
+  Pages                    = {64--67}
+}
+
+@Article{jacobs_methods_1995,
+  Title                    = {Methods for combining experts' probability assessments},
+  Author                   = {Jacobs, R. A},
+  Journal                  = {Neural computation},
+  Year                     = {1995},
+  Number                   = {5},
+  Pages                    = {867--888},
+  Volume                   = {7},
+
+  ISSN                     = {0899-7667}
+}
+
+@Article{jacobs_adaptive_1991,
+  Title                    = {Adaptive mixtures of local experts},
+  Author                   = {Jacobs, R. A and Jordan, M. I and Nowlan, S. J and Hinton, G. E},
+  Journal                  = {Neural computation},
+  Year                     = {1991},
+  Number                   = {1},
+  Pages                    = {79--87},
+  Volume                   = {3},
+
+  ISSN                     = {0899-7667}
+}
+
+@Article{jain_data_1999,
+  Title                    = {Data clustering: a review},
+  Author                   = {Jain, A. K and Murty, M. N and Flynn, P. J},
+  Journal                  = {{ACM} computing surveys {(CSUR)}},
+  Year                     = {1999},
+  Number                   = {3},
+  Pages                    = {264--323},
+  Volume                   = {31},
+
+  ISSN                     = {0360-0300},
+  Shorttitle               = {Data clustering}
+}
+
+@Book{jaynes2003probability,
+  Title                    = {Probability theory: the logic of science},
+  Author                   = {Jaynes, Edwin T},
+  Publisher                = {Cambridge University Press},
+  Year                     = {2003}
+}
+
+@Book{jazwinski1970stochastic,
+  Title                    = {Stochastic processes and filtering theory},
+  Author                   = {Jazwinski, Andrew H},
+  Publisher                = {Courier Dover Publications},
+  Year                     = {1970}
+}
+
+@Article{jazwinski69,
+  Title                    = {Adaptive filtering},
+  Author                   = {Jazwinski, A. H.},
+  Journal                  = {Automatica},
+  Year                     = {1969},
+
+  Month                    = jul,
+  Number                   = {4},
+  Pages                    = {475--485},
+  Volume                   = {5},
+
+  Address                  = {Tarrytown, NY, USA},
+  ISSN                     = {0005-1098},
+  Issue_date               = {July, 1969},
+  Numpages                 = {11},
+  Publisher                = {Pergamon Press, Inc.}
+}
+
+@Article{jin_study_2006,
+  Title                    = {A study of mixture models for collaborative filtering},
+  Author                   = {Jin, Rong and Si, Luo and Zhai, Chengxiang},
+  Journal                  = {Information Retrieval},
+  Year                     = {2006},
+
+  Month                    = jun,
+  Number                   = {3},
+  Pages                    = {357--382},
+  Volume                   = {9},
+
+  Doi                      = {10.1007/s10791-006-4651-1},
+  ISSN                     = {1386-4564},
+  Url                      = {http://www.springerlink.com/content/174t3650n482858k/export-citation/}
+}
+
+@InProceedings{johnson_why_????,
+  Title                    = {Why doesn’t {EM} find good {HMM} {POS-taggers}},
+  Author                   = {Johnson, M.}
+}
+
+@InProceedings{johnson2007doesn,
+  Title                    = {{Why doesn't EM find good HMM POS-taggers}},
+  Author                   = {M. Johnson},
+  Booktitle                = {Proceedings of the 2007 Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural Language Learning (EMNLP-CoNLL)},
+  Year                     = {2007},
+  Pages                    = {296--305}
+}
+
+@Article{jordan_introduction_1999,
+  Title                    = {An introduction to variational methods for graphical models},
+  Author                   = {Jordan, M. I and Ghahramani, Z. and Jaakkola, T. S and Saul, L. K},
+  Journal                  = {Machine learning},
+  Year                     = {1999},
+  Number                   = {2},
+  Pages                    = {183--233},
+  Volume                   = {37},
+
+  ISSN                     = {0885-6125}
+}
+
+@Article{jordan_hierarchical_1994,
+  Title                    = {Hierarchical mixtures of experts and the {EM} algorithm},
+  Author                   = {Jordan, M. I and Jacobs, R. A},
+  Journal                  = {Neural computation},
+  Year                     = {1994},
+  Number                   = {2},
+  Pages                    = {181--214},
+  Volume                   = {6},
+
+  ISSN                     = {0899-7667}
+}
+
+@Article{joshi_sensor_2009,
+  Title                    = {Sensor selection via convex optimization},
+  Author                   = {Joshi, S. and Boyd, S.},
+  Journal                  = {Signal Processing, {IEEE} Transactions on},
+  Year                     = {2009},
+  Number                   = {2},
+  Pages                    = {451--462},
+  Volume                   = {57},
+
+  ISSN                     = {{1053-587X}}
+}
+
+@InProceedings{julier1997ukf,
+  Title                    = {New extension of the {Kalman} filter to nonlinear systems},
+  Author                   = {Julier, Simon J and Uhlmann, Jeffrey K},
+  Booktitle                = {AeroSense'97},
+  Year                     = {1997},
+  Organization             = {International Society for Optics and Photonics},
+  Pages                    = {182--193}
+}
+
+@InProceedings{kahn2004generative,
+  Title                    = {A generative {Bayesian} model for aggregating experts' probabilities},
+  Author                   = {Kahn, Joseph M},
+  Booktitle                = {Proceedings of the 20th conference on Uncertainty in Artificial Intelligence},
+  Year                     = {2004},
+  Organization             = {AUAI Press},
+  Pages                    = {301--308}
+}
+
+@InProceedings{kamar2012,
+  Title                    = {Combining Human and Machine Intelligence in Large-scale Crowdsourcing},
+  Author                   = {Kamar, Ece and Hacker, Severin and Horvitz, Eric},
+  Booktitle                = {Proceedings of the 11th International Conference on Autonomous Agents and Multi-Agent Systems, AAMAS '12},
+  Year                     = {2012},
+  Organization             = {International Foundation for Autonomous Agents and Multi-Agent Systems},
+  Pages                    = {467--474}
+}
+
+@InProceedings{karger2011,
+  Title                    = {Iterative learning for reliable crowdsourcing systems},
+  Author                   = {Karger, David R. and Oh, Sewoong and Shah, Devavrat},
+  Booktitle                = {Advances in Neural Information Processing Systems 24},
+  Year                     = {2011},
+  Pages                    = {1953--1961},
+  Publisher                = {MIT Press},
+
+  Url                      = {http://machinelearning.wustl.edu/mlpapers/paper_files/NIPS2011_1102.pdf},
+  Urldate                  = {2013-10-04}
+}
+
+@InProceedings{kaufmann2011,
+  Title                    = {More than fun and money. worker motivation in crowdsourcing--a study on mechanical turk},
+  Author                   = {Kaufmann, N. and Schulze, T. and Veit, D.},
+  Booktitle                = {Proceedings of the Seventeenth Americas Conference on Information Systems, Detroit, MI},
+  Year                     = {2011}
+}
+
+@Article{khintchine1929loi,
+  Title                    = {Sur la loi des grands nombres},
+  Author                   = {Khintchine, A},
+  Journal                  = {Comtes rendus de l’Acad{\'e}mie des sciences},
+  Year                     = {1929},
+  Pages                    = {477--479},
+  Volume                   = {188}
+}
+
+@Article{kim2003,
+  Title                    = {{Bayesian} classifier combination},
+  Author                   = {Kim, H.C. and Ghahramani, Z.},
+  Journal                  = {Gatsby Computational Neuroscience Unit Technical Report {GCNU-T.},London, {UK}},
+  Year                     = {2003},
+  Publisher                = {University College London}
+}
+
+@Article{kittler_combining_1998,
+  Title                    = {Combining classifiers: A theoretical framework},
+  Author                   = {Kittler, J.},
+  Journal                  = {Pattern Analysis \& Applications},
+  Year                     = {1998},
+  Number                   = {1},
+  Pages                    = {18--27},
+  Volume                   = {1},
+
+  ISSN                     = {1433-7541},
+  Shorttitle               = {Combining classifiers}
+}
+
+@InProceedings{krogh1995neural,
+  Title                    = {Neural Network Ensembles, Cross Validation, and Active Learning},
+  Author                   = {Krogh, Anders and Vedelsby, Jesper},
+  Booktitle                = {Advances in Neural Information Processing Systems 8},
+  Year                     = {1995},
+  Publisher                = {MIT Press}
+}
+
+@Article{kullback_information_1951,
+  Title                    = {On Information and Sufficiency},
+  Author                   = {Kullback, S. and Leibler, R. A.},
+  Journal                  = {The Annals of Mathematical Statistics},
+  Year                     = {1951},
+
+  Month                    = mar,
+  Number                   = {1},
+  Pages                    = {79--86},
+  Volume                   = {22},
+
+  ISSN                     = {0003-4851},
+  Url                      = {http://www.jstor.org/stable/2236703}
+}
+
+@Article{kuncheva_switching_2002,
+  Title                    = {Switching between selection and fusion in combining classifiers: An experiment},
+  Author                   = {Kuncheva, L. I},
+  Journal                  = {Systems, Man, and Cybernetics, Part B: Cybernetics, {IEEE} Transactions on},
+  Year                     = {2002},
+  Number                   = {2},
+  Pages                    = {146--156},
+  Volume                   = {32},
+
+  ISSN                     = {1083-4419},
+  Shorttitle               = {Switching between selection and fusion in combining classifiers}
+}
+
+@Article{lal2013multiagent,
+  Title                    = {A Multiagent Planning Approach to Model a Tele-Surgery Domain},
+  Author                   = {Lal, Amod Kumar and Niyogi, Rajdeep},
+  Journal                  = {International Journal of Intelligent Systems and Applications (IJISA)},
+  Year                     = {2013},
+  Number                   = {9},
+  Pages                    = {27},
+  Volume                   = {5}
+}
+
+@InProceedings{langdon_genetic_2001,
+  Title                    = {Genetic programming for combining classifiers},
+  Author                   = {Langdon, W. B. and Buxton, B. F.},
+  Booktitle                = {Proceedings of the Genetic and Evolutionary Computation Conference {(GECCO-2001)}},
+  Year                     = {2001},
+  Organization             = {ACM SigEVO},
+  Pages                    = {66--73}
+}
+
+@Article{law2009palomar,
+  Title                    = {The {Palomar Transient Factory}: System Overview, Performance, and First Results},
+  Author                   = {Law, N. M. and Kulkarni, S. R. and Dekany, R. G. and Ofek, E. O. and Quimby, R. M. and Nugent, P. E. and Surace, J. and Grillmair, C. C. and Bloom, J. S. and Kasliwal, M. M. and others},
+  Journal                  = {Publications of the Astronomical Society of the Pacific},
+  Year                     = {2009},
+  Number                   = {886},
+  Pages                    = {1395--1408},
+  Volume                   = {121},
+
+  Publisher                = {University of Chicago Press}
+}
+
+@InProceedings{lee2009convolutional,
+  Title                    = {Convolutional deep belief networks for scalable unsupervised learning of hierarchical representations},
+  Author                   = {Lee, Honglak and Grosse, Roger and Ranganath, Rajesh and Ng, Andrew Y},
+  Booktitle                = {Proceedings of the 26th Annual International Conference on Machine Learning},
+  Year                     = {2009},
+  Organization             = {ACM},
+  Pages                    = {609--616}
+}
+
+@Article{lee_sequential_2010,
+  Title                    = {Sequential Dynamic Classification Using Latent Variable Models},
+  Author                   = {Lee, S. M. and Roberts, S. J.},
+  Journal                  = {The Computer Journal},
+  Year                     = {2010},
+
+  Month                    = jan,
+  Number                   = {9},
+  Pages                    = {1415--1429},
+  Volume                   = {53},
+
+  Doi                      = {10.1093/comjnl/bxp127},
+  ISSN                     = {0010-4620, 1460-2067},
+  Url                      = {http://comjnl.oxfordjournals.org/content/53/9/1415}
+}
+
+@Article{lefkimmiatis_bayesian_2009,
+  Title                    = {{Bayesian} Inference on Multiscale Models for {P}oisson Intensity Estimation: Applications to {Photon-Limited} Image Denoising},
+  Author                   = {Lefkimmiatis, S. and Maragos, P. and Papandreou, G.},
+  Journal                  = {Image Processing, {IEEE} Transactions on},
+  Year                     = {2009},
+  Number                   = {8},
+  Pages                    = {1724--1741},
+  Volume                   = {18},
+
+  Doi                      = {10.1109/TIP.2009.2022008},
+  ISSN                     = {1057-7149},
+  Shorttitle               = {{Bayesian} Inference on Multiscale Models for Poisson Intensity Estimation}
+}
+
+@Article{leonard1977,
+  Title                    = {Bayesian simultaneous estimation for several multinomial distributions},
+  Author                   = {Leonard, Tom},
+  Journal                  = {Communications in Statistics-Theory and Methods},
+  Year                     = {1977},
+  Number                   = {7},
+  Pages                    = {619--630},
+  Volume                   = {6},
+
+  Publisher                = {Taylor \& Francis}
+}
+
+@InProceedings{levenbergeconomic,
+  Title                    = {Economic Prediction using Heterogeneous Data Streams from the World Wide Web},
+  Author                   = {Levenberg, Abby and Simpson, Edwin and Roberts, Stephen and Gottlob, Georg},
+  Booktitle                = {European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases, ECML PKDD},
+  Year                     = {2013},
+  Publisher                = {Springer},
+  Series                   = {Lecture Notes in Computer Science}
+}
+
+@Article{lindley_reconciliation_1983,
+  Title                    = {Reconciliation of Probability Distributions},
+  Author                   = {Lindley, Dennis},
+  Journal                  = {Operations Research},
+  Year                     = {1983},
+  Number                   = {5},
+  Pages                    = {866--880},
+  Volume                   = {31}
+}
+
+@InProceedings{littlestone_weighted_2002,
+  Title                    = {The weighted majority algorithm},
+  Author                   = {Littlestone, N. and Warmuth, M. K},
+  Booktitle                = {Foundations of Computer Science, 1989., 30th Annual Symposium on},
+  Year                     = {1989},
+  Pages                    = {256--261},
+  Publisher                = {IEEE}
+}
+
+@InProceedings{liu12,
+  Title                    = {Variational inference for crowdsourcing},
+  Author                   = {Liu, Qiang and Peng, Jian and Ihler, Alex},
+  Booktitle                = {Advances in Neural Information Processing Systems 25},
+  Year                     = {2012},
+  Pages                    = {701--709},
+  Publisher                = {MIT Press}
+}
+
+@Article{liu_multiple_2001,
+  Title                    = {Multiple classifiers combination by clustering and selection},
+  Author                   = {Liu, R. and Yuan, B.},
+  Journal                  = {Information Fusion},
+  Year                     = {2001},
+  Number                   = {3},
+  Pages                    = {163--168},
+  Volume                   = {2},
+
+  ISSN                     = {1566-2535}
+}
+
+@Article{lowne2010,
+  Title                    = {Sequential non-stationary dynamic classification with sparse feedback},
+  Author                   = {Lowne, DR and Roberts, SJ and Garnett, R.},
+  Journal                  = {Pattern Recognition},
+  Year                     = {2010},
+  Number                   = {3},
+  Pages                    = {897--905},
+  Volume                   = {43},
+
+  Publisher                = {Elsevier}
+}
+
+@Article{lum2007telesurgery,
+  Title                    = {Telesurgery via unmanned aerial vehicle ({UAV}) with a field deployable surgical robot},
+  Author                   = {Lum, Mitchell JH and Rosen, Jacob and King, Hawkeye and Friedman, DC and Donlin, Gina and Sankaranarayanan, Ganesh and Harnett, Brett and Huffman, Lynn and Doarn, Charles and Broderick, Timothy and others},
+  Journal                  = {Studies in Health Technology and Informatics},
+  Year                     = {2007},
+  Pages                    = {313--5},
+  Volume                   = {125}
+}
+
+@Article{mackay92,
+  Title                    = {Information-based objective functions for active data selection},
+  Author                   = {MacKay, D.J.C.},
+  Journal                  = {Neural computation},
+  Year                     = {1992},
+  Number                   = {4},
+  Pages                    = {590--604},
+  Volume                   = {4},
+  Publisher                = {MIT Press}
+}
+
+@Article{mackay_c._1998,
+  Title                    = {C. Introduction to Gaussian processes},
+  Author                   = {{MacKay}, D. J.},
+  Journal                  = {Proc Neural Networks and Machine Learning. Cambridge, {UK:}},
+  Year                     = {1998},
+  Pages                    = {133--165},
+
+  Publisher                = {Springer}
+}
+
+@Article{madansky_externally_1964,
+  Title                    = {Externally {Bayesian} Groups},
+  Author                   = {Madansky, A.},
+  Journal                  = {{RM-4141-PR:} The {RAND} Corporation},
+  Year                     = {1964}
+}
+
+@InProceedings{Madnani2011,
+  Title                    = {They can help: using crowdsourcing to improve the evaluation of grammatical error detection systems},
+  Author                   = {Madnani, Nitin and Tetreault, Joel and Chodorow, Martin and Rozovskaya, Alla},
+  Booktitle                = {Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies: short papers - Volume 2},
+  Year                     = {2011},
+  Pages                    = {508--513},
+  Publisher                = {Association for Computational Linguistics},
+  Series                   = {HLT '11}
+}
+
+@Book{manning2008,
+  Title                    = {Introduction to Information Retrieval},
+  Author                   = {Manning, Christopher D. and Raghavan, Prabhakar and Schï¿œtze, Hinrich},
+  Publisher                = {Cambridge University Press},
+  Year                     = {2008}
+}
+
+@Book{Manning2008,
+  Title                    = {Introduction to Information Retrieval},
+  Author                   = {Manning, Christopher D. and Raghavan, Prabhakar and Schtze, Hinrich},
+  Publisher                = {Cambridge University Press},
+  Year                     = {2008}
+}
+
+@InProceedings{mcinerney2012improving,
+  Title                    = {Improving location prediction services for new users with probabilistic latent semantic analysis},
+  Author                   = {McInerney, James and Rogers, Alex and Jennings, Nicholas R},
+  Booktitle                = {Proceedings of the 2012 ACM Conference on Ubiquitous Computing},
+  Year                     = {2012},
+  Organization             = {ACM},
+  Pages                    = {906--910}
+}
+
+@InProceedings{metsis_spam_2006,
+  Title                    = {Spam Filtering with Na\"{\i}ve {Bayes--Which} Na\"{\i}ve {Bayes}?},
+  Author                   = {Metsis, Vangelis and Androutsopoulos, Ion and Paliouras, Georgios},
+  Booktitle                = {Proceedings of Third Conference on Email and Anti-Spam (CEAS)},
+  Year                     = {2006},
+  Organization             = {CEAS}
+}
+
+@InProceedings{Michalak10c,
+  Title                    = {{A Distributed Algorithm for Anytime Coalition Structure Generation}},
+  Author                   = {Tomasz Michalak and Jacek Sroka and Talal Rahwan and Michael Wooldridge and Peter McBurney and Nicholas R. Jennings},
+  Booktitle                = {Proceedings of the Ninth International Joint Conference on Autonomous Agents and Multi-Agent Systems, AAMAS '10},
+  Year                     = {2010},
+  Organization             = {International Foundation for Autonomous Agents and Multi-Agent Systems},
+  Pages                    = {1007--1014},
+
+  Location                 = {Toronto, Canada}
+}
+
+@Article{Miller1995,
+  Title                    = {WordNet: a lexical database for English},
+  Author                   = {Miller, George A.},
+  Journal                  = {Commun. ACM},
+  Year                     = {1995},
+
+  Month                    = nov,
+  Number                   = {11},
+  Pages                    = {39--41},
+  Volume                   = {38},
+
+  Issue_date               = {Nov. 1995},
+  Numpages                 = {3},
+  Publisher                = {ACM}
+}
+
+@Article{minka_bayesian_2000,
+  Title                    = {{Bayesian} model averaging is not model combination},
+  Author                   = {Minka, T.},
+  Journal                  = {MIT Media Lab note (7/6/00), http://www.stat.cmu.edu/minka/papers/bma.html},
+  Year                     = {2000}
+}
+
+@InProceedings{mo2013cross,
+  Title                    = {Cross-Task Crowdsourcing},
+  Author                   = {Mo, Kaixiang and Zhong, Erheng and Yang, Qiang},
+  Booktitle                = {Proceedings of the 19th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+  Year                     = {2013},
+  Organization             = {ACM}
+}
+
+@InProceedings{monteith_turning_2011,
+  Title                    = {Turning {Bayesian} model averaging into {Bayesian} model combination},
+  Author                   = {Monteith, K. and Carroll, J. L and Seppi, K. and Martinez, T.},
+  Booktitle                = {Neural Networks {(IJCNN)}, The 2011 International Joint Conference on},
+  Year                     = {2011},
+  Month                    = aug,
+  Pages                    = {2657--2663},
+  Publisher                = {{IEEE}}
+}
+
+@PhdThesis{moutoutis_cellnuclei,
+  Title                    = {Segmentation and classification of cell nuclei in tissue sections},
+  Author                   = {T. Mouroutis},
+  School                   = {University of Oxford},
+  Year                     = {1999}
+}
+
+@Book{mueller_advances_2000,
+  Title                    = {Advances in Neural Information Processing Systems 12},
+  Author                   = {Müller, {Klaus-Robert}},
+  Publisher                = {{MIT} Press},
+  Year                     = {2000},
+
+  ISBN                     = {9780262194501}
+}
+
+@Article{nam_context_2006,
+  Title                    = {Context awareness system modeling and classifier combination},
+  Author                   = {Nam, M. and Sedai, S. and Rhee, P.},
+  Journal                  = {{PRICAI} 2006: Trends in Artificial Intelligence},
+  Year                     = {2006},
+  Pages                    = {394--403}
+}
+
+@Article{neal_probabilistic_1993,
+  Title                    = {Probabilistic Inference Using Markov Chain Monte Carlo Methods},
+  Author                   = {Neal, Radford M.},
+  Journal                  = {Technical Report CRG-TR-93-1, Department of Computer Science, University of Toronto},
+  Year                     = {1993},
+
+  Language                 = {en}
+}
+
+@InProceedings{sk_crowdsourcing,
+  Title                    = {{Skierarchy}: Extending the Power of Crowdsourcing Using a Hierarchy of Domain Experts, Crowd and Machine Learning},
+  Author                   = { Nellapati, Ramesh and Peerreddy, Sanga and Singhal, Prateek},
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@Article{newman_modularity_2006,
+  Title                    = {Modularity and community structure in networks},
+  Author                   = {Newman, M. E. J.},
+  Journal                  = {Proceedings of the National Academy of Sciences of the United States of America},
+  Year                     = {2006},
+
+  Month                    = jun,
+  Note                     = {{PMID:} 16723398 {PMCID:} 1482622},
+  Number                   = {23},
+  Pages                    = {8577--8582},
+  Volume                   = {103},
+
+  Abstract                 = {Many networks of interest in the sciences, including social networks, computer networks, and metabolic and regulatory networks, are found to divide naturally into communities or modules. The problem of detecting and characterizing this community structure is one of the outstanding issues in the study of networked systems. One highly effective approach is the optimization of the quality function known as “modularity” over the possible divisions of a network. Here I show that the modularity can be expressed in terms of the eigenvectors of a characteristic matrix for the network, which I call the modularity matrix, and that this expression leads to a spectral algorithm for community detection that returns results of demonstrably higher quality than competing methods in shorter running times. I illustrate the method with applications to several published network data sets.},
+  Doi                      = {10.1073/pnas.0601602103},
+  ISSN                     = {0027-8424}
+}
+
+@InProceedings{opper_calculation_1991,
+  Title                    = {Calculation of the learning curve of {Bayes} optimal classification algorithm for learning a perceptron with noise},
+  Author                   = {Opper, M. and Haussler, D.},
+  Booktitle                = {Computational Learning Theory: Proceedings of the Fourth Annual Workshop, COLT '91},
+  Year                     = {1991},
+  Pages                    = {75--87},
+  Publisher                = {Morgan Kaufmann Publishers}
+}
+
+@InProceedings{osborne_active_2010,
+  Title                    = {Active Data Selection for Sensor Networks with Faults and Changepoints},
+  Author                   = {Osborne, M. A and Garnett, R. and Roberts, S. J},
+  Booktitle                = {2010 24th {IEEE} International Conference on Advanced Information Networking and Applications},
+  Year                     = {2010},
+  Pages                    = {533--540}
+}
+
+@Book{parisi1988statistical,
+  Title                    = {Statistical field theory},
+  Author                   = {G. Parisi},
+  Publisher                = {Addison-Wesley},
+  Year                     = {1988}
+}
+
+@Article{peng_bayesian_1996,
+  Title                    = {{Bayesian} Inference in {Mixtures-of-Experts} and Hierarchical {Mixtures-of-Experts} Models with an Application to Speech Recognition.},
+  Author                   = {Peng, F. and Jacobs, R. A and Tanner, M. A},
+  Journal                  = {Journal of the American Statistical Association},
+  Year                     = {1996},
+  Number                   = {435},
+  Volume                   = {91}
+}
+
+@InProceedings{penny_dynamic_2002,
+  Title                    = {Dynamic logistic regression},
+  Author                   = {Penny, W. D and Roberts, S. J},
+  Booktitle                = {Neural Networks (IJCNN), The 1999 International Joint Conference on},
+  Year                     = {1999},
+  Pages                    = {1562--1567},
+  Publisher                = {IEEE},
+  Volume                   = {3},
+
+  ISBN                     = {0780355296}
+}
+
+@Article{psorakis_overlapping_2011,
+  Title                    = {Overlapping community detection using {Bayesian} non-negative matrix factorization},
+  Author                   = {Psorakis, I. and Roberts, S. J. and Ebden, M. and Sheldon, B.},
+  Journal                  = {Physical Review E},
+  Year                     = {2011},
+
+  Month                    = jun,
+  Number                   = {6},
+  Volume                   = {83},
+
+  Doi                      = {10.1103/PhysRevE.83.066114},
+  ISSN                     = {1539-3755, 1550-2376},
+  Url                      = {http://www.orchid.ac.uk/eprints/9/}
+}
+
+@Article{quinn_crowdflow:_2010,
+  Title                    = {Crowdflow: Integrating machine learning with {M}echanical {T}urk for speed-cost-quality flexibility},
+  Author                   = {Quinn, A. J and Bederson, B. B and Yeh, T. and Lin, J.},
+  Journal                  = {Technical Report {HCIL-2010-09}, University of Maryland, College Park},
+  Year                     = {2010}
+}
+
+@InCollection{quinonero2006evaluating,
+  Title                    = {Evaluating predictive uncertainty challenge},
+  Author                   = {Quinonero-Candela, Joaquin and Rasmussen, Carl Edward and Sinz, Fabian and Bousquet, Olivier and Sch{\"o}lkopf, Bernhard},
+  Booktitle                = {Machine Learning Challenges},
+  Publisher                = {Springer},
+  Year                     = {2006},
+  Pages                    = {1--27},
+  Series                   = {Lecture Notes in Computer Science}
+}
+
+@InProceedings{Rahwan12,
+  Title                    = {A Hybrid Algorithm for Coalition Structure Generation},
+  Author                   = {Talal Rahwan and Tomasz Michalak and Nicholas R. Jennings},
+  Booktitle                = {Twenty Sixth Conference on Artificial Intelligence (AAAI-12)},
+  Year                     = {2012},
+
+  Address                  = {Toronto, Canada},
+  Organization             = {AAAI}
+}
+
+@InProceedings{Rahwan11b,
+  Title                    = {Constrained Coalition Formation},
+  Author                   = {Talal Rahwan and Tomasz P. Michalak and Edith Elkind and Piotr Faliszewski and Jacek Sroka and Michael Wooldridge and Nicholas R. Jennings},
+  Booktitle                = {Twenty Fifth AAAI Conference on Artificial Intelligence (AAAI)},
+  Year                     = {2011},
+  Pages                    = {719--725}
+}
+
+@InProceedings{orchid128,
+  Title                    = {Collabmap: crowdsourcing maps for emergency planning.},
+  Author                   = {Sarvapali D Ramchurn and T. Dong Huynh and Matteo Venanzi and Bing Shi},
+  Booktitle                = {ACM Web Science 2013},
+  Year                     = {2013},
+  Organization             = {ACM}
+}
+
+@Article{ranawana2006,
+  Title                    = {{Multi-Classifier} Systems: Review and a roadmap for developers},
+  Author                   = {Ranawana, R. and Palade, V.},
+  Journal                  = {International Journal of Hybrid Intelligent Systems},
+  Year                     = {2006},
+  Number                   = {1},
+  Pages                    = {35--61},
+  Volume                   = {3},
+
+  ISSN                     = {1448-5869},
+  Shorttitle               = {{Multi-Classifier} Systems}
+}
+
+@Article{rasmussen_gaussian_2006,
+  Title                    = {{Gaussian} Processes for Machine Learning},
+  Author                   = {Rasmussen, C. E and Williams, C. K. I.},
+  Journal                  = {The {MIT} Press, Cambridge, {MA}, {USA}},
+  Year                     = {2006},
+  Pages                    = {715--719},
+  Volume                   = {38}
+}
+
+@Article{raykar12,
+  Title                    = {Eliminating spammers and ranking annotators for crowdsourced labeling tasks},
+  Author                   = {Raykar, Vikas C and Yu, Shipeng},
+  Journal                  = {Journal of Machine Learning Research},
+  Year                     = {2012},
+  Pages                    = {491--518},
+  Volume                   = {13},
+
+  Publisher                = {JMLR.org}
+}
+
+@Article{Raykar2010,
+  Title                    = {Learning From Crowds},
+  Author                   = {Raykar, V. C. and Yu, S. and Zhao, L. H. and Valadez, G. H. and Florin, C. and Bogoni, L. and Moy, L.},
+  Journal                  = {Journal of Machine Learning Research},
+  Year                     = {2010},
+
+  Month                    = aug,
+  Pages                    = {1297--1322},
+  Volume                   = {11}
+}
+
+@InProceedings{reece07,
+  Title                    = {Rumours and reputation: Evaluating multi-dimensional trust within a decentralised reputation system},
+  Author                   = {Reece, S. and Rogers, A. and Roberts, S. and Jennings, N. R},
+  Booktitle                = {Proceedings of the 6th International Joint Conference on Autonomous Agents and Multi-Agent Ssystems, AAMAS '07},
+  Year                     = {2007},
+  Organization             = {International Foundation for Autonomous Agents and Multi-Agent Systems},
+  Pages                    = {1--8},
+
+  Shorttitle               = {Rumours and reputation}
+}
+
+@Article{robert_m._selecting_2009,
+  Title                    = {On selecting a prior for the precision parameter of {Dirichlet} process mixture models},
+  Author                   = {Robert M., Dorazio},
+  Journal                  = {Journal of Statistical Planning and Inference},
+  Year                     = {2009},
+
+  Month                    = sep,
+  Number                   = {9},
+  Pages                    = {3384--3390},
+  Volume                   = {139},
+
+  Doi                      = {10.1016/j.jspi.2009.03.009},
+  ISSN                     = {0378-3758}
+}
+
+@Article{roberts_variational_2002,
+  Title                    = {Variational Bayes for generalized autoregressive models},
+  Author                   = {Roberts, S. J and Penny, W. D},
+  Journal                  = {Signal Processing, {IEEE} Transactions on},
+  Year                     = {2002},
+  Number                   = {9},
+  Pages                    = {2245--2257},
+  Volume                   = {50},
+
+  ISSN                     = {{1053-587X}}
+}
+
+@InProceedings{rodriguez2006emergency,
+  Title                    = {An emergency response {UAV} surveillance system},
+  Author                   = {Rodriguez, Pedro A and Geckle, William J and Barton, Jeffrey D and Samsundar, John and Gao, Tia and Brown, Myron Z and Martin, Sean R},
+  Booktitle                = {AMIA Annual Symposium Proceedings},
+  Year                     = {2006},
+  Organization             = {American Medical Informatics Association},
+  Pages                    = {1078},
+  Volume                   = {2006}
+}
+
+@InProceedings{rogers_computational_2007,
+  Title                    = {Computational mechanism design for information fusion within sensor networks},
+  Author                   = {Rogers, A. and Dash, R. K and Jennings, N. R and Reece, S. and Roberts, S.},
+  Booktitle                = {Information Fusion, 2006 9th International Conference on},
+  Year                     = {2007},
+  Pages                    = {1--7},
+
+  ISBN                     = {1424409535}
+}
+
+@Article{rowaihy_survey_2007,
+  Title                    = {A survey of sensor selection schemes in wireless sensor networks},
+  Author                   = {Rowaihy, H. and Eswaran, S. and Johnson, M. and Verma, D. and {Bar-Noy}, A. and Brown, T. and La Porta, T.},
+  Journal                  = {{SPIE} Unattended Ground, Sea, and Air Sensor Technologies and Applications {IX}},
+  Year                     = {2007}
+}
+
+@InProceedings{rowaihy_survey_2007-1,
+  Title                    = {A survey of sensor selection schemes in wireless sensor networks},
+  Author                   = {Rowaihy, H. and Eswaran, S. and Johnson, M. and Verma, D. and {Bar-Noy}, A. and Brown, T. and La Porta, T.},
+  Booktitle                = {Society of {Photo-Optical} Instrumentation Engineers {(SPIE)} Conference Series},
+  Year                     = {2007},
+  Pages                    = {35},
+  Volume                   = {6562}
+}
+
+@Book{russell_artificial_2009,
+  Title                    = {Artificial intelligence: a modern approach},
+  Author                   = {Russell, S. J and Norvig, P.},
+  Publisher                = {Prentice hall},
+  Year                     = {2009},
+
+  ISBN                     = {0136042597},
+  Shorttitle               = {Artificial intelligence}
+}
+
+@InProceedings{sarcevic2012beacons,
+  Title                    = {Beacons of hope in decentralized coordination: learning from on-the-ground medical twitterers during the 2010 {Haiti} earthquake},
+  Author                   = {Sarcevic, Aleksandra and Palen, Leysia and White, Joanne and Starbird, Kate and Bagdouri, Mossaab and Anderson, Kenneth},
+  Booktitle                = {Proceedings of the ACM 2012 conference on Computer Supported Cooperative Work},
+  Year                     = {2012},
+  Organization             = {ACM},
+  Pages                    = {47--56}
+}
+
+@InProceedings{Sayeed2010,
+  Title                    = {Crowdsourcing the evaluation of a domain-adapted named entity recognition system.},
+  Author                   = {Sayeed, Asad B. and Meyer, Timothy J. and Nguyen, Hieu C. and Buzek, Olivia and Weinberg, Amy},
+  Booktitle                = {HLT-NAACL},
+  Year                     = {2010},
+  Pages                    = {345-348},
+  Publisher                = {The Association for Computational Linguistics}
+}
+
+@InProceedings{Sayeed2011,
+  Title                    = {Crowdsourcing syntactic relatedness judgements for opinion mining in the study of information technology adoption},
+  Author                   = {Sayeed, Asad B. and Rusk, Bryan and Petrov, Martin and Nguyen, Hieu C. and Meyer, Timothy J. and Weinberg, Amy},
+  Booktitle                = {Proceedings of the 5th ACL-HLT Workshop on Language Technology for Cultural Heritage, Social Sciences, and Humanities},
+  Pages                    = {69--77},
+  Publisher                = {Association for Computational Linguistics},
+  Series                   = {LaTeCH '11}
+}
+
+@InProceedings{schneider_word_2004,
+  Title                    = {On Word Frequency Information and Negative Evidence in Naive Bayes Text Classification},
+  Author                   = {Schneider, Karl-Michael},
+  Booktitle                = {Advances in Natural Language Processing, 4th International Conference, EsTAL 2004},
+  Year                     = {2004},
+  Pages                    = {474--485},
+  Publisher                = {Springer}
+}
+
+@InProceedings{scott_realisable_1998,
+  Title                    = {Realisable classifiers: improving operating performance on variable cost problems},
+  Author                   = {Scott, M. J. J. and Niranjan, M. and Prager, R. W},
+  Booktitle                = {Proceedings of the Ninth British Machine Vision Conference},
+  Year                     = {1998},
+  Organization             = {BMVC},
+  Pages                    = {304--315},
+  Volume                   = {1}
+}
+
+@Book{shafer_mathematical_1976,
+  Title                    = {A mathematical theory of evidence},
+  Author                   = {Shafer, G.},
+  Publisher                = {Princeton university press Princeton, {NJ}},
+  Year                     = {1976},
+  Volume                   = {1}
+}
+
+@InProceedings{Sheng2008,
+  Title                    = {Get another label? improving data quality and data mining using multiple, noisy labelers},
+  Author                   = {Sheng, Victor S. and Provost, Foster and Ipeirotis, Panagiotis G.},
+  Booktitle                = {Proceedings of the 14th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+  Year                     = {2008},
+  Pages                    = {614--622},
+  Publisher                = {ACM},
+  Series                   = {KDD '08}
+}
+
+@InProceedings{si_flexible_2003,
+  Title                    = {Flexible mixture model for collaborative filtering},
+  Author                   = {Si, Luo and Jin, Rong},
+  Booktitle                = {Proceedings of the Twentieth International Conference on Machine Learning},
+  Year                     = {2003},
+  Pages                    = {704---711},
+  Publisher                = {{ACM}},
+  Series                   = {{ICML} '03},
+  Volume                   = {20}
+}
+
+@inproceedings{minka2001expectation,
+  title={Expectation propagation for approximate Bayesian inference},
+  author={Minka, Thomas P},
+  booktitle={Proceedings of the Seventeenth conference on Uncertainty in artificial intelligence},
+  pages={362--369},
+  year={2001},
+  organization={Morgan Kaufmann Publishers Inc.}
+}
+
+@book{rasmussenwilliams,
+ Title = {Gaussian Processes for Machine Learning},
+ Author = {Rasmussen, Carl Edward and Williams, Christopher K. I.},
+ Publisher = {The MIT Press},
+ Year = {2006}
+}
+
+@InProceedings{simpson13,
+  Title                    = {Using a {Bayesian} Model to Combine {LDA} Features with Crowdsourced Responses},
+  Author                   = {E. Simpson and S. Reece and A. Penta and G. Ramchurn and S. Roberts},
+  Booktitle                = {{The Twenty-First Text REtrieval Conference (TREC 2012), Crowdsourcing Track}},
+  Year                     = {2013},
+  Organization             = {NIST}
+}
+
+@inproceedings{reece2011determining,
+  title={Determining intent using hard/soft data and Gaussian process classifiers},
+  author={Reece, Steven and Roberts, Stephen and Nicholson, David and Lloyd, Chris},
+  booktitle={Information Fusion (FUSION), 2011 Proceedings of the 14th International Conference on},
+  pages={1--8},
+  year={2011},
+  organization={IEEE}
+}
+
+@article{simpsonlong,
+	Author = {E. Simpson and S. Roberts and I. Psorakis and A. Smith},
+	Journal = {Intelligent Systems Reference Library series},
+	Publisher = {Springer},
+	Title = {Dynamic {Bayesian} Combination of Multiple Imperfect Classifiers},
+	Volume = {Decision Making with Imperfect Decision Makers},
+	Year = {2013},
+	Pages={1--35}}
+	
+@phdthesis{simpsonthesis,
+	title={Combined Decision Making with Multiple Agents},
+	school={University of Oxford},
+	author={Simpson, Edwin},
+	year={2014}
+}
+
+@inproceedings{ramchurn2015hac,
+	Author = {Ramchurn, Sarvapali D and  Simpson, Edwin and Fischer, Joel E and Huynh, Trung Dong and Ikuno, Yuki and Reece, Steve and Jiang, Wenchao and Wu, Feng  and Flann, Jack and Moreau, Luc and Rodden, Tom and Jennings, Nicholas R.},
+	Booktitle = {Proceedings of the 2015 International Conference on Autonomous Agents and Multiagent Systems},
+	Date-Modified = {2016-01-31 18:48:30 +0000},
+	Organization = {International Foundation for Autonomous Agents and Multiagent Systems},
+	Pages = {533--541},
+	Title = {{HAC-ER}: a disaster response system based on human-agent collectives},
+	Year = {2015}}
+
+@inproceedings{kamar2012combining,
+	Author = {Kamar, Ece and Hacker, Severin and Horvitz, Eric},
+	Booktitle = {Proceedings of the 11th International Conference on Autonomous Agents and Multiagent Systems-Volume 1},
+	Organization = {International Foundation for Autonomous Agents and Multiagent Systems},
+	Pages = {467--474},
+	Title = {Combining human and machine intelligence in large-scale crowdsourcing},
+	Year = {2012}}
+
+@inproceedings{simpson2015language,
+	Author = {Simpson, Edwin D and Venanzi, Matteo and Reece, Steven and Kohli, Pushmeet and Guiver, John and Roberts, Stephen J and Jennings, Nicholas R},
+	Booktitle = {Proceedings of the 24th International Conference on World Wide Web},
+	Organization = {International World Wide Web Conferences Steering Committee},
+	Pages = {992--1002},
+	Title = {Language Understanding in the Wild: Combining Crowdsourcing and Machine Learning},
+	Year = {2015}}
+
+@InProceedings{simpson11,
+  Title                    = {{Bayesian} Combination of Multiple, Imperfect Classifiers},
+  Author                   = {E. Simpson and S. J. Roberts and A. Smith and C. Lintott},
+  Booktitle                = {25th Annual Conference on Neural Information Processing Systems (NIPS), Workshop on Decision Making with Multiple Imperfect Decision Makers},
+  Year                     = {2011}
+}
+
+@InProceedings{smith_logarithmic_2005,
+  Title                    = {Logarithmic opinion pools for conditional random fields},
+  Author                   = {Smith, A. and Cohn, T. and Osborne, M.},
+  Booktitle                = {Proceedings of the 43rd Annual Meeting on Association for Computational Linguistics},
+  Year                     = {2005},
+  Pages                    = {18--25}
+}
+
+@InProceedings{smith_web-scale_2010,
+  Title                    = {Web-scale citizen science: from {Galaxy Zoo to the Zooniverse}},
+  Author                   = {Smith, A. and Lintott, C.},
+  Booktitle                = {Proceedings of the Royal Society Discussion Meeting 'Web Science: A New Frontier'},
+  Year                     = {2010},
+  Organization             = {The Royal Society},
+
+  Shorttitle               = {Web-scale citizen science}
+}
+
+@Article{smith_galaxy_2010,
+  Title                    = {{Galaxy Zoo Supernovae}},
+  Author                   = {A. M. Smith and S. Lynn and M. Sullivan and C. J. Lintott and P. E. Nugent and J. Botyanszki and M. Kasliwal and R. Quimby and S. P. Bamford and L. F. Fortson and K. Schawinski and I. Hook and S. Blake and P. Podsadlowski and J. J ̈onsson and A. Gal-Yam and I. Arcavi and D. A. Howell and J. S. Bloom and J. Jacobsen and S. R. Kulkarni and N. M. Law and E. O. Ofek and R. Walters},
+  Journal                  = {Monthly Notices of the Royal Astronomical Society},
+  Year                     = {2010},
+
+  Publisher                = {Wiley Online Library}
+}
+
+@InProceedings{trec_crowdsourcing_results,
+  Title                    = {{TREC} 2012 Crowdsourcing Track {TRAT} Task Results},
+  Author                   = {Smucker, Mark D. and Kazai, Gabriella and Lease, Matthew},
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@InProceedings{trec_crowdsourcing_track,
+  Title                    = {Overview of the {TREC} 2012 Crowdsourcing Track},
+  Author                   = {Smucker, Mark D. and Kazai, Gabriella and Lease, Matthew},
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@InProceedings{spaan_decision-theoretic_2009,
+  Title                    = {A decision-theoretic approach to dynamic sensor selection in camera networks},
+  Author                   = {Spaan, M. {T.J} and Lima, P. U},
+  Booktitle                = {International Conference on Automated Planning and Scheduling},
+  Year                     = {2009},
+  Pages                    = {279--304},
+  Publisher                = {AAAI Press}
+}
+
+@Article{stehman97,
+  Title                    = {Selecting and interpreting measures of thematic classification accuracy},
+  Author                   = {Stehman, Stephen V},
+  Journal                  = {Remote sensing of Environment},
+  Year                     = {1997},
+  Number                   = {1},
+  Pages                    = {77--89},
+  Volume                   = {62},
+
+  Publisher                = {Elsevier}
+}
+
+@Book{stigler1986history,
+  Title                    = {The history of statistics: The measurement of uncertainty before 1900},
+  Author                   = {Stigler, Stephen M},
+  Publisher                = {Harvard University Press},
+  Year                     = {1986}
+}
+
+@Article{su_survey_2009,
+  Title                    = {A survey of collaborative filtering techniques},
+  Author                   = {Su, X. and Khoshgoftaar, T. M},
+  Journal                  = {Advances in Artificial Intelligence},
+  Year                     = {2009},
+  Pages                    = {4},
+  Volume                   = {2009},
+
+  ISSN                     = {1687-7470}
+}
+
+@InProceedings{Suchanek06,
+  Title                    = {LEILA: Learning to Extract Information by Linguistic Analysis},
+  Author                   = {Fabian M. Suchanek},
+  Booktitle                = {In Workshop on Ontology Population at ACL/COLING},
+  Year                     = {2006},
+  Pages                    = {18--25}
+}
+
+@Book{sutton1998reinforcement,
+  Title                    = {Reinforcement learning: An introduction},
+  Author                   = {Sutton, Richard S and Barto, Andrew G},
+  Publisher                = {Cambridge University Press},
+  Year                     = {1998},
+  Volume                   = {1}
+}
+
+@InProceedings{tan_automatic_2009,
+  Title                    = {Automatic Relevance Determination in Nonnegative Matrix Factorization},
+  Author                   = {Tan, Vincent Y. F. and F\'evotte, C\'edric},
+  Booktitle                = {{SPARS'09} - Signal Processing with Adaptive Sparse Structured Representations},
+  Year                     = {2009},
+  Publisher                = {Inria {Rennes-Bretagne} Atlantique, Saint Malo, {Royaume-Uni}},
+
+  Abstract                 = {{SPARS09} - Signal Processing with Adaptive Sparse Structured Representations},
+  Shorttitle               = {{HAL} - {INRIA}},
+  Url                      = {http://hal.inria.fr/view_by_stamp.php?&halsid=oerba5b5pkfqikvfb5e1ideks4&label=SPARS09&langue=en&action_todo=view&id=inria-00369376&version=1}
+}
+
+@InProceedings{teh2006collapsed,
+  Title                    = {A collapsed variational {Bayesian} inference algorithm for latent {Dirichlet} allocation},
+  Author                   = {Teh, Yee W and Newman, David and Welling, Max},
+  Booktitle                = {Advances in Neural Information Processing Systems 19},
+  Year                     = {2006},
+  Pages                    = {1353--1360},
+  Publisher                = {MIT Press}
+}
+
+@InProceedings{long2013,
+  Title                    = {Efficient Budget Allocation with Accuracy Guarantees for Crowdsourcing Classification Tasks},
+  Author                   = {L. Tran-Thanh and M. Venanzi and A. Rogers and N. R. Jennings},
+  Booktitle                = {Proceedings of the Twelfth International Conference on Autonomous Agents and Multi-Agent Systems, AAMAS '13},
+  Year                     = {2013},
+  Organization             = {International Foundation for Autonomous Agents and Multi-Agent Systems},
+  Pages                    = {901--908}
+}
+
+@Article{tsoumakas_clustering_2004,
+  Title                    = {Clustering classifiers for knowledge discovery from physically distributed databases},
+  Author                   = {Tsoumakas, G. and Angelis, L. and Vlahavas, I.},
+  Journal                  = {Data \& Knowledge Engineering},
+  Year                     = {2004},
+  Number                   = {3},
+  Pages                    = {223--242},
+  Volume                   = {49},
+
+  ISSN                     = {{0169-023X}}
+}
+
+@Article{tulyakov_review_2008,
+  Title                    = {Review of Classifier Combination Methods},
+  Author                   = {Tulyakov, S. and Jaeger, S. and Govindaraju, V. and Doermann, D.},
+  Journal                  = {Machine Learning in Document Analysis and Recognition},
+  Year                     = {2008},
+  Pages                    = {361--386}
+}
+
+@InProceedings{turner2011two,
+  Title                    = {Two problems with variational expectation maximisation for time-series models},
+  Author                   = {Turner, R. E. and Sahani, M.},
+  Booktitle                = {Inference and Learning in Dynamic Models},
+  Year                     = {2010},
+  Publisher                = {Cambridge University Press}
+}
+
+@InProceedings{venanzi2013,
+  Title                    = {Crowdsourcing Spatial Phenomena Using Trust-Based Heteroskedastic {Gaussian} Processes},
+  Author                   = {Venanzi, Matteo and Rogers, Alex and Jennings, Nicholas R},
+  Booktitle                = {Proceedings of the First AAAI Conference on Human Computation and Crowdsourcing (HCOMP)},
+  Year                     = {2013},
+  Organization             = {AAAI}
+}
+
+@InProceedings{vieweg2010microblogging,
+  Title                    = {Microblogging during two natural hazards events: what {Twitter} may contribute to situational awareness},
+  Author                   = {Vieweg, Sarah and Hughes, Amanda L and Starbird, Kate and Palen, Leysia},
+  Booktitle                = {Proceedings of the SIGCHI Conference on Human Factors in Computing Systems},
+  Year                     = {2010},
+  Organization             = {ACM},
+  Pages                    = {1079--1088}
+}
+
+@InProceedings{wan2000unscented,
+  Title                    = {The unscented {Kalman} filter for nonlinear estimation},
+  Author                   = {Wan, Eric A and Van Der Merwe, Rudolph},
+  Booktitle                = {Adaptive Systems for Signal Processing, Communications, and Control Symposium 2000, AS-SPCC, The IEEE 2000},
+  Year                     = {2000},
+  Organization             = {IEEE},
+  Pages                    = {153--158}
+}
+
+@InProceedings{wang_entropy-based_2004,
+  Title                    = {Entropy-based sensor selection heuristic for target localization},
+  Author                   = {Wang, H. and Yao, K. and Pottie, G. and Estrin, D.},
+  Booktitle                = {Proceedings of the 3rd international symposium on Information processing in sensor networks},
+  Year                     = {2004},
+  Pages                    = {36--45},
+
+  ISBN                     = {1581138466}
+}
+
+@InProceedings{wang2010negative,
+  Title                    = {Negative correlation learning for classification ensembles},
+  Author                   = {Wang, Shuo and Chen, Huanhuan and Yao, Xin},
+  Booktitle                = {Neural Networks (IJCNN), The 2010 International Joint Conference on},
+  Year                     = {2010},
+  Organization             = {IEEE},
+  Pages                    = {1--8}
+}
+
+@Article{watkins1992q,
+  Title                    = {Q-learning},
+  Author                   = {Watkins, Christopher JCH and Dayan, Peter},
+  Journal                  = {Machine learning},
+  Year                     = {1992},
+  Number                   = {3-4},
+  Pages                    = {279--292},
+  Volume                   = {8},
+
+  Publisher                = {Springer}
+}
+
+@PhdThesis{watkins1989learning,
+  Title                    = {Learning from delayed rewards},
+  Author                   = {Watkins, Christopher John Cornish Hellaby},
+  School                   = {University of Cambridge},
+  Year                     = {1989}
+}
+
+@Book{weatherburn_first_1949,
+  Title                    = {A First Course in Mathematical Statistics},
+  Author                   = {Weatherburn, C. E.},
+  Publisher                = {{CUP} Archive},
+  Year                     = {1949},
+  Month                    = jan
+}
+
+@Article{weerahandi_multi-bayesian_1981,
+  Title                    = {{Multi-Bayesian} statistical decision theory},
+  Author                   = {Weerahandi, S. and Zidek, J. V},
+  Journal                  = {Journal of the Royal Statistical Society. Series A {(General)}},
+  Year                     = {1981},
+  Number                   = {1},
+  Pages                    = {85--93},
+  Volume                   = {144},
+
+  ISSN                     = {0035-9238}
+}
+
+@Article{weiss_effect_2001,
+  Title                    = {The effect of class distribution on classifier learning: an empirical study},
+  Author                   = {Weiss, Gary M. and Provost, Foster},
+  Journal                  = {Technical Report ML-TR-44, Department of Computer Science, Rutgers University},
+  Year                     = {2001},
+
+  Keywords                 = {imbalanced, imbalanced data, roc, unbalanced},
+  Shorttitle               = {The effect of class distribution on classifier learning}
+}
+
+@InProceedings{welinder2010,
+  Title                    = {The multidimensional wisdom of crowds},
+  Author                   = {Welinder, P. and Branson, S. and Belongie, S. and Perona, P.},
+  Booktitle                = {In Proc. of NIPS},
+  Year                     = {2010},
+  Pages                    = {2424--2432}
+}
+
+@Book{west_bayesian_1997,
+  Title                    = {{Bayesian} forecasting and dynamic models},
+  Author                   = {West, M. and Harrison, J.},
+  Publisher                = {Springer},
+  Year                     = {1997}
+}
+
+@Article{West1985,
+  Title                    = {Dynamic Generalized Linear Models and {Bayesian} Forecasting},
+  Author                   = {West, M. and Harrison, P. J. and Migon, H. S.},
+  Journal                  = {Journal of the American Statistical Association},
+  Year                     = {1985},
+
+  Month                    = mar,
+  Number                   = {389},
+  Pages                    = {73-83},
+  Volume                   = {80},
+
+  ISSN                     = {0162-1459},
+  Url                      = {http://www.jstor.org/stable/2288042}
+}
+
+@Article{Wilcoxon1945,
+  Title                    = {Individual comparisons by ranking methods},
+  Author                   = {Wilcoxon, F.},
+  Journal                  = {Biometrics Bulletin},
+  Year                     = {1945},
+  Number                   = {6},
+  Pages                    = {80--83},
+  Volume                   = {1},
+
+  Publisher                = {JSTOR}
+}
+
+@Article{wolpert_stacked_1992,
+  Title                    = {Stacked generalization},
+  Author                   = {Wolpert, D. H},
+  Journal                  = {Neural networks},
+  Year                     = {1992},
+  Number                   = {2},
+  Pages                    = {241--259},
+  Volume                   = {5},
+
+  ISSN                     = {0893-6080}
+}
+
+@InProceedings{wong_linear_1988,
+  Title                    = {Linear structure in information retrieval},
+  Author                   = {Wong, S. K. M and Yao, Y. Y},
+  Booktitle                = {Proceedings of the 11th annual international {ACM} {SIGIR} conference on Research and development in information retrieval},
+  Year                     = {1988},
+
+  Address                  = {Grenoble, France},
+  Pages                    = {219--232},
+  Publisher                = {{ACM}},
+  Series                   = {{SIGIR} '88}
+}
+
+@Article{woods_combination_2002,
+  Title                    = {Combination of multiple classifiers using local accuracy estimates},
+  Author                   = {Woods, K. and Kegelmeyer Jr, W. P and Bowyer, K.},
+  Journal                  = {Pattern Analysis and Machine Intelligence, {IEEE} Transactions on},
+  Year                     = {2002},
+  Number                   = {4},
+  Pages                    = {405--410},
+  Volume                   = {19},
+
+  ISSN                     = {0162-8828}
+}
+
+@Article{wooldridge_intelligent_1995,
+  Title                    = {Intelligent agents: theory and practice},
+  Author                   = {Wooldridge, M. and Jennings, N. R},
+  Journal                  = {The Knowledge Engineering Review},
+  Year                     = {1995},
+  Number                   = {02},
+  Pages                    = {115--152},
+  Volume                   = {10},
+
+  ISSN                     = {0269-8889},
+  Shorttitle               = {Intelligent agents}
+}
+
+@Article{xu_methods_1992,
+  Title                    = {Methods of combining multiple classifiers and their applications to handwriting recognition},
+  Author                   = {Xu, L. and Krzyzak, A. and Suen, C. Y},
+  Journal                  = {Systems, Man and Cybernetics, {IEEE} Transactions on},
+  Year                     = {1992},
+  Number                   = {3},
+  Pages                    = {418--435},
+  Volume                   = {22},
+
+  ISSN                     = {0018-9472}
+}
+
+@InProceedings{yan2011,
+  Title                    = {Active learning from crowds},
+  Author                   = {Yan, Yan and Fung, Glenn M. and Rosales, Rómer and Dy, Jennifer G.},
+  Booktitle                = {Proceedings of the 28th International Conference on Machine Learning},
+  Year                     = {2011},
+  Pages                    = {1161--1168},
+  Series                   = {{ICML} '11}
+}
+
+@InProceedings{bupt_crowdsourcing,
+  Title                    = {{BUPT\_PRIS} at {TREC} 2012 Crowdsourcing Track 1},
+  Author                   = {Zhang, Chuang and Zeng, Minjie and Sang, Xiaokang and Zhang, Kailai and Kang, Houfu },
+  Booktitle                = {The Twenty-First Text REtrieval Conference (TREC 2012)},
+  Year                     = {2012},
+  Organization             = {NIST}
+}
+
+@InProceedings{zhang2004optimality,
+  Title                    = {The Optimality of Naive Bayes},
+  Author                   = {Zhang, Harry},
+  Booktitle                = {Proceedings of the Seventeenth International Florida Artificial Intelligence Research Society Conference, FLAIRS 2004},
+  Year                     = {2004},
+  Publisher                = {AAAI Press}
+}
+
+@Article{zhang_efficient_2010,
+  Title                    = {Efficient sensor selection for active information fusion},
+  Author                   = {Zhang, Y. and Ji, Q.},
+  Journal                  = {Systems, Man, and Cybernetics, Part B: Cybernetics, {IEEE} Transactions on},
+  Year                     = {2010},
+  Number                   = {3},
+  Pages                    = {719--728},
+  Volume                   = {40},
+
+  ISSN                     = {1083-4419}
+}
+
+@InProceedings{zilli2013hidden,
+  Title                    = {A hidden Markov model-based acoustic cicada detector for crowdsourced smartphone biodiversity monitoring},
+  Author                   = {Zilli, Davide and Parson, Oliver and Merrett, Geoff and Rogers, Alex},
+  Booktitle                = {Proceedings of the 23rd International Joint Conference on Artificial Intelligence, IJCAI 2013},
+  Year                     = {2013},
+  Organization             = {IJCAI}
+}
