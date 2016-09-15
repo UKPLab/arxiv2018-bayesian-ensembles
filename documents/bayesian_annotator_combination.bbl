@@ -32,4 +32,28 @@ E.~Simpson, S.~Roberts, I.~Psorakis, and A.~Smith, ``Dynamic {Bayesian}
   Reference Library series}, vol. Decision Making with Imperfect Decision
   Makers, pp. 1--35, 2013.
 
+\bibitem{sayeed2011crowdsourcing}
+A.~B. Sayeed, B.~Rusk, M.~Petrov, H.~C. Nguyen, T.~J. Meyer, and A.~Weinberg,
+  ``Crowdsourcing syntactic relatedness judgements for opinion mining in the
+  study of information technology adoption,'' in \emph{Proceedings of the 5th
+  ACL-HLT Workshop on Language Technology for Cultural Heritage, Social
+  Sciences, and Humanities}.\hskip 1em plus 0.5em minus 0.4em\relax Association
+  for Computational Linguistics, 2011, pp. 69--77.
+
+\bibitem{farra2015annotating}
+N.~Farra, K.~McKeown, and N.~Habash, ``Annotating targets of opinions in arabic
+  using crowdsourcing,'' in \emph{ANLP Workshop 2015}, 2015, p.~89.
+
+\bibitem{hsueh2009data}
+P.-Y. Hsueh, P.~Melville, and V.~Sindhwani, ``Data quality from crowdsourcing:
+  a study of annotation selection criteria,'' in \emph{Proceedings of the NAACL
+  HLT 2009 workshop on active learning for natural language processing}.\hskip
+  1em plus 0.5em minus 0.4em\relax Association for Computational Linguistics,
+  2009, pp. 27--35.
+
+\bibitem{dagan2016specifying}
+G.~S. M. A.~I. Dagan, ``Specifying and annotating reduced argument span via
+  qa-srl,'' in \emph{The 54th Annual Meeting of the Association for
+  Computational Linguistics}, 2016, p. 474.
+
 \end{thebibliography}

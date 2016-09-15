@@ -1,5 +1,30 @@
-% This file was created with JabRef 2.10b2.
 % Encoding: UTF-8
+
+@inproceedings{sayeed2011crowdsourcing,
+  title={Crowdsourcing syntactic relatedness judgements for opinion mining in the study of information technology adoption},
+  author={Sayeed, Asad B and Rusk, Bryan and Petrov, Martin and Nguyen, Hieu C and Meyer, Timothy J and Weinberg, Amy},
+  booktitle={Proceedings of the 5th ACL-HLT Workshop on Language Technology for Cultural Heritage, Social Sciences, and Humanities},
+  pages={69--77},
+  year={2011},
+  organization={Association for Computational Linguistics}
+}
+
+@inproceedings{farra2015annotating,
+  title={Annotating Targets of Opinions in Arabic using Crowdsourcing},
+  author={Farra, Noura and McKeown, Kathleen and Habash, Nizar},
+  booktitle={ANLP Workshop 2015},
+  pages={89},
+  year={2015}
+}
+
+
+@inproceedings{dagan2016specifying,
+  title={Specifying and Annotating Reduced Argument Span Via QA-SRL},
+  author={Dagan, Gabriel Stanovsky Meni Adler Ido},
+  booktitle={The 54th Annual Meeting of the Association for Computational Linguistics},
+  pages={474},
+  year={2016}
+}
 
 @inproceedings{adams2009tractable,
   title={Tractable nonparametric Bayesian inference in Poisson processes with Gaussian process intensities},
@@ -1136,12 +1161,12 @@
   Volume                   = {188}
 }
 
-@Article{kim2003,
-  Title                    = {{Bayesian} classifier combination},
-  Author                   = {Kim, H.C. and Ghahramani, Z.},
-  Journal                  = {Gatsby Computational Neuroscience Unit Technical Report {GCNU-T.},London, {UK}},
-  Year                     = {2003},
-  Publisher                = {University College London}
+@inproceedings{kim2012bayesian,
+  title={Bayesian Classifier Combination},
+  author={Kim, Hyun-chul and Ghahramani, Zoubin},
+  booktitle={International Conference on Artificial Intelligence and Statistics},
+  pages={619--627},
+  year={2012}
 }
 
 @Article{kittler_combining_1998,

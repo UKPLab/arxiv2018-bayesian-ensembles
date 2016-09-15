@@ -1,8 +1,43 @@
 \section{Modelling Text Span Annotations}\label{sec:model}
 
-We model annotations using the IOB schema, in which each token in a document is labelled as either I (in), O (out), or B (begin). The IOB schema requires that the label I cannot directly follow a label O, since a B token must precede the first I in any span. The IOB schema allows us to identify whether a token forms part of an annotation or not, and the use of the B label enables us to separate annotations when one annotation span begins immediately after another without any gap. This schema does not permit overlapping annotations, which are typically undesirable in crowdsourcing tasks where the crowd is instructed to provide one type of annotation. The schema also does not consider different types of annotation, although it is trivial to extend both the schema and our model to permit this case, as we will explain below. Using a single model for different types of annotation may be desirable if the annotators are likely to have consistent confusion patterns betweeen different annotation types. 
+We model annotations using the IOB schema, in which each token in a document is labelled as either I (in), O (out), or B (begin). The IOB schema requires that the label I cannot directly follow a label O, since a B token must precede the first I in any span. The IOB schema allows us to identify whether a token forms part of an annotation or not, and the use of the B label enables us to separate annotations when one annotation span begins immediately after another without any gap. This schema does not permit overlapping annotations, which are typically undesirable in crowdsourcing tasks where the crowd is instructed to provide one type of annotation. The schema also does not consider different types of annotation, although it is trivial to extend both the schema and our model to permit this case. Using a single model for different types of annotation may be desirable if the annotators are likely to have consistent confusion patterns betweeen different annotation types. 
 
+We model the text annotation task as a sequential classification problem, where the true class, $t_i$, of token $i$ may be I, O, or B, and is dependent on the class of the previous token, $t_{i-1}$. This dependency is modelled by a transition matrix, as used in a hidden markov model. Rows of the transition matrix correspond to the class of the previous token, $t_{i-1}$, while columns correspond to values of $t_i$. Each row is therefore a categorical distribution. 
 
-Thus we model the text annotation problem as a sequential classification problem. 
+We model the annotators using a confusion matrix similar to that used in \cite{simpsonlong}, which captures the likelihood that annotator $k$ labels token $i$ with class $c_i^{(k)}$, given the true class label, $t_i$, and the previous annotation from $k$, $c_{i-1}^{(k)}$. The dependency between $c_i^{(k)}$ and $t_i$ allows us to infer the ground truth from noisy or biased crowdsourced annotations. There is also a dependency on the previous worker annotation, since these are constrained in a similar way to the true labels, i.e. the class I cannot follow immediately from class O. Furthermore, mistakes in the class labels are likely to be correlated across several neighbouring tokens, since annotations cover continuous
+spans of text. The confusion matrix, $\bs\pi^{(k)}$, is therefore expanded in our model to three dimensions, where the element $\pi_{j,l,m}^{(k)} = p(c_i^{(k)} = m | c_{i-1}^{(k)}=l, t_i=j)$. Within $\bs\pi^{(k)}$, the vector $\bs\pi_{j,l}^{(k)} = \{ \pi_{j,l,1}^{(k)},...,\pi_{j,l,L}^{(k)}\} $, where $L$ is the number of class labels, represents a categorical distribution over the worker's annotations.
 
-tHE 
+\section{Alternative Methods}\label{sec:alt}
+
+To date, a number of methods have been used to reduce annotations from multiple workers to a single gold-standard set. These approaches make use of both heuristic and statistical techniques. This section outlines commonly-used baselines and state-of-the-art methods that we later compare against our method.
+
+\subsection{Majority/Plurality Voting}
+
+For classifications, a simple heuristic is to take the majority label, or for multi-class problems, the most popular label. Examples for NLP classification problems include sentiment analysis\cite{sayeed2011crowdsourcing},.... With text spans, we can use the IOB classes and choose the most popular label for each word, but there are a number of cases where the resulting spans would not follow the constraints of the schema, and an additional step is required to resolve these issues. The problems occur when annotators disagree about the starting and ending points of an annotation:
+\begin{itemize}
+  \item The votes for a token being inside a span can be split between the classes I and B, which could lead to tokens being excluded from spans even when most have marked them as inside. 
+  \item The voting process can lead to spans of I tokens with no preceding B token if there is only a minority of annotators who marked did not agree on the first token. 
+  \item The spans from different annotators could partly overlap, causing the overlap area itself to be marked as a separate span. In some cases, this may be a valid annotation, while in others it would be obvious to anyone reviewing the annotation that it is an artefact of the aggregation method. There does not seem to be a simple fix here, except for requesting more annotations from other workers. With a sufficient number of annotations, we expect the problem to be resolved.
+\end{itemize}
+In our experiments, we define a baseline \emph{majority voting} method, which addresses the problems described above as follows. We resolve the first problem using a two-stage voting process. First, we combine the I and B votes and determine whether each token should be labelled as O or not. Then, for each token marked as I or B, we and perform another voting step to determine the correct label. This resolves cases where annotators disagree about whether a span should be split into two annotations. To resolve the second problem of aggregated spans without a B token at the start, we mark the first I token in any aggregate span as B.  
+
+The voting procedure outlined above produces annotations where the annotations of at least 50\% of workers intersect. A stricter approach can be used, which requires that all the annotators mark a token for it to be included (e.g. \cite{farra2015annotating}). We refer to this approach as the \emph{intersect} method. For tasks where workers are likely to miss many spans, it is also possible to lower the threshold so that we do not require a majority of workers to mark a token as I/B before we accept it as such during aggregation.
+
+\subsection{Worker Accuracy-Based Methods}
+
+Determine worker accuracy from a number of gold-standard tasks. Weight the workers' votes by accuracy and apply the majority voting approach above to produce a \emph{weighted majority voting} method.
+
+An interesting approach is used by \cite{hsueh2009data} that takes into account amibiguity in sentiment classifications. It is unclear whether this can be generalised to other types of annotation such as argument components. 
+
+The weights can also be obtained using unsupervised and semi-supervised learning. In this case we use an EM algorithm, in which we initialise the true annotations using the majority voting method, then use these to compute worker accuracies. The true annotations are then re-estimated using a weighted majority vote. The process repeats until convergence. This method is labelled \emph{weighted majority voting (EM)}. 
+
+\subsection{Clustering Methods}
+
+Cluster the annotations, e.g. using a mixture model with annotation centre and spread, or by merging the boundaries somehow. See Zooniverse annotation work -- could discretize this?
+
+\subsection{Other Solutions}
+
+The level of disagreement in annotations for a particular piece of text can be used to determine whether an annotation is of a insufficient quality to keep (e.g. \cite{sayeed2011crowdsourcing,hsueh2009data}. This can be achieved using the majority voting method, but adjusting the threshold for classifying a token as I/B from 50\% to something higher. 
+
+\emph{Human resolution}: an additional worker selects the correct answer from the annotations provided by the initial set of workers, e.g. \cite{dagan2016specifying}. To reduce costs, the human resolution step could be applied only to text with large amounts of disagreement.
+
