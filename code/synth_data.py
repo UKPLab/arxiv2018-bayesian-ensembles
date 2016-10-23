@@ -11,8 +11,9 @@ import ConfigParser
 from annotator import Annotator
 from scipy.stats import dirichlet
 from sys import argv
-from sklearn.metrics import classification_report, accuracy_score, roc_curve
+from sklearn.metrics import classification_report, accuracy_score, roc_curve, precision_recall_fscore_support
 import matplotlib.pyplot as plt
+from data_generator import DataGenerator
 
 schema = None
 
@@ -44,67 +45,24 @@ majority_threshold = None
 worker_accuracies = None
 
 priors = None
-likelihood_gt = None
-likelihood_prev = None
+gt_model = None
+
+generator = None
 
 def simulate_ground_truth():
     global data
     
-    data = np.ones((num_docs*doc_length, crowd_size + 2)) * -1
+    #data = np.ones((num_docs*doc_length, crowd_size + 2)) * -1
     
-    for i in xrange(num_docs):
-        
-        # filling document index column
-        data[i*doc_length:(i+1)*doc_length,0] = i
-        
-        doc = np.random.choice(range(len(schema)), 1, p = initial_probabilities)
-        
-        for j in xrange(doc_length - 1):
-            #print doc
-            doc = np.append(doc, np.random.choice(range(len(schema)), 1, p = transition_probabilities[doc[j], :]))
-            
-        data[i*doc_length:(i+1)*doc_length, 1] = np.transpose(doc)
-    
-    return
+    ground_truth = generator.generate_ground_truth(5, 10)
 
 
 def simulate_crowd_annotators():
-    global crowd_annotations
     global data
-    
-    for annotator in xrange(crowd_size):
-        #seq = build_sequence(crowd_model[annotator,:,:,:], doc_length)
-        #print seq
-        for word in xrange(data.shape[0]):
-            #print word, annotator
-            true_label = data[word, 1]
-            if (word < 1) or (data[word, 0] != data[word-1, 0]):
-                previous_label = 3
-            else:
-                previous_label = data[word - 1, annotator + 2]
-            data[word,annotator + 2] = annotators[annotator].annotate_word(previous_label, true_label)
-            #data[word,annotator + 2] = np.asscalar(np.random.choice(range(len(schema)), 1, p = crowd_model[annotator, true_label, previous_label, :]))
-            #crowd_annotations.append([np.asscalar(np.random.choice(range(len(schema)), 1, p = crowd_model[i, word, :])) for word in doc])
-    #print data
+   
+    data[:,2:] = generator.generate_annotations(data[:,:2], annotators)
+
     return
-
-def build_sequence(model, length):
-    
-    sequence = []
-    previous_label = 3
-
-    for index in xrange(length):
-        true_label = int(data[index, 1])
-        #print model[true_label, previous_label, :]
-        label = np.asscalar(np.random.choice(range(len(schema)), 1, p = model[true_label, previous_label, :]))
-        #print sequence, int(true_label), previous_label, label
-        sequence.append(label)
-        previous_label = sequence[index]
-    
-    if is_valid(sequence):
-        return sequence
-    else:
-        return build_sequence(model, length)
 
 
 def is_valid(sequence):
@@ -116,7 +74,6 @@ def is_valid(sequence):
 
 
 def build_crowd_model():
-    global crowd_model
     global alphas
     
     alphas = np.ones((4,3,3)) 
@@ -132,6 +89,8 @@ def build_crowd_model():
     
     # set epsilons
     alphas[[1,3],:,0] = epsilon
+    
+    print alphas
     
     # build annotators    
     for i in xrange(crowd_size):    
@@ -151,6 +110,8 @@ def read_config_file(file_path):
     for section in parser.sections():
         parameters = dict(parser.items(section))
         
+        print parameters
+        
         for p in parameters:
             parameters[p] = np.array(eval(parameters[p].split('#')[0].strip()))
                 
@@ -159,12 +120,12 @@ def read_config_file(file_path):
     return
 
 
-def save_generated_data():
+def save_generated_data(filename='data.csv'):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     # TODO: check for existence, for now simply override
-    np.savetxt(output_dir + 'data.csv', data, fmt='%s', header='generated data \nschema: ' + str(schema))
+    np.savetxt(output_dir + filename, data, fmt='%s', header='generated data \nschema: ' + str(schema))
     #np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', header='generated ground truth data \nschema: ' + str(schema))
     #np.savetxt(output_dir + 'crowd_annotations.csv', crowd_annotations, fmt='%s', header='generated crowd annotation data \nschema: '+ str(schema))
     return
@@ -225,19 +186,25 @@ def majority_voting(weighted = False):
 
     return
 
+
 def plot_roc_curve(estimates):
     lines = []
     for i in xrange(len(schema)):
         fpr, tpr, thresholds = roc_curve(data[:,1], estimates[:,i], pos_label=i)
         lines.append(plt.plot(fpr,tpr,label='Line'))
     #plt.legend(handles=lines)
-    plt.show() 
+    #plt.show()
+    plt.savefig(output_dir + 'roc.png') 
+    plt.clf()
     return
+
 
 def calculate_metrics():
     global data
-    print classification_report(data[:,1],data[:,12], target_names=schema)
-    return
+    p, r, f1, s = precision_recall_fscore_support(data[:,1],data[:,12]) 
+    print classification_report(data[:,1],data[:,12],target_names=schema)
+    return p, r, f1, s
+
 
 def calculate_worker_accuracy(target):
     global worker_accuracies
@@ -247,14 +214,20 @@ def calculate_worker_accuracy(target):
         
     return worker_accuracies
 
+
 def generate_data(config_file):
-    read_config_file(config_file)
-    build_crowd_model()
+    #read_config_file(config_file)
+    #build_crowd_model()
+    
+    global generator
+    
+    generator = DataGenerator(config_file)
+    
     simulate_ground_truth()
     simulate_crowd_annotators()
-    majority_voting()
+    #majority_voting()
     save_generated_data()
-    calculate_metrics()
+    #calculate_metrics()
 
     
 if __name__ == '__main__':
