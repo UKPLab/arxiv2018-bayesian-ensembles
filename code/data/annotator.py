@@ -5,7 +5,7 @@ Created on Oct 18, 2016
 '''
 
 import numpy as np
-from data_utils import check_document_syntax
+import data_utils
 
 class Annotator(object):
     '''
@@ -36,7 +36,17 @@ class Annotator(object):
             for i in xrange(document.shape[0]):
                 annotation[i] = self.annotate_word(annotation[i-1], document[i])
                 
-            if check_document_syntax(annotation):
+            if data_utils.check_document_syntax(annotation):
                 break
     
         return annotation
+    
+    def annotate(self, ground_truth):
+        
+        data = np.ones((ground_truth.shape[0],))
+            
+        # iterate through documents
+        for doc_id in xrange(int(ground_truth[-1,0]) + 1):
+            data[ground_truth[:,0]==doc_id,] = self.annotate_document(ground_truth[ground_truth[:,0]==doc_id,1])
+            
+        return data
