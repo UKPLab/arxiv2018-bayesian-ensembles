@@ -139,7 +139,9 @@ class DataGenerator(object):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
                 
-            np.savetxt(output_dir + 'data.csv', np.concatenate((ground_truth, annotations), 1), fmt='%s')
+            np.savetxt(output_dir + 'full_data.csv', np.concatenate((ground_truth, annotations), 1), fmt='%s', delimiter=',')
+            np.savetxt(output_dir + 'annotations.csv', annotations, fmt='%s', delimiter=',')
+            np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
         
         return ground_truth, annotations, crowd
 

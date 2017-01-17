@@ -4,9 +4,9 @@ Created on Nov 1, 2016
 @author: Melvin Laux
 '''
 
-import baselines as bsl
+from baselines import ibcc, clustering, majority_voting
 import ConfigParser
-import os, sys
+import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,8 +37,6 @@ class Experiment(object):
     save_plots = False
     show_plots = False
     
-    
-
 
     def __init__(self, generator, config=None):
         '''
@@ -66,7 +64,9 @@ class Experiment(object):
         
         self.param_values = np.ones((len(param_values), 3))
         
-        self.method = parameters['method'].split('#')[0].strip()
+        self.method = eval(parameters['method'].split('#')[0].strip())
+        
+        print self.method
         
         idx = 0
         
@@ -90,43 +90,76 @@ class Experiment(object):
         
     def single_run(self, param_values):
         
-        scores = np.zeros((param_values.shape[0], 4))
+        scores = np.zeros((param_values.shape[0], 4, len(self.method)))
        
         for i in xrange(param_values.shape[0]):
             params = param_values[i,:]
             self.generator.init_crowd_model(params[0], params[1], params[2])
-            ground_truth, annotations, _ = self.generator.generate_dataset(crowd_size=3)
+            ground_truth, annotations, _ = self.generator.generate_dataset(crowd_size=10, save_to_file=True)
             
             agg = None
             
-            if self.method == 'majority':
-                mv = bsl.majority_voting.MajorityVoting(ground_truth, annotations, 3)
-                agg,_ = mv.vote()
-            elif self.method == 'clustering':
-                cl = bsl.clustering.Clustering(ground_truth, annotations)
-                agg = cl.run_kde()
-            else:
-                sys.exit('unknown method: ' + self.method)
+            idx = 0
             
-            scores[i,1],scores[i,2],scores[i,3],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-            scores[i,0] = skm.accuracy_score(ground_truth[:,1], agg)
+            if 'majority' in self.method:
+                mv = majority_voting.MajorityVoting(ground_truth, annotations, 3)
+                agg,_ = mv.vote()
+                
+                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                idx += 1
+            
+            if 'clustering' in self.method:
+                cl = clustering.Clustering(ground_truth, annotations)
+                agg = cl.run()
+            
+                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                idx += 1
+                
+            if 'mace' in self.method:
+                subprocess.call(['java', '-jar', 'MACE/MACE.jar', 'output/data/annotations.csv'])
+                
+                agg = np.genfromtxt('prediction', delimiter=',')
+            
+                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                idx += 1
+                
+            if 'ibcc' in self.method:
+                
+                alpha0 = np.ones((3,3,10))
+                alpha0[:, :, 5] = 2.0
+                alpha0[np.arange(3),np.arange(3),:] += 1.0
+                #alpha0[np.arange(3),np.arange(3),-1] += 20
+
+                
+                nu0 = np.array([1,1,1], dtype=float)
+                
+                ibc = ibcc.IBCC(nclasses=3,nscores=3,nu0=nu0, alpha0=alpha0)
+                res = ibc.combine_classifications(annotations,table_format=True).argmax(axis=1)
+                
+                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                idx += 1
+                
         
         return scores
     
     
     def run(self, param_values, num_runs, show_plot=False, save_plot=False, save_results=False, output_dir='output/'):
         
-        results = np.zeros((param_values.shape[0], 4, num_runs))
+        results = np.zeros((param_values.shape[0], 4, len(self.method), num_runs))
         print 'Running experiment...'
         for i in xrange(num_runs):      
-            results[:,:,i] = self.single_run(param_values) 
+            results[:,:,:,i] = self.single_run(param_values) 
             
         if save_results:
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
                 
             print 'Saving results...'
-            np.savetxt(output_dir + 'results.csv', np.mean(results,2))
+            np.savetxt(output_dir + 'results.csv', np.mean(results,3)[:,:,0])
 
         if show_plot or save_plot:
             self.plot_results(results,show_plot,save_plot,output_dir)
@@ -145,23 +178,24 @@ class Experiment(object):
         if save_plot and not os.path.exists(output_dir):
             os.makedirs(output_dir)
             
-        plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,0,:], 1), yerr=np.var(results[:,0,:], 1), label='accuracy')
-        plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,1,:], 1), yerr=np.var(results[:,1,:], 1), label='precision')
-        plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,2,:], 1), yerr=np.var(results[:,2,:], 1), label='recall')
-        plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,3,:], 1), yerr=np.var(results[:,3,:], 1), label='f1-score')
+        score_names = ['accuracy', 'precision','recall','f1-score']
+            
+        for i in xrange(4):    
+            for j in xrange(len(self.method)):
+                plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,i,:,j], 1), yerr=np.var(results[:,i,:,j], 1), label=self.method[j])
+            
+            plt.legend(loc=0)
         
-        plt.legend(loc=0)
+            plt.title('parameter influence')
+            plt.ylabel(score_names[i])
+            plt.xlabel(self.param_names[self.param_idx])
         
-        plt.title('parameter influence')
-        plt.ylabel('score')
-        plt.xlabel(self.param_names[self.param_idx])
+            if save_plot:
+                print 'Saving plot...'
+                plt.savefig(self.output_dir + 'plot_' + score_names[i] + '.png') 
         
-        if save_plot:
-            print 'Saving plot...'
-            plt.savefig(self.output_dir + 'plot.png') 
-        
-        if show_plot: 
-            plt.show()
+            if show_plot: 
+                plt.show()
         
         
         
