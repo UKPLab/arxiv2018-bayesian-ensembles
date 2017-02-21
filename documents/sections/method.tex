@@ -52,63 +52,149 @@ The latter may be more expensive to compute but gives stronger guarantees of con
 If not converged, repeat from step \ref{step:2}.
 \item \label{step:7} Output the predictions for the true labels, $\mathbb{E}\left[\bs t\right]$ given the converged estimates of the variational factors.
 \end{enumerate}
+latent variables. For our proposed model, the variational approximation is given by:
+\begin{equation}
+  q(\bs t, \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)}) = q(\bs t)\prod_{j=1}^L \left\{ q(\bs A_j)\prod_{l=1}^L \prod_{k=1}^K  q(\bs\pi_{j,l}^{(k)}) \right\}
+\end{equation}
+Below, we summarise the algorithm used to optimise this distribution to obtain an approximate posterior.
+The following subsection then defines the variational factors and expectation terms needed to perform each step of the algorithm. The procedure is as follows:
+\begin{algorithm}
+ \KwIn{ Crowdsourced annotations, $\bs c$}
+ Initialise $\mathbb{E}\left[\log \bs A \right]$ 
+ and $\mathbb{E}\left[\log\bs\pi^{(k)} \right], \forall k$\;
+ \While{not converged}%$\mathbb{E}\left[\bs t\right]$
+ {
+ Update $q^*(t_{i,\tau}=j)$ and $q^*(t_{i,\tau-1}=j, t_{i,\tau}=j')$, $\forall i,\forall \tau,\forall j$,
+ given $\mathbb{E}\left[\log \bs A \right]$ and 
+ $\mathbb{E}\left[\log\bs\pi^{(k)} \right], \forall k$
+ using the forward-backward algorithm\;
+ Update $q^*(\bs A_j), \forall j$ given current $q^*(t_{i,\tau}=j)$\;
+ Update $q^*\left(\bs\pi_j^{(k)}\right), \forall j, \forall k$ given current $q^*(t_{i,\tau-1}=j, t_{i,\tau}=j')$\;
+ Recompute $\mathbb{E}\left[\log \bs A \right]$ 
+ and $\mathbb{E}\left[\log\bs\pi^{(k)} \right], \forall k$ given current estimates of
+ $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$\; 
+ }
+\KwOut{ Predictions for the true labels, $\mathbb{E}[t_{i,\tau}]$. }
+%\caption{The key steps of the VB algorithm for Bayesian annotator combination.
+%\label{al:vb_bac}
+\end{algorithm}
+
+There are several ways to initialise the expectation terms $\mathbb{E}\left[\log \bs A \right]$ 
+ and $\mathbb{E}\left[\log\bs\pi^{(k)} \right], \forall k$. One possibility is to estimate the means 
+ of the distributions using a cheaper method, such as maximum likelihood expectation maximisation, then
+ take logarithms. Values may also be chosen at random.
+  In our experiments we find initialising $\mathbb{E}\left[\log \bs A \right]$ 
+ and $\mathbb{E}\left[\log\bs\pi^{(k)} \right], \forall k$ to their prior values to be effective
+ as we use weakly informative priors.
+ 
+The algorithm above iteratively updates each variational factor in turn. Each update increases the lower bound on the model evidence, $\mathcal{L}$, by optimising one variational factor given the current estimates of the others.  
+Convergence can be checked cheaply by comparing values of $\mathbb{E}[t_{i,\tau}]$ between iterations. However, a more reliable method is to check $\mathcal{L}$ for convergence. We now present equations for the variational factors and expectation terms required by the algorithm, followed by the lower bound, $\mathcal{L}$. 
 
 \subsection{Variational Factors}
 
-Steps 1 to 5 of the algorithm above initialise then iteratively update each variational factor in turn. Each update increases the lower bound on the model evidence by optimising one variational factor given the current estimates of the others. In this section we first provide equations for computing the variational factors, then show how to initialise them and compute the expectation terms required by the algorithm.
-
-For the true labels, $\bs t$, the optimal variational factor is:
+For the sequence of true labels, $\bs t$, the optimal variational factor given the current estimates of $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$, is:
 %\log\pi^{(k)}_{t_{i,\tau},c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}}
-\begin{align}
-  \log q^*(\bs t) = \mathbb{E}_{q} \left[ \sum_{i=1}^N \sum_{\tau=1}^{T_i} \bigg\{ \log p(t_{i,\tau} | t_{i,\tau-1}, \bs A ) \right. \nonumber \\
-  \left. + \sum_{k=1}^K p(c_{i,\tau}^{(k)} | t_{i,\tau}, c_{i,\tau-1}^{(k)}, \bs\pi^{(k)})
-  \bigg\} \right] + \mathrm{const}, \nonumber\\
+\begin{flalign}
+  &\log q^*(\bs t) = \mathbb{E}_{q} \left[ \sum_{i=1}^N \sum_{\tau=1}^{T_i} \bigg\{ \log p(t_{i,\tau} | t_{i,\tau-1}, \bs A ) \right. &&\nonumber \\
+  &\left. + \sum_{k=1}^K p(c_{i,\tau}^{(k)} | t_{i,\tau}, c_{i,\tau-1}^{(k)}, \bs\pi^{(k)})
+  \bigg\} \right] + \mathrm{const}, && \nonumber\\
    \label{eq:qstar_t}
-   =  \sum_{i=1}^N \sum_{\tau=1}^{T_i} q^*(t_{i,\tau}), \\
- %\log p(t_{i,\tau} | t_{i,\tau-1}, \bs A, \bs c) 
- q^*(t_{i,\tau}) = \sum_{j=1}^L \mathbb{E}_q[p(t_{i,\tau-1}=j | \bs c_{i,1:\tau})] 
- \log A_{j,t_{i,\tau}} \nonumber\\ 
+   &=  \sum_{i=1}^N \sum_{\tau=1}^{T_i} %\sum_{j=1}^L \mathbb{E}_q[p(t_{i,\tau-1}=j | \bs c_{i,1:\tau})] 
+ \mathbb{E}[\log A_{j,t_{i,\tau}}] 
  %\sum_{j'=1}^L p(t_{i,\tau}=j') % \sum_{i=1}^N \sum_{\tau=1}^{T_i}
-   \sum_{k=1}^K \log\pi^{(k)}_{t_{i,\tau},c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}}
-   +  p(\bs c_{i,\tau+1:T_i} | t_{i,\tau}) + \mathrm{const}, \nonumber\\
-\end{align}
-where...
-
-. The dependency on the previous true label and the subsequent label can be solved using the forward-backward algorithm.  
-
-For convenience, we define the variational posterior for each token as $r_{i,\tau,j} = \mathbb{E}_q[p(t_{i,\tau}=j | \bs c)]$.
-
-The updated variational factor for each vector in the three-dimensional worker transition-confusion matrices is:
+  + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau,t_{i,\tau}}
+   + \mathrm{const}, &&  %+  p(\bs c_{i,\tau+1:T_i} | t_{i,\tau}) 
+\end{flalign}
+where for notational convenience we define $\log\tilde{\pi}^{(k)}_{i,\tau,j} = \mathbb{E}\left[\log\pi^{(k)}_{j,c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}} \right]$. 
+In the VB algorithm, the parameters updates to $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$
+require expectations for the individual true labels and transitions from one each label to the next:
 \begin{align}
-  \log q^*(\bs\pi_{j,l}^{(k)}) = \sum_{m=1}^J N_{j,l,m}^{(k)}\log\pi_{j,l,m}^{(k)} + \log p(\bs\pi_{j,l}^{(k)} | \alpha_{j,l}^{(k)}) + \mathrm{const},
+ r_{i,\tau,j} & = q^*(t_{i,\tau}=j) = \mathbb{E}_q[p(t_{i,\tau}=j | \bs c)], &\\
+ s_{i,\tau,j,j'} & = q^*(t_{i,\tau-1}=j, t_{i,\tau}=j') & \nonumber\\ 
+ & = \mathbb{E}_q[p(t_{i,\tau-1}=j, t_{i,\tau}=j' | \bs c)].&
 \end{align}
-where $N^{(k)}_{j,l,m} = \sum_{i=1}^N\sum_{\tau=1}^{T_i} r_{i,\tau,j} \delta_{m,c^{(k)}_{i,\tau}}$ are
-pseudo-counts and $\delta$ is the Kronecker delta. Since we assumed Dirichlet priors, the variational 
-factor is also a Dirichlet distribution with parameters $\bs a_{j,l}^{(k)} = \bs\alpha_{j,l}^{(k)} + \bs N_{j}^{(k)}$, where $\bs N_j^{(k)}=\left\{ N_{j,l,m}^{(k)}, \forall m \right\}$. 
+These terms can be computed using the forward-backward algorithm\cite{ghahramani2001introduction},
+which consists of two passes. 
+The forward pass starts from $\tau=1$ and computes for each value of $\tau$ the posterior given crowdsourced annotations for tokens up to and including $\tau$. 
+\begin{flalign}
+  & \log r^{-}_{i,\tau,j} = \mathbb{E}_q\left[ \log p(t_{i,\tau}=j | \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right] &
+  \nonumber\\
+  & = \sum_{j'=1}^L \left\{ \log r^{-}_{i,\tau-1,j'} + \mathbb{E}[\log A_{j',j}] \right\}
+  + \sum_{k=1}^K \log\tilde{\pi}^{(k)}_{i,\tau,j}, &
+\end{flalign}
+where $\bs c_{i,1:\tau}^{(k)}$ is the set of labels from 1 to $\tau$ in document $i$.
+We assume that the label at position, $t_{i,0} = O$, is always an 'outside' label.
+The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the likelihood of the annotations at positions from $\tau+1$ to $T_i$ given the true label $t_{i, \tau}$.
+\begin{flalign}
+  & \log \lambda_{i,T_i,j} = 1 & \nonumber\\
+  & \log \lambda_{i,\tau,j} = \mathbb{E}_q  \! \left[ \log p(\bs c_{i,\tau+1:T_i}^{(1)},...,\bs c_{i,\tau+1:T_i}^{(K)} | t_{i,\tau}=j) \right]
+  & \!\!\!\!\nonumber\\
+  & = \log \lambda_{i,\tau+1,j} + \sum_{j'=1}^L \! \left\{ \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
+\end{flalign}
+By taking the exponents and applying Bayes' rule we arrive at the terms $r_{i,\tau,j}$ and $s_{i,\tau,j,j'}$:
+\begin{flalign}
+ & r_{i,\tau,j} \propto r^{-}_{i,\tau,j}\lambda_{i,\tau,j} &\\%}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} \\
+ & s_{i,\tau,j,j'} \propto r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \exp\! \left(\mathbb{E}[\log A_{j,j'}] 
++ \log \tilde{\pi}^{(k)}_{i,\tau,j'}  \right) . \!\!\!\! &
+\end{flalign}
+The $r_{i,\tau,j}$ terms are normalised by a sum over $j$, and the  $s_{i,\tau,j,j'}$ terms are 
+normalised by a sum over $j$ and $j'$.
+We also use the $r_{i,\tau,j}$ terms to produce the output predictions from the VB algorithm.
 
-Equation \ref{eq:qstar_t} makes use of a three-dimensional matrix term $\mathbb{E}[\log \pi^{(k)}]$, which is computed in step 2
-of the VB algorithm summarised above. Each element of this matrix is computed using the following:
+The optimal variational factor for each row of the ground truth transition matrix is:
+\begin{flalign}
+  & \log q^*(\bs A_{j}) & \nonumber\\ 
+  & = \sum_{i=1}^N\sum_{\tau=1}^{T_i} \sum_{j'=1}^L s_{i,\tau,j,j'}\log\bs A_{j,j'} 
+ + \log p(\bs A_j | \bs\beta_j) + \mathrm{const} &\nonumber\\
+ & = \sum_{j'=1}^L N_{j,j'}\log\bs A_{j,j'} 
+  + \log p(\bs A_j | \bs\beta_j) + \mathrm{const},&
+\end{flalign}
+where $N_{j,j'} = \sum_{i=1}^N \sum_{\tau=1}^{T_i} s_{i,\tau,j,j'}$ are pseudo-counts of the 
+number of times that class $j$ follows class $j'$. Since we assumed Dirichlet priors over $\bs A_j$, the variational factor for $\bs A_j$ is Dirichlet distribution with parameters $\bs b_j = \bs\beta_j + \bs N_{j}$, where $\bs N_{j} = \left\{ N_{j,j'} , \forall j' \right\}$.
+
+The VB algorithm requires a term $\mathbb{E}[\log A]$ to update the variational factors for the ground truth labels. We can compute each element using:
 \begin{align}
-  \mathbb{E}[\log \pi_{j,l,m}^{(k)}] = \Psi(a^{(k)}_{j,l,m}) - \Psi(\sum_{m=1}^L a^{(k)}_{j,l} ),
+  \mathbb{E}[\log A_{j,j'}] = \Psi\left(b_{j,j'}\right) - \Psi\left(\sum_{j'=1}^L b_{j,j'} \right),
 \end{align}
 where $\Psi$ is the digamma function.
 
-The transition matrix for the ground truth labels has the following variational factors for each of its rows:
-\begin{align}
-  \log q^*(\bs A_{j}) = \sum_{i=1}^N\sum_{\tau=1}^{T_i} r_{i,\tau-1,j} \sum_{j'=1}^L r_{i,\tau,j'}\log\bs A_{j,j'} \nonumber\\
-  + \log p(\bs A_j | \bs\beta_j) + \mathrm{const} \nonumber\\
-  = \sum_{j'=1}^L N_{j,j'}\log\bs A_{j,j'} 
-  + \log p(\bs A_j | \bs\beta_j) + \mathrm{const},
-\end{align}
-where $N_{j,j'} = \sum_{i=1}^N \sum_{\tau=1}^{T_i} r_{i,\tau-1,j}r_{i,\tau,j'}$ are pseudo-counts of the 
-number of times that class $j$ follows class $j'$. The variational factor for $\bs A_j$ is Dirichlet distribution with parameters $\bs b_j = \bs\beta_j + \bs N_{j}$, where $\bs N_{j} = \left\{ N_{j,j'} , \forall j' \right\}$.
+For the three-dimensional worker transition-confusion matrices, $\bs\pi^{(k)}$, 
+the optimal variational factors are given by:
+\begin{flalign}
+ \log q^*\left(\bs\pi_{j,l}^{(k)}\right) = &  \sum_{m=1}^J N_{j,l,m}^{(k)}\log\pi_{j,l,m}^{(k)} & \nonumber\\
+ & + \log p\left(\bs\pi_{j,l}^{(k)} | \alpha_{j,l}^{(k)} \right) + \mathrm{const}, &
+\end{flalign}
+where $N^{(k)}_{j,l,m} = \sum_{i=1}^N\sum_{\tau=1}^{T_i} r_{i,\tau,j} \delta_{m,c^{(k)}_{i,\tau}}$ are
+pseudo-counts and $\delta$ is the Kronecker delta. The variational 
+factor is also a Dirichlet distribution with parameters $\bs a_{j,l}^{(k)} = \bs\alpha_{j,l}^{(k)} + \bs N_{j}^{(k)}$, where $\bs N_j^{(k)}=\left\{ N_{j,l,m}^{(k)}, \forall m \right\}$. 
 
-For Equation \ref{eq:qstar_t} we also require a term $\mathbb{E}[\log A]$ that is computed in step 2
-of the VB algorithm. Using the variational Dirichlet distribution over $\bs A$, we can compute each element as:
+To update the variational factor for the true class, the VB algorithm requires a three-dimensional expectation term, $\mathbb{E}[\log \pi^{(k)}]$, whose elements are computed using the following:
 \begin{align}
-  \mathbb{E}[\log A_{j,j'}] = \Psi(b_{j,j'}) - \Psi(\sum_{j'=1}^L b_{j,j'} ).
+  \mathbb{E}\left[\log \pi_{j,l,m}^{(k)}\right] = \Psi\left(a^{(k)}_{j,l,m}\right) - \Psi\left(\sum_{m=1}^L a^{(k)}_{j,l} \right).
 \end{align}
 
+\subsection{Variational Lower Bound}
+
+The VB algorithm optimises the lower bound on model evidence, so it is useful to compute the lower bound
+to check for convergence, or to compare models with different hyperparameters when performing model selection. The lower bound for Bayesian annotator combination is:
+\begin{flalign}
+ &\mathcal{L}  = \mathbb{E}_{q} \left[ \log p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)}\right)
+ - \log q(\bs t) \right] & \nonumber \\
+ & + \sum_{j=1}^L \bigg\{ \mathbb{E}_{q} \left[ \log p\left(\bs A_j | \bs\beta_j\right)  -  \log q(\bs A_j ) \right] & \nonumber\\
+ & + \sum_{l=1}^J \sum_{k=1}^K 
+ \mathbb{E}_{q}
+ \left[ \log p \left( \bs\pi_{j,l}^{(k)} | \bs\alpha_{j,l}^{(k)} \right)
+ - \log q \left( \bs\pi_{j,l}^{(k)} \right) \right] \bigg\}.&&
+\end{flalign}
+The lower bound computation uses the equations described above for the variational
+factors, $q(\bs A_j)$ and $q \left( \bs\pi_{j,l}^{(k)} \right)$, and the prior distributions for the parameters, 
+and inserts the expectations $\mathbb{E}\left[\log \bs A_j \right]$ and $\mathbb{E}\left[\log\bs\pi_{j,l}^{(k)} \right]$. The first term of $\mathcal{L}$ makes use of auxiliary variables from the 
+forward-backward algorithm:
+\begin{align}
+ && \mathbb{E}_q \left[ \log p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},..,\bs\pi^{(K)}\right)\right] = 
+ \nonumber\\
+ && \sum_{i=1}^N \sum_{\tau=1}^{T_i} \sum_{j=1}^L r_{i,\tau,j} \log r^{-}_{i,\tau,j} &
+\end{align}
 
 \section{Alternative Methods}\label{sec:alt}
 
