@@ -21,18 +21,17 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start):
     for t in xrange(T):
         for l in xrange(L):
             
-            
             if doc_start[t]:
                 # compute values for document start
                 for k in xrange(K):
-                    r_[t,l] = initProbs[l] * lnPi[l, C[t,k], -1, k]    
+                    r_[t,l] += initProbs[l] * np.exp(lnPi[l, int(C[t,k]), -1, k])    
             else:
                 for l_prev in xrange(L):
-                    r_[t,l] = r_[t,l] + r_[t-1,l_prev]*lnA[l_prev,l]
+                    r_[t,l] +=  r_[t-1,l_prev]*lnA[l_prev,l]
                 
                 #r_[t,l] = r_[t,l] * lnPi[l,C[t]]
                 for k in xrange(K):
-                    r_[t,l] = r_[t,l] * lnPi[l,C[t,k],C[t-1,k], k]
+                    r_[t,l] *= np.exp(lnPi[l,int(C[t,k]),int(C[t-1,k]), k])
             
         r_[t,:] = r_[t,:]/sum(r_[t,:])
             
@@ -45,20 +44,27 @@ def backward_pass(C, lnA, lnPi, doc_start):
     K = lnA.shape[-1]
     lambd = np.zeros((T,L)) 
     
-    # compute values for t=T
-    for l in xrange(L):
-        lambd[T-1,l] = 1
+    # set values for t=T
+    lambd[T-1,:] = np.ones((L,))
     
-    for t in xrange(T-2,-1,-1):        
+    for t in xrange(T-2,-1,-1):
+        
+        # set values for t=T
+        if doc_start[t+1]:
+            lambd[t,:] = np.ones((L,))
+            continue
+        
         for l in xrange(L):            
             for l_next in xrange(L):
-                #lambd[t,l] = lambd[t,l] + lambd[t+1,l_next]*lnA[l,l_next]*lnPi[l_next,C[t]]
-                
                 for k in xrange(K):
+                    
+                    if C[t,k] == 0:
+                        continue
+                    
                     if doc_start[t]:
-                        lambd[t,l] = lambd[t,l] + lambd[t+1,l_next]*lnA[l,l_next]*lnPi[l_next, C[t,k], -1, k]
+                        lambd[t,l] += lambd[t+1,l_next]*np.exp(lnA[l,l_next])*np.exp(lnPi[l_next, int(C[t,k])-1, -1, k])
                     else:
-                        lambd[t,l] = lambd[t,l] + lambd[t+1,l_next]*lnA[l,l_next]*lnPi[l_next, C[t,k], C[t-1,k], k]
+                        lambd[t,l] += lambd[t+1,l_next]*np.exp(lnA[l,l_next])*np.exp(lnPi[l_next, int(C[t,k])-1, int(C[t-1,k])-1, k])
                 
         lambd[t,:] = lambd[t,:]/sum(lambd[t,:])                
   

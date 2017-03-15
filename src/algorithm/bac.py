@@ -38,7 +38,7 @@ class BAC(object):
         self.nscores = L
         self.K = K
         
-        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + np.eye(self.L)[:,:,np.newaxis,np.newaxis] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
         self.nu0 = np.log(np.ones((L+1, L)))
         
         # initialise transition and confusion matrices
@@ -103,7 +103,7 @@ def post_alpha(E_t, C, alpha0, doc_start):  # Posterior Hyperparameters
     
     dims = alpha0.shape
     
-    alpha = np.zeros(dims)
+    alpha = alpha0.copy()
     
     for j in range(dims[0]): # iterate through previous anno
         Tj = E_t[:, j] 
@@ -112,11 +112,11 @@ def post_alpha(E_t, C, alpha0, doc_start):  # Posterior Hyperparameters
             counts = ((C==l+1) * doc_start).T.dot(Tj).reshape(-1)    
             alpha[j, l, -1, :] = alpha0[j, l, -1, :] + counts
             
-            for m in range(dims[1]): # iterate through true anno
+            for m in range(-1, dims[1]): # iterate through true anno
                 
                 counts = ((C==l+1)[1:,:] * np.invert(doc_start[1:]) * (C==m+1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
                 
-                alpha[j, l, m, :] = alpha0[j, l, m, :] + counts
+                alpha[j, l, m, :] = alpha[j, l, m, :] + counts
     
     return alpha
             
