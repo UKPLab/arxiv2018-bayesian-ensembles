@@ -8,10 +8,10 @@ from __future__ import division
 import numpy as np
 
 
-def forward_pass(C, lnA, lnPi, initProbs, doc_start):
+def forward_pass(C, lnA, lnPi, initProbs, doc_start,skip=True):
     T = C.shape[0]
     L = lnA.shape[0]
-    K = lnA.shape[-1]
+    K = lnPi.shape[-1]
     r_ = np.zeros((T,L)) 
     
     # compute values for t=1
@@ -24,14 +24,20 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start):
             if doc_start[t]:
                 # compute values for document start
                 for k in xrange(K):
-                    r_[t,l] += initProbs[l] * np.exp(lnPi[l, int(C[t,k]), -1, k])    
+                    # skip unannotated tokens
+                    if skip and C[t,k] == 0:
+                        continue
+                    r_[t,l] += initProbs[l] * np.exp(lnPi[l, int(C[t,k])-1, -1, k])
             else:
                 for l_prev in xrange(L):
-                    r_[t,l] +=  r_[t-1,l_prev]*lnA[l_prev,l]
+                    r_[t,l] += r_[t-1,l_prev] * np.exp(lnA[l_prev,l])
                 
-                #r_[t,l] = r_[t,l] * lnPi[l,C[t]]
                 for k in xrange(K):
-                    r_[t,l] *= np.exp(lnPi[l,int(C[t,k]),int(C[t-1,k]), k])
+                    # skip unannotated tokens
+                    if skip and C[t,k] == 0:
+                        continue
+                    
+                    r_[t,l] += np.exp(lnPi[l,int(C[t,k])-1,int(C[t-1,k])-1, k])
             
         r_[t,:] = r_[t,:]/sum(r_[t,:])
             
@@ -58,13 +64,14 @@ def backward_pass(C, lnA, lnPi, doc_start):
             for l_next in xrange(L):
                 for k in xrange(K):
                     
+                    # skip unannotated tokens
                     if C[t,k] == 0:
                         continue
                     
                     if doc_start[t]:
-                        lambd[t,l] += lambd[t+1,l_next]*np.exp(lnA[l,l_next])*np.exp(lnPi[l_next, int(C[t,k])-1, -1, k])
+                        lambd[t,l] += lambd[t+1,l_next] * np.exp(lnA[l,l_next]) * np.exp(lnPi[l_next, int(C[t,k])-1, -1, k])
                     else:
-                        lambd[t,l] += lambd[t+1,l_next]*np.exp(lnA[l,l_next])*np.exp(lnPi[l_next, int(C[t,k])-1, int(C[t-1,k])-1, k])
+                        lambd[t,l] += lambd[t+1,l_next] * np.exp(lnA[l,l_next]) * np.exp(lnPi[l_next, int(C[t,k])-1, int(C[t-1,k])-1, k])
                 
         lambd[t,:] = lambd[t,:]/sum(lambd[t,:])                
   
