@@ -44,32 +44,33 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start,skip=True):
     return r_        
 
         
-def backward_pass(C, lnA, lnPi, doc_start):
+def backward_pass(C, lnA, lnPi, doc_start, skip=True):
     T = C.shape[0]
     L = lnA.shape[0]
-    K = lnA.shape[-1]
+    K = lnPi.shape[-1]
     lambd = np.zeros((T,L)) 
     
     # set values for t=T
-    lambd[T-1,:] = np.ones((L,))
+    #lambd[T-1,:] = np.ones((L,))
     
-    for t in xrange(T-2,-1,-1):
+    for t in xrange(T-1,-1,-1):
         
         # set values for t=T
-        if doc_start[t+1]:
-            lambd[t,:] = np.ones((L,))
-            continue
+        #if doc_start[t+1]:
+        #    lambd[t,:] = np.ones((L,))
+        #    continue
         
         for l in xrange(L):            
             for l_next in xrange(L):
                 for k in xrange(K):
                     
                     # skip unannotated tokens
-                    if C[t,k] == 0:
+                    if skip and C[t,k] == 0:
                         continue
                     
-                    if doc_start[t]:
-                        lambd[t,l] += lambd[t+1,l_next] * np.exp(lnA[l,l_next]) * np.exp(lnPi[l_next, int(C[t,k])-1, -1, k])
+                    if t==T-1 or doc_start[t+1]:
+                        #lambd[t,l] += lambd[t+1,l_next] * np.exp(lnA[l,l_next]) * np.exp(lnPi[l_next, int(C[t,k])-1, -1, k])
+                        lambd[t,l] += np.exp(lnA[l,l_next]) * np.exp(lnPi[l_next, int(C[t,k])-1, -1, k])
                     else:
                         lambd[t,l] += lambd[t+1,l_next] * np.exp(lnA[l,l_next]) * np.exp(lnPi[l_next, int(C[t,k])-1, int(C[t-1,k])-1, k])
                 
