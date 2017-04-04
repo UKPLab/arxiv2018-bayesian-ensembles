@@ -5,16 +5,18 @@ Created on Dec 20, 2016
 '''
 import numpy as np
 
-def expec_t(r_, lambd):
+def expec_t(lnR_, lnLambda):
+    r_ = np.exp(lnR_)
+    lambd = np.exp(lnLambda)
     return (r_*lambd)/np.sum(r_*lambd,1)[:, None]
     
-def expec_joint_t(r_, lambd, lnA, lnPi, C, doc_start):
+def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
     
     # initialise variables
-    T = r_.shape[0]
+    T = lnR_.shape[0]
     L = lnA.shape[0]
-    K = lnA.shape[-1]
-    s = np.zeros((T, L+1, L))
+    K = lnPi.shape[-1]
+    lnS = np.zeros((T, L+1, L))
     
     # iterate though everything, calculate joint expectations
     for t in xrange(T):
@@ -26,11 +28,12 @@ def expec_joint_t(r_, lambd, lnA, lnPi, C, doc_start):
                         continue
                     
                     if doc_start[t]:
-                        s[t,-1,l_next] += r_[t,l] * lambd[t,l_next] * lnA[l,l_next] * lnPi[l,int(C[t,k])-1,-1, k]
+                        lnS[t,-1,l_next] += lnR_[t,l] + lnLambda[t,l_next] + lnA[l,l_next] + lnPi[l,int(C[t,k])-1,-1, k]
                     else:
-                        s[t,l,l_next] += r_[t,l] * lambd[t,l_next] * lnA[l,l_next] * lnPi[l,int(C[t,k])-1,int(C[t-1,k])-1, k]
+                        lnS[t,l,l_next] += lnR_[t,l] + lnLambda[t,l_next] + lnA[l,l_next] + lnPi[l,int(C[t,k])-1,int(C[t-1,k])-1, k]
     
-    #normalise and return            
+    #normalise and return  
+    s = np.exp(lnS)          
     return s / np.sum(np.sum(s, 2), 1)[:,None, None]
     
                 

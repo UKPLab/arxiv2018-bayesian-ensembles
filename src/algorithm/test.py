@@ -12,7 +12,7 @@ from numpy import allclose
 class Test(unittest.TestCase):
 
     def test_forward_pass(self):
-        initProbs = np.array([.5,.5])
+        initProbs = np.log(np.array([.5,.5]))
         lnA = np.log(np.array([[.7,.3],[.3,.7]]))
         lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,np.newaxis,np.newaxis],2,axis=2))
         
@@ -21,16 +21,20 @@ class Test(unittest.TestCase):
                 
         doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
         
-        r_ = forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=False)
+        lnR_ = forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=False)
         
-        print r_
+        r_ = np.exp(lnR_)
+        
+        s_ = r_/np.sum(r_,1)[:,np.newaxis]
+        
+        print s_
         
         target = np.array([[.8182,.1818],[.8834,.1166],[.1907,.8093],[.7308,.2692],[.8673,.1327],[.8182,.1818],[.8834,.1166],[.1907,.8093],[.7308,.2692],[.8673,.1327]])
         
-        assert allclose(r_,target,atol=1e-4)
+        assert allclose(s_,target,atol=1e-4)
         
     def test_backward_pass(self):
-        lnA = np.array([[.7,.3],[.3,.7]])
+        lnA = np.log(np.array([[.7,.3],[.3,.7]]))
         lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,np.newaxis,np.newaxis],2,axis=2))
         
         C = np.ones((10,1))
@@ -38,13 +42,17 @@ class Test(unittest.TestCase):
         
         doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
         
-        betas = backward_pass(C, lnA, lnPi, doc_start, skip=False)
+        lnLambd = backward_pass(C, lnA, lnPi, doc_start, skip=False)
         
-        print betas
+        lambd = np.exp(lnLambd)
+        
+        lambdNorm = lambd/np.sum(lambd,1)[:,np.newaxis]
+        
+        print lambdNorm
         
         target = np.array([[.6469,.3531],[.5923,.4077],[.3763,.6237],[.6533,.3467],[.6273,.3727],[.6469,.3531],[.5923,.4077],[.3763,.6237],[.6533,.3467],[.6273,.3727]])
         
-        assert allclose(betas,target,atol=1e-4)
+        assert allclose(lambdNorm,target,atol=1e-4)
         
     def test_bac(self):
         C = np.ones((5,10)) * 2
@@ -54,7 +62,11 @@ class Test(unittest.TestCase):
         
         myBac = bac.BAC(L=3, T=5, K=10)
         
-        print myBac.run(C, doc_start)
+        result =  myBac.run(C, doc_start)
+        target = np.zeros((5,3))
+        target[:,1] = 1
+        
+        assert allclose(target, result, atol=1e-4)
 
 
 if __name__ == "__main__":
