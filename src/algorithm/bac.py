@@ -58,7 +58,7 @@ class BAC(object):
             
             self.iter += 1
             
-            print self.iter
+            #print self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
             r_ = fb.forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start)

@@ -8,6 +8,7 @@ import unittest
 import numpy as np
 from baselines import ibcc 
 from expectations import expec_joint_t
+from src.expectations import expec_t
 
     
 class Test(unittest.TestCase):
@@ -94,21 +95,41 @@ class Test(unittest.TestCase):
         
         E_t_trans = ibcc.expec_t_trans(E_t)
         
-        assert np.allclose(E_t_goal, E_t_trans)        
+        assert np.allclose(E_t_goal, E_t_trans)
+        
+    
+    def test_expec_t(self): 
+        
+        lnR_ = np.log(np.ones((10,4))) 
+        lnLambda = np.log(np.ones((10,4)) * (np.array(range(4)) + 1)[:, None].T)
+        
+        result = expec_t(lnR_, lnLambda)  
+        
+        # ensure all rows sum up to 1
+        assert np.allclose(np.sum(result,1), 1, atol=1e-10)
+        
+        # test values
+        assert np.allclose(result[:,0], .1, atol=1e-10)
+        assert np.allclose(result[:,1], .2, atol=1e-10)
+        assert np.allclose(result[:,2], .3, atol=1e-10)
+        assert np.allclose(result[:,3], .4, atol=1e-10)
         
         
-    def test_expec_joint_s(self):
+    def test_expec_joint_t(self):
         
         T = 10
         
-        alpha = np.ones((T,3))
-        beta = np.ones((T,3))
-        C = np.ones((3,2))
-        A = np.ones((3,3))
-        y = np.zeros((T,1)) 
-        doc_start = np.array([1,0,0,1,0,0])
+        lnR_ = np.ones((T,3))
+        lnLambda = np.ones((T,3))
+        lnA = np.ones((4,3))
+        lnPi = np.ones((3,3,4,1))
+        C = np.ones((T,1)) 
+        doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
         
-        print expec_joint_t(alpha, beta, A, C, y, doc_start)
+        result = expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start)
+        
+        # ensure all rows sum up to 1
+        assert np.allclose(np.sum(np.sum(result,-1),-1),1, atol=1e-10)
         
               
 if __name__ == "__main__":

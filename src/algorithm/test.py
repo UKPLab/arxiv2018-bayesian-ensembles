@@ -26,9 +26,7 @@ class Test(unittest.TestCase):
         r_ = np.exp(lnR_)
         
         s_ = r_/np.sum(r_,1)[:,np.newaxis]
-        
-        print s_
-        
+               
         target = np.array([[.8182,.1818],[.8834,.1166],[.1907,.8093],[.7308,.2692],[.8673,.1327],[.8182,.1818],[.8834,.1166],[.1907,.8093],[.7308,.2692],[.8673,.1327]])
         
         assert allclose(s_,target,atol=1e-4)
@@ -48,8 +46,6 @@ class Test(unittest.TestCase):
         
         lambdNorm = lambd/np.sum(lambd,1)[:,np.newaxis]
         
-        print lambdNorm
-        
         target = np.array([[.6469,.3531],[.5923,.4077],[.3763,.6237],[.6533,.3467],[.6273,.3727],[.6469,.3531],[.5923,.4077],[.3763,.6237],[.6533,.3467],[.6273,.3727]])
         
         assert allclose(lambdNorm,target,atol=1e-4)
@@ -67,6 +63,24 @@ class Test(unittest.TestCase):
         target[:,1] = 1
         
         assert allclose(target, result, atol=1e-4)
+        
+    def test_bac_2(self):
+        C = np.genfromtxt('../output/data/annotations.csv', delimiter=',') + 1
+        gt = np.genfromtxt('../output/data/ground_truth.csv', delimiter=',')[:,1] + 1
+        
+        doc_start = np.zeros((20,1))
+        doc_start[[0,10]] = 1
+        
+        myBac = bac.BAC(L=3, T=20, K=10)
+        
+        result = myBac.run(C, doc_start)
+        
+        target = np.zeros((20,3))
+        
+        for t in xrange(20):
+            target[t,int(gt[t]-1)] = 1
+        
+        assert allclose(target, result, atol=1e-6)
 
 
 if __name__ == "__main__":

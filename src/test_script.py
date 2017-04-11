@@ -12,7 +12,7 @@ from baselines.clustering import Clustering
 
 generator = DataGenerator('config/data.ini')
 
-gt, annos, _ = generator.generate_dataset(num_docs=3, doc_length=3, save_to_file=True)
+gt, annos, _ = generator.generate_dataset(num_docs=2, doc_length=10, save_to_file=True)
 
 #e = Experiment(generator, 'config/experiment.ini')
 

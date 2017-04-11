@@ -9,13 +9,15 @@ def expec_t(lnR_, lnLambda):
     r_ = np.exp(lnR_)
     lambd = np.exp(lnLambda)
     return (r_*lambd)/np.sum(r_*lambd,1)[:, None]
+
     
 def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
     
     # initialise variables
     T = lnR_.shape[0]
-    L = lnA.shape[0]
+    L = lnA.shape[-1]
     K = lnPi.shape[-1]
+    
     lnS = np.zeros((T, L+1, L))
     
     # iterate though everything, calculate joint expectations
