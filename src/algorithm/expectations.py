@@ -18,7 +18,8 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
     L = lnA.shape[-1]
     K = lnPi.shape[-1]
     
-    lnS = np.zeros((T, L+1, L))
+    lnS = np.ones((T, L+1, L))
+    flags = np.zeros(lnS.shape)
     
     # iterate though everything, calculate joint expectations
     for t in xrange(T):
@@ -30,14 +31,16 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
                         continue
                     
                     if doc_start[t]:
-                        lnS[t,-1,l_next] += lnR_[t,l] + lnLambda[t,l_next] + lnA[l,l_next] + lnPi[l,int(C[t,k])-1,-1, k]
+                        lnS[t, -1, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, -1, k]
+                        flags[t, -1, l_next] = 1
                     else:
-                        lnS[t,l,l_next] += lnR_[t,l] + lnLambda[t,l_next] + lnA[l,l_next] + lnPi[l,int(C[t,k])-1,int(C[t-1,k])-1, k]
+                        lnS[t, l, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
+                        flags[t, l, l_next] = 1
     
     #normalise and return  
-    s = np.exp(lnS)          
+    s = np.exp(lnS-np.max(lnS, 2)[:,:,None]) * flags         
     return s / np.sum(np.sum(s, 2), 1)[:,None, None]
-    
+
                 
 
 if __name__ == '__main__':

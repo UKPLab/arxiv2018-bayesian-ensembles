@@ -6,7 +6,7 @@ Created on Jan 28, 2017
 
 import numpy as np
 import src.algorithm.forward_backward as fb
-from src.expectations import expec_t, expec_joint_t
+from src.algorithm.expectations import expec_t, expec_joint_t
 from scipy.special import psi
 
 class BAC(object):
@@ -28,12 +28,11 @@ class BAC(object):
     iter = 0
     
 
-    def __init__(self, L=3, K=5, T=10):
+    def __init__(self, L=3, K=5):
         '''
         Constructor
         '''
         # initialise variables
-        self.T = T
         self.L = L
         self.nscores = L
         self.K = K
@@ -79,8 +78,7 @@ class BAC(object):
             self.lnPi = calc_q_pi(alpha)
             
         return self.q_t
-        
-        
+    
             
     def converged(self):
         return (self.iter >= 10)
@@ -105,16 +103,17 @@ def post_alpha(E_t, C, alpha0, doc_start):  # Posterior Hyperparameters
     
     alpha = alpha0.copy()
     
-    for j in range(dims[0]): # iterate through previous anno
+    for j in range(dims[0]): 
         Tj = E_t[:, j] 
-        for l in range(dims[1]): # iterate through current anno
+        for l in range(dims[1]): 
             
             counts = ((C==l+1) * doc_start).T.dot(Tj).reshape(-1)    
             alpha[j, l, -1, :] = alpha0[j, l, -1, :] + counts
             
-            for m in range(-1, dims[1]): # iterate through true anno
+            for m in range(dims[1]): 
                 
-                counts = ((C==l+1)[1:,:] * np.invert(doc_start[1:]) * (C==m+1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
+                #counts = ((C==l+1)[1:,:] * np.invert(doc_start[1:]) * (C==m+1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
+                counts = ((C==l+1)[1:,:] * (1-doc_start[1:]) * (C==m+1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
                 
                 alpha[j, l, m, :] = alpha[j, l, m, :] + counts
     

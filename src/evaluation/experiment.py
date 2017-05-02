@@ -5,6 +5,7 @@ Created on Nov 1, 2016
 '''
 
 from src.baselines import ibcc, clustering, majority_voting
+from src.algorithm import bac
 import ConfigParser
 import os, subprocess
 import sklearn.metrics as skm
@@ -95,7 +96,7 @@ class Experiment(object):
         for i in xrange(param_values.shape[0]):
             params = param_values[i,:]
             self.generator.init_crowd_model(params[0], params[1], params[2])
-            ground_truth, annotations, _ = self.generator.generate_dataset(crowd_size=10, save_to_file=True)
+            ground_truth, annotations, _ = self.generator.generate_dataset(num_docs=1, doc_length=100, crowd_size=10, save_to_file=True)
             
             agg = None
             
@@ -103,6 +104,7 @@ class Experiment(object):
             
             if 'majority' in self.method:
                 mv = majority_voting.MajorityVoting(ground_truth, annotations, 3)
+                
                 agg,_ = mv.vote()
                 
                 scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
@@ -118,7 +120,7 @@ class Experiment(object):
                 idx += 1
                 
             if 'mace' in self.method:
-                subprocess.call(['java', '-jar', 'MACE/MACE.jar', 'output/data/annotations.csv'])
+                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
                 
                 agg = np.genfromtxt('prediction', delimiter=',')
             
@@ -132,12 +134,24 @@ class Experiment(object):
                 alpha0[:, :, 5] = 2.0
                 alpha0[np.arange(3),np.arange(3),:] += 1.0
                 #alpha0[np.arange(3),np.arange(3),-1] += 20
-
                 
                 nu0 = np.array([1,1,1], dtype=float)
                 
-                ibc = ibcc.IBCC(nclasses=3,nscores=3,nu0=nu0, alpha0=alpha0)
-                agg = ibc.combine_classifications(annotations,table_format=True).argmax(axis=1)
+                ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
+                agg = ibc.combine_classifications(annotations, table_format=True).argmax(axis=1)
+                
+                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                idx += 1
+                
+            if 'bac' in self.method:
+                
+                alg = bac.BAC(L=2, K=annotations.shape[1])
+                
+                doc_start = np.zeros((annotations.shape[0],1))
+                doc_start[0,0] = 1
+                
+                agg = alg.run(annotations, doc_start).argmax(axis=1)
                 
                 scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
                 scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)

@@ -41,7 +41,7 @@ class MajorityVoting(object):
         # iterate through words
         for i in xrange(self.num_words):
         
-                # count all votes
+            # count all votes
             for j in xrange(self.num_annotators):
                 votes[i, int(self.annotations[i,j])] += self.accuracies[j]
         

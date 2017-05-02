@@ -80,7 +80,33 @@ class Test(unittest.TestCase):
         for t in xrange(20):
             target[t,int(gt[t]-1)] = 1
         
-        assert allclose(target, result, atol=1e-6)
+        assert allclose(target, result, atol=1e-4)
+        
+        
+    def test_post_alpha(self):
+        
+        E_t = np.repeat(np.array([0.5, 0.5])[None,:], 8, axis=0)
+        E_t[2,:] = np.array([1,0])
+        E_t[6,:] = np.array([0,1])
+        C = np.array([[2],[2],[2],[1],[1],[1],[1],[2]])
+        doc_start = np.array([1,0,0,0,1,0,0,0])[:,None]
+        alpha0 = np.zeros((2,2,3,1))
+        alpha0[1,0,0,0] = 5
+        alpha0[1,1,1,0] = 3
+        
+        result = bac.post_alpha(E_t, C, alpha0, doc_start)
+        
+        target = np.ones((2,2,3,1)) * .5
+        
+        target[1,0,0,0] = 6.5
+        target[1,1,1,0] = 3.5
+        target[0,1,1,0] = 1.5
+        
+        # all values should be non-negative
+        assert np.all(result >= 0)
+        # check values
+        assert np.all(result==target)
+        
 
 
 if __name__ == "__main__":

@@ -6,9 +6,9 @@ Created on Nov 29, 2016
 
 import unittest
 import numpy as np
-from baselines import ibcc 
-from expectations import expec_joint_t
-from src.expectations import expec_t
+from src.baselines import ibcc 
+from src.algorithm.expectations import expec_t,expec_joint_t
+from src.algorithm import bac
 
     
 class Test(unittest.TestCase):
@@ -84,7 +84,28 @@ class Test(unittest.TestCase):
         
         assert np.allclose(nu, .25, atol=1e-10)
         assert np.allclose(lnkappa, -np.pi/2 - 3 * np.log(2), atol=1e-10)
-
+        
+    def test_expec_lnPi(self):
+        
+        alpha = np.zeros((2,2,3,1))
+        alpha[0,:,:,0] = [[2,1,2],[2,1,2]]
+        alpha[1,:,:,0] = [[1,2,1],[1,2,1]]
+        
+        lnPi = bac.calc_q_pi(alpha)
+        
+        # print lnPi[0,:,:,0]
+        # print lnPi[1,:,:,0]
+        
+        assert lnPi[0,0,0,0] > lnPi[0,0,1,0]
+        assert lnPi[0,0,2,0] > lnPi[0,0,1,0]
+        assert lnPi[0,1,0,0] > lnPi[0,1,1,0]
+        assert lnPi[0,1,2,0] > lnPi[0,1,1,0]
+        
+        assert lnPi[1,0,0,0] < lnPi[1,0,1,0]
+        assert lnPi[1,0,2,0] < lnPi[1,0,1,0]
+        assert lnPi[1,1,0,0] < lnPi[1,1,1,0]
+        assert lnPi[1,1,2,0] < lnPi[1,1,1,0]
+        
         
     def test_expec_t_trans(self):
         
@@ -117,19 +138,24 @@ class Test(unittest.TestCase):
         
     def test_expec_joint_t(self):
         
-        T = 10
+        T = 3
         
-        lnR_ = np.ones((T,3))
-        lnLambda = np.ones((T,3))
-        lnA = np.ones((4,3))
-        lnPi = np.ones((3,3,4,1))
+        lnR_ = np.log(np.ones((T,3)) * (np.array(range(3)) + 1)[:, None].T)
+        lnLambda = np.log(np.ones((T,3))) 
+        lnA = np.log(np.ones((4,3)))
+        lnPi = np.log(np.ones((3,3,4,1)))
         C = np.ones((T,1)) 
-        doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
+        doc_start = np.array([1,0,0])
         
         result = expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start)
         
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(np.sum(result,-1),-1),1, atol=1e-10)
+        
+        assert np.all(result[0,:-1,:] == 0)
+        assert np.all(result[1,-1,:] == 0)
+        assert np.all(result[2,-1,:] == 0)
+        
         
               
 if __name__ == "__main__":

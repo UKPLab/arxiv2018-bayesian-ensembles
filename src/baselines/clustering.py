@@ -5,7 +5,7 @@ Created on Nov 2, 2016
 '''
 from sklearn.neighbors.kde import KernelDensity
 import sklearn.metrics as skm
-import data.data_utils as dut
+import src.data.data_utils as dut
 import numpy as np
 import scipy.ndimage.filters as filters
 from scipy.optimize import minimize
