@@ -107,16 +107,14 @@ class Experiment(object):
                 
                 agg,_ = mv.vote()
                 
-                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                self.update_scores(scores, i, idx, agg, ground_truth)
                 idx += 1
             
             if 'clustering' in self.method:
                 cl = clustering.Clustering(ground_truth, annotations)
                 agg = cl.run()
             
-                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                self.update_scores(scores, i, idx, agg, ground_truth)
                 idx += 1
                 
             if 'mace' in self.method:
@@ -124,8 +122,7 @@ class Experiment(object):
                 
                 agg = np.genfromtxt('prediction', delimiter=',')
             
-                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                self.update_scores(scores, i, idx, agg, ground_truth)
                 idx += 1
                 
             if 'ibcc' in self.method:
@@ -140,8 +137,8 @@ class Experiment(object):
                 ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
                 agg = ibc.combine_classifications(annotations, table_format=True).argmax(axis=1)
                 
-                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                self.update_scores(scores, i, idx, agg, ground_truth)
+                
                 idx += 1
                 
             if 'bac' in self.method:
@@ -149,16 +146,23 @@ class Experiment(object):
                 alg = bac.BAC(L=2, K=annotations.shape[1])
                 
                 doc_start = np.zeros((annotations.shape[0],1))
-                doc_start[0,0] = 1
+                doc_start[0] = 1
                 
                 agg = alg.run(annotations, doc_start).argmax(axis=1)
                 
-                scores[i,1,idx],scores[i,2,idx],scores[i,3,idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-                scores[i,0,idx] = skm.accuracy_score(ground_truth[:,1], agg)
+                self.update_scores(scores, i, idx, agg, ground_truth)
+                
+                #scores[i,0,idx] = skm.auc(ground_truth[:,1], agg)
                 idx += 1
                 
         
         return scores
+    
+    
+    def update_scores(self, scores, param_idx, method_idx, agg, ground_truth):
+        
+        scores[param_idx, 1, method_idx],scores[param_idx, 2, method_idx],scores[param_idx, 3, method_idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+        scores[param_idx, 0, method_idx] = skm.accuracy_score(ground_truth[:,1], agg)
     
     
     def run(self, param_values, num_runs, show_plot=False, save_plot=False, save_results=False, output_dir='output/'):
@@ -196,7 +200,7 @@ class Experiment(object):
             
         for i in xrange(4):    
             for j in xrange(len(self.method)):
-                plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,i,:,j], 1), yerr=np.var(results[:,i,:,j], 1), label=self.method[j])
+                plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,i,:,j], 1), yerr=np.std(results[:,i,:,j], 1), label=self.method[j])
             
             plt.legend(loc=0)
         
