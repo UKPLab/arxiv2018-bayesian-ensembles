@@ -84,6 +84,10 @@ class BAC(object):
 def calc_q_A(E_t, nu0):
     nu = nu0 + np.reshape(np.sum(E_t,0), nu0.shape)
     q_A = (psi(nu).T - psi(np.sum(nu, -1))).T
+    
+    if np.any(np.isnan(q_A)):
+        print 'nan value encountered'
+    
     return q_A, nu
 
 def calc_q_pi(alpha):
@@ -139,19 +143,27 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
             for l_next in xrange(L):
                 for k in xrange(K):
                     
-                    if C[t,k]==0: # ignore unannotated tokens
-                        continue
-                    
                     if doc_start[t]:
-                        lnS[t, -1, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, -1, k]
+                        
                         flags[t, -1, l_next] = 1
+                        if C[t,k]==0: # ignore unannotated tokens
+                            continue
+                        lnS[t, -1, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, -1, k]
                     else:
-                        lnS[t, l, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
+                        
                         flags[t, l, l_next] = 1
+                        if C[t,k]==0: # ignore unannotated tokens
+                            continue
+                        lnS[t, l, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
     
     #normalise and return  
     s = np.exp(lnS-np.max(lnS, 2)[:,:,None]) * flags         
-    return s / np.sum(np.sum(s, 2), 1)[:,None, None]
+    s_sum = np.sum(np.sum(s, 2), 1)[:,None, None]
+    
+    if np.any(np.isnan(s / s_sum)):
+        print 'nan encountered'
+        
+    return s / s_sum
 
 def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
     T = C.shape[0]
@@ -241,9 +253,18 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
             
         
         # normalise  
-        #lambd = np.exp(lnLambda)      
-        #norm_lambd = lambd
-        #lnLambda[t,:] = lnLambda[t,:]/sum(lnLambda[t,:])                
+        lambd = np.exp(lnLambda[t,:])      
+        norm_lambd = lambd/np.sum(lambd)
+        lnLambda[t,:] = np.log(norm_lambd)               
   
-    return lnLambda            
-            
+    return lnLambda    
+
+
+def most_probable_sequence(lnA, E_t):
+    
+    sequenceProbs = np.zeros(E_t.shape)
+    sequnceProbs = E_t
+    
+    # TODO: implement! (if necessary)
+    
+              

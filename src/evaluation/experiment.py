@@ -143,12 +143,16 @@ class Experiment(object):
                 
             if 'bac' in self.method:
                 
-                alg = bac.BAC(L=2, K=annotations.shape[1])
+                alg = bac.BAC(L=3, K=annotations.shape[1])
                 
                 doc_start = np.zeros((annotations.shape[0],1))
                 doc_start[0] = 1
                 
-                agg = alg.run(annotations, doc_start).argmax(axis=1)
+                E_t = alg.run(annotations+1, doc_start)
+                
+                print E_t,E_t.argmax(axis=1)
+                
+                agg = E_t.argmax(axis=1)
                 
                 self.update_scores(scores, i, idx, agg, ground_truth)
                 
@@ -200,7 +204,7 @@ class Experiment(object):
             
         for i in xrange(4):    
             for j in xrange(len(self.method)):
-                plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,i,:,j], 1), yerr=np.std(results[:,i,:,j], 1), label=self.method[j])
+                plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,i,j,:], 1), yerr=np.std(results[:,i,j,:], 1), label=self.method[j])
             
             plt.legend(loc=0)
         
