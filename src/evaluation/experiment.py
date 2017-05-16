@@ -103,7 +103,7 @@ class Experiment(object):
             idx = 0
             
             if 'majority' in self.method:
-                mv = majority_voting.MajorityVoting(ground_truth, annotations, 3)
+                mv = majority_voting.MajorityVoting(annotations, 3)
                 
                 agg,_ = mv.vote()
                 
@@ -150,7 +150,7 @@ class Experiment(object):
                 
                 E_t = alg.run(annotations+1, doc_start)
                 
-                print E_t,E_t.argmax(axis=1)
+                #print E_t,E_t.argmax(axis=1)
                 
                 agg = E_t.argmax(axis=1)
                 
@@ -173,7 +173,8 @@ class Experiment(object):
         
         results = np.zeros((param_values.shape[0], 4, len(self.method), num_runs))
         print 'Running experiment...'
-        for i in xrange(num_runs):      
+        for i in xrange(num_runs):   
+            print 'Run number:', i   
             results[:,:,:,i] = self.single_run(param_values) 
             
         if save_results:

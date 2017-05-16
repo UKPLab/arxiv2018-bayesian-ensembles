@@ -22,12 +22,11 @@ class MajorityVoting(object):
     num_annotators = None
     num_words = None
 
-    def __init__(self, ground_truth, annotations, num_labels):
+    def __init__(self, annotations, num_labels):
         '''
         Constructor
         '''
         
-        self.ground_truth = ground_truth
         self.annotations = annotations
         self.num_words, self.num_annotators = annotations.shape
         self.num_labels = num_labels
