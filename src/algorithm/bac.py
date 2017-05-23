@@ -5,6 +5,7 @@ Created on Jan 28, 2017
 '''
 
 import numpy as np
+import Decoder
 from scipy.special import psi
 
 class BAC(object):
@@ -35,13 +36,13 @@ class BAC(object):
         self.nscores = L
         self.K = K
         
-        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + np.eye(self.L)[:,:,np.newaxis,np.newaxis] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
         self.nu0 = np.log(np.ones((L+1, L)))
         
         # initialise transition and confusion matrices
         self.lnA = np.log(np.ones((L+1, L))/L)
         
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 2)[:,:,np.newaxis,:])
+        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 2)[:,:,None,:])
         
             
     def run(self, C, doc_start):
@@ -75,11 +76,21 @@ class BAC(object):
             # update E_lnpi
             self.lnPi = calc_q_pi(alpha)
             
-        return self.q_t
+        return self.q_t, self.most_probable_sequence(C, doc_start)
     
             
     def converged(self):
         return (self.iter >= 10)
+    
+    
+    def most_probable_sequence(self, C, doc_start):
+    
+        dec = Decoder.Decoder(np.exp(self.lnA[-1,:])[:,None], np.exp(self.lnA[:-1,:]))
+                          
+        return dec.Decode(C, doc_start, self.lnPi)
+    
+        # TODO: implement! (if necessary)
+    
     
 def calc_q_A(E_t, nu0):
     nu = nu0 + np.reshape(np.sum(E_t,0), nu0.shape)
@@ -141,6 +152,12 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
     for t in xrange(T):
         for l in xrange(L):
             for l_next in xrange(L):
+                
+                if doc_start[t]:
+                    lnS[t, -1, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next]
+                else:
+                    lnS[t, l, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next]
+                    
                 for k in xrange(K):
                     
                     if doc_start[t]:
@@ -148,13 +165,13 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
                         flags[t, -1, l_next] = 1
                         if C[t,k]==0: # ignore unannotated tokens
                             continue
-                        lnS[t, -1, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, -1, k]
+                        lnS[t, -1, l_next] += lnPi[l, int(C[t,k])-1, -1, k]
                     else:
                         
                         flags[t, l, l_next] = 1
                         if C[t,k]==0: # ignore unannotated tokens
                             continue
-                        lnS[t, l, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next] + lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
+                        lnS[t, l, l_next] += lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
     
     #normalise and return  
     s = np.exp(lnS-np.max(lnS, 2)[:,:,None]) * flags         
@@ -257,14 +274,4 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
         norm_lambd = lambd/np.sum(lambd)
         lnLambda[t,:] = np.log(norm_lambd)               
   
-    return lnLambda    
-
-
-def most_probable_sequence(lnA, E_t):
-    
-    sequenceProbs = np.zeros(E_t.shape)
-    sequnceProbs = E_t
-    
-    # TODO: implement! (if necessary)
-    
-              
+    return lnLambda                

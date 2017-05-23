@@ -59,7 +59,7 @@ class MajorityVoting(object):
                 else:
                     self.majority[i] = 1
                     
-        return self.majority, votes
+        return self.majority, (votes/np.sum(votes, axis=1)[:,None])
                     
                     
     def update_accuracies(self):

@@ -68,15 +68,16 @@ class Clustering(object):
         
         
     def run(self):
-        # build function to minimise: negative f1-score of clustering results
-        f = lambda x: -skm.f1_score(self.run_kde(x[0], x[1]), self.ground_truth[:,1], average='macro')
+        
+        # build function to minimise: negative data-log-likelihood
+        f = lambda x: -self.calc_data_likelihood(x)
         
         # build optimisation constraint: bandwidth must be non-negative
-        cons = {'type':'ineq', 'fun':lambda x: x[0]}
+        #cons = {'type':'ineq', 'fun': lambda x: x - 1e-5}
         
-        opt = minimize(f, np.array([1.0, 0.001]), constraints=cons)
+        opt = minimize(f, .5)#, constraints=cons)
         
-        return self.run_kde(opt.x[0], opt.x[1])
+        return self.run_kde(opt.x, 0.001)
 
         
     def run_kde(self, bandwidth, threshold):
@@ -87,7 +88,7 @@ class Clustering(object):
             x = self.spans[self.spans[:,0]==doc][:,1:] 
             
             #print x
-            kde = KernelDensity(bandwidth, kernel='gaussian').fit(x)
+            kde = KernelDensity(np.exp(bandwidth), kernel='gaussian').fit(x)
             
             peaks = find_peaks(kde, self.doc_length, 0.5, threshold)
             
@@ -100,5 +101,19 @@ class Clustering(object):
                 result = np.append(result, iob, 0)
         
         return result
+    
+    def calc_data_likelihood(self, bandwidth):
+        
+        print bandwidth, np.exp(bandwidth)
+        
+        score = 0.0
+        
+        for doc in xrange(int(self.num_docs)):
+            x = self.spans[self.spans[:,0]==doc][:,1:] 
+            kde = KernelDensity(np.exp(bandwidth), kernel='gaussian').fit(x)
+            score += kde.score(x)
+            
+            
+        return score/self.num_docs
     
         
