@@ -118,24 +118,34 @@ which consists of two passes.
 The forward pass starts from $\tau=1$ and computes for each value of $\tau$ the posterior given crowdsourced annotations for tokens up to and including $\tau$. 
 \begin{flalign}
   & \log r^{-}_{i,\tau,j} = \mathbb{E}_q\left[ \log p(t_{i,\tau}=j | \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right] &
+  %\frac{1}{\sum_{j'=1}^L \mathbb{E}_q\left[ \log p(t_{i,\tau}=j', \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right]} &
   \nonumber\\
-  & = \sum_{j'=1}^L \left\{ \log r^{-}_{i,\tau-1,j'} + \mathbb{E}[\log A_{j',j}] \right\}
-  + \sum_{k=1}^K \log\tilde{\pi}^{(k)}_{i,\tau,j}, &
+  & = \frac{1}{Z}\sum_{j'=1}^L \left\{ \log r^{-}_{i,\tau-1,j'} + \mathbb{E}[\log A_{j',j}] \right\}
+  + \sum_{k=1}^K \log\tilde{\pi}^{(k)}_{i,\tau,j}, & \nonumber\\
 \end{flalign}
-where $\bs c_{i,1:\tau}^{(k)}$ is the set of labels from 1 to $\tau$ in document $i$.
-We assume that the label at position, $t_{i,0} = O$, is always an 'outside' label.
-The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the likelihood of the annotations at positions from $\tau+1$ to $T_i$ given the true label $t_{i, \tau}$.
+where $\bs c_{i,1:\tau}^{(k)}$ is the set of labels from 1 to $\tau$ in document $i$, 
+and $Z$ is the normalisation constant obtained by summing the other terms over $j$.
+For the first token in each sequence, we compute $\log r^{-}_{i,1,j}$ as follows:
 \begin{flalign}
-  & \log \lambda_{i,T_i,j} = 1 & \nonumber\\
+  & \log r^{-}_{i,1,j} = \mathbb{E}[\log p(t_{i,1})] + \sum_{k=1}^K \log\tilde{\pi}^{(k)}_{i,1,j}, & 
+\end{flalign}
+where $p(t_{i,1})$ gives the class probability for the first token in the sequence.
+%We assume that the label at position, $t_{i,0} = O$, is always an 'outside' label.
+The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the likelihood of the annotations at positions from $\tau+1$ to $T_i$ given the true label $t_{i, \tau}$, as follows:
+\begin{flalign}
+  & \log \lambda_{i,T_i,j} = 0 & \nonumber\\
   & \log \lambda_{i,\tau,j} = \mathbb{E}_q  \! \left[ \log p(\bs c_{i,\tau+1:T_i}^{(1)},...,\bs c_{i,\tau+1:T_i}^{(K)} | t_{i,\tau}=j) \right]
   & \!\!\!\!\nonumber\\
-  & = \log \lambda_{i,\tau+1,j} + \sum_{j'=1}^L \! \left\{ \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
+  & = \log \lambda_{i,\tau+1,j} + \sum_{j'=1}^L \! \left\{ \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\}, \!\!\!\!\! &
 \end{flalign}
+$\forall\tau<T_i$.
 By taking the exponents and applying Bayes' rule we arrive at the terms $r_{i,\tau,j}$ and $s_{i,\tau,j,j'}$:
 \begin{flalign}
- & r_{i,\tau,j} \propto r^{-}_{i,\tau,j}\lambda_{i,\tau,j} &\\%}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} \\
- & s_{i,\tau,j,j'} \propto r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \exp\! \left(\mathbb{E}[\log A_{j,j'}] 
-+ \log \tilde{\pi}^{(k)}_{i,\tau,j'}  \right) . \!\!\!\! &
+ & r_{i,\tau,j} = \frac{r^{-}_{i,\tau,j}\lambda_{i,\tau,j}}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} &\\%}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} \\
+ & s_{i,\tau,j,j'} = \frac{ r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \mathrm{e}^{\mathbb{E}[\log A_{j,j'}] 
++ \log \tilde{\pi}^{(k)}_{i,\tau,j'}}} {\sum_{j'=1}^L \sum_{j''=1}^L  
+ r^{-}_{i,\tau-1,j'}\lambda_{i,\tau,j''} \mathrm{e}^{\mathbb{E}[\log A_{j',j''}] 
++ \log \tilde{\pi}^{(k)}_{i,\tau,j''}  }} . \!\!\!\! &
 \end{flalign}
 The $r_{i,\tau,j}$ terms are normalised by a sum over $j$, and the  $s_{i,\tau,j,j'}$ terms are 
 normalised by a sum over $j$ and $j'$.
@@ -151,6 +161,9 @@ The optimal variational factor for each row of the ground truth transition matri
 \end{flalign}
 where $N_{j,j'} = \sum_{i=1}^N \sum_{\tau=1}^{T_i} s_{i,\tau,j,j'}$ are pseudo-counts of the 
 number of times that class $j$ follows class $j'$. Since we assumed Dirichlet priors over $\bs A_j$, the variational factor for $\bs A_j$ is Dirichlet distribution with parameters $\bs b_j = \bs\beta_j + \bs N_{j}$, where $\bs N_{j} = \left\{ N_{j,j'} , \forall j' \right\}$.
+The class probability for the first token in each sequence, $p(t_i,1)$, can be treated as an additional
+ row of the transition matrix, $\bs A_{0}$. Dirichlet priors can then be applied in the same manner, and
+ the posterior parameters can also by computed by adding pseudo-counts of the initial class labels.
 
 The VB algorithm requires a term $\mathbb{E}[\log A]$ to update the variational factors for the ground truth labels. We can compute each element using:
 \begin{align}
@@ -229,4 +242,3 @@ Cluster the annotations, e.g. using a mixture model with annotation centre and s
 The level of disagreement in annotations for a particular piece of text can be used to determine whether an annotation is of a insufficient quality to keep (e.g. \cite{sayeed2011crowdsourcing,hsueh2009data}. This can be achieved using the majority voting method, but adjusting the threshold for classifying a token as I/B from 50\% to something higher. 
 
 \emph{Human resolution}: an additional worker selects the correct answer from the annotations provided by the initial set of workers, e.g. \cite{dagan2016specifying}. To reduce costs, the human resolution step could be applied only to text with large amounts of disagreement.
-
