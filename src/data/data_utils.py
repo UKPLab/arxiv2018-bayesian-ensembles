@@ -36,7 +36,7 @@ def extract_spans(iob_document, doc_id=0):
 
 def iob_to_span(iob_data, num_docs):
     spans = np.zeros((0,3))
-    docs = np.split(iob_data, num_docs)
+    docs = np.split(iob_data, int(num_docs))
     for j in xrange(len(docs)):
         for i in xrange(iob_data.shape[1]):
             spans = np.append(spans, extract_spans(docs[j][:,i], doc_id=j), 0)

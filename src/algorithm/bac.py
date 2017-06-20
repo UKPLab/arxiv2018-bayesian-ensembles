@@ -7,6 +7,7 @@ Created on Jan 28, 2017
 import numpy as np
 import Decoder
 from scipy.special import psi
+from scipy.misc import logsumexp
 
 class BAC(object):
     '''
@@ -21,10 +22,10 @@ class BAC(object):
     
     nu0 = None
     
-    lnA = None
-    lnPi = None
+    lnA = None # transition matrix
+    lnPi = None # worker confusion matrices
     
-    iter = 0
+    iter = 0 # iteration
     
 
     def __init__(self, L=3, K=5):
@@ -41,8 +42,12 @@ class BAC(object):
         
         # initialise transition and confusion matrices
         self.lnA = np.log(np.ones((L+1, L))/L)
+        self.lnA[[1,3],0] = np.nextafter(0,1)
+        #self.lnA[1,0] = np.nextafter(0,1)
         
         self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 2)[:,:,None,:])
+        self.lnPi[:,0,[3,1],:] = np.nextafter(0,1)
+        
         
             
     def run(self, C, doc_start):
@@ -97,7 +102,7 @@ def calc_q_A(E_t, nu0):
     q_A = (psi(nu).T - psi(np.sum(nu, -1))).T
     
     if np.any(np.isnan(q_A)):
-        print 'nan value encountered'
+        print 'calc_q_A: nan value encountered!'
     
     return q_A, nu
 
@@ -178,7 +183,7 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
     s_sum = np.sum(np.sum(s, 2), 1)[:,None, None]
     
     if np.any(np.isnan(s / s_sum)):
-        print 'nan encountered'
+        print 'expec_joint_t: nan value encountered!'
         
     return s / s_sum
 
@@ -197,11 +202,14 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
             
             if doc_start[t]:
                 # compute values for document start
+                
+                lnR_[t,l] += initProbs[l] 
+                
                 for k in xrange(K):
                     # skip unannotated tokens
                     if skip and C[t,k] == 0:
                         continue
-                    lnR_[t,l] += initProbs[l] + lnPi[l, int(C[t,k])-1, -1, k]
+                    lnR_[t,l] += lnPi[l, int(C[t,k])-1, -1, k]
             else:
                 for l_prev in xrange(L):
                     lnR_[t,l] += np.exp(lnR_[t-1,l_prev] + lnA[l_prev,l])
@@ -215,10 +223,11 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
                     
                     lnR_[t,l] += lnPi[l,int(C[t,k])-1,int(C[t-1,k])-1, k]
         
+        
+        
         # normalise
-        r_ = np.exp(lnR_[t,:])
-        normR_ = r_/np.sum(r_)    
-        lnR_[t,:] = np.log(normR_) #lnR_[t,:]/lnR_[t,:]
+        
+        lnR_[t,:] = lnR_[t,:] - logsumexp(lnR_[t,:])
             
     return lnR_        
 

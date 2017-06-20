@@ -25,12 +25,14 @@ class DataGenerator(object):
     output_dir = 'output/data/'
     
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, seed=None):
         '''
         Constructor
         '''
         self.config_file = config_file 
         self.read_config_file()
+        if not seed==None:
+            np.random.seed(seed)
         
         
     def read_config_file(self):

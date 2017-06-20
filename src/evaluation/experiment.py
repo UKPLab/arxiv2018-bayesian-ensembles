@@ -26,11 +26,21 @@ class Experiment(object):
     param_idx = None
     param_fixed = None
     
-    param_names = ['acc_bias','miss_bias','short_bias']
+    acc_bias = None
+    miss_bias = None
+    short_bias = None
+    
+    param_names = ['acc_bias','miss_bias','short_bias','num_docs', 'doc_length','crowd_size']
+    score_names = ['accuracy', 'precision','recall','f1-score','auc-score', 'cross-entropy-error']
     
     method = None
     
     num_runs = None
+    doc_length = None
+    crowd_size = None
+    num_docs = None
+    
+    num_classes = None
     
     output_dir = None
     
@@ -60,26 +70,23 @@ class Experiment(object):
         # set up parameters
         parameters = dict(parser.items('parameters'))
         self.param_idx = int(parameters['idx'].split('#')[0].strip())
-        param_values = np.array(eval(parameters['values'].split('#')[0].strip()))
-        param_fixed = eval(parameters['fixed'].split('#')[0].strip())
+        self.param_values = np.array(eval(parameters['values'].split('#')[0].strip()))
         
-        self.param_values = np.ones((len(param_values), 3))
+        self.acc_bias = int(parameters['acc_bias'].split('#')[0].strip())
+        self.miss_bias = int(parameters['miss_bias'].split('#')[0].strip())
+        self.short_bias = int(parameters['short_bias'].split('#')[0].strip())
+        
         
         self.method = eval(parameters['method'].split('#')[0].strip())
         
         print self.method
-        
-        idx = 0
-        
-        while idx < 3:
-            if idx == self.param_idx:
-                self.param_values[:,idx] = param_values
-            else:
-                self.param_values[:,idx] *= param_fixed.pop(0)
                 
-            idx += 1
         
         self.num_runs = int(parameters['num_runs'].split('#')[0].strip())
+        self.doc_length = int(parameters['doc_length'].split('#')[0].strip())
+        self.crowd_size = int(parameters['crowd_size'].split('#')[0].strip())
+        self.num_classes = int(parameters['num_classes'].split('#')[0].strip())
+        self.num_docs = int(parameters['num_docs'].split('#')[0].strip())
         
         # set up output
         parameters = dict(parser.items('output'))
@@ -91,19 +98,34 @@ class Experiment(object):
         
     def single_run(self, param_values):
         
-        scores = np.zeros((param_values.shape[0], 8, len(self.method)))
+        scores = np.zeros((self.param_values.shape[0], len(self.score_names), len(self.method)))
        
         for i in xrange(param_values.shape[0]):
-            params = param_values[i,:]
-            self.generator.init_crowd_model(params[0], params[1], params[2])
-            ground_truth, annotations, _ = self.generator.generate_dataset(num_docs=1, doc_length=100, crowd_size=10, save_to_file=True)
+            # update tested parameter
+            if self.param_idx == 0:
+                self.acc_bias = self.param_values[i]
+            elif self.param_idx == 1:
+                self.miss_bias = self.param_values[i]
+            elif self.param_idx == 2:
+                self.short_bias = self.param_values[i]
+            elif self.param_idx == 3:
+                self.num_docs = self.param_values[i]
+            elif self.param_idx == 4:
+                self.doc_length = self.param_values[i]
+            elif self.param_idx == 5:
+                self.crowd_size = self.param_values[i]
+            else:
+                print 'Encountered invalid test index!'
+                
+            self.generator.init_crowd_model(self.acc_bias, self.miss_bias, self.short_bias)
+            ground_truth, annotations, _ = self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length, crowd_size=self.crowd_size, save_to_file=True)
             
             agg = None
             
             idx = 0
             
             if 'majority' in self.method:
-                mv = majority_voting.MajorityVoting(annotations, 3)
+                mv = majority_voting.MajorityVoting(annotations, self.num_classes)
                 
                 agg, probs = mv.vote()
                 
@@ -114,7 +136,7 @@ class Experiment(object):
                 cl = clustering.Clustering(ground_truth, annotations)
                 agg = cl.run()
                 
-                probs = np.zeros((ground_truth.shape[0], 3))
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
                 
                 for k in xrange(ground_truth.shape[0]):
                     #print agg.shape
@@ -128,14 +150,16 @@ class Experiment(object):
             if 'mace' in self.method:
                 subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
                 
-                agg = np.genfromtxt('prediction', delimiter=',')
+                agg = np.genfromtxt('output/data/mace.prediction', delimiter=',')
+                
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
             
-                self.update_scores(scores, i, idx, agg, ground_truth)
+                self.update_scores(scores, i, idx, agg, ground_truth, probs)
                 idx += 1
                 
             if 'ibcc' in self.method:
                 
-                alpha0 = np.ones((3,3,10))
+                alpha0 = np.ones((self.num_classes,self.num_classes,10))
                 alpha0[:, :, 5] = 2.0
                 alpha0[np.arange(3),np.arange(3),:] += 1.0
                 #alpha0[np.arange(3),np.arange(3),-1] += 20
@@ -145,7 +169,9 @@ class Experiment(object):
                 ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
                 agg = ibc.combine_classifications(annotations, table_format=True).argmax(axis=1)
                 
-                self.update_scores(scores, i, idx, agg, ground_truth)
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                
+                self.update_scores(scores, i, idx, agg, ground_truth, probs)
                 
                 idx += 1
                 
@@ -176,15 +202,16 @@ class Experiment(object):
         
         scores[param_idx, 0, method_idx] = skm.accuracy_score(ground_truth[:,1], agg)
         scores[param_idx, 1, method_idx],scores[param_idx, 2, method_idx],scores[param_idx, 3, method_idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
-        scores[param_idx, 4, method_idx] = skm.roc_auc_score(ground_truth[:,1]==0, agg==0)
-        scores[param_idx, 5, method_idx] = skm.roc_auc_score(ground_truth[:,1]==1, agg==1)
-        scores[param_idx, 6, method_idx] = skm.roc_auc_score(ground_truth[:,1]==2, agg==2)
-        scores[param_idx, 7, method_idx] = skm.log_loss(ground_truth[:,1], probs, eps=1e-100)
+        auc_score = skm.roc_auc_score(ground_truth[:,1]==0, agg==0)*np.sum(ground_truth[:,1]==0)
+        auc_score += skm.roc_auc_score(ground_truth[:,1]==1, agg==1)*np.sum(ground_truth[:,1]==1)
+        auc_score += skm.roc_auc_score(ground_truth[:,1]==2, agg==2)*np.sum(ground_truth[:,1]==2)
+        scores[param_idx, 4, method_idx] = auc_score/float(ground_truth.shape[0])
+        scores[param_idx, 5, method_idx] = skm.log_loss(ground_truth[:,1], probs, eps=1e-100)
     
     
     def run(self, param_values, num_runs, show_plot=False, save_plot=False, save_results=False, output_dir='output/'):
         
-        results = np.zeros((param_values.shape[0], 8, len(self.method), num_runs))
+        results = np.zeros((param_values.shape[0], len(self.score_names), len(self.method), num_runs))
         print 'Running experiment...'
         for i in xrange(num_runs):   
             print 'Run number:', i   
@@ -211,27 +238,26 @@ class Experiment(object):
     
     
     def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/'):
+        
         if save_plot and not os.path.exists(output_dir):
             os.makedirs(output_dir)
             
-        score_names = ['accuracy', 'precision','recall','f1-score','auc-score (label 0)','auc-score (label 1)','auc-score (label 2)', 'cross-entropy-error']
-            
-        for i in xrange(len(score_names)):    
+        for i in xrange(len(self.score_names)):    
             for j in xrange(len(self.method)):
-                plt.errorbar(self.param_values[:, self.param_idx], np.mean(results[:,i,j,:], 1), yerr=np.std(results[:,i,j,:], 1), label=self.method[j])
+                plt.errorbar(self.param_values, np.mean(results[:,i,j,:], 1), yerr=np.std(results[:,i,j,:], 1), label=self.method[j])
                 
             
             plt.legend(loc=0)
         
             plt.title('parameter influence')
-            plt.ylabel(score_names[i])
+            plt.ylabel(self.score_names[i])
             plt.xlabel(self.param_names[self.param_idx])
             
             plt.ylim([0,np.max([1,np.max(results[:,i,:,:])])])
         
             if save_plot:
                 print 'Saving plot...'
-                plt.savefig(self.output_dir + 'plot_' + score_names[i] + '.png') 
+                plt.savefig(self.output_dir + 'plot_' + self.score_names[i] + '.png') 
         
             if show_plot: 
                 plt.show()
