@@ -25,10 +25,16 @@ class BAC(object):
     lnA = None # transition matrix
     lnPi = None # worker confusion matrices
     
+    q_t = None
+    q_t_old = None
+    
     iter = 0 # iteration
     
+    max_iter = None
+    eps = None
+    
 
-    def __init__(self, L=3, K=5):
+    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5):
         '''
         Constructor
         '''
@@ -38,7 +44,9 @@ class BAC(object):
         self.K = K
         
         self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
-        self.nu0 = np.log(np.ones((L+1, L)))
+        
+        self.nu0 = np.ones((L+1, L))
+        self.nu0[[1,3],0] = np.nextafter(0,1)
         
         # initialise transition and confusion matrices
         self.lnA = np.log(np.ones((L+1, L))/L)
@@ -49,6 +57,9 @@ class BAC(object):
         self.lnPi[:,0,[3,1],:] = np.nextafter(0,1)
         
         
+        self.max_iter = max_iter
+        self.eps = eps
+        
             
     def run(self, C, doc_start):
         
@@ -57,21 +68,24 @@ class BAC(object):
         
         doc_start = doc_start.astype(bool)
         
+        self.iter = 0
+        self.q_t_old = np.zeros((C.shape[0], self.L))
+        self.q_t = np.ones((C.shape[0], self.L))
+        
         while not self.converged():
             
             self.iter += 1
-            
-            #print self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
             r_ = forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start)
             lambd = backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start)
             
             # update q_t
+            self.q_t_old = self.q_t
             self.q_t = expec_t(r_, lambd)
             
             # update q_t_joint
-            self.q_t_joint = expec_joint_t(r_, lambd, self.lnA[0:self.L,:], self.lnPi, C, doc_start)
+            self.q_t_joint = expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start)
             
             # update E_lnA
             self.lnA, nu = calc_q_A(self.q_t_joint, self.nu0)
@@ -85,7 +99,7 @@ class BAC(object):
     
             
     def converged(self):
-        return (self.iter >= 10)
+        return ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps)
     
     
     def most_probable_sequence(self, C, doc_start):
@@ -159,9 +173,9 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
             for l_next in xrange(L):
                 
                 if doc_start[t]:
-                    lnS[t, -1, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next]
+                    lnS[t, -1, l_next] += lnLambda[t, l_next] + lnA[-1, l_next]
                 else:
-                    lnS[t, l, l_next] += lnR_[t, l] + lnLambda[t, l_next] + lnA[l, l_next]
+                    lnS[t, l, l_next] += lnR_[t-1, l] + lnLambda[t, l_next] + lnA[l, l_next]
                     
                 for k in xrange(K):
                     
@@ -179,13 +193,14 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
                         lnS[t, l, l_next] += lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
     
     #normalise and return  
-    s = np.exp(lnS-np.max(lnS, 2)[:,:,None]) * flags         
-    s_sum = np.sum(np.sum(s, 2), 1)[:,None, None]
+        lnS[t,:,:] = lnS[t,:,:] - logsumexp(lnS[t,:,:])
+    #s = np.exp(lnS-np.max(lnS,2)[:,:,None]) * flags     
+    #s_sum = np.sum(np.sum(s, 2), 1)[:,None, None]
     
-    if np.any(np.isnan(s / s_sum)):
-        print 'expec_joint_t: nan value encountered!'
+    #if np.any(np.isnan(s / s_sum)):
+    #    print 'expec_joint_t: nan value encountered!'
         
-    return s / s_sum
+    return np.exp(lnS)#s / s_sum
 
 def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
     T = C.shape[0]
@@ -279,8 +294,10 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
             
         
         # normalise  
-        lambd = np.exp(lnLambda[t,:])      
-        norm_lambd = lambd/np.sum(lambd)
-        lnLambda[t,:] = np.log(norm_lambd)               
+        #lambd = np.exp(lnLambda[t,:])      
+        #norm_lambd = lambd/np.sum(lambd)
+        #lnLambda[t,:] = np.log(norm_lambd)
+        
+        lnLambda[t,:] = lnLambda[t,:] - logsumexp(lnLambda[t,:])                
   
     return lnLambda                

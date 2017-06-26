@@ -11,6 +11,7 @@ import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.distutils.system_info import agg2_info
 
 
 class Experiment(object):
@@ -31,7 +32,7 @@ class Experiment(object):
     short_bias = None
     
     param_names = ['acc_bias','miss_bias','short_bias','num_docs', 'doc_length','crowd_size']
-    score_names = ['accuracy', 'precision','recall','f1-score','auc-score', 'cross-entropy-error']
+    score_names = ['accuracy', 'precision','recall','f1-score','auc-score', 'cross-entropy-error','count error', 'number of invalid labels', 'mean length error']
     
     method = None
     
@@ -122,78 +123,54 @@ class Experiment(object):
             
             agg = None
             
-            idx = 0
+            for method_idx in xrange(len(self.method)):
             
-            if 'majority' in self.method:
-                mv = majority_voting.MajorityVoting(annotations, self.num_classes)
+                if self.method[method_idx] == 'majority':
+                    mv = majority_voting.MajorityVoting(annotations, self.num_classes)
                 
-                agg, probs = mv.vote()
-                
-                self.update_scores(scores, i, idx, agg, ground_truth, probs)
-                idx += 1
+                    agg, probs = mv.vote()
             
-            if 'clustering' in self.method:
-                cl = clustering.Clustering(ground_truth, annotations)
-                agg = cl.run()
+                if self.method[method_idx] == 'clustering':
+                    cl = clustering.Clustering(ground_truth, annotations)
+                    agg = cl.run()
                 
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                    probs = np.zeros((ground_truth.shape[0], self.num_classes))
                 
-                for k in xrange(ground_truth.shape[0]):
-                    #print agg.shape
-                    probs[k,int(agg[k])] = 1
+                    for k in xrange(ground_truth.shape[0]):
+                        probs[k,int(agg[k])] = 1      
+                
+                if self.method[method_idx] == 'mace':
+                    subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
+                
+                    agg = np.genfromtxt('output/data/mace.prediction', delimiter=',')
+                
+                    probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                
+                if self.method[method_idx] == 'ibcc':
+                
+                    alpha0 = np.ones((self.num_classes,self.num_classes,10))
+                    alpha0[:, :, 5] = 2.0
+                    alpha0[np.arange(3),np.arange(3),:] += 1.0
+                
+                    nu0 = np.array([1,1,1], dtype=float)
+                
+                    ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
+                    agg = ibc.combine_classifications(annotations, table_format=True).argmax(axis=1)
+                
+                    probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                
+                if self.method[method_idx] == 'bac':
+                
+                    alg = bac.BAC(L=3, K=annotations.shape[1])
+                
+                    doc_start = np.zeros((annotations.shape[0],1))
+                    doc_start[0] = 1
+                
+                    E_t, most_prob = alg.run(annotations+1, doc_start)
+                
+                    agg = E_t.argmax(axis=1)
                     
-                #print probs
-            
-                self.update_scores(scores, i, idx, agg, ground_truth, probs)
-                idx += 1
-                
-            if 'mace' in self.method:
-                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
-                
-                agg = np.genfromtxt('output/data/mace.prediction', delimiter=',')
-                
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
-            
-                self.update_scores(scores, i, idx, agg, ground_truth, probs)
-                idx += 1
-                
-            if 'ibcc' in self.method:
-                
-                alpha0 = np.ones((self.num_classes,self.num_classes,10))
-                alpha0[:, :, 5] = 2.0
-                alpha0[np.arange(3),np.arange(3),:] += 1.0
-                #alpha0[np.arange(3),np.arange(3),-1] += 20
-                
-                nu0 = np.array([1,1,1], dtype=float)
-                
-                ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
-                agg = ibc.combine_classifications(annotations, table_format=True).argmax(axis=1)
-                
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                
-                self.update_scores(scores, i, idx, agg, ground_truth, probs)
-                
-                idx += 1
-                
-            if 'bac' in self.method:
-                
-                alg = bac.BAC(L=3, K=annotations.shape[1])
-                
-                doc_start = np.zeros((annotations.shape[0],1))
-                doc_start[0] = 1
-                
-                E_t, most_prob = alg.run(annotations+1, doc_start)
-                
-                agg = E_t.argmax(axis=1)
-                
-                #print 'most_prob', most_prob
-                #print 'argmax', agg
-                #print np.where(agg!=most_prob)
-                self.update_scores(scores, i, idx, agg, ground_truth, E_t)
-                
-                #scores[i,0,idx] = skm.auc(ground_truth[:,1], agg)
-                idx += 1
-                
+                self.update_scores(scores, i, method_idx, agg, ground_truth, E_t)
         
         return scores
     
@@ -201,12 +178,15 @@ class Experiment(object):
     def update_scores(self, scores, param_idx, method_idx, agg, ground_truth, probs):
         
         scores[param_idx, 0, method_idx] = skm.accuracy_score(ground_truth[:,1], agg)
-        scores[param_idx, 1, method_idx],scores[param_idx, 2, method_idx],scores[param_idx, 3, method_idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, average='macro')
+        scores[param_idx, 1, method_idx],scores[param_idx, 2, method_idx],scores[param_idx, 3, method_idx],_ = skm.precision_recall_fscore_support(ground_truth[:,1], agg, pos_label=0, average='macro')
         auc_score = skm.roc_auc_score(ground_truth[:,1]==0, agg==0)*np.sum(ground_truth[:,1]==0)
         auc_score += skm.roc_auc_score(ground_truth[:,1]==1, agg==1)*np.sum(ground_truth[:,1]==1)
         auc_score += skm.roc_auc_score(ground_truth[:,1]==2, agg==2)*np.sum(ground_truth[:,1]==2)
         scores[param_idx, 4, method_idx] = auc_score/float(ground_truth.shape[0])
         scores[param_idx, 5, method_idx] = skm.log_loss(ground_truth[:,1], probs, eps=1e-100)
+        scores[param_idx, 6, method_idx] = abs_count_error(agg, ground_truth[:,1])
+        scores[param_idx, 7, method_idx] = num_invalid_labels(agg)
+        scores[param_idx, 8, method_idx] = mean_length_error(agg, ground_truth[:,1])
     
     
     def run(self, param_values, num_runs, show_plot=False, save_plot=False, save_results=False, output_dir='output/'):
@@ -259,8 +239,31 @@ class Experiment(object):
                 print 'Saving plot...'
                 plt.savefig(self.output_dir + 'plot_' + self.score_names[i] + '.png') 
         
-            if show_plot: 
+            if show_plot:
                 plt.show()
-        
-        
-        
+
+'''
+
+'''        
+def abs_count_error(pred, target):
+    return np.abs(len(pred==2) - len(target==2))
+
+'''
+
+'''        
+def num_invalid_labels(pred):    
+    return len(np.where(pred[np.r_[0,np.where(pred[:-1]==1)[0] + 1]]==0)[0])
+     
+
+'''
+
+'''        
+def mean_length_error(pred, target):
+    # delete 'O'-tokens
+    pred = np.delete(pred, np.where(pred==1)[0])
+    target = np.delete(target, np.where(target==1)[0])
+
+    return np.abs(np.mean(np.array([len(x) for x in np.split(target, np.where(target==2)[0])[1:]])) - np.mean(np.array([len(x) for x in np.split(pred, np.where(pred==2)[0])[1:]])))
+
+
+            

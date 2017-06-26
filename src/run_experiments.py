@@ -6,7 +6,7 @@ Created on Oct 19, 2016
 from src.data.data_generator import DataGenerator
 from src.evaluation.experiment import Experiment
 
-e = Experiment(DataGenerator('config/data.ini', seed=0), 'config/experiment.ini')
+e = Experiment(DataGenerator('config/data.ini', seed=42), 'config/experiment.ini')
 
 result = e.run_config()
 
