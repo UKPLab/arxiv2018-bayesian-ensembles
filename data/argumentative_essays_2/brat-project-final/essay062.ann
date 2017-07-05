@@ -1,0 +1,34 @@
+T1	MajorClaim 324 397	Universities must admit both in equal numbers, depending on their choices
+T2	MajorClaim 1686 1769	both genders have equal rights and universities should accept them in equal numbers
+T3	Claim 1771 1832	Equality in education will help in development of the society
+A1	Stance T3 For
+T4	Premise 1834 1918	Both genders are the fulcrum of the society and none of them is superior or inferior
+R1	supports Arg1:T4 Arg2:T3	
+T5	Claim 534 586	females should be given equal opportunities as males
+A2	Stance T5 For
+T6	Premise 469 511	The whole world aims for women empowerment
+T7	Premise 399 467	Right to education is a basic human right of both, males and females
+T8	Premise 588 740	When universities will accept them in equal number, both genders will be able to nurture their talent and a healthy competitive environment will develop
+R2	supports Arg1:T6 Arg2:T5	
+R3	supports Arg1:T7 Arg2:T5	
+R4	supports Arg1:T8 Arg2:T5	
+T9	Claim 1134 1257	Universities giving both genders equal opportunities, will prepare them for future challenges and will help in the long run
+A3	Stance T9 For
+T10	Premise 742 801	Co-education helps both genders to gel well with each other
+T11	Premise 803 862	It helps them how to behave and cooperate and work together
+T12	Premise 877 985	students studying in boy's colleges do not generally know how to talk to a female or behave in front of them
+T13	Premise 1006 1066	females studying in girl's colleges are too shy to face boys
+T14	Premise 1068 1132	Co-education will help to eradicate this kind of demerit in both
+R5	supports Arg1:T12 Arg2:T11	
+R6	supports Arg1:T13 Arg2:T11	
+R7	supports Arg1:T14 Arg2:T11	
+R8	supports Arg1:T10 Arg2:T9	
+R9	supports Arg1:T11 Arg2:T9	
+T15	Claim 1274 1396	some male chauvinists think that women are incapable in particular fields, like maths, mechanical engineering, defense etc
+A4	Stance T15 Against
+T16	Premise 1398 1483	This kind of gender biased approach is detrimental for the development of the society
+T17	Premise 1501 1546	women have proved their mettle in every field
+T18	Premise 1548 1656	Women like Margaret Thatcher, Indira Gandhi, Mari Curie etc., are symbols of women's intelligence and skills
+R10	attacks Arg1:T16 Arg2:T15	
+R11	supports Arg1:T17 Arg2:T16	
+R12	supports Arg1:T18 Arg2:T16	

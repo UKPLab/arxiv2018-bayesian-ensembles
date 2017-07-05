@@ -1,0 +1,32 @@
+T1	MajorClaim 300 346	saving some part of your earnings is essential
+T2	Claim 368 522	you can not predict future developments, neither in your professional nor your personal life, furthermore with savings you can fulfill some of your dreams
+A1	Stance T2 For
+T3	Premise 925 1002	they had to move back in with their families and they lost their independence
+T4	Premise 890 920	They could not afford the rent
+R1	supports Arg1:T4 Arg2:T3	
+T5	Premise 766 855	I remember some friends who lost their jobs recently due to the economic crisis in Europe
+T6	Claim 595 753	The global economic conditions in these days are tough and there are many unpredictable factors that make it necessary to have some money on your bank account
+A2	Stance T6 For
+T7	Premise 531 593	there are several uncertainties about your professional future
+R2	supports Arg1:T7 Arg2:T6	
+R3	supports Arg1:T5 Arg2:T6	
+R4	supports Arg1:T3 Arg2:T6	
+T8	Claim 1082 1192	It is possible that in the future you have some unavoidable expenses that you could not afford without savings
+A3	Stance T8 For
+T9	Premise 1017 1080	you can not be sure about the development in your personal life
+R5	supports Arg1:T9 Arg2:T8	
+T10	Premise 1194 1318	Back in university I remember a friend of mine who had just little savings and he had to deal with a major repair of his car
+R6	supports Arg1:T10 Arg2:T8	
+T11	Premise 1320 1355	He could not afford the maintenance
+T12	Premise 1359 1376	he had to sell it
+R7	supports Arg1:T11 Arg2:T12	
+R8	supports Arg1:T12 Arg2:T8	
+T13	Claim 1462 1622	Working hard and saving money for later on investments is a great way of getting a satisfying feeling and to reward yourself for something you have accomplished
+A4	Stance T13 For
+T14	Premise 1388 1460	with savings you can afford some luxurious goods and fulfill your dreams
+R9	supports Arg1:T14 Arg2:T13	
+T15	Premise 1638 1725	I made a month-long backpack trip through Southeast Asia last summer with my girlfriend
+T16	Premise 1727 1792	Without our savings we could not have pursued our long-time dream
+R10	supports Arg1:T15 Arg2:T13	
+R11	supports Arg1:T16 Arg2:T13	
+T17	MajorClaim 1863 1919	there is no other choice than saving money for some time

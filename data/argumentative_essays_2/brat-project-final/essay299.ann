@@ -1,0 +1,26 @@
+T1	MajorClaim 354 420	its better that people learn foreign language in their own country
+T2	MajorClaim 1648 1720	it is better for people to learn a foreign language in their own country
+T3	Claim 1722 1816	It is cost effective and there is a pool of opportunities available now to accomplish the same
+A1	Stance T3 For
+T4	Premise 666 750	In the earlier periods, it was not easy to find a teacher to learn a foreign languge
+T5	Claim 756 840	with the advent of globalization, one can easily find a teacher in their own country
+T6	Premise 855 987	in Indian sub-continent there are large number of centers opened for getting trained in variety of languages like french, german etc
+T7	Claim 519 605	it is not possible for everyone to visit a foreign country to learn a foreign language
+A2	Stance T7 For
+T8	Premise 609 664	it requires large amount of money and legal formalities
+R4	supports Arg1:T8 Arg2:T7	
+A3	Stance T5 For
+R1	attacks Arg1:T4 Arg2:T5	
+R2	supports Arg1:T6 Arg2:T5	
+T9	Claim 1184 1237	it is very easy to learn a foreign in our own country
+A4	Stance T9 For
+T10	Premise 1094 1178	Students can choose any language from the set of languages available at a university
+T11	Premise 997 1092	colleges and universities have introduced foreign language course as a part of their curriculum
+R3	supports Arg1:T10 Arg2:T9	
+R5	supports Arg1:T11 Arg2:T9	
+T12	Premise 1245 1341	highly qualified foreign language teachers are easily accessible in various schools and colleges
+R6	supports Arg1:T12 Arg2:T9	
+T13	Premise 1472 1635	A large number of foreign language courses are available online and there are various forums where people can discuss their problems on different foreign languages
+T14	Claim 1350 1470	technology has also played a great role in reducing the separation between learning a foreign languge in our own country
+A5	Stance T14 For
+R7	supports Arg1:T13 Arg2:T14	

@@ -1,0 +1,18 @@
+T1	MajorClaim 274 387	governments should devote a greater portion of their health budgets to health education and means for precautions
+T2	MajorClaim 1619 1812	a greater proportion of the budget should be allotted to education and prevention issues in comparison with treatment due to achieve more effective health system and greater level of well-being
+T3	Claim 736 796	society should be educated and became aware of health issues
+A1	Stance T3 For
+T4	Premise 541 723	decreasing the number of patients in the health system can lead hospitals and healthcare centers to be managed effectively which will result in better treatments for current patients
+R1	supports Arg1:T4 Arg2:T3	
+T5	Premise 805 944	the potential precautions on the way of illnesses can be taken instead of trying to provide treatment for the increasing number of patients
+R2	supports Arg1:T5 Arg2:T3	
+T6	Premise 389 524	The first reason why education and preventative measures should receive a greater budget is the potential improvements in health system
+R3	supports Arg1:T6 Arg2:T3	
+T7	Premise 1112 1220	there is nothing more important than health in a human's life and the happiness and welfare come with health
+T8	Premise 1233 1388	a government's role should be providing means that lead its citizens to learn how to prevent from potential illness that can cause misery in people's lives
+T9	Premise 1403 1602	the marketing campaign of Ministry of Health in Turkey which aimed smoking problem among the youth increased the well-being of those who quit smoking and adapted a better lifestyle after the campaign
+T10	Claim 968 1095	governments should allocate more budget on prevention from illness and providing health education is the welfare of the society
+A3	Stance T10 For
+R4	supports Arg1:T7 Arg2:T8	
+R5	supports Arg1:T9 Arg2:T8	
+R6	supports Arg1:T8 Arg2:T10	

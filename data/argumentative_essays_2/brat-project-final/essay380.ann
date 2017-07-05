@@ -1,0 +1,22 @@
+T1	MajorClaim 302 430	While many believe that petrol and diesel fuel should be charged with the highest taxation, I strongly disagree with this notion
+T2	MajorClaim 1651 1818	it disadvantages may outweigh its advantages with regard to economic and politic issues, making it advisable to seek another options to reduce the use of personal cars
+T3	Claim 1587 1640	higher fuel and petrol cost has its own pros and cons
+A1	Stance T3 Against
+T4	Claim 557 692	Taxation may have tackled the environmental issue simply by diverting people to public transportations such as trains, buses or ferries
+A2	Stance T4 Against
+T5	Premise 463 555	if petrol and fuel taxation are raised, people might hesitate choosing a personal automobile
+R1	supports Arg1:T5 Arg2:T4	
+T6	Premise 708 837	for those who have already afforded a car, there is a likelihood it is restraint from usage on long journeys or to crowded cities
+R2	supports Arg1:T6 Arg2:T4	
+T7	Premise 936 1034	the more costly petrol is, the higher the price of necessary product: rice, meat or even vegetable
+T8	Claim 1050 1165	people have to turn to cheaper alternatives, which might cause the abundance in goods and later on, economic crisis
+A3	Stance T8 For
+T9	Premise 848 919	taxation on flamable resources might backfire by conducing to inflation
+R3	supports Arg1:T9 Arg2:T8	
+R4	supports Arg1:T7 Arg2:T8	
+T10	Premise 1319 1464	Suppose that the those countries cut down on its oil support, other nations will have to pay more as well as release beneficial policies for them
+T11	Premise 1466 1571	America, for example, has recently drawn its intervention in Russian crisis only due to the influx of oil
+T12	Claim 1218 1317	countries that import oil will be more dependent on the exporters, both politically and financially
+A4	Stance T12 For
+R5	supports Arg1:T10 Arg2:T12	
+R6	supports Arg1:T11 Arg2:T12	

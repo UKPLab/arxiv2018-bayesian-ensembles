@@ -1,0 +1,48 @@
+T1	MajorClaim 64 124	Many circumstances that I experienced change the way I think
+T2	MajorClaim 1584 1681	experiences that shape my thinking and the way to live my life are teach me to be a better person
+T3	Claim 1881 1948	These experiences taught me to change my life to be a better person
+A1	Stance T3 For
+T4	Premise 1691 1734	I could find a better way to solve problems
+T5	Premise 1745 1804	experiences could shape me to be more aware about my health
+T6	Premise 1816 1879	these experiences could make me to make plan for my future life
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T6 Arg2:T3	
+R3	supports Arg1:T5 Arg2:T3	
+T7	Claim 126 189	There are many experiences that are improve my life in many way
+A2	Stance T7 For
+T8	Premise 204 327	I could improve the way that I solve problems, improve how I take care of my health, and improve to plan my life for future
+R4	supports Arg1:T8 Arg2:T7	
+T9	Premise 478 555	in math class, the way that we learnt to find an answer by doing step by step
+T10	Premise 557 637	Start with find cause of problem and the way to do research to solve the problem
+T11	Premise 639 684	I could adapt this method to use my real life
+T12	Premise 686 763	When I want to go to somewhere, I try to find the way to reach to destination
+T13	Premise 765 828	Which ways are shortest and which ways are less consume my time
+T14	Premise 830 873	I could find a better way to solve problems
+T15	Claim 387 463	studying in university taught me to be more prudent person to solve problems
+A3	Stance T15 For
+R5	supports Arg1:T9 Arg2:T15	
+R6	supports Arg1:T10 Arg2:T15	
+R7	supports Arg1:T11 Arg2:T15	
+R8	supports Arg1:T12 Arg2:T15	
+R9	supports Arg1:T13 Arg2:T15	
+R10	supports Arg1:T14 Arg2:T15	
+T16	Premise 1193 1236	This experience teach me to aware my health
+T17	Claim 885 947	Some experiences could teach me the way to take care of myself
+A5	Stance T17 For
+T18	Premise 963 1064	reading and listening the news about choosing a good diet are the way to keep myself are more healthy
+T19	Premise 1072 1123	I am always buy a quality food such as organic food
+T20	Premise 1125 1156	This food are not have chemical
+T21	Premise 1167 1191	I can have a good health
+R11	supports Arg1:T20 Arg2:T21	
+R12	supports Arg1:T18 Arg2:T19	
+R14	supports Arg1:T21 Arg2:T17	
+R15	supports Arg1:T19 Arg2:T17	
+T22	Premise 1494 1567	This experience change me to concern about making plan for my future life
+T23	Claim 1246 1300	experiences are also change to plan for my future life
+A7	Stance T23 For
+T24	Premise 1315 1381	I read about saving money for my retire is a good plan for my life
+T25	Premise 1397 1492	I start changing myself from spending many thing that I want to saving money for my entire life
+R18	supports Arg1:T24 Arg2:T25	
+R19	supports Arg1:T25 Arg2:T23	
+R13	supports Arg1:T16 Arg2:T17	
+R16	supports Arg1:T22 Arg2:T25	

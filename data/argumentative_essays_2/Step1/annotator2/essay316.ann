@@ -1,0 +1,15 @@
+T1	MajorClaim 1833 1908	new building construction hold the right to gain more money from government
+T2	Claim 426 493	Building more accommodating constructions meets people's basic need
+A1	Stance T2 For
+T3	Premise 495 581	People cannot live a harmonious life if citizens do not have a decent place to live in
+T4	Premise 583 712	If the price of housing grows continuously, a comfortable place to live in will be a luxury to the middle class and the low class
+T5	Premise 720 840	ordinary people, especially the younger generation, will fall into a certain pattern - work, pay bills for housing, work
+T6	Premise 930 1041	when they are working, the fair of losing their accommodation always lingers, which will limit their efficiency
+T7	Premise 1047 1201	government should spend money on people to rescue them from this, because only a government of the people, by the people, for the people will finally last
+T8	Premise 861 920	it will increase people's dissatisfaction of the government
+T9	Premise 1203 1241	people's cohesiveness will be promoted
+T10	Premise 1365 1431	it requires far more resource compare to old building preservation
+T11	Premise 1433 1610	Build a new building has following prerequisites, land that has been sold by the government via formal procedures, a reliable construction company and tremendous amount of labor
+T12	Premise 1612 1682	Except these, hundreds of problems would occur during the construction
+T13	Claim 1690 1788	only government can cope with it by utilizing its enormous resource like dollars and effectiveness
+A3	Stance T13 For

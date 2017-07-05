@@ -1,0 +1,44 @@
+T1	MajorClaim 271 372	paying for teacher base on grade that students got is not appropriate, and it is not fair for teacher
+T2	MajorClaim 1729 1829	I totally disagree with this statement that teachers should be paid by how much their students learn
+T3	Claim 1838 1895	teacher could not pay attention to each students in class
+A1	Stance T3 For
+T4	Claim 1906 1949	learning abilities of student are different
+A2	Stance T4 For
+T5	Claim 1961 2019	there are problems if paying teacher by grade students get
+A3	Stance T5 For
+T6	Premise 529 583	there are certain period of time for teachers to teach
+T7	Premise 585 686	In these short time, it is not possible for teachers to pay attention to individual students in class
+T8	Claim 688 745	Teachers have to manage to teach every topics by schedule
+T9	Premise 747 912	If teachers pay attention to specific students, their work might not finish on time, and this might make many student miss some field in topics that they should know
+T10	Premise 439 527	main task of teacher to give knowledge to students, and this role have to finish in time
+T11	Claim 1258 1321	teachers should not be paid by testing result that students get
+A4	Stance T11 For
+T12	Premise 922 970	learning abilities in each students is different
+T13	Premise 972 1054	It is not possible that they all comprehend all lessons in the same period of time
+T14	Premise 1056 1135	Some students might understand all topics that they had learnt but some are not
+T15	Premise 1148 1176	testing result are different
+R1	supports Arg1:T12 Arg2:T15	
+R2	supports Arg1:T13 Arg2:T15	
+R3	supports Arg1:T14 Arg2:T15	
+T16	Premise 1178 1224	This problems depend on how hard study they do
+T17	Premise 1226 1250	It is not teachers fault
+R4	supports Arg1:T17 Arg2:T11	
+R5	supports Arg1:T16 Arg2:T11	
+T18	Claim 1653 1712	grade that students get should not be in evaluating teacher
+A5	Stance T18 For
+T19	Premise 1331 1415	there could lead to a big problem if schools pay teachers by grade that students get
+T20	Premise 1417 1456	That is problem in quality of education
+T21	Premise 1458 1546	Teacher may not care about how they have to teach to make students understand the topics
+T22	Premise 1548 1603	Teachers may just give high grades to get higher salary
+T23	Premise 1605 1640	This problem should not be happened
+R6	supports Arg1:T23 Arg2:T18	
+R7	supports Arg1:T22 Arg2:T18	
+R8	supports Arg1:T19 Arg2:T18	
+R9	supports Arg1:T20 Arg2:T18	
+R10	supports Arg1:T21 Arg2:T18	
+A6	Stance T8 For
+R11	supports Arg1:T6 Arg2:T8	
+R12	supports Arg1:T9 Arg2:T8	
+R13	supports Arg1:T7 Arg2:T8	
+R14	supports Arg1:T10 Arg2:T8	
+R15	supports Arg1:T15 Arg2:T11	

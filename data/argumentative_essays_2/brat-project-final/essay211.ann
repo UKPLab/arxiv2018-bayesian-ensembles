@@ -1,0 +1,30 @@
+T1	MajorClaim 2039 2079	schools should not remove these subjects
+T2	Claim 1939 2026	non-academic subjects are as essential as academic subjects for a student’s development
+A1	Stance T2 For
+T3	Premise 354 434	from the health point of view, schools should not only deliver academic subjects
+T4	Premise 436 551	If physical education is removed from the syllabus, there will be considerable negative effects on students’ health
+T5	Premise 567 814	after studying and sitting in the classroom for the whole morning, it is better for students to do some outdoor activities, such as stretching, jogging and playing ball games, in order to improve their learning ability during the afternoon classes
+T6	Claim 816 962	Removing physical classes from school education will not only be harmful to young people’s health, it will also decrease their learning capability
+T7	Claim 1349 1428	school education should not only focus on the academic development of a student
+A3	Stance T7 For
+T8	Premise 1432 1512	it is much more crucial to teach them how to be independent and live a good life
+T9	Premise 1145 1341	Success in life should be the ultimate goal of a student, which requires more than academic knowledge, but also practical life skills such as cooking, good communication skills and teamwork spirit
+T10	Premise 977 1055	schools are responsible for developing their students into well-rounded people
+T11	Premise 1057 1143	It is more important for a person to success in life than to success only academically
+T12	Claim 1541 1614	students can learn practical skills after school hours from their parents
+A4	Stance T12 Against
+T13	Premise 1640 1661	it is not a good idea
+T14	Premise 1670 1796	most young people would rather watch TV or play computer games after school instead of learning life skills from their parents
+T15	Premise 1808 1898	parents are usually too busy with their daily jobs to teach their children the life skills
+T16	MajorClaim 256 337	non-academic subjects should be completely removed, I strongly disagree with that
+A5	Stance T6 For
+R1	supports Arg1:T3 Arg2:T6	
+R2	supports Arg1:T4 Arg2:T6	
+R3	supports Arg1:T5 Arg2:T6	
+R4	supports Arg1:T10 Arg2:T7	
+R5	supports Arg1:T11 Arg2:T7	
+R6	supports Arg1:T9 Arg2:T7	
+R7	supports Arg1:T8 Arg2:T7	
+R8	attacks Arg1:T13 Arg2:T12	
+R9	supports Arg1:T14 Arg2:T13	
+R10	attacks Arg1:T15 Arg2:T12	

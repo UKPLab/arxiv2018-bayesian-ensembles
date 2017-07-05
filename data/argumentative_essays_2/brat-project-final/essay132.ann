@@ -1,0 +1,21 @@
+T1	MajorClaim 1716 1890	people are now more conscious to gain more educational qualification and also are more interested to work on various fields simultaneously to earn more and support themselves
+T2	Claim 781 890	people are focusing on doing several jobs or gaining further qualification to secure their economic condition
+A1	Stance T2 For
+T3	Premise 580 691	with the recent recession, almost all the countries all over the world are seeing significant economic downfall
+T4	Premise 693 766	This overwhelming crisis is prompting delayering and reduction of workers
+R1	supports Arg1:T4 Arg2:T2	
+R2	supports Arg1:T3 Arg2:T2	
+T5	Premise 468 574	A full time job with a steady income was enough for a potential employee to support himself and his family
+R3	supports Arg1:T5 Arg2:T2	
+T6	Claim 1467 1529	The best way to ensure a flexible earning is getting more jobs
+A2	Stance T6 For
+T7	Premise 1551 1666	corporational policy to to pay less to inferiors is another reason that drives labours to work on different sectors
+T8	Premise 1425 1465	many people's jobs are now at high stake
+T9	Premise 1239 1418	robots, automation and softwares are taking over manual human workers professions such as clerks, interpreters, security services, retails and specially in manufacturing companies
+R4	supports Arg1:T9 Arg2:T8	
+T10	Premise 1058 1224	North American economists have published reports after scrutinizing the recent American economic situation that, technology is eliminating more jobs than creating one
+T11	Premise 902 993	the arrival of technology has also been playing a major role promoting further unemployment
+R5	supports Arg1:T8 Arg2:T6	
+R6	supports Arg1:T10 Arg2:T8	
+R7	supports Arg1:T11 Arg2:T8	
+R8	supports Arg1:T7 Arg2:T6	

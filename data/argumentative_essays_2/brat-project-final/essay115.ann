@@ -1,0 +1,25 @@
+T1	Claim 1765 1857	newly developed plant foods and machinery make significant financial success for the farmers
+A1	Stance T1 Against
+T2	MajorClaim 1881 1977	the demerits of applying these new developments in the agriculture industry cannot be overlooked
+T3	Premise 437 552	applying the advanced fertilizers in combine with the automatic reaping resources increase farmers' economic profit
+T4	Premise 570 740	artificial fertilizers catalyze the capacity of each inch of farmland in order to churn out the crops, and automatic machinery enhances the work efficiency of the harvest
+T5	Claim 756 854	the production and labour cost of each kilogram of the agriculture products dramatically decreased
+A3	Stance T5 Against
+T6	Claim 865 944	high-tech fertilizers pose a potential threat to individuals' health well-being
+A4	Stance T6 For
+T7	Premise 946 1158	Unlike the organic plant foods, industrialized fertilizers are made of unusual chemicals, which are not only varying the gene of crops into those unknown substances but also remaining inside of plants permanently
+T8	Premise 1174 1287	consumers who intake those fertilized products on a regular base tend to suffer a series of disease in the future
+R4	supports Arg1:T7 Arg2:T8	
+R5	supports Arg1:T8 Arg2:T6	
+T9	Claim 1299 1396	excessively relying on the electronic equipment for harvest causes several impacts to the society
+A5	Stance T9 For
+T10	Premise 1398 1482	One is that it worsens the air pollution by releasing the excessive exhaust emission
+T11	Premise 1497 1549	manual harvest prevents severe environmental damages
+T12	Premise 1564 1646	mechanical reaper causes the rise of the unemployment rate in the farming industry
+T13	Premise 1665 1736	high-end reaping plants replace a large number of workers in the fields
+R6	supports Arg1:T10 Arg2:T9	
+R7	supports Arg1:T11 Arg2:T9	
+R8	supports Arg1:T13 Arg2:T12	
+R9	supports Arg1:T12 Arg2:T9	
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T3 Arg2:T5	

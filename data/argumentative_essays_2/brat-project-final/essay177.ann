@@ -1,0 +1,38 @@
+T1	MajorClaim 63 127	I don't think that technology can replace teachers and classroom
+T2	MajorClaim 1832 1883	distance education can't replace traditional school
+T3	Claim 151 201	Studying at home by using technology is convenient
+A1	Stance T3 Against
+T4	Premise 203 291	The biggest advantage is that your classroom and instructor are available 24 hours a day
+T5	Premise 306 384	you could make your own schedule for completing the requirements of the course
+T6	Premise 386 417	You can study any time you want
+T7	Premise 428 552	if you aren't extremely dedicated or have good time management skills, it may be very difficult to complete a course at home
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T5 Arg2:T3	
+R3	supports Arg1:T6 Arg2:T3	
+R4	attacks Arg1:T7 Arg2:T3	
+T8	Premise 908 988	it may be a predicament when you face some problems in learning without any help
+T9	Premise 561 632	attending an education course at home requires persistence and patience
+T10	Premise 645 784	when you don't have an instructor there to guide you, it is up to you to make sure that you understand and complete all course requirements
+T11	Claim 786 891	Students may raise questions and they may have problems of understanding some specific topics or subjects
+A3	Stance T11 For
+R5	supports Arg1:T10 Arg2:T11	
+R6	supports Arg1:T9 Arg2:T11	
+R7	supports Arg1:T8 Arg2:T11	
+T12	Claim 1207 1286	Students may find that it is hard to study without being kept under supervision
+A2	Stance T12 For
+T13	Premise 1288 1383	If you are the type that gets easily distracted, a distance-learning program may not be for you
+R8	supports Arg1:T13 Arg2:T12	
+T14	Premise 999 1059	studying at home is very different from traditional learning
+T15	Premise 1061 1205	Unlike traditional classes, distance education courses don't take place in a classroom, where you are surrounded by your teachers and classmates
+R9	supports Arg1:T15 Arg2:T12	
+R10	supports Arg1:T14 Arg2:T12	
+T16	Claim 1398 1499	there is an advantage of traditional school - socialization- establishes relationship with classmates
+A4	Stance T16 For
+T17	Premise 1501 1541	We can learn a lot from programs at home
+T18	Premise 1552 1624	our computers or televisions can't teach us how to get along with people
+T19	Premise 1639 1704	students may learn how to cooperate with classmates from teamwork
+R12	supports Arg1:T19 Arg2:T16	
+T20	Premise 1706 1793	Studying alone at home might deprive us of these significant and valuable opportunities
+R13	attacks Arg1:T17 Arg2:T16	
+R11	attacks Arg1:T18 Arg2:T17	
+R14	supports Arg1:T20 Arg2:T16	

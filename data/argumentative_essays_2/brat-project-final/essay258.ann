@@ -1,0 +1,40 @@
+T1	MajorClaim 132 200	both learning by myself and learning with a teacher could be helpful
+T2	Claim 202 305	Learning with a teacher can prevent one from being confused and increase the rate and speed of learning
+A1	Stance T2 For
+T3	Claim 339 388	for practical subjects you have to have a teacher
+A2	Stance T3 For
+T4	Claim 409 452	sometimes I would rather learning on my own
+A3	Stance T4 For
+T5	MajorClaim 2228 2299	both can help and each of them has its own advantages and disadvantages
+T6	Claim 2156 2214	it is good to learn with a teacher and sometimes on my own
+A4	Stance T6 For
+T7	Claim 853 922	I will learn faster and better and won't get discouraged and confused
+A5	Stance T7 For
+T8	Premise 454 520	A good and experienced teacher can help me learn faster and easier
+T9	Premise 522 684	Sometimes when learning a course by myself which is hard and confusing to understand and has few sources available, I get discouraged after spending a lot of time
+T10	Premise 686 765	In this situation, I'll look for a teacher and request for help from him or her
+T11	Premise 767 838	And then he or she will teach me the course efficiently in a short time
+R1	supports Arg1:T11 Arg2:T7	
+R2	supports Arg1:T10 Arg2:T7	
+R3	supports Arg1:T9 Arg2:T7	
+R4	supports Arg1:T8 Arg2:T7	
+T12	Premise 1033 1182	if you want to learn driving a car or some jobs like medicine and engineering and some sports like skiing and swimming, you'll have to find a teacher
+T13	Premise 1184 1256	It's almost impossible and inefficient to learn those things on your own
+R5	supports Arg1:T13 Arg2:T12	
+T14	Premise 1270 1366	if you are going to learn some things by yourself, you may learn and understand them incorrectly
+T15	Claim 924 1018	There are some practical subjects that you can only learn them with a teacher or an instructor
+A6	Stance T15 For
+T16	Premise 1381 1658	from my own experiences, after I had started learning playing the guitar without a teacher, I got used to wrong habits regarding strumming and tempo, but after finding and learning with a tutor and identifying and eliminating those incorrect habits, I was able to play properly
+R6	supports Arg1:T16 Arg2:T14	
+R7	supports Arg1:T14 Arg2:T15	
+R8	supports Arg1:T12 Arg2:T15	
+T17	Claim 1660 1727	There are some things that I prefer to learn them without a teacher
+A7	Stance T17 For
+T18	Premise 1736 1849	I won't have to spend extra money for a teacher and my time will not be wasted either because of going to classes
+T19	Premise 1851 1981	In today's world there are many great and useful sources available like books, electronic books, the internet and TV and satellite
+T20	Premise 1983 2030	I can utilize them as tutorials for many things
+R9	supports Arg1:T18 Arg2:T17	
+T21	Premise 2046 2135	I can learn English or other languages by a lot of helpful books and many online websites
+R10	supports Arg1:T21 Arg2:T17	
+R11	supports Arg1:T20 Arg2:T17	
+R12	supports Arg1:T19 Arg2:T17	

@@ -1,0 +1,27 @@
+T1	Claim 325 410	successful people can learn important and very valuable points from trying new things
+T2	Claim 437 478	great success requires taking great risks
+A1	Stance T2 For
+T3	MajorClaim 1698 1808	success and trying new things and taking risks go hand in hand and to achieve success you should consider them
+A2	Stance T1 For
+T4	Premise 610 757	if you want to know how to act effectively when communicating with people, you can try something new like salesmanship in various stores and places
+T5	Premise 759 870	By selling goods or other commodities you will face different people with different behaviors and personalities
+T6	Premise 887 969	you will learn how to behave people in different situations and jobs in the future
+T7	Claim 971 1065	These experiences can only be obtained by trying new things and can’t be always found in books
+A3	Stance T7 For
+T8	Premise 480 595	There are always interesting and useful experiences that successful people can learn them only by trying new things
+R4	supports Arg1:T8 Arg2:T7	
+R2	supports Arg1:T4 Arg2:T7	
+R1	supports Arg1:T5 Arg2:T6	
+R3	supports Arg1:T6 Arg2:T7	
+T9	Premise 1129 1324	If you want to gain very high profits in investments, you should use great and very high amounts of money in very risky financial decisions and dealings in which you may lose much amount of money
+T10	Premise 1326 1486	If you want to achieve a remarkable success in an important exam, you should risk studying all the time and sacrificing your free time and your favorite hobbies
+T11	Premise 1488 1547	The more you take risks, the greater your successes will be
+T12	Claim 1644 1673	it is important to take risks
+A5	Stance T12 For
+T13	Premise 1549 1631	If you don’t take any risks, you will have an ordinary life with average successes
+T14	Premise 1086 1127	great success requires taking great risks
+R5	supports Arg1:T14 Arg2:T12	
+R6	supports Arg1:T11 Arg2:T12	
+R7	supports Arg1:T13 Arg2:T12	
+R8	supports Arg1:T9 Arg2:T12	
+R9	supports Arg1:T10 Arg2:T12	

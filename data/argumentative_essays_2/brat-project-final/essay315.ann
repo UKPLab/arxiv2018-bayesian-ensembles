@@ -1,0 +1,20 @@
+T1	MajorClaim 429 481	I prefer to live in bigger cities than in small ones
+T2	Claim 605 743	living in a dynamic environment can turn into a very rich experience that sharpens one's personality and open one's eyes on the real world
+A1	Stance T2 For
+T3	Premise 745 889	Life in big cities cities gives one new challenges every day, let it be deciding which restaurant to go to or deciding which company to work for
+T4	Premise 891 1048	For me, this lifestyles is very attractive and is considered a huge advantage of big cities compared with the constant, slow paced life styles of small towns
+R1	supports Arg1:T3 Arg2:T2	
+R2	supports Arg1:T4 Arg2:T2	
+T5	Claim 1111 1296	the facilitates and services it contains which support and improve the quality of its inhabitants' lives, hospitals, advanced medical facilities can satisfy one's need of medical safety
+A2	Stance T5 For
+T6	Claim 1298 1435	Cultural events such as exhibitions and theatre plays can enrich one's and widen his horizons, things which aren't offered by small towns
+A3	Stance T6 For
+T7	Claim 1637 1760	big cities offer more opportunities for one's career advancements and a more chances of higher income that small towns does
+T8	Premise 1766 1825	higher income can be the basis of a happier, healthier life
+A4	Stance T7 For
+T9	Premise 1475 1611	economic power of a country is driven by it's big cities and the majority of wealth and finance is centered and controlled in big cities
+R3	supports Arg1:T9 Arg2:T7	
+R4	supports Arg1:T8 Arg2:T7	
+T10	MajorClaim 1845 1875	I prefer to live in a big city
+T11	Claim 1957 2060	I would love to spend some days in countryside to recharge my soul and relieve myself from daily stress
+A5	Stance T11 Against

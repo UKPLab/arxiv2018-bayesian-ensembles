@@ -1,0 +1,22 @@
+T1	Claim 208 240	although appearance is important
+A1	Stance T1 Against
+T2	MajorClaim 242 275	personality is the most important
+T3	Claim 277 337	We can never judge about a person with his or her appearance
+A2	Stance T3 For
+T4	MajorClaim 1555 1662	the best way to judge about individuals' is to be familiar with their personality not with their appearance
+T5	Claim 715 771	we have to be aware to never judge with their appearance
+A3	Stance T5 For
+T6	Premise 620 703	there are people who play a role and cheat the other individuals with their playing
+T7	Premise 786 941	some people cheat their fiance before marriage by showing a cheerful face and well spoken; however, after getting marriage they show their real personality
+R1	supports Arg1:T6 Arg2:T5	
+R2	supports Arg1:T7 Arg2:T5	
+T8	Premise 1183 1347	One day in a cold winter while I was getting back to home from school I realized that I lost my keys, so I could not do anything before my parents getting back home
+T9	Premise 1097 1181	I have a neighbor who are old, black skin and frown and I had always panicked of her
+T10	Premise 1349 1469	She asked me to stay with her till my parents come, also she was great in hospitality and her behavior was unforgettable
+T11	Claim 958 1081	there are some people who are black skin, fat and frown, nonetheless they might be a great person for leaving and colleague
+A4	Stance T11 For
+T12	Premise 1496 1541	I had to never judge with people's appearance
+R3	supports Arg1:T9 Arg2:T11	
+R4	supports Arg1:T8 Arg2:T11	
+R5	supports Arg1:T10 Arg2:T11	
+R6	supports Arg1:T12 Arg2:T11	

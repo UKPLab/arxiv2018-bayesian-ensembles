@@ -1,0 +1,26 @@
+T1	MajorClaim 255 311	the capability of working independly is more significant
+T2	MajorClaim 1675 1805	the capablity of working alone is the foundation for the skill to work in team and plays a significant role in a lot of situations
+T3	Premise 385 479	in many important cases when team-working is not possible, the ability to work alone will help
+T4	Premise 324 379	effective cooperation can make things easier and faster
+R1	attacks Arg1:T4 Arg2:T3	
+T5	Premise 481 565	The apperant example is that there are a lot of tests that do not allow team-working
+T6	Premise 567 768	Let's imagine that you perform really well when you can discuss the problems with other people, but you have no experience of working alone, standardized tests such as SAT, TOEFL may be your nightmares
+T7	Premise 770 878	Testing is a very important aspect of life, and still the majority of tests do not allow you to work in team
+T8	Claim 891 1040	if you want to get brilliant achievements such as going to college, acing your school's final tests, you should consider learning to work on your own
+A2	Stance T8 For
+R2	supports Arg1:T3 Arg2:T8	
+R3	supports Arg1:T5 Arg2:T8	
+R4	supports Arg1:T6 Arg2:T8	
+R5	supports Arg1:T7 Arg2:T8	
+T9	Claim 1052 1139	the ability to work alone will help you increase your ability to work with other people
+A1	Stance T9 For
+T10	Premise 1141 1218	Working in team does not mean that you do not have to come up with your ideas
+T11	Premise 1220 1313	Everybody in a team must have his/her own opinion first, then discuss them with other members
+T12	Premise 1315 1364	When we work in team, we still think individually
+T13	Premise 1373 1413	our brain are not connected but separate
+R6	supports Arg1:T13 Arg2:T12	
+T14	Premise 1415 1521	When everyone in a team can come up with his/her own ideas, working in team will definitely more effective
+R7	supports Arg1:T10 Arg2:T9	
+R8	supports Arg1:T11 Arg2:T9	
+R9	supports Arg1:T12 Arg2:T9	
+R10	supports Arg1:T14 Arg2:T9	

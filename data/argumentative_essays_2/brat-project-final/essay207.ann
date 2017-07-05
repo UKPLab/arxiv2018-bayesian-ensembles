@@ -1,0 +1,21 @@
+T1	Claim 1472 1521	young people tend to study or work in urban areas
+T2	Premise 1528 1599	these provide them many educational opportunities and career potentials
+A1	Stance T1 Against
+R1	supports Arg1:T2 Arg2:T1	
+T3	MajorClaim 1625 1737	I do not approve of this trend due to negative effects such as low quality of life and affecting the environment
+T4	Premise 376 456	cities often offer more well-paid jobs and study chances compared to rural areas
+T5	Claim 601 709	they move to big cities to pursue academic career and find jobs in order to have a higher standard of living
+A3	Stance T5 Against
+T6	Premise 469 589	many large companies and universities often locate in cities which are hailed as promising lands to develop their career
+R2	supports Arg1:T6 Arg2:T5	
+R3	supports Arg1:T4 Arg2:T5	
+T7	Premise 724 926	if a gradate stays in the city after leaving his college and seeks a job with good salary instead of returning his village to do farm work, he could perhaps buy a house or his own car after a short time
+R4	supports Arg1:T7 Arg2:T5	
+T8	Claim 1159 1279	cities cannot provide adequate space for thousands of dwellers that might lead to poor housing conditions and sanitation
+A2	Stance T8 For
+T9	Premise 1028 1144	the burgeoning number of young adults from the countryside flocking to cities gives rise to overpopulation in cities
+R5	supports Arg1:T9 Arg2:T8	
+T10	Premise 1295 1333	it might put strain on the environment
+R6	supports Arg1:T10 Arg2:T8	
+T11	Premise 1335 1455	If there are more people in the cities, there would be large numbers of vehicles on the road, which causes air pollution
+R7	supports Arg1:T11 Arg2:T8	

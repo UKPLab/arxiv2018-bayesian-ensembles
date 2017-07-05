@@ -1,0 +1,22 @@
+T1	MajorClaim 286 359	one who studies overseas will gain many skills throughout this experience
+T2	MajorClaim 1535 1652	living and studying overseas gives the individual a new perspective on the subject that is studied or in general life
+T3	Claim 388 564	studying at an overseas university gives individuals the opportunity to improve social skills by interacting and communicating with students from different origins and cultures
+A1	Stance T3 For
+T4	Claim 775 883	living and studying overseas is an irreplaceable experience when it comes to learn standing on your own feet
+A2	Stance T4 For
+T5	Claim 1330 1425	one who has studied and lived overseas will become more eligible for the job than his/her peers
+A3	Stance T5 For
+T6	Premise 566 765	Compared to the peers studying in the home country, it will be more likely for the one who is living overseas to be successful in adapting himself/herself into new environments and situations in life
+T7	Premise 885 988	One who is living overseas will of course struggle with loneliness, living away from family and friends
+T8	Premise 993 1078	those difficulties will turn into valuable experiences in the following steps of life
+T9	Premise 1090 1148	the one will learn living without depending on anyone else
+T10	Premise 1156 1238	employers are mostly looking for people who have international and language skills
+T11	Premise 1240 1317	Becoming successful in this study will give the student an edge in job market
+T12	Claim 1442 1524	there are many difficulties a student might face when studying and living overseas
+A4	Stance T12 Against
+R1	supports Arg1:T6 Arg2:T3	
+R2	attacks Arg1:T7 Arg2:T4	
+R3	attacks Arg1:T8 Arg2:T7	
+R4	supports Arg1:T9 Arg2:T4	
+R5	supports Arg1:T10 Arg2:T5	
+R6	supports Arg1:T11 Arg2:T5	

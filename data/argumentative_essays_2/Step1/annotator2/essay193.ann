@@ -1,0 +1,20 @@
+T1	MajorClaim 1599 1673	Using public transportation has a lot of advantages for the modern society
+T2	MajorClaim 81 169	development of public transportation is the most essential thing for a developed society
+T3	Claim 171 299	Public transportation keeps society from the depletion of natural resources, the air pollution, the loss of a sense of community
+A1	Stance T3 For
+T4	Claim 370 466	The use of public transportation is the best way to conserve natural resources gradually run out
+A2	Stance T4 For
+T5	Premise 468 507	Cars depend on oil and gasoline to move
+T6	Premise 509 600	If people use too many private cars, the oil and gasoline nonrenewable will run out quickly
+T7	Premise 602 785	Instead of using many private cars, people can use public transportation, such as bus, train, subway, each one can get far more people and less oil and gasoline are used up per person
+T8	Claim 787 855	The use of public transportation helps in reducing the air pollution
+A3	Stance T8 For
+T9	Premise 857 938	Cars use oil and gasoline and send out gas such as carbon dioxide, heat and so on
+T10	Premise 940 986	They cause pollution and make the Earth warmer
+T11	Premise 988 1053	The more cars are driven, the more pollution will be put into air
+T12	Premise 1055 1149	If we use the public transportation, less cars will be used and less pollution will be emitted
+T13	Claim 1227 1286	The use of public transportation make us live more sociable
+A4	Stance T13 For
+T14	Premise 1288 1475	When we drive a private car, we are alone or only our family members that we already know and lost the opportunity to make friends with others or to see that we are a part of this society
+T15	Premise 1477 1597	When using public transportation, we have a chance to meet more people and more chances to discovery new aspects of life
+T16	Premise 1151 1225	The atmosphere, surrounding us, will be protected and help us more healthy

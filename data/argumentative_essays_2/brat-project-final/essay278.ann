@@ -1,0 +1,34 @@
+T1	MajorClaim 387 451	these activities have the same efficient role in students' lives
+T2	MajorClaim 1991 2061	sports and social activities should obtain analogous concern and money
+T3	Claim 2102 2205	They bring a lot of advantages and benefits for students and also affect their future in a positive way
+A1	Stance T3 For
+T4	Claim 932 1000	sports are necessary for students to acquire their energy and health
+A2	Stance T4 For
+T5	Premise 854 917	I decided to go to gym to recuperate and it responded very well
+T6	Premise 794 841	After that exam, I felt depressed and exhausted
+T7	Premise 707 792	last month I had very difficult exam that I forced to study for one week back to back
+T8	Premise 518 602	besides the good body shape, sports have very vital effects on human's healthfulness
+T9	Premise 621 685	our body and moral health depend to physical activities directly
+T10	Claim 1467 1529	social activities have same rights to receive monetary support
+A3	Stance T10 For
+T11	Premise 1010 1114	besides the academic knowledge, the awareness of social behavior is an important factor for human's life
+T12	Premise 1140 1212	students should be prepared to present in society after their graduation
+T13	Premise 1219 1309	social activities can help them to be familiar with other's mind and different environment
+T14	Premise 1326 1461	social groups and classes are significant factors to prepare students to contribute in discussion and encounter real social environment
+T15	Claim 1541 1620	they bring about students to be happier and to have more fun and entertainments
+A4	Stance T15 For
+T16	Premise 1622 1761	If we follow just one wing of my life i.e., studying as a student, after some whiles it would be boring and we wouldn't have any motivation
+T17	Premise 1763 1843	Such activities can help us to pick up with other students and have more friends
+T18	Premise 1864 1949	more friends and new experience inspire the feeling of happiness and excitement in me
+R1	supports Arg1:T7 Arg2:T5	
+R2	supports Arg1:T6 Arg2:T5	
+R3	supports Arg1:T8 Arg2:T4	
+R4	supports Arg1:T5 Arg2:T4	
+R5	supports Arg1:T9 Arg2:T4	
+R6	supports Arg1:T14 Arg2:T10	
+R7	supports Arg1:T12 Arg2:T10	
+R8	supports Arg1:T13 Arg2:T10	
+R9	supports Arg1:T11 Arg2:T10	
+R10	supports Arg1:T16 Arg2:T15	
+R11	supports Arg1:T17 Arg2:T15	
+R12	supports Arg1:T18 Arg2:T15	

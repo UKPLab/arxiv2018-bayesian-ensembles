@@ -1,0 +1,34 @@
+T1	MajorClaim 502 575	children should be forbidden in watching television or movies excessively
+T2	Premise 591 670	children generally have weak self-control, and thus they lose their time easily
+T3	Claim 672 800	Watching TV for a long time without doing homework is one of major headaches that most of children have brought to their parents
+A2	Stance T3 For
+R1	supports Arg1:T2 Arg2:T3	
+T4	Premise 847 963	Whenever I back to home from school, the first thing I would do is turning on the television and sit there for hours
+T5	Premise 965 1066	I could watch TV for hours, but I could hardly sit in front of my desk to do homework for few minutes
+T6	Premise 1068 1180	I could memorize all channels that TV programs was playing, but I could barely memorize any word on the textbook
+T7	Premise 1182 1251	I, therefore, did extremely bad at school due to the lack of studying
+R2	supports Arg1:T6 Arg2:T7	
+R3	supports Arg1:T5 Arg2:T7	
+R4	supports Arg1:T4 Arg2:T7	
+R5	supports Arg1:T7 Arg2:T3	
+T8	Premise 1348 1420	Children are not mature enough to make a judgment of what is good or bad
+T9	Premise 1432 1501	they are likely to imitate the behaviors on TV out of their curiosity
+R6	supports Arg1:T8 Arg2:T9	
+T10	Premise 1503 1541	Recently, more and more children smoke
+T11	Premise 1550 1596	they imitate actors' behaviors on TV or movies
+R7	supports Arg1:T11 Arg2:T10	
+T12	Premise 1617 1759	according to some statistics, there are more and more children have violent tendency, and the reports attribute this to TV programs and movies
+T13	Claim 1780 1877	there are many programs on TV or movies that are harmful to children in metal and physical health
+T14	Premise 1263 1346	sometimes programs on TV are full of violence and sex which are harmful to children
+A3	Stance T13 For
+R12	supports Arg1:T12 Arg2:T13	
+R13	supports Arg1:T9 Arg2:T13	
+R14	supports Arg1:T10 Arg2:T13	
+T15	Premise 2224 2327	it doesn't mean that children should do it overtime and without being taken care what they are watching
+T16	Claim 2057 2169	children should watch TV and movies for their rich contents that could give children some topics in conversation
+A4	Stance T16 Against
+R15	attacks Arg1:T15 Arg2:T16	
+T17	MajorClaim 2330 2477	In considering whether the time children watching on TV or movies should be constrained, I hold a strongly positive point of view toward this issue
+T18	Claim 2487 2641	children are poor at time management, and are less mature to make a good judgment, they cannot be too serious to be taken care when watching TV and movies
+A5	Stance T18 For
+R8	supports Arg1:T14 Arg2:T13	

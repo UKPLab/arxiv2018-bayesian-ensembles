@@ -1,0 +1,22 @@
+T1	MajorClaim 242 311	This, contrary to some ideas, is a positive progress in human society
+T3	Claim 544 680	Women nowadays are much more active, they may be successful businessmen, they join the political world, they become scientists and so on
+A1	Stance T3 For
+T4	Premise 698 902	the "weaker" gender as often be thought has enough right as well as ability to contribute to the development of human beings just like any other men, not to mention they even perform better in some fields
+T5	Premise 432 542	Gone are the days when women could do nothing rather than stick to boring house work and take care of children
+T6	Premise 350 430	the fairness between males and females is inevitable in such a developed society
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T5 Arg2:T3	
+R3	supports Arg1:T6 Arg2:T3	
+T7	Claim 925 1032	the revolution in females' right has brought about many benefits not only to themselves but society as well
+A2	Stance T7 For
+T8	Premise 1034 1168	The financial burden of families, for instance, has decreased significantly with both the wives and the husbands working to earn money
+T2	MajorClaim 1755 1900	in a society where females are given equal opportunities compared with males would obviously enjoy lots of benefits far outweighing its obstacles
+T9	Premise 1184 1326	women have the outstanding instinct to take up some careers like healthcare or human resource management due to their patience and elaboration
+R4	supports Arg1:T8 Arg2:T7	
+R5	supports Arg1:T9 Arg2:T7	
+T10	Claim 1340 1422	such changes do lead to some negative results like an upward trend in divorce rate
+A3	Stance T10 Against
+T11	Premise 1453 1538	women find it difficult to balance their work and their traditional role as the wives
+R6	supports Arg1:T11 Arg2:T10	
+T12	Premise 1546 1627	children might enjoy less care from parents as they are both busy with their work
+R7	supports Arg1:T12 Arg2:T10	

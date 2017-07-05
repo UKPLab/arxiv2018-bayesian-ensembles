@@ -1,0 +1,16 @@
+T1	MajorClaim 343 435	while some of them are disturbing, we can not overlook other merits the advertisements bring
+T2	MajorClaim 1452 1531	advertisements have its social responsibility and contribute to economic growth
+T3	Claim 444 537	it is unfair to restrict those public service advertisements which are creative and inspiring
+A1	Stance T3 For
+T4	Claim 744 837	publicizing brand image or a particular product of mass media could boost sales for companies
+A2	Stance T4 For
+T5	Claim 1221 1382	the advertising expenses lead to a higher product price and some of them express fake information, creating information asymmetry between consumers and companies
+A3	Stance T5 Against
+T6	Premise 548 714	they are not in the purpose of making profits but taking a role of disseminating valued culture, good moral traits and calling for helps for the disabled and the poor
+T7	Premise 858 962	it could simulate household spending and therefore promote the economic development of the whole country
+T8	Premise 964 1140	A recent study shows that after launching an advertising campaign, the sales revenue would increase by 40%, which is the very fact to verify its positive influences on economic
+T9	Premise 1389 1430	its merits still outweigh these downsides
+R1	supports Arg1:T6 Arg2:T3	
+R2	supports Arg1:T7 Arg2:T4	
+R3	supports Arg1:T8 Arg2:T4	
+R4	attacks Arg1:T9 Arg2:T5	

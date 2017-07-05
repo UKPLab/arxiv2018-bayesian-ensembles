@@ -1,0 +1,15 @@
+T1	MajorClaim 1454 1602	I strongly support the current laws of Great Britain and Australia, and would not change the regulations on keeping the jury unaware of past actions
+T2	Claim 358 490	past behaviour determines the future actions, which could be the main reason to support the idea of revealing the record to the jury
+A1	Stance T2 Against
+T3	Premise 517 667	complete data concerning the history of a sued person creates more opportunity for jury members to build an overall picture of defendant's personality
+T4	Premise 682 844	past record might be useful to decide whether a person was able to perform a certain type of crime when it concerns serious crimes, such as kidnapping or a murder
+T5	Claim 860 1030	in order for the jury to come up with an objective decision not depending on the past experience, the court should provide with details relevant to a particular case only
+A2	Stance T5 For
+T6	Premise 1046 1175	a defendant with number of past crimes has more chance to be found guilty compared to a person with no or lighter criminal record
+T7	Premise 1177 1294	Innocent suspects, eventually, can face unfair juridical decision and pay twice for their previous inadequate actions
+T8	Claim 1311 1446	I am skeptical about disclosing the defendant's history to the jury, with intention to avoid subjective and probable inaccurate verdict
+A3	Stance T8 For
+R1	supports Arg1:T3 Arg2:T2	
+R2	supports Arg1:T4 Arg2:T2	
+R3	supports Arg1:T6 Arg2:T5	
+R4	supports Arg1:T7 Arg2:T5	

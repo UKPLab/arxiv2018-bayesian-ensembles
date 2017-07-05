@@ -1,0 +1,28 @@
+T1	MajorClaim 536 608	the Internet will pave way for a more accessible and convenient learning
+T2	MajorClaim 2279 2354	I would like to reiterate the necessity of the Internet in learning process
+T3	Claim 630 751	the Internet is an adequate source of academic information, which will potentially fulfill the needs of university pupils
+A1	Stance T3 For
+T4	Premise 753 902	Nowadays, not only are lectures available online, it is also applicable to find reference e-books as well as multi-aspect documents on the cyberspace
+T5	Premise 913 978	the Internet has grown to become the largest virtual library ever
+T6	Premise 990 1068	with the use of the Internet, distance and time seem to be no more a hindrance
+T7	Premise 1070 1220	College students can save their time browsing for necessary information through the web instead of spending hours wandering in bookstores or libraries
+T8	Premise 1242 1311	the Internet offers a more effective and practical method of studying
+T9	Premise 1313 1480	While virtual flowcharts and animations may simplify complicated scientific processes, Google and Wikipedia are always accessible for detailed responses to every query
+T10	Claim 1502 1569	the Internet will become an indispensable part in academic training
+A2	Stance T10 For
+T11	Premise 1748 1826	This fairy tale turns out to be true thanks to technical and internet advances
+T12	Premise 1619 1746	Have you ever imagined what it would be like to stay at home and attend a lecture by a famous speaker in Finland simultaneously
+T13	Claim 1851 1979	the Internet have several drawbacks which can affect the education system negatively, for instance internet abuse and black webs
+A3	Stance T13 Against
+T14	Premise 2018 2126	these problems are mainly triggered by students' wrong approach towards the Internet not the Internet itself
+T15	Premise 2134 2240	what we are to do is a change in learners' attitude not an elimination of the Internet from academic study
+R1	supports Arg1:T4 Arg2:T5	
+R2	supports Arg1:T7 Arg2:T6	
+R3	supports Arg1:T9 Arg2:T8	
+R4	supports Arg1:T5 Arg2:T3	
+R5	supports Arg1:T6 Arg2:T3	
+R6	supports Arg1:T8 Arg2:T3	
+R7	supports Arg1:T12 Arg2:T10	
+R8	supports Arg1:T11 Arg2:T10	
+R9	supports Arg1:T14 Arg2:T15	
+R10	attacks Arg1:T15 Arg2:T13	

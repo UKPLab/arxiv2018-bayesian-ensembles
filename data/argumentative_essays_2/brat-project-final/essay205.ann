@@ -1,0 +1,30 @@
+T1	MajorClaim 463 508	students should be free not to attend classes
+T2	Claim 517 627	it improves the quality of student life as well as their learning motivation and teaches important life skills
+A1	Stance T2 For
+T3	MajorClaim 2411 2476	it is clear that going to classes should be optional for students
+T4	Claim 2478 2640	I hold this belief due to the improvement of students' current experience as well as the valuable skills and knowledge they obtain for their whole life afterwards
+A2	Stance T4 For
+T5	Claim 867 959	some students might learn better at home on their own, for instance, by reading the textbook
+A3	Stance T5 For
+T6	Premise 961 1020	This problem occurs especially if the lecturer is lethargic
+T7	Premise 1022 1121	By letting students choose not to attend class you give them the opportunity to escape bad teaching
+T8	Premise 1128 1217	they are able to save precious study time and dive into the course syllabus independently
+R1	supports Arg1:T7 Arg2:T8	
+R2	supports Arg1:T8 Arg2:T5	
+R3	supports Arg1:T6 Arg2:T5	
+T9	Claim 1232 1327	being free to stay away from classes improves flexibility and therefore quality of student life
+A4	Stance T9 For
+T10	Premise 1329 1461	Sometimes the wild party on Thursday night is too good to end already at midnight only because of a lecture on Friday in the morning
+T11	Premise 1463 1606	With a liberal policy students are able to postpone the learning to the afternoon which gives a feeling of freedom and improves time efficiency
+T12	Premise 1608 1734	Research has shown that the more satisfied the students are with those life aspects, the better they perform in academic areas
+R4	supports Arg1:T10 Arg2:T9	
+R5	supports Arg1:T11 Arg2:T9	
+R6	supports Arg1:T12 Arg2:T9	
+T13	Premise 1940 2046	Intrinsic motivation is known to be much more desirable because it leads to better learning and well-being
+T14	Claim 2154 2312	By giving students the freedom to choose about class attendance they might rather be thinking about why they decided to study and learn to motivate themselves
+T15	Premise 2314 2396	These are crucial skills for the duration of their study and their whole life time
+T16	Premise 2057 2152	in order to gain intrinsic motivation students need to become aware of their strengths and aims
+A5	Stance T14 For
+R7	supports Arg1:T16 Arg2:T14	
+R8	supports Arg1:T13 Arg2:T14	
+R9	supports Arg1:T15 Arg2:T14	

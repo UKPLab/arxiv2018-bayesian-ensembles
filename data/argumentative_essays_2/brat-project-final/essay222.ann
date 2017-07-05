@@ -1,0 +1,31 @@
+T1	MajorClaim 1625 1699	parents are really the best teachers who give us much knowledge and advice
+T2	Claim 47 158	parents are the first teachers who teach babies how to walk and speak and make children to become a good person
+A1	Stance T2 For
+T3	Claim 170 290	parents provide their children the best social skills and knowledge in order to prepare for their children's future life
+A2	Stance T3 For
+T4	Claim 299 383	children are taught basic things, which influence their whole life, by their parents
+A3	Stance T4 For
+T5	Premise 385 478	As a baby, they do not know any thing all around but they learn everything from their parents
+T6	Premise 480 610	Parents always try to explain and describe tenderly all things in simple way so that their baby can understand and learn from that
+T7	Premise 626 717	parents bring the whole world of wonderful and colorful thing into their baby's little mind
+R1	supports Arg1:T6 Arg2:T7	
+R2	supports Arg1:T7 Arg2:T4	
+R3	supports Arg1:T5 Arg2:T4	
+T8	Claim 727 780	parents train their child how to become a good person
+A4	Stance T8 For
+T9	Premise 782 863	They always make their children basically say thanks and apology in the right way
+T10	Premise 882 947	it is common that they try to explain who is a good or bad person
+T11	Premise 968 1017	children are shown how to behave well with others
+T12	Premise 1045 1165	this can influence positively their future children and makes children's behavior better before they face the real world
+R4	supports Arg1:T9 Arg2:T8	
+R5	supports Arg1:T10 Arg2:T8	
+R6	supports Arg1:T11 Arg2:T8	
+R7	supports Arg1:T12 Arg2:T8	
+T13	Claim 1537 1608	parents' support is one factor which makes people succeed in their life
+A5	Stance T13 For
+T14	Premise 1191 1276	parents are ones who loves their children most and always take care of their children
+T15	Premise 1284 1369	they tend to provide the best knowledge and advice from their experience for children
+R8	supports Arg1:T14 Arg2:T15	
+T16	Premise 1371 1526	Unlike a professional, parents always support children and give them much social skill so they can communicate well with others and have good habit in life
+R9	supports Arg1:T16 Arg2:T13	
+R10	supports Arg1:T15 Arg2:T13	

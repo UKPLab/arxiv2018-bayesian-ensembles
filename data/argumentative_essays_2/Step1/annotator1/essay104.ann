@@ -1,0 +1,18 @@
+T1	MajorClaim 540 608	Internet will pave way for a more accessible and convenient learning
+T2	Claim 630 751	the Internet is an adequate source of academic information, which will potentially fulfill the needs of university pupils
+A1	Stance T2 For
+T3	Premise 753 902	Nowadays, not only are lectures available online, it is also applicable to find reference e-books as well as multi-aspect documents on the cyberspace
+T4	Premise 913 978	the Internet has grown to become the largest virtual library ever
+T5	Premise 990 1068	with the use of the Internet, distance and time seem to be no more a hindrance
+T6	Premise 1070 1220	College students can save their time browsing for necessary information through the web instead of spending hours wandering in bookstores or libraries
+T7	Premise 1242 1311	the Internet offers a more effective and practical method of studying
+T8	Claim 1502 1569	the Internet will become an indispensable part in academic training
+A2	Stance T8 For
+T9	Premise 1748 1826	This fairy tale turns out to be true thanks to technical and internet advances
+T10	Claim 1855 1935	Internet have several drawbacks which can affect the education system negatively
+A3	Stance T10 Against
+T11	Premise 1950 1979	internet abuse and black webs
+T12	Premise 1990 2126	we should bear in mind that these problems are mainly triggered by students' wrong approach towards the Internet not the Internet itself
+T13	Premise 2134 2240	what we are to do is a change in learners' attitude not an elimination of the Internet from academic study
+T14	MajorClaim 2305 2354	the necessity of the Internet in learning process
+T15	Premise 1313 1480	While virtual flowcharts and animations may simplify complicated scientific processes, Google and Wikipedia are always accessible for detailed responses to every query

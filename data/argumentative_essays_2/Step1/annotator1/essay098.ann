@@ -1,0 +1,15 @@
+T1	MajorClaim 345 416	the benefits of children engagement in paid work outweigh its drawbacks
+T4	MajorClaim 1581 1724	if children take part in some kind of paid work with their parents' permission, they can learn lively lessons and become mature and responsible
+T2	Claim 285 320	it's not a good educational measure
+A1	Stance T2 Against
+T3	Claim 432 486	children can learn about the hardship of earning money
+A2	Stance T3 For
+T5	Claim 858 1018	when children take jobs, they tend to be more responsible because whether they can earn money or not will depend on their effectiveness and attitudes in working
+A3	Stance T5 For
+T6	Claim 1296 1398	children will be more material, neglect their study for earning money or be exploited by the employers
+A4	Stance T6 Against
+T7	Premise 488 717	When they take some kind of paid work such as looking after babies, doing housework and keeping shops, they will have some life experience and skills which make them mature and can deal with many different situations in real life
+T8	Premise 730 846	they are likely to understand their parents' hardship, to respect values of money and to form a good habit of saving
+T9	Premise 1020 1099	To keep their jobs, children will have to try their best to finish their duties
+T10	Premise 1114 1267	if a child works as a shop assistant, he will have to keep an eye on good and products, calculate prices correctly and take responsibilities for any lost
+T11	Premise 1409 1564	if children get good care and instructions from their parents, they can take advantages of the work to learn valuable things and avoid going in a wrong way

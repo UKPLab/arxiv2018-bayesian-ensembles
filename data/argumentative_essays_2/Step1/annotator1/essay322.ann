@@ -1,0 +1,15 @@
+T1	MajorClaim 1414 1463	we should preserve historic buildings in the city
+T4	MajorClaim 92 220	It is important for any city to replace old buildings with new ones, but these revolutions should not include historic buildings
+T5	Claim 354 445	Historic buildings answer many questions, which are mysterious about our previous ancestors
+A3	Stance T5 For
+T6	Premise 447 511	thereby no one can determine the price of the historic buildings
+T7	Premise 513 592	They show the history of nations and previous generations who lived in the city
+T8	Premise 594 663	They show the lifestyle of people who lived in thousands of years ago
+T9	Premise 665 729	They show us how they survive, or how they defend themselves etc
+T10	Premise 731 843	By investigating about their structures, we can understand how much they knew about the architecture of building
+T11	Premise 864 955	historic buildings are important treasures, which provide an area to learn valuable lessons
+T12	Claim 958 1056	Another advantage of historic buildings is their capabilities to attract more tourists to the city
+A4	Stance T12 For
+T13	Premise 1058 1148	It is interesting for most people to know about the way people live in thousands years ago
+T14	Premise 1161 1259	It is a valuable opportunities for any city having historic buildings to show them to new visitors
+T15	Premise 1261 1384	Historic building can develop other industries such as restaurants or other food industries and handicrafts shops and so on

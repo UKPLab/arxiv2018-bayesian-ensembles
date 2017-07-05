@@ -1,0 +1,26 @@
+T1	MajorClaim 509 595	i discern that several small breaks will help students to be active in their academics
+T2	MajorClaim 2332 2418	schools should consider giving several small vocations to the students during the year
+T3	Premise 2129 2320	it not only provide break to them from their regular commitment but also allows them to spend some time on themselves, heel stressful mind and boost desire of resuming to the regular schedule
+T4	Claim 2038 2124	Vacations are not only required by students but also by professionals and housekeepers
+A1	Stance T4 For
+R1	supports Arg1:T3 Arg2:T4	
+T5	Claim 606 682	several vacations throughout the year will keep stress level of students low
+A2	Stance T5 For
+T6	Claim 1439 1509	students learning capability increase after having refreshing vacation
+A3	Stance T6 For
+T7	Premise 684 801	Many educational bodies schedule its small vacations after term exams so that student's get relief form exam pressure
+T8	Premise 812 969	research done by universities proves that student's performance improves if they get regular breaks from their learning, preparation and examination schedule
+T9	Premise 971 1146	Many colleges in foreign countries provide vacations to students after each semester that facilitate student to entertain themselves as well as prepare for their next semester
+T10	Premise 1153 1317	several holidays aid these students to not only amuse themselves but also arrange fund and materials such as books and references material for their upcoming course
+R2	supports Arg1:T7 Arg2:T5	
+R3	supports Arg1:T8 Arg2:T5	
+R4	supports Arg1:T9 Arg2:T5	
+R5	supports Arg1:T10 Arg2:T5	
+T11	Premise 1533 1604	in my school we used to get several vacations after our quarterly exams
+T12	Premise 1606 1768	During those vacations i used to analyze my performance in latest examination and used to go through those question or concept again to avoid making same mistakes
+T13	Premise 1770 1871	I also used to spend my time on developing some recreational activity or learning some sports or game
+T14	Premise 1873 2036	During my all vacations, I used to miss my school due to which I used to restart my session with great enthusiasm of learning and scoring good marks in new quarter
+R6	supports Arg1:T11 Arg2:T6	
+R7	supports Arg1:T12 Arg2:T6	
+R8	supports Arg1:T13 Arg2:T6	
+R9	supports Arg1:T14 Arg2:T6	

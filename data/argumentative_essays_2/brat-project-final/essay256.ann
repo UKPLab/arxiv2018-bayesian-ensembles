@@ -1,0 +1,28 @@
+T1	MajorClaim 518 595	students should always attend class no matter what the outcome of the exam is
+T2	Claim 605 705	in terms of learning, attending class is more effective than simply studying alone to pass the exams
+A1	Stance T2 For
+T3	Premise 707 819	Classes are designed diligently for the students and professors absolutely bear more knowledge than the students
+T4	Premise 821 964	Professors not only have the knowledge, but also equip with experiences, knowing how to guide their students toward their academic achievements
+R1	supports Arg1:T3 Arg2:T2	
+R2	supports Arg1:T4 Arg2:T2	
+T5	MajorClaim 2014 2131	students can learn more thoroughly as well as showing respect for professors and themselves through attending classes
+T6	Claim 2133 2167	It's an essential learning process
+A3	Stance T6 For
+T7	Claim 1221 1291	class attendances are regarded as critical as examination performances
+A2	Stance T7 For
+T8	Premise 1293 1385	Those who even achieve high scores on exams could fail if they didn't show up in the classes
+T9	Premise 1144 1203	Many professors grade their students with class attendances
+T10	Premise 1028 1142	Attending class is the most persuasive way for the students to show respect to the professor as well as themselves
+T11	Premise 975 1026	it's students' basic responsibility to attend class
+R3	supports Arg1:T10 Arg2:T7	
+R4	supports Arg1:T11 Arg2:T7	
+R5	supports Arg1:T9 Arg2:T7	
+R6	supports Arg1:T8 Arg2:T7	
+T12	Premise 1635 1676	this is a rather immodest way of thinking
+T13	Premise 1693 1830	professors can always give students more than students themselves could because of the experiences and their qualifications as professors
+T14	Premise 1841 1996	even if students believe that they are so brilliant to surpass their professors, they can still go to the classes to discuss with professors and classmates
+T15	Claim 1416 1539	if students already understand the contents on the class enough to pass the exams or they can study the course on their own
+A4	Stance T15 Against
+R7	attacks Arg1:T12 Arg2:T15	
+R8	attacks Arg1:T13 Arg2:T15	
+R9	attacks Arg1:T14 Arg2:T15	

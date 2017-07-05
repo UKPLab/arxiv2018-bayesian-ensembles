@@ -1,0 +1,12 @@
+T1	MajorClaim 373 442	a defeated person has to try and try until to achieve her or his goal
+T2	MajorClaim 1177 1232	people should not give up when they face with a failure
+T3	Claim 1247 1328	they have to learn new points from that failure, and they become more experienced
+A1	Stance T3 For
+T4	Claim 459 630	when people face with a failure they can learn a large number of things from that failure, therefore in the next effort they try to avoid doing and repeating that mistakes
+A2	Stance T4 For
+T6	Premise 646 793	most of inventors in the first phases of their job face with some problems and defeats, but in the next stages they learn how to deal with problems
+R2	supports Arg1:T6 Arg2:T4	
+T5	Claim 810 980	experience shows while people doing a job constantly, they become more experienced in that subject, so in the final effort they become successful with the high percentile
+A3	Stance T5 For
+T7	Premise 995 1142	scientists experiment a substance for a long time, after they gain lots of experience and knowledge about that subject they decide to make it final
+R1	supports Arg1:T7 Arg2:T5	

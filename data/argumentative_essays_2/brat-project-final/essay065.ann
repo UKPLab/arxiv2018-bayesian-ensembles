@@ -1,0 +1,28 @@
+T1	MajorClaim 213 321	government should invest more on medical care and education rather than on entertaining or sports facilities
+T2	MajorClaim 1916 2026	budgets should be allocated more on medical care and education rather than on building entertaining facilities
+T3	Claim 2036 2147	the former is more essential, non-profit oriented to the public and can be accessed by the majority of citizens
+A1	Stance T3 For
+T4	Claim 758 846	providing education and medical care is more essential and prioritized to the government
+A2	Stance T4 For
+T5	Premise 398 543	Taking care of thousands of citizens who suffer from disease or illiteracy is more urgent and pragmatic than building theaters or sports stadiums
+T6	Premise 566 745	an uneducated person may barely appreciate musicals, whereas a physical damaged person, resulting from the lack of medical treatment, may no longer participate in any sports games
+R1	supports Arg1:T6 Arg2:T5	
+R2	supports Arg1:T5 Arg2:T4	
+T7	Claim 848 944	Entertaining facilities such as cinemas, theaters and sports stadiums are mostly profit-oriented
+A3	Stance T7 For
+T8	Premise 946 1058	Their existences are based on their marketing strategies, the condition of facilities and the volume of audience
+T9	Premise 1060 1193	The competition among each of these facilities is an inevitable part of the free market, which should not be interfered by government
+T10	Premise 1204 1393	the establishment of medical facilities or educational institutes is aimed to improve the health or education standard rather than earning profits, which deserves more funds from government
+R3	supports Arg1:T8 Arg2:T7	
+R4	supports Arg1:T9 Arg2:T7	
+R5	supports Arg1:T10 Arg2:T7	
+T11	Premise 1593 1698	it is a bit inappropriate to use the majority of citizens' tax funds to meet a minority of people's needs
+T12	Claim 1723 1799	sectors such as medical care and education deserve more governmental support
+A4	Stance T12 For
+T13	Premise 1809 1878	they are accessed by every individual in our society on a daily basis
+T14	Premise 1408 1511	putting taxpayers' money on building theaters or sports stadiums is unfair to those who cannot use them
+T15	Premise 1526 1580	not everyone is a fan of watching musicals on the spot
+R6	supports Arg1:T15 Arg2:T11	
+R7	supports Arg1:T11 Arg2:T12	
+R8	supports Arg1:T14 Arg2:T12	
+R9	supports Arg1:T13 Arg2:T12	

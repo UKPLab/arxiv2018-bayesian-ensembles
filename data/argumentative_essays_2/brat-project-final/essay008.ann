@@ -1,0 +1,24 @@
+T1	MajorClaim 468 539	a government is supposed to offer sufficient financial support for both
+T2	MajorClaim 1909 1993	a government should spare effort on young children education as well as universities
+T3	Claim 1995 2043	both are crucial on the way to a brighter future
+A1	Stance T3 For
+T4	Claim 960 1167	if countries, especially the developing countries, are determined to take off, one of the key points governments should set on agenda is to educate more qualified future citizens through elementary education
+A2	Stance T4 For
+T5	Premise 776 942	a lack of well-established primary education goes hand in hand with a high rate of illiteracy, and this interplay seriously compromises a country's future development
+T6	Premise 557 687	elementary education, like the base of a architecture, is the fundamental requirement to be a qualified citizen in today's society
+T7	Premise 689 771	government should guarantee that all people have equal and convenient access to it
+R1	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T7 Arg2:T4	
+R3	supports Arg1:T6 Arg2:T4	
+T8	Claim 1687 1840	government's big budget on universities may attract more excellent intellectuals and researchers into the country and enjoy a higher reputation worldwide
+A3	Stance T8 For
+T9	Premise 1605 1672	Researches into humanities and art still need large amount of money
+T10	Premise 1188 1331	for higher education, which represent the cutting edge of a country's academic achievements, act as the vanguard in economic and social advance
+T11	Premise 1333 1487	The high technology and new ideas applied into practice may not only lead a country to flourish but also elevate its status in the international community
+T12	Premise 1489 1573	Some may argue that universities can support themselve well by donation or invention
+T13	Premise 1579 1603	this argument is invalid
+R4	attacks Arg1:T13 Arg2:T12	
+R5	attacks Arg1:T12 Arg2:T8	
+R6	supports Arg1:T9 Arg2:T8	
+R7	supports Arg1:T11 Arg2:T8	
+R8	supports Arg1:T10 Arg2:T8	

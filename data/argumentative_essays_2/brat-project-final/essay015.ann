@@ -1,0 +1,28 @@
+T1	MajorClaim 199 262	they may be factors decreasing the position of written language
+T2	Claim 397 535	it is easy to point out many benefits users can get from email and text messaging, which answers to the question of their great popularity
+A1	Stance T2 For
+T3	MajorClaim 1969 2091	we cannot deny the threat from email and text messaging to the status of written language because their obvious popularity
+T4	Premise 537 665	Before email and mobile phone, human beings communicated by meeting directly, sending letters or later, calling from home phones
+T5	Premise 667 808	Such ways usually made people have troubles for the expensiveness, difficulties in far communication or emergency and the loss of information
+T6	Premise 876 952	People can send or receive electronic letters anywhere and anytime they want
+T7	Premise 966 1128	thanks to the function provided by email and text messaging (SMS), it is cheaper and faster to transfer a lot of information, even to many people at the same time
+T8	Premise 1130 1236	They are so convenient that the majority of population prefer to use them instead of some traditional ways
+T9	Premise 819 874	email and cell phones have improved the obstacles above
+R1	supports Arg1:T4 Arg2:T2	
+R2	supports Arg1:T5 Arg2:T2	
+R3	supports Arg1:T9 Arg2:T2	
+R4	supports Arg1:T6 Arg2:T2	
+R5	supports Arg1:T7 Arg2:T2	
+R6	supports Arg1:T8 Arg2:T2	
+T10	Claim 1238 1345	The popularity of email and text messaging, as a result, leads to the losing of written language's position
+A2	Stance T10 For
+T11	Premise 1347 1476	People tend to use slangs and abbreviated words to shorten their writing and save more time in communicating for other activities
+T12	Premise 1498 1545	language in writing is not in its original form
+R7	supports Arg1:T11 Arg2:T12	
+T13	Premise 1567 1724	people compose a message with only emoticons (the expressions by face created by service providers), which means there is no room for writing or typing texts
+T14	Premise 1736 1844	it is more dangerous that youngsters sometimes use such new languages in their studying, writing assignments
+T15	Premise 1846 1952	If that tendency continues at a rapid pace, written language may face up to a real problem about its stand
+R8	supports Arg1:T13 Arg2:T12	
+R9	supports Arg1:T12 Arg2:T10	
+R11	supports Arg1:T14 Arg2:T10	
+R10	supports Arg1:T15 Arg2:T10	

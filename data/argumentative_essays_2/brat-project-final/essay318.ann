@@ -1,0 +1,32 @@
+T1	MajorClaim 470 517	no additional payment should be charged on them
+T2	MajorClaim 2347 2425	charging drivers for another fee for this could be unreasonable and irrational
+T3	Claim 2196 2258	"rush hours" are usually not the direct consequence of drivers
+A1	Stance T3 For
+T4	Claim 791 856	charging them extra fee might seems to be out of the jurisdiction
+A2	Stance T4 For
+T5	Premise 552 652	Capitalism enfranchised people's right to own properties, and consequently, their rights to use them
+T6	Premise 654 772	Driving cars during the rush hours might is bound to polluting cities's environment, but laws protect drivers to do so
+T7	Premise 886 956	traffic jam is a natural phenomenon that nobody is able to shun or ban
+T8	Premise 961 990	it is out of drivers' control
+R1	supports Arg1:T7 Arg2:T8	
+T9	Premise 1076 1170	Wars are notorious, but you can't blame the soldiers who are justing fight for their countries
+R2	supports Arg1:T8 Arg2:T4	
+R3	supports Arg1:T9 Arg2:T4	
+R4	supports Arg1:T5 Arg2:T4	
+R5	supports Arg1:T6 Arg2:T4	
+T10	Claim 1327 1389	Charging drivers one more fee makes no sense and is ridiculous
+A3	Stance T10 For
+T12	Premise 1172 1325	Buying a car spends hundreds of thousand; paying for all sorts of fee takes another several-these are all ready too much for most of the families to bear
+T11	Premise 1471 1566	charging them too much fee adds a lot to their burden and is actually jeopardizing their rights
+T13	Premise 1391 1465	Majority of the families buy cars simply for a safer and easier conveyance
+R6	supports Arg1:T13 Arg2:T11	
+R7	supports Arg1:T12 Arg2:T11	
+R8	supports Arg1:T11 Arg2:T10	
+T14	Premise 1857 1973	Sometimes traffic jam occur only due to the malfunction of a traffic light, or unreasonable organization of roadways
+T15	Premise 1991 2064	the one who should be charged for a fine is the city planner, not drivers
+T16	Claim 2078 2178	charging drivers fees regardless of the causes of the problems could be ridiculous and even unlawful
+A4	Stance T16 For
+T17	Claim 1568 1855	Rather than passively forcing drivers to pay another fee, government should instead, be more active on advocating the use of more efficient and environmental-friendly energy or planning out more reasonable and convenient layout that allow people to reach their destinations with less oil
+A5	Stance T17 For
+R9	supports Arg1:T14 Arg2:T16	
+R10	supports Arg1:T15 Arg2:T16	

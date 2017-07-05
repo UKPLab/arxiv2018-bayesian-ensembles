@@ -1,0 +1,14 @@
+T2	MajorClaim 1524 1587	more emphasis should be laid on human beings other than animals
+T1	Premise 368 430	biodiversity is essential to maintain the balance of ecosystem
+T3	Premise 432 592	If certain species are absent from this system, such kind of balance is likely to be disrupted and other species, including human beings, will come under threat
+T4	Claim 605 678	it is our responsibility to keep as many species on the Earth as possible
+T5	Claim 697 769	species extinction is quite natural according to the theory of evolution
+A2	Stance T5 For
+T6	Premise 771 871	The environment on the Earth has been transformed many times since the first species came into being
+T7	Premise 873 975	A great number of plants and animals died out because they were unable to fit into the new environment
+T8	Premise 996 1083	the process of extinction of some species is irrevocable and we can do nothing about it
+T9	Premise 1098 1198	human beings nowadays are still faced with many urgent problems such as starvation, disease and wars
+T10	Premise 1200 1391	When these problems are taken into account, extinction of some animals recedes greatly in importance and it is not sensible to devote our limited resources to animals that have been past help
+T11	Claim 1393 1507	We should put our own survival and sustainment in order first before considering the conservation of other species
+A3	Stance T11 For
+A4	Stance T4 Against

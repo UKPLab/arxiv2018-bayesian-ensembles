@@ -1,0 +1,17 @@
+T2	MajorClaim 295 402	spending the budget for space exploration is an important activity to save living of humanity in the future
+T1	MajorClaim 1459 1518	spending budget for space exploring is not the waste budget
+T4	Claim 435 490	space exploration is an activity that wastes the budget
+A2	Stance T4 Against
+T5	Premise 724 796	finding a new place for living in another planet is impossible until now
+T6	Premise 817 928	our planet is threatening by many of other planets or stars and it is an enormous danger for living of humanity
+T7	Claim 941 1011	it is very significant to find a new place for living in other planets
+A3	Stance T7 For
+T3	Claim 1380 1445	space exploration will use as a military power for many countries
+A1	Stance T3 For
+T8	Claim 1528 1573	it may helps to save civilization of humanity
+A4	Stance T8 For
+T9	Premise 1014 1086	Space exploration has used as a tools for military power in the cold war
+T10	Premise 1103 1199	many countries will try to prevent attach of other countries by using and invention new missiles
+T11	Premise 498 600	the essential challenge of humanity in the future would be the discovery of a new place for the living
+T12	Premise 1214 1284	the space race happened between the United Stated and the Soviet Union
+T13	Premise 1286 1365	Both countries tried to send man to the moon and show their power to each other

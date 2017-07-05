@@ -1,0 +1,36 @@
+T2	MajorClaim 1780 1840	traditional learning still has many benefits to the students
+T1	Claim 347 382	online classes have many advantages
+A1	Stance T1 Against
+T3	MajorClaim 392 429	I prefer traditional learning classes
+T4	Claim 458 560	the participant with the others like classmates or professors is still an important factor in studying
+A2	Stance T4 For
+T5	Premise 562 636	Working in group leads to more discussion and more opinion among the class
+T6	Premise 652 753	the discussion class results in expanded children vision and their respect to others roommate's ideas
+T7	Premise 755 850	Unlike the distance learning that children have few opportunities to discuss with their friends
+T8	Claim 860 918	classroom learning provides other activities than studying
+A3	Stance T8 For
+T9	Premise 920 1058	During student's free time, they have a number of activities that they can join, such as playing sports, going to lab, or going to library
+T10	Premise 1060 1117	These activities lead to more interact with their friends
+T11	Premise 1119 1170	Connection with friends improves their IQ abilities
+T12	Premise 1185 1234	they have a chance to learn about their societies
+T13	Premise 1242 1297	the online course keeps the children at their home only
+T14	Claim 1307 1399	in school, there are professors that guided you during you had a problem or needed an advice
+A4	Stance T14 For
+T15	Premise 1401 1443	The professor provides good answers to you
+T16	Premise 1445 1528	They do not mind helping you, and they never leave you alone when you got a problem
+T17	Premise 1543 1623	in distance learning, these aspects of the professor had reduced their important
+T18	Premise 1625 1670	The professor has been assigned to teach only
+T19	Premise 1682 1763	there will be a long response from the teachers when children ask them a question
+R1	supports Arg1:T5 Arg2:T6	
+R2	supports Arg1:T6 Arg2:T4	
+R3	supports Arg1:T7 Arg2:T4	
+R4	supports Arg1:T9 Arg2:T8	
+R5	supports Arg1:T10 Arg2:T8	
+R6	supports Arg1:T11 Arg2:T8	
+R7	supports Arg1:T12 Arg2:T8	
+R8	supports Arg1:T13 Arg2:T8	
+R9	supports Arg1:T15 Arg2:T14	
+R10	supports Arg1:T16 Arg2:T14	
+R11	supports Arg1:T17 Arg2:T14	
+R12	supports Arg1:T18 Arg2:T14	
+R13	supports Arg1:T19 Arg2:T14	

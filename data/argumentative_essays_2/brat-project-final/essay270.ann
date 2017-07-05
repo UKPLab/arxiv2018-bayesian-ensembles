@@ -1,0 +1,42 @@
+T1	Claim 284 350	it can improve the efficiency and reduce the crisis of our actions
+A1	Stance T1 For
+T2	MajorClaim 183 277	it is essential for people, especially young ones, to possess the ability to plan and organize
+T3	Claim 410 506	great planning and organizing ability is able to cause our actions more efficient and productive
+A2	Stance T3 For
+T4	Premise 508 684	Take myself as an example, I used to be overwhelmed by the burden of preparing for the final exam, submitting my paper, and finishing my internship work at the end of each term
+T5	Premise 686 897	Yet, in this year, following the suggestion of my roommate, John, I make a to-do list to plan and organize perfectly everything I should get done in the final and hence take every tasks and trivials into control
+T6	Premise 899 1009	This plan ability helps me a lot, making me climb to the top rank of the class while finishing everything else
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T5 Arg2:T3	
+R3	supports Arg1:T6 Arg2:T3	
+T7	Claim 1030 1184	the capacity to plan and organize also help young people to eliminate the crisis in their actions, which may ruin one's whole effort over a very long time
+A3	Stance T7 For
+T8	Premise 1202 1337	the employees in every company have to create profit as much as they can for their supervisors and complete their assignments perfectly
+T9	Premise 1339 1496	If some employees lack the ability to plan and organize ahead, they may get the procrastination and therefore take into action until the deadline is imminent
+R4	supports Arg1:T8 Arg2:T9	
+T10	Premise 1664 1833	those employees who did not plan and finish their assignments ahead of time perhaps are unable to finish these tasks on time and therefore will be penalized or get fired
+T11	Premise 1835 1882	Every employee can not afford this kind of loss
+T12	Premise 1561 1648	the deadline of task is shifted to an earlier date for the change of company's schedule
+R5	supports Arg1:T12 Arg2:T10	
+R6	supports Arg1:T11 Arg2:T7	
+R7	supports Arg1:T9 Arg2:T7	
+R8	supports Arg1:T10 Arg2:T7	
+T13	Claim 1987 2042	it is not need for young people to possess this ability
+A4	Stance T13 Against
+T14	Premise 1910 1979	the ability to plan and organize can be learned until obtaining a job
+R9	supports Arg1:T14 Arg2:T13	
+T15	Premise 2058 2105	this ability is also essential for young people
+T16	Premise 2112 2209	young people can overcome their bad habits and fulfill their goals more quickly with this ability
+R10	supports Arg1:T16 Arg2:T15	
+T17	Premise 2211 2346	As searching information on the internet, young people are probably distracted by other attractions such as online games or social webs
+T18	Premise 2371 2432	they would surf on the internet for hours and end up no where
+T19	Premise 2434 2470	It is obviously a huge waste of time
+T20	Premise 2476 2614	if they make their plan in the first place, and then stick to their plans, they could get their work done quickly beyond their imagination
+R11	attacks Arg1:T15 Arg2:T13	
+R13	supports Arg1:T17 Arg2:T20	
+R14	supports Arg1:T18 Arg2:T20	
+R15	supports Arg1:T19 Arg2:T20	
+T21	MajorClaim 2699 2801	the ability to plan and organize is undoubtedly a powerful and sharp weapon that we must be armed with
+T22	Claim 2616 2694	In this complex society, we, young people, are encompassed with multiple tasks
+A5	Stance T22 For
+R12	attacks Arg1:T20 Arg2:T13	

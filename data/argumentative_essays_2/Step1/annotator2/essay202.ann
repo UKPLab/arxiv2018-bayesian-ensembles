@@ -1,0 +1,23 @@
+T1	MajorClaim 446 566	a good co-worker needs to have three most important characteristics such as cooperation, trustworthiness, and fellowship
+T2	Claim 568 621	The co-workers should be cooperative with one another
+A1	Stance T2 For
+T3	Premise 623 679	If they do not cooperate, there will be lots of disputes
+T4	Premise 681 732	I once had a co-worker who was too family conscious
+T5	Premise 744 854	he always left office sharp on time without giving any consideration whether the work has been finished or not
+T6	Premise 874 992	I had to do his work in order to protect him from getting caught to the supervisor who was a very authoritative person
+T7	Premise 1003 1081	one day I wanted to be off early because I had to take my mother to the doctor
+T8	Premise 1083 1208	When I requested my co-worker to give a helping hand to finish my work early, he turned down my request giving a silly excuse
+T9	Premise 1210 1377	From that day onwards I did not offer him any support and finally he was transferred from our department to a distant location as a punishment for his irresponsibility
+T10	Premise 1400 1498	if the co-workers do not corporate with each other that would be devastating in a work environment
+T11	Claim 1500 1539	The co-workers need to trust each other
+A3	Stance T11 For
+T12	Premise 1541 1573	They should not act on suspicion
+T13	Premise 1632 1750	I came across a situation once such that one of my subordinates used to suspect his co-worker for carrying tales to me
+T14	Premise 1752 1868	To a certain extent his suspicion was valid as his co-worker made several attempts to highlight the drawbacks of him
+T15	Premise 1878 1992	I never encourage tale carriers as a principle and therefore his co-worker gave up talking ill against him with me
+T16	Premise 1998 2091	this mistrust continued and created very unpleasant situations for everybody in my department
+T17	Claim 2107 2146	co-workers should believe in fellowship
+A2	Stance T17 For
+T18	Premise 2148 2241	This helps them to enjoy their work life while building up very strong personal relationships
+T19	Premise 2254 2290	you spend most of your day at office
+T20	Premise 2292 2356	If you have a good company in office, it is certainly a blessing

@@ -1,0 +1,40 @@
+T1	MajorClaim 2247 2306	parents should encourage students to take the part-time job
+T2	MajorClaim 217 282	it is better for parents to encourage them to take part-time jobs
+T3	Claim 2139 2234	taking the part-time job can let students experience the real adult life and know more about it
+A1	Stance T3 For
+T4	Premise 436 483	most people they contact with are also students
+T5	Claim 601 653	they can teach students many things about adult life
+A2	Stance T5 For
+T6	Premise 335 426	there are a few opportunities for students to know how to live adult life in the university
+R1	supports Arg1:T4 Arg2:T6	
+T7	Premise 494 595	when students do part-time jobs, they can work with many kinds of people, and most of whom are adults
+R2	supports Arg1:T7 Arg2:T5	
+R3	supports Arg1:T6 Arg2:T5	
+T8	Premise 655 742	My friend Lisa, who is doing part-time job now, tells me that it is fabulous to take it
+T9	Premise 744 873	Through part-time job, she makes friends with different kinds of people and they let her know the different aspects of adult life
+T10	Premise 888 1058	Lisa thought in adult life, work is the core; but after she knows these friends, she changes her mind that the true core for the adult life is responsibility but not work
+T11	Premise 1067 1177	thanks to the information her new friends has provided; now she is more confidence about her future adult life
+R4	supports Arg1:T10 Arg2:T11	
+R5	supports Arg1:T11 Arg2:T5	
+R6	supports Arg1:T9 Arg2:T5	
+R7	supports Arg1:T8 Arg2:T5	
+T12	Premise 1287 1310	we do not experience it
+T13	Premise 1312 1386	it is very difficult for us to really know how tense the adult life can be
+R8	supports Arg1:T12 Arg2:T13	
+T14	Claim 1399 1468	we need part-time job to teach us how hard the real adult life can be
+R9	supports Arg1:T13 Arg2:T14	
+A3	Stance T14 For
+T15	Premise 1480 1738	some questionnaires indicate that if students have taken part-time jobs, they will make the best use of their time to prepare their future and more importantly; they will not expect too much for their future than students who have not taken the part-time job
+T16	Claim 1751 1814	the part-time job can make people understand future life better
+A4	Stance T16 For
+R10	supports Arg1:T15 Arg2:T16	
+T17	Premise 1188 1268	parents always tell students that the adult life is much tenser than school life
+R11	supports Arg1:T17 Arg2:T14	
+T18	Claim 1852 1896	the part-time job will effect student' study
+A5	Stance T18 Against
+T19	Premise 1908 1964	most students will do the part-time job in their holiday
+T20	Premise 1969 2002	it will not effect on their study
+R12	supports Arg1:T19 Arg2:T20	
+R13	attacks Arg1:T20 Arg2:T18	
+T21	Premise 2004 2122	Compared with playing computers every day, doing part-time jobs is the best choice for students to spend their holiday
+R14	supports Arg1:T21 Arg2:T20	

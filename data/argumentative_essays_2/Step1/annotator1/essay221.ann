@@ -1,0 +1,29 @@
+T1	MajorClaim 260 298	the zoo is invaluable for human beings
+T6	MajorClaim 1808 1842	the zoo is so useful for the earth
+T2	Claim 1672 1784	the zoo not only saves animals in danger of extinction, but also helps people around the world have better lives
+A1	Stance T2 For
+T3	Claim 300 331	It is very crucial for learning
+A2	Stance T3 For
+T4	Claim 333 367	It helps animals out of extinction
+A3	Stance T4 For
+T5	Claim 375 410	it is a interesting travel location
+A4	Stance T5 For
+T7	Claim 426 460	the zoo gives humans new knowledge
+A5	Stance T7 For
+T8	Claim 988 1068	the zoo preserves a large number of rare animals and provides them safe habitats
+A6	Stance T8 For
+T9	Claim 1622 1654	It benefits to a certain country
+A7	Stance T9 For
+T10	Claim 1285 1384	because of all weird, acute, and beautiful animals in the zoo, it can be a great tourist attraction
+A8	Stance T10 For
+T11	Premise 583 633	the zoo is the important place for innate learning
+T12	Premise 635 706	The zoo also let students have a chance to learning biology practically
+T13	Premise 708 764	They are able to observe animals' behaviors and features
+T14	Premise 776 842	practical learning help students relax from a boring lecture class
+T15	Premise 853 976	researchers need the zoo to pick up some examples of animals for their researches because it has diverse species of animals
+T16	Premise 1070 1117	In the zoo, there is not so harmful as a forest
+T17	Premise 1119 1179	They, fed by zookeepers, do not need to find food themselves
+T18	Premise 1194 1263	we can do artificial insemenation to maintain nearly extinct wildlife
+T19	Premise 1386 1451	There are a lot of tourists who seek to see those animals closely
+T20	Premise 1453 1559	If the zoo has a large number of both national and foreign tourists, it will receive a great deal of money
+T21	Premise 1561 1620	That also make money flow, and then economics become better

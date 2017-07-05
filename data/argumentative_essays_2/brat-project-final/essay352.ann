@@ -1,0 +1,22 @@
+T1	Claim 343 506	computer assists children to use vast resources available over internet to study effectively as well as develop some basic skills which help them in future careers
+A1	Stance T1 For
+T2	MajorClaim 197 304	It is disagreed that computer can affect children in a negative way if they use a computer on a daily basis
+T3	MajorClaim 1822 1852	computer is a boon to children
+T4	Claim 1043 1087	computer impacts children on a positive note
+A2	Stance T4 For
+T5	Premise 642 770	through computer children can access internet to gather knowledge on the subjects they are studying or they are interested about
+T6	Premise 508 637	The best thing about internet is the availability of information in the form of text, image or video related to almost everything
+T7	Premise 787 935	students preparing for delivering speech on a certain topic can browse through internet to learn each and every minute details of the subject matter
+T8	Premise 937 1028	It's hard to get everything at a same place unless children are not familiar with computers
+T9	Claim 1594 1656	it's clear that computer has a positive effect on the children
+A3	Stance T9 For
+T10	Premise 1099 1231	computers enable people to prepare presentations, draw complex graphs and pictures, document thesis in a simple though efficient way
+T11	Premise 1233 1418	When children are allowed to play around with computer from a very early age, they get acquainted with the previously mentioned skills and become expert before facing professional world
+T12	Premise 1434 1581	students who used to prepare Microsoft PowerPoint presentation for their school projects, get an edge over others at an early stage of their career
+R1	supports Arg1:T7 Arg2:T4	
+R2	supports Arg1:T8 Arg2:T4	
+R3	supports Arg1:T6 Arg2:T5	
+R4	supports Arg1:T5 Arg2:T4	
+R5	supports Arg1:T12 Arg2:T9	
+R6	supports Arg1:T11 Arg2:T9	
+R7	supports Arg1:T10 Arg2:T9	

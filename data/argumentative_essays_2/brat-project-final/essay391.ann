@@ -1,0 +1,26 @@
+T1	MajorClaim 272 348	this great invention in the 21st century causes many problems in our society
+T2	Claim 1818 1861	mobile phones make our communication faster
+A1	Stance T2 Against
+T3	MajorClaim 1863 1962	it also gives rise to many social problems such as children's social skills and their mental health
+T4	Premise 475 722	as people, especially teenagers increasingly tend to focus on their phones, they may lose their interests on daily activities such as meeting with friends, and this lack of communication may impair their future negotiation and interpersonal skills
+T5	Premise 734 822	continuous use of mobile phones may also damage children's eyesight and physical posture
+T6	Claim 837 889	it is harmful for us to use mobile phones frequently
+A2	Stance T6 For
+T7	Premise 370 460	spending too much time on mobiles phones many exert an adverse effect on our social skills
+R1	supports Arg1:T4 Arg2:T7	
+R2	supports Arg1:T7 Arg2:T6	
+R3	supports Arg1:T5 Arg2:T6	
+T8	Premise 992 1085	there many game applications available online and many of them are quite aggressive in nature
+T9	Premise 1087 1299	In these games, children are rewarded to help their characters to kill or shoot monsters or characters controlled by other players, and this many lead to development of aggressive feelings, thoughts and behaviors
+T10	Premise 1315 1364	frequent conflicts may occur during communication
+T11	Claim 904 976	the growing number of mobiles games will impact their mental development
+A3	Stance T11 For
+R4	supports Arg1:T8 Arg2:T11	
+R5	supports Arg1:T9 Arg2:T10	
+R6	supports Arg1:T10 Arg2:T11	
+T12	Premise 1536 1729	as most of the telecommunication companies provide us with access to the internet via our phones, people are able to enjoy sending instant messages and making international calls free of charge
+T13	Claim 1737 1795	mobile phones have shortened the distance of communication
+A4	Stance T13 Against
+T14	Premise 1429 1514	Mobile phones , such as smart phones, has made our communication easy and convenience
+R8	supports Arg1:T14 Arg2:T13	
+R7	supports Arg1:T12 Arg2:T14	

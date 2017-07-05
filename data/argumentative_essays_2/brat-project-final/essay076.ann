@@ -1,0 +1,19 @@
+T1	MajorClaim 1695 1827	the government should fund the deprived for their health care and education, who are the group in real need for the authority's help
+T2	Premise 737 879	such people might fail to get cured in time, thus influencing their working efficiency, which would destabilize the production of the industry
+T3	Premise 600 722	If citizens had no access to health care and education, their physical health and psychological soundness would be at risk
+R1	supports Arg1:T3 Arg2:T2	
+T4	Claim 1038 1146	the government should be accountable for citizens' health care and education to keep society safe and stable
+A1	Stance T4 For
+T5	Premise 887 1025	without sufficient guidance of teachers, these citizens might misbehave or even commit crimes, posing a threat to other citizens' security
+T6	Premise 343 439	it is the government that should be obligated to fund the health care and education for citizens
+T7	Premise 457 598	citizens enjoy the right to live in a harmonious and stable environment, which should be enabled by the government, the leader of the society
+R4	supports Arg1:T7 Arg2:T4	
+R5	supports Arg1:T5 Arg2:T4	
+R8	supports Arg1:T2 Arg2:T4	
+T8	Claim 1207 1321	it is a waste of public money for the government to subsidize health care and education of each citizen in society
+A3	Stance T8 Against
+T9	Premise 1329 1415	a great number of people, in fact, have had the capacity to pay for the both privately
+T10	Premise 1426 1673	the government should give priority to more pressing problems related to social members' wellbeing, such as soaring crime rate, AIDS epidemic or the shortage of infrastructure, which are requiring financial resources from the government to address
+R9	supports Arg1:T10 Arg2:T8	
+R10	supports Arg1:T9 Arg2:T8	
+R2	supports Arg1:T6 Arg2:T4	

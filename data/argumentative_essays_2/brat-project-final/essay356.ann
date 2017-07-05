@@ -1,0 +1,29 @@
+T1	MajorClaim 1891 1966	the prosperity of tourism can provide benefits for people on a global scale
+T2	Claim 1977 2011	there are some inevitable problems
+A1	Stance T2 Against
+T3	Premise 2013 2094	they are outweighed by advantages and can be tackled if proper measures are taken
+R1	attacks Arg1:T3 Arg2:T2	
+T4	Premise 340 537	In order to meet the needs of tourists, local governments are likely to build more facilities and infrastructures around tourist attractions, which may result in the destruction of natural habitats
+T5	Premise 539 723	Tourism also creates more pollution and waste, including growing emission of greenhouse gases, dumped leftovers and overuse of water, power and other kind of energy in luxurious hotels
+T6	Claim 277 338	tourism can have a negative impact on the natural environment
+A2	Stance T6 Against
+T7	Premise 763 856	tourism puts great pressure on ecosystem and local resources, and it should not be encouraged
+R2	supports Arg1:T4 Arg2:T6	
+R4	supports Arg1:T5 Arg2:T6	
+T8	Premise 947 1115	Holiday makers flocking to other countries are not only bound to spend on tickets of attractions, but also pay for food, accommodation, transportation and entertainment
+T9	Premise 1117 1264	Both local people and governments can make a large amount of money through these services, and more employment opportunities can be created as well
+T10	Premise 1281 1380	the revenue earned form tourism can be used in turn to reduce pollution and protect the environment
+T11	Claim 867 945	flourishing tourism in a place can be very rewarding in terms of local economy
+A4	Stance T11 For
+R7	supports Arg1:T8 Arg2:T11	
+R8	supports Arg1:T9 Arg2:T11	
+R9	supports Arg1:T10 Arg2:T11	
+T12	Claim 1395 1463	the increasing development of tourism is a boon to travelers as well
+A5	Stance T12 For
+T13	Premise 1465 1563	The provision of direct airlines makes it possible for them to travel conveniently and comfortably
+T14	Premise 1565 1681	With adequate local facilities and services available, they can spend more of their holidays having fun and relaxing
+T15	Premise 1696 1874	both locals and tourists can experience more cultures than ever before, and they can be more open-minded to eliminate preconceptions and deepen mutual understanding among nations
+R10	supports Arg1:T13 Arg2:T12	
+R11	supports Arg1:T14 Arg2:T12	
+R12	supports Arg1:T15 Arg2:T12	
+R3	supports Arg1:T7 Arg2:T6	

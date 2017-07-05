@@ -1,0 +1,30 @@
+T1	MajorClaim 444 515	giving those with no work a mobile phone each is a total waste of money
+T2	MajorClaim 2307 2460	providing those who are jobless with mobile phones that are accessible to internet is not a proper and the best way to trim down the rate of unemployment
+T3	Premise 546 684	when people without jobs have hand phones that have access to the Internet, they will be able to browse the net for more job opportunities
+T4	Claim 1081 1227	if the government provides those without work with a mobile phone, they will be able to find themselves an occupation in order to live and survive
+A2	Stance T4 Against
+T5	Premise 699 787	they can surf the The Star Onlines' work section to find a job that is suitable for them
+T6	Premise 789 947	With the help of the net, they can also do more research on the work that they have found apart from looking up on how they can prepare themselves for the job
+T7	Premise 964 1069	the mobile phones can also be used to make calls with the companies in which they would like to work with
+R4	supports Arg1:T5 Arg2:T4	
+R5	supports Arg1:T6 Arg2:T4	
+R6	supports Arg1:T7 Arg2:T4	
+T8	Premise 1276 1350	supplying hand phones to the unemployed is a waste of the taxpayers' money
+T9	Claim 1662 1753	the money can be used for other intentions rather than giving hand phones to the unemployed
+A4	Stance T9 For
+T10	Premise 1368 1485	the money instead of being used to supply the electronic gadget can be used for other useful purposes for the country
+T11	Premise 1515 1647	the money can be used to build more amenities for the public or given to the poor so that they can use it to help them earn a living
+R10	supports Arg1:T11 Arg2:T9	
+R11	supports Arg1:T10 Arg2:T9	
+T12	Claim 1768 1861	when hand phones are provided for free, many would want to take advantage of this opportunity
+A5	Stance T12 For
+T13	Premise 1863 1957	It will not be surprising that in order to obtain a mobile phone, they make themselves jobless
+T14	Premise 1959 2070	Some might even go to the extent of lying that they are on unemployment to make them eligible to get the phones
+T15	Premise 2089 2128	the public's money is spent worthlessly
+R13	supports Arg1:T14 Arg2:T15	
+R14	supports Arg1:T15 Arg2:T12	
+R15	supports Arg1:T13 Arg2:T12	
+T16	Claim 2146 2262	till now, there are no surveys or evidences that prove this method in effective in reducing the rate of unemployment
+A6	Stance T16 For
+R1	supports Arg1:T3 Arg2:T4	
+R2	supports Arg1:T8 Arg2:T9	

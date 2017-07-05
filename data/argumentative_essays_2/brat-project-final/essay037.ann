@@ -1,0 +1,40 @@
+T1	MajorClaim 258 384	international sporting occasions are essential in easing international tensions and releasing patriotic emotions in a safe way
+T2	MajorClaim 2052 2166	It will make the world more peaceful by easing internation tensions and releasing patriotic emotions in a safe way
+T3	Claim 1985 2050	International sporting events will draw the international concern
+A1	Stance T3 For
+T4	Claim 1002 1041	It really help to alleviate the tension
+A2	Stance T4 For
+T5	Premise 640 685	it is useful to ease tensions between nations
+T6	Premise 596 638	People can understand more about a country
+T7	Premise 386 493	An international sporting event is normal held in a country with huge interest from fans all over the world
+T8	Premise 495 594	For the time of occasions, people regardless of nationality, origin and religion will live together
+T9	Premise 699 808	in FIFA World Cup 2010, the relation between North Korea and South Korea is dangerous for the warship sinking
+T10	Premise 810 866	The world suspected North Korea of the aggressive action
+T11	Premise 877 941	due to this event North Korea showed a friendship and enthuasism
+T12	Premise 943 1000	It is rare times when people can learn about this country
+R9	supports Arg1:T12 Arg2:T4	
+R10	supports Arg1:T11 Arg2:T4	
+R11	supports Arg1:T10 Arg2:T4	
+R12	supports Arg1:T9 Arg2:T4	
+R13	supports Arg1:T6 Arg2:T4	
+R14	supports Arg1:T8 Arg2:T4	
+R15	supports Arg1:T7 Arg2:T4	
+T13	Claim 1068 1156	an international sporting event also helps fans release patriotic emotions in a safe way
+A4	Stance T13 For
+T14	Premise 1158 1249	When they garther together to encourage their team, they will show their patriotic emotions
+T15	Premise 1251 1381	Regardless of the competition between teams, their emotions are always released in a safe way due to the sole passion of the sport
+T16	Premise 1393 1497	all fans know that a sport event will attract the attention of whole the world and a lot of public media
+T17	Premise 1499 1568	They will try to create a beautiful image about their land and people
+T18	Premise 1570 1678	In Olympic Beijing 2008, Chinese tried thier best to bring the world a spectacular image about their country
+T19	Premise 1694 1789	foreigners came here always received the support of friendly volunteers who were young students
+T20	Premise 1791 1860	They were welcomed by each Chinese hospitality, beauty in each cities
+T21	Premise 1862 1968	Everythings is created by patriotic emotions of Chinese who wanted to bring a beautiful China to the world
+R16	supports Arg1:T21 Arg2:T13	
+R17	supports Arg1:T20 Arg2:T13	
+R18	supports Arg1:T19 Arg2:T13	
+R19	supports Arg1:T18 Arg2:T13	
+R20	supports Arg1:T17 Arg2:T13	
+R21	supports Arg1:T16 Arg2:T13	
+R22	supports Arg1:T15 Arg2:T13	
+R23	supports Arg1:T14 Arg2:T13	
+R1	supports Arg1:T5 Arg2:T4	

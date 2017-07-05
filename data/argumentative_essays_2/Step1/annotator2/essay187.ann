@@ -1,0 +1,18 @@
+T1	MajorClaim 145 337	people who learn a foreign language in the country in which it is spoken have a deeper understanding of different language skills than those who learn the same languages in their own countries
+T2	MajorClaim 1830 1966	advantages of learning language in the country in which is spoken outweigh the advantages of the other way of learning of a new language
+T3	Claim 339 453	Person 'A' who learns a non-native language in his country may receive benefit from a step-by-step teaching method
+A1	Stance T3 Against
+T4	Premise 525 599	he can set aside enough time and energy dedicated to learning the language
+T5	Premise 610 661	all the learners are probably from the same country
+T6	Premise 772 909	when a new learner wants to learn a new language in the country in which it is spoken, he has the opportunity to communicate with natives
+T7	Premise 911 1017	He may find native friends and may participate in groups where members are people from the foreign country
+T8	Premise 1092 1142	He also has access to the most up-to-date language
+T9	Claim 1149 1276	he can learn most useful idioms, proverbs and so many other things which the former person, person 'A', does not have access to
+T10	Claim 1523 1738	When you are exposed to an environment where everybody talks to you in the new language you want to learn and expects you express words from the same language, you are forced to learn it as soon and good as possible
+A4	Stance T10 For
+T11	Premise 1414 1521	There are lots of evidences show that communication is the most important factor in learning a new language
+T12	Premise 471 513	he is not jumping into the foreign country
+T13	Premise 666 751	all these people most likely have learned the language, more or less, in the same way
+T14	Claim 1029 1090	it leads to better understanding of language essential skills
+A5	Stance T14 For
+A2	Stance T9 For

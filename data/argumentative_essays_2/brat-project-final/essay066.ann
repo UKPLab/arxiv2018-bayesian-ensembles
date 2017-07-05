@@ -1,0 +1,22 @@
+T1	MajorClaim 523 601	technology plays a key role in promoting traditional techniques and lifestyles
+T3	Claim 603 730	In terms of time and space, technology makes it more efficient and effective to promote the traditional skills and ways of life
+A1	Stance T3 For
+T4	Premise 1044 1211	with the access to the Internet, one of the greatest innovations in modern society, humankind can acquire the traditional techniques displayed online anytime, anywhere
+T5	Premise 732 843	In the past, only when people went to the local place could they experience the specific traditional lifestyles
+T6	Premise 845 1033	This means individuals who were engaged in work and therefore could not spare time to travel or restricted by traffic conditions had to miss the chance to appreciate the traditional skills
+R2	supports Arg1:T5 Arg2:T3	
+R3	supports Arg1:T6 Arg2:T3	
+T7	Claim 1227 1334	technology enriches the way of displaying traditional cultural heritage, making it more vivid and appealing
+A3	Stance T7 For
+T2	Premise 1349 1521	China has successfully promoted traditional techniques in the Shanghai World Expo, using a variety of state-of-the-art technological methods, such as robots and LED screens
+T8	Premise 1532 1649	many tourists around the world marveled at the perfect synthesis of the modern technology and the traditional culture
+R6	supports Arg1:T2 Arg2:T7	
+R7	supports Arg1:T8 Arg2:T7	
+T9	Claim 1670 1771	some people are concerned that technology may have a detrimental effect on the traditional lifestyles
+A4	Stance T9 Against
+T10	Premise 1797 1942	especially youngsters, are crazier about fresh and advanced things, such as digital products, thus becoming indifferent to traditional techniques
+R8	supports Arg1:T10 Arg2:T9	
+T11	Premise 1988 2061	people tend to follow the trend back to the tradition in the recent years
+R9	attacks Arg1:T11 Arg2:T10	
+T12	MajorClaim 2095 2193	technology indeed supports the preservation and promotion of traditional techniques and lifestyles
+R1	supports Arg1:T4 Arg2:T3	

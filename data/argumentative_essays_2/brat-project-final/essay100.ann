@@ -1,0 +1,36 @@
+T1	MajorClaim 397 458	one can also shine without even having to attend universities
+T2	MajorClaim 2177 2295	it would be wrong to say that one's success completely depends on the education he or she receives at the institutions
+T3	Claim 2065 2166	it is indeed true that university education is pivotal in a person's life in order for one to prosper
+A1	Stance T3 Against
+T4	Claim 480 613	it is certainly true that university education is of paramount importance for certain professions such as doctor, engineer and lawyer
+A2	Stance T4 Against
+T5	Premise 615 724	Without proper training and knowledge, it would be impossible for them to perform their best in their careers
+T6	Premise 726 886	Not only that, when they are in a university, they will have the opportunity to share their knowledge as well as to network for business associates and partners
+T7	Premise 888 980	This can benefit them in future when they intend to open up their own companies or hospitals
+R1	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+R3	supports Arg1:T7 Arg2:T4	
+T8	Claim 1016 1129	there are also a significant number of people who are very successful in their fields without going to university
+A3	Stance T8 For
+T9	Premise 1131 1183	Take for instance those who start their own business
+T10	Premise 1185 1233	These people depend solely on hard work and luck
+T11	Premise 1250 1299	for some of them it proved to be a profitable job
+T12	Premise 1321 1391	Michael Dell who is the founder and the CEO of Dell left college at 19
+T13	Premise 1404 1460	he started his computer company in his college dorm room
+T14	Premise 1474 1564	he used his earnings as well as his family's loan in order to progress to be who he is now
+R4	supports Arg1:T9 Arg2:T8	
+R5	supports Arg1:T10 Arg2:T8	
+R6	supports Arg1:T11 Arg2:T8	
+R7	supports Arg1:T12 Arg2:T8	
+R8	supports Arg1:T13 Arg2:T8	
+R9	supports Arg1:T14 Arg2:T8	
+T15	Premise 1579 1650	people with natural talents are also most likely to excel in their life
+T16	Claim 1974 2044	individuals born with talents have also a high chance to be successful
+A5	Stance T16 For
+T17	Premise 1652 1716	This is especially true in sectors like entertainment and sports
+T18	Premise 1718 1830	The introduction of increasing number of reality shows have made it possible for all those lucky ones to triumph
+T19	Premise 1860 1946	David Archuleta who was once a nobody has now taken up a large space in hearts of many
+R13	supports Arg1:T19 Arg2:T18	
+R14	supports Arg1:T18 Arg2:T16	
+R15	supports Arg1:T17 Arg2:T16	
+R10	supports Arg1:T15 Arg2:T16	

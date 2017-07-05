@@ -1,0 +1,35 @@
+T1	MajorClaim 1581 1620	dancing is an important part of culture
+T2	Claim 1629 1671	dancing are represent to believe of people
+A1	Stance T2 For
+T3	Premise 1682 1736	dancing could show how civilization of that culture is
+T4	Premise 1748 1790	people use dancing to entertain themselves
+T5	Claim 1795 1832	dancing is important in every culture
+A2	Stance T5 For
+R1	supports Arg1:T3 Arg2:T5	
+R2	supports Arg1:T4 Arg2:T5	
+T6	Claim 714 751	dancing are the part of people belief
+A3	Stance T6 For
+T7	Premise 489 600	some culture people believe that they dance in order to sacrifice to their god so they will be get a happy life
+T8	Premise 602 698	Or some part of the world that are in arid area believe that if they danced, the rain would come
+T9	Premise 386 474	dancing are significant part of culture that could show to something that people believe
+R5	supports Arg1:T7 Arg2:T6	
+R6	supports Arg1:T8 Arg2:T6	
+T10	Claim 763 816	dancing can represent to civilization of that culture
+A5	Stance T10 For
+T11	Premise 832 988	I have seen many western movies that when a kingdom have visitor from another kingdom, king or queen would dance to show a splendid of their kingdom culture
+T12	Premise 990 1070	The way of movement, the way that they costume and also a music while they dance
+T13	Premise 1072 1115	All this is a civilization of their culture
+R7	supports Arg1:T11 Arg2:T10	
+R8	supports Arg1:T12 Arg2:T10	
+R9	supports Arg1:T13 Arg2:T10	
+T14	Claim 1191 1218	dancing is one of that ways
+A6	Stance T14 For
+T15	Premise 1126 1185	many culture, people have many ways to entertain themselves
+T16	Premise 1220 1271	Both people who see and dance also have a good time
+T17	Premise 1286 1443	many event, such as christmas, last christmas I went to mall to buy gifts, and I was entertained by group of people in santa custom dancing in christmas song
+T18	Premise 1445 1530	I felt that people around me happy and group of santas also happy to see people happy
+R10	supports Arg1:T17 Arg2:T14	
+R11	supports Arg1:T16 Arg2:T14	
+R12	supports Arg1:T18 Arg2:T14	
+R13	supports Arg1:T15 Arg2:T14	
+R3	supports Arg1:T9 Arg2:T6	

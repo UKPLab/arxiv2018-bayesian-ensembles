@@ -1,0 +1,33 @@
+T1	MajorClaim 1999 2093	An integration of music into learning process bound to be successful when it is not compulsory
+T2	Claim 1946 1997	music can help an individual to shape its character
+A1	Stance T2 Against
+T3	Claim 387 455	many university authorities provide music lessons for their students
+A2	Stance T3 For
+T4	Premise 464 507	they live and study in a harmony with music
+R1	supports Arg1:T4 Arg2:T3	
+T5	Premise 267 374	It is obvious that music has a great power which can positively influence on human being and its psychology
+R2	supports Arg1:T5 Arg2:T3	
+T6	Premise 535 695	students, who spend a great deal of their time studying different academic subjects should have an opportunity to cope with the stress gained during school time
+T7	Premise 711 757	music can be a useful and interesting solution
+T8	Premise 769 934	if musical activity involves many participants, there will be co-operation and developed team work in the group, which is, of course, beneficial in their future life
+T9	Premise 945 1024	students with a quite poor academic background can show themselves in the music
+T10	Premise 1040 1089	the calm atmosphere in the class might be created
+R3	supports Arg1:T6 Arg2:T3	
+R4	supports Arg1:T7 Arg2:T3	
+R5	supports Arg1:T8 Arg2:T3	
+R6	supports Arg1:T9 Arg2:T3	
+R7	supports Arg1:T10 Arg2:T3	
+T11	Premise 1104 1179	it is clear that music can have many mentally enhancing effects on students
+T12	Claim 1528 1584	music and other entertaining subjects should be optional
+A4	Stance T12 For
+T13	Premise 1586 1655	Nowadays, time is the most valuable thing in life with increased pace
+T14	Premise 1669 1807	students are to develop their professional skills by learning occupation-related subjects, rather than playing on guitar or singing a song
+R8	supports Arg1:T13 Arg2:T12	
+R9	supports Arg1:T14 Arg2:T12	
+T15	Premise 1426 1515	students can not obtain supposed impacts, unless they get interested in it more seriously
+R10	supports Arg1:T15 Arg2:T12	
+T16	Premise 1343 1402	music is the art which requires special attitude towards it
+R11	supports Arg1:T16 Arg2:T12	
+T17	Premise 1210 1299	demand is not for musically orientated students, but for academically developed employees
+R12	supports Arg1:T17 Arg2:T12	
+R13	supports Arg1:T11 Arg2:T12	

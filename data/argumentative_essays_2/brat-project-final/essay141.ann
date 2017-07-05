@@ -1,0 +1,37 @@
+T1	MajorClaim 469 518	I agree that face-to-face communication is better
+T2	MajorClaim 2390 2430	I prefer to express my opinion in person
+T3	Claim 2439 2513	the advantages of this are qualitatively greater than that of the opposite
+A1	Stance T3 For
+T4	MajorClaim 2539 2596	the best way of communication is by means of face-to-face
+T5	Premise 584 630	communicating in person can be more convincing
+T6	Premise 632 776	Sometimes, face-to face communication can lead us to convince or complain someone successfully, and a fitting example can be found from my uncle
+T7	Premise 778 822	He once complained a service of a restaurant
+T8	Premise 824 957	Without exaggeration, he directly went to the boss and told the boss that something wrong occurred on the meal--a fly concealed in it
+T9	Premise 959 1038	Afterward, my uncle acquired a new service thanks to face-to face communication
+T10	Premise 1040 1165	If he just wrote something to complain on the website or by telephone, I do not think this problem would be thought important
+T11	Claim 1178 1260	we can commence to agree that communicating with someone in person is the best way
+A3	Stance T11 For
+R3	supports Arg1:T7 Arg2:T11	
+R4	supports Arg1:T8 Arg2:T11	
+R5	supports Arg1:T9 Arg2:T11	
+R6	supports Arg1:T10 Arg2:T11	
+T12	Premise 1346 1406	it is easy to be deceived without face-to face communication
+R1	supports Arg1:T6 Arg2:T11	
+R2	supports Arg1:T5 Arg2:T11	
+T13	Premise 1422 1493	I had received some harmful words on facebook from my best friend, Eric
+T14	Premise 1495 1610	He said that I was totally failed in building a good friendship and he did not want to be one of my friends anymore
+T15	Premise 1612 1657	I just shocked and did not know what happened
+T16	Premise 1668 1715	I realized that his facebook account was stolen
+T17	Claim 1740 1817	we are capable of stating that it is important to talk to people face-to-face
+A2	Stance T17 For
+R7	supports Arg1:T15 Arg2:T17	
+R8	supports Arg1:T16 Arg2:T17	
+R9	supports Arg1:T13 Arg2:T17	
+R10	supports Arg1:T14 Arg2:T17	
+R11	supports Arg1:T12 Arg2:T17	
+T18	Claim 1899 2048	communication by letters, email, or telephone can enable them to talk without scruple, which is also one of the most important parts in communication
+A4	Stance T18 Against
+T19	Premise 2135 2228	It is conceivable that before we talk, it is necessary for us to be imprudent about our words
+T20	Premise 2230 2346	Talking without scruple is not the indispensable part in communication; in contrast, it is usually detrimental to us
+R12	supports Arg1:T19 Arg2:T18	
+R13	attacks Arg1:T20 Arg2:T18	

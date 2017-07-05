@@ -1,0 +1,18 @@
+T1	MajorClaim 205 260	big cities can be a good place for bringing up children
+T2	Premise 299 364	education is better in big cities in comparison with countrysides
+T3	Premise 380 461	in my country the best schools, universities and institutes are located in cities
+T4	Premise 467 541	todays education is one of the most important parts of our children's life
+T5	Premise 671 730	a large number of creational facilities are built in cities
+T6	Claim 732 787	Children who live in cities have a lot of entertainment
+A2	Stance T6 For
+T7	Premise 789 850	For example playgrounds, parks, science museums, cinemas etc.
+T8	Premise 860 916	in countrysides we hardly ever see creational facilities
+T9	Claim 1009 1054	in big cities children access to media easily
+A3	Stance T9 For
+T10	Premise 1059 1140	they can learn a lot of things by watching television and surfing through the net
+T11	Premise 1142 1303	Via internet they can have connection with the other children all around the world, therefor they can exchange their knowledge, they can learn different cultures
+T12	Claim 1325 1393	countrysides have some advantages such as fresh air, peace, and etc.
+A4	Stance T12 Against
+T13	Claim 554 631	it is a good idea for children to past their first earlier life in the cities
+A5	Stance T13 For
+T14	Premise 918 998	Children who live in countrysides most of the time pass their free time in farms

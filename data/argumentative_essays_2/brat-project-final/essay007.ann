@@ -1,0 +1,23 @@
+T1	MajorClaim 374 459	newspapers have lost their competitive advantage to sustain their prolonged existence
+T2	Claim 1090 1175	the print media has failed to keep its important role in the provision of information
+A1	Stance T2 For
+T3	Premise 554 650	to obtain information, using the internet is quicker and more convenient than reading newspapers
+T4	Premise 652 888	Contrary to the past when people had to wait long hours to take a daily newspaper, nowadays, they can acquire latest news updated every second through their mobile phones or computers connected to the internet, everywhere and at anytime
+T5	Premise 890 1081	As can be seen, these devices and machines are very common in all parts of the world, making it easier for people to read a number of things that newspapers can not provide in only some pages
+R1	supports Arg1:T3 Arg2:T2	
+R2	supports Arg1:T4 Arg2:T2	
+R3	supports Arg1:T5 Arg2:T2	
+T6	Claim 1706 1838	the number of people reading newspapers may continue falling sharply, possibly leading to the close-downs of many in the coming time
+A2	Stance T6 For
+T7	Premise 1200 1324	from the economic aspect, buying newspapers appears to be a waste of money when the internet becomes available for every one
+T8	Premise 1356 1439	the internet service is being provided at a low cost or even free in many countries
+T9	Premise 1624 1687	The answer, perhaps, is that hardly would rational people do so
+R4	supports Arg1:T9 Arg2:T6	
+R5	supports Arg1:T8 Arg2:T6	
+R6	supports Arg1:T7 Arg2:T6	
+T10	Claim 2107 2188	newspapers' production will have to face environmentalists on its way to be alive
+A3	Stance T10 For
+T11	Premise 1861 1993	when taking environment into consideration, people must conceive that the more newspapers are published, the more trees are cut down
+T12	Premise 1995 2090	This is simply the contributor to the deforestation which is happening all over the world today
+R7	supports Arg1:T12 Arg2:T10	
+R8	supports Arg1:T11 Arg2:T10	

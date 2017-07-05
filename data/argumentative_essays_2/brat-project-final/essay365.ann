@@ -1,0 +1,17 @@
+T1	MajorClaim 1556 1648	city planner can still opt for non-personal vehicle and the exploitation of the suburb areas
+T2	Premise 541 676	Buses and trains have been phased in the streets for quite a long time and have proven themselves the best candidates among all options
+T3	Premise 690 802	a bus can carry no less than 30 people, while a train can carry as much as nine or even ten times of that number
+T4	Premise 952 1010	they will lessen the crowded image in most cities nowadays
+T5	Claim 458 539	public transport is a key factor to minimize the number of vehicles on the street
+A2	Stance T5 For
+T6	Premise 804 940	Not to mention the fact that highway train is operated underground, which leaves the street above with buses and non-fuel-based vehicles
+R1	supports Arg1:T2 Arg2:T5	
+R2	supports Arg1:T3 Arg2:T5	
+R3	supports Arg1:T6 Arg2:T5	
+T7	Premise 1282 1439	huge centers of attention distributed equally in a wide region means that residential areas will come along thus exert less pressure on the public facilities
+T8	Claim 1441 1539	The city itself will be absolved of enduring the influx of immigrants as well as unemployed people
+A3	Stance T8 For
+R8	supports Arg1:T7 Arg2:T8	
+T9	Premise 1099 1260	if some of the enormous shopping malls or universities were relocated in the commuter belt, the city street would be les burstling and overly-teemed as it is now
+R9	supports Arg1:T9 Arg2:T8	
+R4	supports Arg1:T4 Arg2:T5	

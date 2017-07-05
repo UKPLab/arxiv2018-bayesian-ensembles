@@ -1,0 +1,36 @@
+T1	MajorClaim 327 406	it is good for a teenager to do a part time job while he/she is still a student
+T2	MajorClaim 2017 2056	part time job will be good for students
+T3	Claim 1863 1904	it can destruct students from their study
+A1	Stance T3 Against
+T4	Premise 1918 1994	i did part time job in my high school and it did not hurt my academic result
+R1	attacks Arg1:T4 Arg2:T3	
+T5	Premise 546 639	Students can learn about time management, money management and convince people by their words
+T6	Premise 654 727	when I was in my high school I worked as a sales-man in a shop for a year
+T7	Premise 785 820	i had to manage my time efficiently
+T8	Premise 729 772	As i had to spend some of my time in my job
+R2	supports Arg1:T8 Arg2:T7	
+T9	Premise 822 883	I had to manage my boss as well as had to prepare my homework
+T10	Premise 885 969	This taught me how to manage time efficiently and do any job quickly and effectively
+T11	Premise 981 1005	I learn money management
+T12	Premise 1007 1089	When my boss was out of the shop, i had to manage the accounts section of the shop
+R3	supports Arg1:T12 Arg2:T11	
+T13	Premise 1091 1141	From this i learned, how to manage money correctly
+T14	Premise 1143 1228	This experience taught me, doing part time job can help students to learn many things
+T15	Claim 460 544	students can learn lots of things from part time job, before starting their real job
+A2	Stance T15 For
+R4	supports Arg1:T5 Arg2:T15	
+R5	supports Arg1:T7 Arg2:T6	
+R6	supports Arg1:T9 Arg2:T6	
+R7	supports Arg1:T10 Arg2:T7	
+R8	supports Arg1:T11 Arg2:T6	
+R9	supports Arg1:T13 Arg2:T6	
+R10	supports Arg1:T14 Arg2:T6	
+R11	supports Arg1:T6 Arg2:T15	
+T16	Claim 1253 1326	from part time jobs students can earn money, which can help their parents
+A3	Stance T16 For
+T17	Premise 1674 1761	part time job can help students earn money and which can help their parents financially
+T18	Premise 1499 1564	By tutoring them, i earned some money and bought me books with it
+T19	Premise 1576 1656	after taking that part time job i stopped taking my pocket money form my parents
+R12	supports Arg1:T18 Arg2:T16	
+R13	supports Arg1:T19 Arg2:T16	
+R14	supports Arg1:T17 Arg2:T16	

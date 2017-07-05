@@ -1,0 +1,30 @@
+T1	MajorClaim 2219 2325	both sports and social activities should not receive equal amount of money with libraries and laboratories
+T2	Claim 2123 2205	I do not deny the importance of doing sports in the success of university students
+A1	Stance T2 Against
+T3	MajorClaim 374 515	I don't think that equal amount of money should be spent on academic issues like libraries and laboratories and physical or social activities
+T4	Claim 535 684	spending too much money for equipping the gyms or constructing football/basketball courts are really not necessary to encourage students to do sports
+A2	Stance T4 For
+T5	Premise 699 820	my roommate, Mary, always wakes up 6 in the morning and spends 1 hour doing sport in the park which is near our dormitory
+T6	Premise 822 937	When she gets to the dorm, she is really full of energy and after taking a shower, she is ready to start a good day
+T7	Premise 951 996	she is doing exercise without spending a cent
+T8	Premise 998 1231	What the university should do is informing the students the benefits of doing sport by hanging some posters in the campus, inviting some athletes to lecture for students and encourage them to spend some time for their body and health
+R1	supports Arg1:T8 Arg2:T4	
+R2	supports Arg1:T5 Arg2:T4	
+R3	supports Arg1:T6 Arg2:T4	
+R4	supports Arg1:T7 Arg2:T4	
+T9	Claim 1300 1387	The university should provide the best equipment needed for physical education students
+A3	Stance T9 For
+T10	Premise 1246 1298	students choose their major based on their interests
+R5	supports Arg1:T10 Arg2:T9	
+T11	Premise 1397 1454	their major in completely involved in physical activities
+R6	supports Arg1:T11 Arg2:T9	
+T12	Premise 1469 1579	for an engineer or a medicine student I do not find it fair enough to equip gyms instead of their laboratories
+T13	Premise 1589 1708	it really make the students enthusiastic to use innovative technology to learn and maybe find new things in their field
+R7	supports Arg1:T13 Arg2:T12	
+R8	supports Arg1:T12 Arg2:T9	
+T14	Premise 1781 1926	For students who want to gather with their friends or want to go out to meet new people, university programs are the last place they would choose
+T15	Premise 1940 2105	when I and my friends want to spend time with each other, we prefer to go out of university to the places where we do not want to be disturbed by any familiar people
+T16	Claim 1719 1779	spending money on social activities looks like wasting money
+A4	Stance T16 For
+R9	supports Arg1:T14 Arg2:T16	
+R10	supports Arg1:T15 Arg2:T16	

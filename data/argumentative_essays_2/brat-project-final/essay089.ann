@@ -1,0 +1,30 @@
+T1	MajorClaim 336 373	human needs should be considered more
+T2	Claim 302 334	endangered animals are important
+A1	Stance T2 For
+T3	Premise 384 419	day by day population is increasing
+T4	Premise 424 466	human needs for food is increasing as well
+T5	MajorClaim 1309 1360	nowadays humans need farmland, housing and industry
+T6	Claim 1372 1452	increasing population are more important than saving land for endangered animals
+A3	Stance T6 For
+T7	Claim 1239 1285	they do not need so much land that people need
+A4	Stance T7 For
+T8	Premise 1164 1234	the population of endangered animals are less than people's population
+R1	supports Arg1:T8 Arg2:T7	
+T9	Claim 620 654	farmlands are vital for human life
+A5	Stance T9 For
+T10	Premise 468 607	We need farmland to grow crops such as wheat and corn, and there is no doubt that without food people cannot alive for more than some weeks
+R2	supports Arg1:T10 Arg2:T9	
+R3	supports Arg1:T4 Arg2:T9	
+R4	supports Arg1:T3 Arg2:T4	
+T11	Premise 666 767	people need shelters to protect themselves from mother nature such as wind and flood and wild animals
+T12	Premise 816 896	Dwelling is one of the most important human needs after food which is undeniable
+T13	Claim 772 814	they need land to build their houses on it
+A2	Stance T13 For
+R5	supports Arg1:T11 Arg2:T13	
+R6	supports Arg1:T12 Arg2:T13	
+T14	Claim 1023 1064	some lands should be assigned to industry
+A6	Stance T14 For
+T15	Premise 907 1010	human need some crucial things to continue their life, and most of them are industrial such as medicine
+T16	Premise 1066 1148	Todays life has some difficulty which become comfortable with the help of industry
+R7	supports Arg1:T15 Arg2:T14	
+R8	supports Arg1:T16 Arg2:T14	

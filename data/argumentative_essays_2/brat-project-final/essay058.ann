@@ -1,0 +1,41 @@
+T1	MajorClaim 2055 2133	children should be taught co-operation complimented with a healthy competition
+T2	Claim 375 413	Co-operation is essential for teamwork
+A1	Stance T2 For
+T3	Premise 415 493	Educational systems emphasize on encouraging co-operative approach in children
+T4	Premise 495 570	We live in a social setup and mutual help and sharing only leads to success
+T5	Premise 572 627	A person can not learn or achieve everything by oneself
+T6	Premise 643 663	lions hunt in a team
+T7	Premise 665 751	It is only due to their teamwork that they are able to catch a prey and make task easy
+R1	supports Arg1:T7 Arg2:T6	
+T8	Premise 770 850	co-operative approach will save time, energy and will have a higher success rate
+R2	supports Arg1:T6 Arg2:T2	
+R3	supports Arg1:T3 Arg2:T2	
+R4	supports Arg1:T4 Arg2:T2	
+R5	supports Arg1:T5 Arg2:T2	
+R6	supports Arg1:T8 Arg2:T2	
+T9	Claim 866 946	co-operation helps to understand other's perspective and learn by their mistakes
+A2	Stance T9 For
+T10	Premise 948 1021	It helps to identify one's strengths and weaknesses as compared to others
+T11	Premise 1023 1131	A co-operative approach can create inspirational and motivational feeling seeing other people's achievements
+T12	Premise 1142 1190	competition is also as important as co-operation
+R7	supports Arg1:T10 Arg2:T9	
+R8	supports Arg1:T11 Arg2:T9	
+R9	attacks Arg1:T12 Arg2:T9	
+T13	Claim 1419 1465	Competition helps in improvement and evolution
+A3	Stance T13 For
+T14	Premise 1273 1351	An individual must compete with oneself only, instead of trying to beat others
+T15	Premise 1353 1417	Competition has helped the development of science and technology
+T16	Premise 1480 1569	every other day, new cars are developed by companies which are more efficient than others
+T17	Premise 1571 1624	This kind of competition gives customers more options
+R10	supports Arg1:T17 Arg2:T16	
+R11	supports Arg1:T14 Arg2:T13	
+R12	supports Arg1:T15 Arg2:T13	
+T18	Claim 1761 1820	Competition should be always based on self-improvement rule
+A4	Stance T18 Against
+T19	Premise 1635 1679	blind and selfish competition is detrimental
+T20	Premise 1681 1759	'Your loss, my gain' kind of competition can never be fruitful in the long run
+T21	Premise 1822 1916	A healthy competition which involves raising one's own level above others is the best approach
+R14	supports Arg1:T20 Arg2:T18	
+R15	supports Arg1:T21 Arg2:T18	
+R16	supports Arg1:T19 Arg2:T18	
+R13	supports Arg1:T16 Arg2:T13	

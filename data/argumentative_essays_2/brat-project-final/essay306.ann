@@ -1,0 +1,30 @@
+T1	MajorClaim 366 399	the convenience it brings is more
+T2	Claim 303 364	technology may make people's life complicated in some aspects
+A1	Stance T2 Against
+T3	Premise 591 684	With a private car, you can reach the destination in another city just sitting in the vehicle
+T4	Premise 701 846	if you would like to have a trip across the ocean, a plane can carry you there in only a few hours, which is hard to imagine in the ancient times
+T5	Claim 461 589	when it comes to the field of transportation, there is no doubt that the technology in automobile has made people's life simpler
+A2	Stance T5 For
+T6	Premise 896 1050	In the past, teachers have to write what they want to convey to students on the chalkboard, resulting in a great waste of time and the fatigue of teachers
+T7	Premise 1052 1147	With the advent of iPads in e-learning, paper books become unnecessary, so does the blackboards
+T8	Premise 1163 1295	all the knowledge and information are stored in the iPads, with a single click, and they would appear right before your eyes at once
+T9	Claim 856 894	technology also makes teaching simpler
+A3	Stance T9 For
+T10	Premise 1390 1559	the cell phone, which used to be simply a tool to deliver messages to your contacts in a distance, now are playing a role more than just a phone in social communications
+T11	Premise 1575 1691	folks have to check their Facebooks, Twitters, and Forums accounts every minute, which add too much pressure to them
+T12	Premise 1706 1837	games on their phone exert a tremendous fascination on teenagers, leading to a large problem that they got addicted to their phones
+T13	Premise 1853 1897	making their life more complicated and tired
+T14	Claim 1325 1375	technology may make people's life more complicated
+T15	Claim 1985 2044	technology may make people's life complicated in some cases
+A6	Stance T15 Against
+T16	MajorClaim 2046 2099	the convenience it brings in people's are significant
+A5	Stance T14 Against
+R1	supports Arg1:T3 Arg2:T5	
+R2	supports Arg1:T4 Arg2:T5	
+R3	supports Arg1:T8 Arg2:T7	
+R4	supports Arg1:T6 Arg2:T9	
+R5	supports Arg1:T7 Arg2:T9	
+R6	supports Arg1:T10 Arg2:T14	
+R7	supports Arg1:T11 Arg2:T14	
+R8	supports Arg1:T12 Arg2:T14	
+R9	supports Arg1:T13 Arg2:T14	

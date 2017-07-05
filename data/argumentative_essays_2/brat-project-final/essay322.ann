@@ -1,0 +1,30 @@
+T1	Claim 222 278	The historic buildings show the history of our ancestors
+A1	Stance T1 For
+T2	Claim 293 351	they can develop tourism industries by attracting tourists
+A2	Stance T2 For
+T3	MajorClaim 1414 1463	we should preserve historic buildings in the city
+T4	Claim 1465 1527	They can benefit us financially by developing other industries
+A3	Stance T4 For
+T5	Claim 1539 1639	they are the symbols of our nations, which can show the historical culture of our previous ancestors
+A4	Stance T5 For
+T7	Claim 354 511	Historic buildings answer many questions, which are mysterious about our previous ancestors; thereby no one can determine the price of the historic buildings
+A5	Stance T7 For
+T8	Premise 513 592	They show the history of nations and previous generations who lived in the city
+T9	Premise 594 663	They show the lifestyle of people who lived in thousands of years ago
+T10	Premise 665 729	They show us how they survive, or how they defend themselves etc
+T11	Premise 731 843	By investigating about their structures, we can understand how much they knew about the architecture of building
+T12	Premise 864 955	historic buildings are important treasures, which provide an area to learn valuable lessons
+T13	Premise 1161 1259	It is a valuable opportunities for any city having historic buildings to show them to new visitors
+T14	Premise 1058 1148	It is interesting for most people to know about the way people live in thousands years ago
+T15	Claim 958 1056	Another advantage of historic buildings is their capabilities to attract more tourists to the city
+T16	Premise 1261 1384	Historic building can develop other industries such as restaurants or other food industries and handicrafts shops and so on
+A6	Stance T15 For
+T6	MajorClaim 92 220	It is important for any city to replace old buildings with new ones, but these revolutions should not include historic buildings
+R1	supports Arg1:T8 Arg2:T7	
+R2	supports Arg1:T9 Arg2:T7	
+R3	supports Arg1:T10 Arg2:T7	
+R4	supports Arg1:T11 Arg2:T7	
+R5	supports Arg1:T12 Arg2:T7	
+R6	supports Arg1:T14 Arg2:T13	
+R7	supports Arg1:T16 Arg2:T15	
+R8	supports Arg1:T13 Arg2:T15	

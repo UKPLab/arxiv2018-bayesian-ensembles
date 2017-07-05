@@ -1,0 +1,39 @@
+T1	MajorClaim 356 428	businesses had better not employ the workers for the whole of their life
+T2	MajorClaim 2296 2351	the employer should not hire the staff for a whole life
+T3	MajorClaim 2372 2460	brilliant bosses are conscious of the need for giving opportunities to diverse employees
+T4	Claim 493 587	various ideas and creativity from different people are indispensable for a company to flourish
+A1	Stance T4 For
+T5	Premise 589 746	The invaluable experience of senior employees can pass down to the young apprentices who get used to new job, but regularly give out creative and novel ideas
+T6	Premise 761 859	the rapid development in every field nowadays requires precise updates and access to new knowledge
+T7	Premise 872 925	the youngsters are capable of meeting those standards
+R1	supports Arg1:T6 Arg2:T7	
+T8	Premise 945 1045	they have activeness, inventiveness and enterprise which allow them to complete their jobs perfectly
+R2	supports Arg1:T8 Arg2:T7	
+T9	Premise 1047 1115	These vital factors can decide whether the company can thrive or not
+R3	supports Arg1:T9 Arg2:T7	
+R4	supports Arg1:T5 Arg2:T4	
+R5	supports Arg1:T7 Arg2:T4	
+T10	Claim 1127 1195	the staff soon gets boring with their stable job in such a long time
+A2	Stance T10 For
+T11	Premise 1197 1288	At a certain time, they may presume that a securing job is the most important and necessary
+T12	Premise 1297 1341	they need to earn money to manage their life
+T13	Premise 1355 1468	the bulk of them realize that high promotion and competition can assist them to improve their skills and horizons
+T14	Premise 1475 1509	Many people enjoy challenging them
+T15	Premise 1518 1569	they don not want to be monotonous and passive ones
+R6	supports Arg1:T15 Arg2:T14	
+R7	supports Arg1:T12 Arg2:T11	
+T16	Premise 1571 1630	The same-old-same-old environment soon makes them depressed
+T17	Premise 1635 1695	this situation will have an adverse impact on the enterprise
+R8	supports Arg1:T16 Arg2:T17	
+R9	supports Arg1:T17 Arg2:T10	
+R10	supports Arg1:T11 Arg2:T10	
+R11	supports Arg1:T13 Arg2:T10	
+R12	supports Arg1:T14 Arg2:T10	
+T18	Claim 1826 1904	the businesses ought to recruit many workers so as to tackle this aching issue
+A3	Stance T18 For
+T19	Premise 1718 1809	the economic crisis and financial recession result in a tremendous increase in unemployment
+T20	Premise 1906 1967	It enables the jobless to better their life and earn a living
+T21	Premise 1982 2115	the factories and companies will have abundant human sources to ensure the pace of manufacture and also devising lots of unique ideas
+R13	supports Arg1:T21 Arg2:T18	
+R14	supports Arg1:T19 Arg2:T18	
+R15	supports Arg1:T20 Arg2:T18	

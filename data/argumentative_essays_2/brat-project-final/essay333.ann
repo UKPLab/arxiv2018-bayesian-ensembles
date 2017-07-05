@@ -1,0 +1,28 @@
+T1	MajorClaim 329 369	this development was a very positive one
+T2	MajorClaim 1540 1678	the development of technology impacted on the means of communication among people very positively by making it easier and more comfortable
+T3	Claim 505 553	Technology revolutionized the way we communicate
+A1	Stance T3 For
+T4	Premise 570 628	it is almost possible to do everything without tete-a-tete
+T5	Premise 417 503	nowadays, to keep in touch with loved ones in faraway places has become easy than ever
+R1	supports Arg1:T5 Arg2:T3	
+R2	supports Arg1:T4 Arg2:T3	
+T6	Premise 630 736	By means of some software such as Skype, MSN, Whatsapp we can get in touch with everybody whenever we want
+T7	Premise 751 807	in earlier times, people didn't leave for faraway places
+T8	Premise 817 843	they could easily get lost
+R3	supports Arg1:T8 Arg2:T7	
+T9	Premise 845 930	This is also one salient prove that the development of technology was a very positive
+R4	supports Arg1:T6 Arg2:T3	
+R5	supports Arg1:T7 Arg2:T3	
+R6	supports Arg1:T9 Arg2:T3	
+T10	Claim 1121 1192	Internet is a basic tool to keep in touch with old and make new friends
+A2	Stance T10 For
+T11	Premise 941 1022	by means of some communication tools, it has become very easy to make new friends
+T12	Premise 1024 1104	According to statistics, 40% of people met even their life partners via Internet
+R7	supports Arg1:T12 Arg2:T10	
+R8	supports Arg1:T11 Arg2:T10	
+T13	Premise 1335 1417	during such conversations, some of our words can make a completely different sense
+T14	Premise 1239 1325	by communicating via Internet or phone, we cannot express our ideas and feelings fully
+R9	supports Arg1:T13 Arg2:T14	
+T15	Claim 1432 1477	the rate of divorces is increasing day by day
+A3	Stance T15 Against
+R10	supports Arg1:T14 Arg2:T15	

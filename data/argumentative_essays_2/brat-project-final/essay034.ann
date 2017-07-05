@@ -1,0 +1,32 @@
+T1	MajorClaim 337 381	student have to be forced to study at school
+T2	MajorClaim 1541 1572	students should study at school
+T3	Claim 1586 1643	there are some advantages of leaving school to find a job
+A1	Stance T3 Against
+T4	Premise 1645 1711	studying at school is always the best choice for children's future
+R1	attacks Arg1:T4 Arg2:T3	
+T5	Premise 1713 1820	There are many ways that can train children to learn independent and social skills instead of getting a job
+R2	attacks Arg1:T5 Arg2:T3	
+T6	Claim 837 914	they have more opprotunities to find a job and to be successful in the future
+A2	Stance T6 For
+T7	Premise 941 1027	employer always prefer to hire an employee of high degree who have professional skills
+R3	supports Arg1:T7 Arg2:T6	
+T8	Premise 397 508	schools offer to students a good environment with experienced professors and high quality programs for studying
+T9	Premise 680 734	schools provide lots of academic knowledge to students
+T10	Premise 736 824	Students may learn professional skills, expand their understandings and gain experiences
+T11	Premise 510 663	It creates the best conditions for students education and can force them to focus on their school work instead of wasting their time to do useless things
+R4	supports Arg1:T11 Arg2:T8	
+R5	supports Arg1:T10 Arg2:T9	
+R6	supports Arg1:T8 Arg2:T6	
+R7	supports Arg1:T9 Arg2:T6	
+T12	Claim 1094 1151	children should interrupt their school work and get a job
+A3	Stance T12 Against
+T13	Premise 1153 1195	Whether children can learn a lot at school
+T14	Premise 1197 1271	there are many subjects that will be of little value to them in the future
+R8	attacks Arg1:T13 Arg2:T14	
+R9	supports Arg1:T14 Arg2:T12	
+T15	Premise 1286 1339	children can learn social skills when they have a job
+T16	Premise 1341 1405	They can get more experiences that can not be obtained at school
+T17	Premise 1407 1515	Working helps children be more independent and teach them to esteem and manage the money that they've earned
+R10	supports Arg1:T15 Arg2:T12	
+R11	supports Arg1:T17 Arg2:T12	
+R12	supports Arg1:T16 Arg2:T12	

@@ -1,0 +1,32 @@
+T1	MajorClaim 483 524	a person should keep trying for his goals
+T2	MajorClaim 1631 1653	one should not give up
+T3	Claim 1698 1962	Anyone who wants to achieve the goal should acknowledge that his effort and experience from suffering helps him understand his true potential and increase his strength, and ultimately, it will prompt him to be ready for overcoming the greater challenge in his life
+A1	Stance T3 For
+T4	Premise 603 686	I realized the true potential of my body and mind as I decided to train myself hard
+T5	Premise 688 810	Even if I were not to win this medal, I acknowledged the great amount of my endeavor as I could keep my tired legs running
+T6	Claim 536 588	committing to our goal helps creating personal worth
+A2	Stance T6 For
+T7	Premise 881 975	I remembered how I was suffered in the first round when I was last person who touched the line
+T8	Premise 986 1058	I did not give up, and believed that I would be better in the next round
+T9	Premise 1067 1095	I knew how to improve myself
+T10	Premise 1097 1225	I had been a loser for a thousand time before the first winning, and suffering from losing in each competition makes me stronger
+T11	Claim 823 879	one who learns the great difficulty will become stronger
+A3	Stance T11 For
+T12	Claim 1366 1406	the responsibility is worthy of carrying
+T13	Premise 1408 1517	When the distance is longer and harder to achieve, a runner who can go beyond his limit will proud of himself
+T14	Premise 1519 1555	He can feel the sweetness of triumph
+T15	Premise 1564 1596	he did not stop pursing his goal
+T16	Premise 1252 1349	we, as an average people, might feel that the responsibility to our goal is too heavy to carry on
+T17	Claim 1658 1696	the true reward is to have the dignity
+A5	Stance T17 For
+A4	Stance T12 For
+R1	supports Arg1:T4 Arg2:T6	
+R2	supports Arg1:T5 Arg2:T6	
+R3	supports Arg1:T9 Arg2:T8	
+R4	supports Arg1:T7 Arg2:T11	
+R5	supports Arg1:T8 Arg2:T11	
+R6	supports Arg1:T10 Arg2:T11	
+R7	attacks Arg1:T16 Arg2:T12	
+R8	supports Arg1:T13 Arg2:T12	
+R9	supports Arg1:T15 Arg2:T14	
+R10	supports Arg1:T14 Arg2:T12	

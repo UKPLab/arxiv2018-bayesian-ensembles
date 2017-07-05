@@ -1,0 +1,24 @@
+T1	MajorClaim 202 246	individuals should pay their college tuition
+T2	Claim 255 376	it would cost too much, the college education is a personal's choice, and there are many ways to fund a college education
+A1	Stance T2 For
+T3	Claim 386 435	making college education free would cost too much
+A2	Stance T3 For
+T4	Premise 437 535	It would divert public funds from other needs such as law enforcement, infrastructure and so forth
+T5	Premise 537 663	There are many other needs which should come first, such as providing health care to all American, or improving public schools
+T6	Premise 678 753	it would cause to raise our taxes again and again to fund college education
+T7	Premise 769 852	it would affect all taxpayers whether or not they benefit from the use of the funds
+T8	Claim 863 905	it is a personal choice to go to a college
+A3	Stance T8 For
+T9	Premise 907 944	Not everyone wants to go to a college
+T10	Premise 946 1057	People who want to make more money, and live a better life than other people decide to take a college education
+T11	Premise 1070 1159	those people should make the financial investment in their own choice; not the government
+T12	Claim 1168 1215	there are many ways to fund a college education
+A4	Stance T12 For
+T13	Premise 1217 1324	People who cannot afford to pay their tuition benefit from the scholarship, financial aids, and other funds
+T14	Premise 1339 1410	the government already helps pay college expense through indirect means
+T15	Premise 1412 1542	They often provide services such as fire departments, medical assistance, and police protection for the schools and their students
+T16	Premise 1544 1589	They also provide funds for academic research
+T17	Premise 1591 1679	While the money is not given to individual students, these contributions are not trivial
+T18	MajorClaim 1692 1742	the individual should finance his or her education
+T19	Claim 1751 1774	it is a personal choice
+A5	Stance T19 For

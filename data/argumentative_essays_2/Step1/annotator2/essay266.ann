@@ -1,0 +1,18 @@
+T1	MajorClaim 484 544	advertising is not the main cause of unhealthy eating habits
+T2	MajorClaim 2018 2082	advertising is not the primary reason of unhealthy eating habits
+T3	Claim 560 621	advertising is not entirely decisive on personal eating habit
+T4	Premise 623 727	The key to forming a healthy eating pattern lies in people's concept of wholesome diets and self-control
+T5	Premise 745 869	advertising always makes the products so tempting, regardless of whether they might bring negative effects on the human body
+T6	Premise 880 937	advertising is not the only information source for people
+T7	Premise 939 1039	People can still acquire different viewpoints about foods from other sources, like news or magazines
+T8	Premise 1228 1380	It will be not persuasive if people just blame the advertising sector of a fast-food company for making them so fat and not reassess their own behaviors
+T9	Premise 1041 1226	As long as people are clear about how to maintain a healthy body and they persistently keep track of their eating habits, they can successfully prevent themselves from those temptations
+T11	Claim 1391 1553	in the era when people are becoming conscious of a healthier lifestyle, some companies are actually aiming at this rising trend and start to promote healthy foods
+T12	Premise 1637 1809	Think about the recently popular organic foods that are claimed to grow in an environment without pesticide and those crude foods in which less salt or less sugar are added
+T13	Claim 2196 2310	advertising might lead to healthier eating customs due to the growing awareness of living under a better lifestyle
+A4	Stance T13 For
+T14	Claim 2084 2185	There are the build-up of the concept about healthy eating habits and self-control that really matter
+A5	Stance T14 For
+A6	Stance T3 For
+A2	Stance T11 For
+T10	Premise 1902 2000	In these cases, the advertising industry bolsters people's awareness of having a healthy lifestyle

@@ -1,0 +1,31 @@
+T2	MajorClaim 1843 1944	they have other critical obligations to take, in order to make our society function in an ordered way
+T3	Premise 340 439	it is the most important source of government's revenue, which is mainly used to serve all citizens
+T4	Premise 454 548	a large proportion of the tax is spent on national defence and in maintaining social stability
+T5	Premise 558 611	every one can work and live in a peaceful environment
+T6	Premise 613 736	The tax is also used to pay the salaries of workers working in public service sectors, such as teachers and police officers
+T7	Premise 747 791	these workers do not produce profit directly
+T8	Premise 793 848	what they do is for the well-being of the whole society
+T9	Claim 271 335	all people who are able to work should pay tax to the government
+A1	Stance T9 For
+T10	Claim 878 956	citizens have other important responsibilities to fulfil apart from paying tax
+A2	Stance T10 For
+T11	Premise 970 1066	there are impoverished or disabled people in every society, needing help and support from others
+T12	Premise 1084 1147	the government can provide some fund to ease their difficulties
+T13	Premise 1153 1199	such financial help is usually far from enough
+T14	Premise 1215 1336	aids from more capable or wealthier citizens are particularly crucial, which are a great complement to government support
+T15	Premise 1338 1448	Another responsibility all citizens should take is to maintain social stability together with the police force
+T16	Premise 1450 1550	There are criminals in every society, and the number of policemen the government can hire is limited
+T17	Premise 1555 1736	it is quite necessary for the local residents to take actions and ensure the safety of the communities, by doing things like reporting suspicious activities to the police department
+R1	supports Arg1:T3 Arg2:T9	
+R2	supports Arg1:T4 Arg2:T5	
+R3	supports Arg1:T5 Arg2:T9	
+R4	supports Arg1:T6 Arg2:T9	
+R5	attacks Arg1:T7 Arg2:T6	
+R6	attacks Arg1:T8 Arg2:T7	
+R7	supports Arg1:T11 Arg2:T10	
+R8	attacks Arg1:T12 Arg2:T11	
+R9	attacks Arg1:T13 Arg2:T12	
+R10	supports Arg1:T14 Arg2:T10	
+R11	supports Arg1:T16 Arg2:T17	
+R12	supports Arg1:T17 Arg2:T10	
+R13	supports Arg1:T15 Arg2:T10	

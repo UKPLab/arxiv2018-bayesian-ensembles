@@ -1,0 +1,22 @@
+T1	MajorClaim 197 270	the technology has large positive effects on relationships between people
+T2	MajorClaim 1465 1528	the technology has more optimal effects on people's interaction
+T3	Claim 1538 1612	it helps ordinary people to make new friends and to maintain relationships
+A1	Stance T3 For
+T4	Claim 300 374	technology has enabled people stay in contact with each other more closely
+A2	Stance T4 For
+T5	Premise 376 478	While public use the Internet or smart phone to share information to each other at different positions
+T6	Premise 480 593	Instead of using letters, technology advanced not only gives us more spare time but also convenient and efficient
+T7	Premise 601 770	even if family members who are in different countries, they also can use the Internet to connect each others, especially though the images or videos, they can feel close
+T8	Premise 785 904	technology is also essential for students, live in remote districts, shared the valuable natural resources with friends
+R1	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+R3	supports Arg1:T7 Arg2:T4	
+R4	supports Arg1:T8 Arg2:T4	
+T9	Premise 989 1065	technology provides opportunities for people to establish the social network
+T10	Premise 1067 1244	In the past, people might have had pen friends in other countries, but now, thanks to the social networking websites, people can easily to find someone who has similar interests
+T11	Premise 1252 1346	they can connect with friends who have been out of touch for a long time by using the Internet
+T12	Claim 1361 1429	technology is beneficial to humanity develops positive relationships
+A4	Stance T12 For
+R5	supports Arg1:T9 Arg2:T12	
+R6	supports Arg1:T11 Arg2:T12	
+R7	supports Arg1:T10 Arg2:T12	

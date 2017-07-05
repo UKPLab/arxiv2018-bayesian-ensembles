@@ -1,0 +1,22 @@
+T1	MajorClaim 317 366	some museums and art galleries will not disappear
+T2	MajorClaim 1469 1568	museums and art galleries are necessary to be preserved for its importance of education and culture
+T3	Claim 1360 1463	modern technology has provided a more convenient and comfortable manner for people to watch exhibitions
+A1	Stance T3 Against
+T4	Premise 385 440	technology indeed simplifies people's life all the time
+T5	Claim 453 620	people who watch exhibitions on TV or internet at home, save the time and money on the road, which is increasingly significant particularly to people in modern society
+T6	Premise 631 742	in accordance with recent research, experts suggest the lifestyle of individuals in modern society is unhealthy
+T7	Premise 751 812	they lack of physical exercise and face-to-face communication
+R1	supports Arg1:T7 Arg2:T6	
+T8	Claim 833 919	the importance of museums and art galleries is plain in terms of education and culture
+A3	Stance T8 For
+T9	Claim 1260 1330	these buildings will not disappear unless people abandon their culture
+A4	Stance T9 For
+T10	Premise 1190 1247	museums and art galleries preserve some culture heritages
+R4	supports Arg1:T10 Arg2:T9	
+T11	Premise 935 1010	authentic exhibits cannot be completely displayed only by images and videos
+T12	Premise 1012 1175	It is like travelling to a place is much better than viewing the landscape of that place on TV or photos, so the best method to learn one thing is to experience it
+R5	supports Arg1:T11 Arg2:T8	
+R6	supports Arg1:T12 Arg2:T8	
+A5	Stance T5 Against
+R2	supports Arg1:T4 Arg2:T5	
+R3	attacks Arg1:T6 Arg2:T5	

@@ -1,0 +1,20 @@
+T1	MajorClaim 1301 1385	the merits of email and messaging have reduced amount of ours time to communicate to
+T2	MajorClaim 246 335	using of these soft devices have cut much of time people need to see with their relatives
+T3	Claim 1396 1458	we need to make sure for the real gathering with our colleague
+A1	Stance T3 Against
+T4	Claim 346 391	it is had some demerits on their social lives
+A2	Stance T4 Against
+T5	Premise 922 978	they do not do much social live interactions with others
+T6	Premise 865 917	It caused they were swept away by virtual atmosphere
+R1	supports Arg1:T6 Arg2:T5	
+T7	Claim 1014 1104	some people become geek, as too much of using email and messaging, without direct contacts
+A3	Stance T7 Against
+T8	Premise 1115 1247	people have had own minded to keep connection with their friends as a good relationship, meet them and talk by face to face directly
+R2	attacks Arg1:T8 Arg2:T7	
+T9	Premise 775 863	using of these facilities has influenced netizens to keep themselves becoming unsociable
+R3	supports Arg1:T9 Arg2:T7	
+R4	supports Arg1:T5 Arg2:T7	
+T10	Claim 565 752	there are other ways like social media that they could to use it for meeting theirs buddies such as Twitter and Facebook, also make the communication become feasible and limitless of time
+A4	Stance T10 For
+T11	Premise 428 550	they constantly use these kinds of electronic letter for making fellowship or just continuing theirs what they already had
+R5	supports Arg1:T11 Arg2:T10	

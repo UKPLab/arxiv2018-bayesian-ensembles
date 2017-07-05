@@ -1,0 +1,43 @@
+T1	MajorClaim 79 158	it is not the good idea for teenagers to have job while they are still students
+T2	MajorClaim 234 282	it can interfere with their life in various ways
+T3	Claim 170 220	many argue that it provide good working experience
+A1	Stance T3 Against
+T4	Claim 284 334	Having jobs would affect the health of the student
+A2	Stance T4 For
+T5	Claim 336 427	It divert their mind from studies and would take away their childhood phase from their life
+A3	Stance T5 For
+T6	MajorClaim 1753 1817	for a teenager it is important to pay attention on their studies
+T7	Claim 1819 1938	Having job would affect their health, divert them from studies and take away one of the important phase from their life
+A4	Stance T7 For
+T8	Claim 901 946	would affect their mental and physical health
+A5	Stance T8 For
+T9	Premise 699 780	jobs has various responsibilities like attendance, sometimes extra work and so on
+T10	Premise 782 832	This would result in stress, tension and tiredness
+T11	Premise 834 893	They won't be able to get proper time for relaxation, sleep
+R1	supports Arg1:T11 Arg2:T8	
+R2	supports Arg1:T9 Arg2:T8	
+R3	supports Arg1:T10 Arg2:T8	
+T12	Claim 577 684	If the student get involved himself in job in rest of the time, then it would cause an extra burden on them
+A6	Stance T12 For
+T13	Premise 512 575	He has to spend his most of time in school to get a good grades
+T14	Premise 429 510	A student has to do lots of studies in today's competitive world to prove himself
+R4	supports Arg1:T13 Arg2:T12	
+R5	supports Arg1:T14 Arg2:T12	
+T15	Claim 964 1007	jobs can divert students from their studies
+A7	Stance T15 For
+T16	Premise 1009 1104	If students started earning in earlier age in their life, then they get attracted towards money
+T17	Premise 1106 1178	They feel themselves independent and would prefer to work more for money
+T18	Premise 1180 1251	This would affect their studies, they loose their interest from studies
+T19	Premise 1263 1315	they drop out their studies so as to earn more money
+R6	supports Arg1:T16 Arg2:T15	
+R7	supports Arg1:T17 Arg2:T15	
+R8	supports Arg1:T18 Arg2:T15	
+R9	supports Arg1:T19 Arg2:T15	
+T20	Premise 1338 1427	the main drawback of teenagers job is that, they miss out the fun of their childhood time
+T21	Claim 1685 1745	they should take advantage of life as much possible they can
+A9	Stance T21 For
+T22	Premise 1564 1672	They have whole life to do job and prove themselves, but the childhood phase will never return in their life
+T23	Premise 1429 1562	He would miss various childhood activities such as hang out with friends, clubs and fun activities and social interaction with others
+R10	supports Arg1:T23 Arg2:T21	
+R11	supports Arg1:T20 Arg2:T21	
+R12	supports Arg1:T22 Arg2:T21	

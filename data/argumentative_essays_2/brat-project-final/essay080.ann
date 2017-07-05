@@ -1,0 +1,27 @@
+T1	MajorClaim 1818 1851	more good come from zoos than bad
+T2	Claim 1754 1796	both of the arguments have strong supports
+A1	Stance T2 Against
+T3	Claim 366 403	keeping animals in captivity is wrong
+A2	Stance T3 Against
+T4	Premise 412 507	animals should be considered non-human persons and they should have the right of having freedom
+R1	supports Arg1:T4 Arg2:T3	
+T5	Premise 509 615	This is so unfair for them to be taken out of their natural environment and to be kept in small enclosures
+T6	Premise 634 751	many zoos, especially the ones in developing countries, do not provide care and attention which their animals require
+R2	supports Arg1:T6 Arg2:T5	
+R3	supports Arg1:T5 Arg2:T3	
+T7	Premise 753 858	The animals are often undernourished and do not have sufficient quality and quantity of medical treatment
+T8	Premise 873 967	sometimes animals from hot countries have to survive in the cold winter of somewhere in Europe
+R4	supports Arg1:T7 Arg2:T3	
+R5	supports Arg1:T8 Arg2:T3	
+T9	Claim 1016 1114	zoos provide the public with good entertainment and also help to ensure the balance of the ecology
+A3	Stance T9 For
+T10	Premise 1116 1294	Many people, especially young children enjoy going to zoos and see their favorite animals, cute baby-born animals and the animals that are from the different corners of the world
+T11	Premise 1296 1383	Zoos provide educational information about the lives of different animals to the public
+T12	Premise 1391 1502	zoos play an important role in reserving many breeds of animal and preventing them from being missing from life
+T13	Premise 1534 1687	in zoos, animals are kept in enclosures which simulate their own habitats and also endangered animals are being protected from their predators or hunters
+R6	supports Arg1:T13 Arg2:T12	
+T14	Premise 1694 1737	zoos are needed to keep the nature balanced
+R7	supports Arg1:T14 Arg2:T9	
+R8	supports Arg1:T12 Arg2:T14	
+R9	supports Arg1:T10 Arg2:T9	
+R10	supports Arg1:T11 Arg2:T9	

@@ -1,0 +1,42 @@
+T1	MajorClaim 607 684	it is no evidence about the reduction of crime rates due to the death penalty
+T2	Claim 1063 1146	death penalty neither controls the violent in society nor creates a violent culture
+A1	Stance T2 For
+T3	Premise 790 933	Crimes kill someone which is illegal; nevertheless, the government use law to punish them, which is the same way they sinned but in a legal one
+T4	Premise 950 986	the criminal is repeated second time
+T5	Premise 719 788	capital punishment is a form of revenge which creates violent culture
+T6	Premise 1229 1295	the rights of life are the basic and vital rights of a human being
+T7	Premise 1297 1374	No one has the right to take the life of a human; even if he committed murder
+T8	Premise 1376 1421	If you kill a criminal, you become a criminal
+T9	Claim 1158 1205	nobody has the right to take another human life
+A2	Stance T9 For
+T10	Premise 1543 1596	crimes seem to increase due to the capital punishment
+T11	Premise 1433 1531	if we think that killing is the best way to solve the problem, it is neither unethical nor immoral
+T12	Premise 1727 1828	If they kill someone and end their life by dead without paying for their sins, it is so easy for them
+T13	Premise 1830 1868	They do not undergo any pain or misery
+T14	Premise 1678 1725	Criminals should be punished for their misdeeds
+T15	Claim 1607 1676	with some of serious criminals, capital punishment is an easy way out
+T16	MajorClaim 2453 2530	The world should consider clearly about polishing the law of the dead penalty
+T17	Premise 2228 2358	capital punishment is a form of legalized revenge, it is an easy way for serious crimes, and nobody has rights to take others life
+T18	Claim 2366 2451	it neither demines crimes of violence nor be essential to control violence in society
+A5	Stance T18 For
+T19	Premise 2116 2212	rehabilitation and education is also a better way in order to prevent or minimize offensive acts
+T20	Premise 2022 2104	Why do not punish them by doing something meaningful for the country- it is better
+T21	Premise 1929 2020	some industries such as mining, oil and gas extraction, reclamation, etc, needs many labors
+A4	Stance T15 For
+T22	Premise 994 1054	it is regarded as the "legalized revenge" to victims' family
+R1	supports Arg1:T4 Arg2:T22	
+R2	supports Arg1:T22 Arg2:T2	
+R3	supports Arg1:T3 Arg2:T2	
+R4	supports Arg1:T5 Arg2:T2	
+R5	supports Arg1:T14 Arg2:T15	
+R6	supports Arg1:T12 Arg2:T15	
+R7	supports Arg1:T13 Arg2:T15	
+R8	supports Arg1:T21 Arg2:T15	
+R9	supports Arg1:T20 Arg2:T15	
+R10	supports Arg1:T19 Arg2:T15	
+R11	supports Arg1:T17 Arg2:T18	
+R12	supports Arg1:T7 Arg2:T6	
+R13	supports Arg1:T6 Arg2:T9	
+R14	supports Arg1:T8 Arg2:T9	
+R15	supports Arg1:T11 Arg2:T9	
+R16	supports Arg1:T10 Arg2:T9	

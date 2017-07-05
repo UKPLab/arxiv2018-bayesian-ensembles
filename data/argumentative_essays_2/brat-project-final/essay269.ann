@@ -1,0 +1,25 @@
+T2	Claim 465 529	Relating well to people can bring plenty of merits to future job
+A1	Stance T2 For
+T3	Premise 393 463	friends is a treasure with respect to either our daylife or our career
+T4	Premise 531 875	Having a good ability of relate to people means you have a number of friends in a variety of fields, imagine when you are in trouble, you have a lot of people who have good relationship with you, so you can ask for your friends to help you solve this problem as soon as possible, even an esy phone call, instend of a series of complex solutions
+R1	supports Arg1:T4 Arg2:T2	
+R2	supports Arg1:T3 Arg2:T2	
+T5	Premise 1037 1321	If top-level managers want to make a project successful, have a good relationship with their subordinaries is the prerequisit for the managers' work complete successfully, managers should listen to their employees needs and complaints about this job, pay much patiant and care to them
+T6	Premise 889 1035	no matter who you are a top-level managers of a company or a low-level employee of that company, relating well to people is also a importent issue
+T7	Claim 1337 1371	make a good relationship with them
+A2	Stance T7 For
+R3	supports Arg1:T5 Arg2:T7	
+R4	supports Arg1:T6 Arg2:T7	
+T1	MajorClaim 2298 2415	I do really prefer to improve my ability of relating people and make more friends rather than studying hard in school
+T8	Claim 1392 1513	if a low-level employee desire to enhance his position, it's fairly important to have a good relationship with their boss
+A3	Stance T8 For
+T9	Premise 1515 1624	only if the employee is considered excellent in his boss's eyes, he will be more possible to enhance position
+R5	supports Arg1:T9 Arg2:T8	
+T10	Claim 1661 1714	good specify knowledge is more crucial for future job
+A4	Stance T10 Against
+T11	Premise 1716 1894	Studying harder in school, getting a good resume and absorbing lots of working knowledge, which can make these graduates more competitive than other applicants in one certain job
+R6	supports Arg1:T11 Arg2:T10	
+T12	Premise 2146 2188	majority of people would choose the former
+T13	Premise 2197 2275	it has more chance than the latter in terms of getting good jobs in the future
+R7	supports Arg1:T13 Arg2:T12	
+R8	supports Arg1:T12 Arg2:T10	

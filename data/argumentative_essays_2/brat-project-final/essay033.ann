@@ -1,0 +1,15 @@
+T1	MajorClaim 1355 1460	I would rather classify myself in the proponents of globalization as a speeding factor of global progress
+T2	Premise 453 612	the idea of globalization put their inherited culture in danger of uncontrolled change and make them vulnerable against the attack of imperialistic governments
+T3	Claim 320 435	Some people prefer to recognize globalization as a threat to ethnic and religious values of people of their country
+A1	Stance T3 Against
+R1	supports Arg1:T2 Arg2:T3	
+T4	Claim 647 738	globalization contribute effectively to the global improvement of the world in many aspects
+A2	Stance T4 For
+T5	Premise 740 926	Developing globalization, people can have more access to many natural resources of the world and it leads to increasing the pace of scientific and economic promotions of the entire world
+T6	Premise 941 1113	they admit that globalization can be considered a chance for people of each country to promote their lifestyle through the stuffs and services imported from other countries
+R2	supports Arg1:T5 Arg2:T4	
+R3	supports Arg1:T6 Arg2:T4	
+T7	Claim 1172 1236	globalization results in considerable decrease in global tension
+A3	Stance T7 For
+T8	Premise 1244 1338	convergence of benefits of people of the world which is a natural consequence of globalization
+R4	supports Arg1:T8 Arg2:T7	

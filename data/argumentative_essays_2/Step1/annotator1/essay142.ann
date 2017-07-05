@@ -1,0 +1,16 @@
+T1	MajorClaim 270 343	the advanced medical care brings with it more benefits than disadvantages
+T2	MajorClaim 1617 1690	the development of the health care system helps people have a better life
+T6	Claim 947 1013	the improvement of medical care makes a better life for all people
+A4	Stance T6 For
+T7	Claim 1060 1135	the increase in life expectancy puts a high pressure on the economic system
+A5	Stance T7 Against
+T9	Claim 345 458	The main advantage of high-tech medical care is that people are better taken care so that they have a good health
+T10	Premise 460 525	They can contribute effectively to the development of the economy
+T11	Premise 596 711	they do not have to spend more time in health checking or treatment so this saves an amount of time as well as cost
+T12	Premise 726 844	a community with the elderly who have a good health has a major role to play in a sustainable development of a society
+T13	Premise 856 925	young people will be happy as their parents, grandparents are healthy
+T14	Premise 1144 1244	more pension have to spend for Medicare instead of investing in other sectors of the economic system
+T15	Premise 1298 1441	the capital that spend on taking care the elderly is contributed by these people during their working time, so they are worth to have good care
+T16	Premise 1443 1577	They have given their effort to the society so that young people, the governments have a responsibility to improve the Medicare system
+T3	Premise 534 578	healthy workers can create more productivity
+A1	Stance T9 For

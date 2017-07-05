@@ -1,0 +1,28 @@
+T1	MajorClaim 417 512	no matter how widely they are spoken, every language should be protected from being disappeared
+T2	Claim 1977 2061	letting languages spoken by ethnic minorities be extinct seems to be very beneficial
+T3	MajorClaim 2063 2169	it will definitely impact seriously on many other aspects especially in the loss of our cultural heritages
+A1	Stance T2 Against
+T4	Premise 614 724	we need to consider that if the government expands the use scope of that languages, it can be really expensive
+T5	Premise 733 828	educational programmes will need to be given so as to keep young people learning and using them
+T6	Premise 843 1018	some certain areas in the Southern Vietnam have been trying to help their secondary school students who are originally from khmer people speak their language beside Vietnamese
+T7	Premise 1023 1155	the local government has recently struggled with their costly investments on language teachers, facilities and appropriate materials
+R1	supports Arg1:T6 Arg2:T7	
+T8	Claim 1186 1356	in many aspects such as communication, trade, cooperation as well as transaction, it will be absolutely easier for the whole society to work together in one language only
+A2	Stance T8 Against
+T9	Claim 544 603	saving regional languages could be seen as a waste of money
+A3	Stance T9 Against
+R2	supports Arg1:T5 Arg2:T4	
+R3	supports Arg1:T4 Arg2:T9	
+R4	supports Arg1:T7 Arg2:T4	
+T10	Claim 1420 1476	the government should try to preserve minority languages
+A4	Stance T10 For
+T11	Premise 1494 1565	language can be seen as much more than just one method of communication
+T12	Premise 1580 1635	forming a language must be undergone thousands of years
+T13	Premise 1643 1684	it deserves to be respected and preserved
+R5	supports Arg1:T12 Arg2:T13	
+T14	Premise 1706 1803	language is one of the essential factors creating the differences and unique cutures in the world
+T15	Premise 1816 1951	saving the use of that kinds of languages in this case generally is the most important element of the cultural diversity's preservation
+R6	supports Arg1:T14 Arg2:T15	
+R7	supports Arg1:T15 Arg2:T10	
+R8	supports Arg1:T13 Arg2:T10	
+R9	supports Arg1:T11 Arg2:T10	

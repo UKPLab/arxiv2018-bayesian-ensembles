@@ -1,0 +1,19 @@
+T1	MajorClaim 255 403	standardized tests are valuable option for educational system as long as it would help teachers to know if the students are really getting knowledge
+T2	MajorClaim 1822 1896	schools which obligate their students to take standardized tests are right
+T3	Claim 469 516	they help teachers to fairly grade the students
+A1	Stance T3 For
+T4	Premise 530 624	some students are not so active on the lessons, cause they are already familiar with the issue
+T5	Premise 637 721	exams could be the only way for teachers to see the real abilities of those students
+T6	Claim 736 803	many teachers rely only on the exam results while grading the class
+T7	Premise 808 871	the usage of standardized tests is the superior option for them
+T8	Premise 887 974	standardized tests can be good chance for students to apply their knowledge on practice
+T9	Premise 983 1120	some students may get used to simply rewriting solved problems from the blackboard, so they will never try to solve problems on their own
+T10	Premise 1131 1172	standardized tests offer them such chance
+T11	Claim 1402 1467	teachers can compare the level of knowledge of different students
+T12	Premise 1469 1594	In any class there will be students who will show low academic performance, so teachers could work with them more intensively
+T13	Premise 1639 1691	standardized tests are required over those who don’t
+T14	Claim 1197 1299	schools should require students to take standardized tests, as long as this option helps to both sides
+A4	Stance T6 For
+A2	Stance T14 For
+T15	Premise 1700 1797	if the teacher would know the level of each student he would fairly share his time to all of them
+A3	Stance T11 For

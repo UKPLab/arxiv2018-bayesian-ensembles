@@ -1,0 +1,27 @@
+T1	MajorClaim 1434 1464	using machines is advantageous
+T2	Claim 1468 1502	machines make work easy and smooth
+A1	Stance T2 For
+T3	Claim 1504 1562	The negative effects on health can be put on the back seat
+A2	Stance T3 For
+T4	Premise 1571 1625	there are many other ways to exercise and stay healthy
+R1	supports Arg1:T4 Arg2:T3	
+T5	Claim 459 512	the usage of machines is harmful for health of humans
+A3	Stance T5 Against
+T6	Premise 519 560	machines decrease the work done by people
+R2	supports Arg1:T6 Arg2:T5	
+T7	Premise 575 639	in many institutions staircases are replaced by lifts now a days
+R3	supports Arg1:T7 Arg2:T5	
+T8	Premise 641 713	People opt for elevators instead of climbing one or two flight of stairs
+R4	supports Arg1:T8 Arg2:T5	
+T9	Premise 715 817	It is confirmed in a number of researches that daily usage of elevators in workplaces promotes obesity
+T10	Premise 822 910	this example clearly shows the linkage between using machines and adverse health effects
+R5	supports Arg1:T9 Arg2:T5	
+T11	Premise 1116 1267	The work of chopping, blending, grating, kneading has become so easy that people can not imagine their lives without this simple machine at their homes
+T12	Claim 1298 1370	using machines makes daily tasks less time consuming and less cumbersome
+A5	Stance T12 For
+T13	Premise 964 1058	usage of machines makes work easier and less time is consumed for doing similar amount of work
+T14	Premise 1060 1114	Take the example of use of food processors in kitchens
+R15	supports Arg1:T11 Arg2:T12	
+R16	supports Arg1:T14 Arg2:T12	
+R6	supports Arg1:T10 Arg2:T5	
+R7	supports Arg1:T13 Arg2:T12	

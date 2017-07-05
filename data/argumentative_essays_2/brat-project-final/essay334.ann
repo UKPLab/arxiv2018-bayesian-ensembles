@@ -1,0 +1,34 @@
+T1	Claim 1670 1744	we cannot deny machines are play a vital role in people living and working
+A1	Stance T1 Against
+T2	MajorClaim 1746 1809	problems posed by machines should draws more attentions as well
+T3	Claim 200 242	although using machines have many benefits
+A2	Stance T3 Against
+T4	MajorClaim 244 281	we cannot ignore its negative effects
+T5	Premise 393 555	Not like human, machines do not need rest, which means they can work as long as employers want and consistently produce high quality products without any mistakes
+T6	Premise 570 609	using machines can save company's money
+T7	Premise 619 674	machines never ask for salary, over-time pay or pension
+T8	Premise 679 737	employers do not need to spend money on employee's welfare
+T9	Premise 739 882	The company only needs some technicians to make sure machines are working on the right track or replace some part when machines are not working
+R1	supports Arg1:T8 Arg2:T6	
+R2	supports Arg1:T7 Arg2:T8	
+R3	supports Arg1:T9 Arg2:T6	
+T10	Claim 304 336	machines can bring many benefits
+A3	Stance T10 Against
+T11	Premise 353 391	machines are more effective than human
+R4	supports Arg1:T5 Arg2:T11	
+R5	supports Arg1:T11 Arg2:T10	
+R6	supports Arg1:T6 Arg2:T10	
+T12	Premise 991 1057	because of extensive of using machines, many people loss their job
+T13	Premise 1059 1162	Especially in large population countries, high unemployment rate may cause crime and social instability
+T14	Premise 1181 1253	using of machines are also pose serious pollution and energy dissipation
+R7	supports Arg1:T13 Arg2:T12	
+T15	Premise 1268 1369	nowadays people prefer to use dish-washing machine to wash dishes and plates rather than hand washing
+T16	Premise 1375 1516	they did not know that compared with hand washing dish-washing machine consume at least 2 times water and electricity to wash these tableware
+T17	Premise 1538 1644	if thousands of families use dish-washing machines, how many water and how much electricity will be wasted
+R8	supports Arg1:T16 Arg2:T15	
+R9	supports Arg1:T17 Arg2:T15	
+R10	supports Arg1:T15 Arg2:T14	
+T18	Claim 894 974	the disadvantages of machines that bring to us should not be neglected by people
+A4	Stance T18 For
+R11	supports Arg1:T12 Arg2:T18	
+R12	supports Arg1:T14 Arg2:T18	

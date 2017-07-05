@@ -1,0 +1,21 @@
+T1	MajorClaim 1206 1254	ease to prepare food has improved people’s lives
+T2	Claim 1327 1374	But people should be careful with what they eat
+A1	Stance T2 Against
+T3	Premise 1384 1435	some industrial foods are very bad for their health
+T4	Premise 1440 1488	they should buy only food from well known brands
+R1	supports Arg1:T3 Arg2:T4	
+R2	supports Arg1:T4 Arg2:T2	
+T5	Claim 493 590	being able to prepare a tasty food just putting it into the microwave or into the oven is awesome
+A2	Stance T5 For
+T6	Premise 438 487	they don’t have much time to spend in the kitchen
+T7	Premise 378 419	people normally have lots of things to do
+R3	supports Arg1:T7 Arg2:T6	
+R4	supports Arg1:T6 Arg2:T5	
+T8	Premise 605 780	if an engineer needs to make a project, but he needs to deliver it tomorrow, he could save hours preparing a food with the microwave instead of cooking everything from scratch
+R5	supports Arg1:T8 Arg2:T5	
+T9	Claim 792 995	when someone wants to prepare a good food alone for some reason, some time ago he/she would need to be a very good cook to prepare that food, but nowadays is very easy to prepare a healthy and tasty food
+A3	Stance T9 For
+T10	Premise 1010 1120	if a guy wants to prepare a dinner to his girlfriend, he could just buy some food that comes with instructions
+T11	Premise 1122 1187	Normally you just need to put it into the oven and wait some time
+R6	supports Arg1:T10 Arg2:T9	
+R7	supports Arg1:T11 Arg2:T9	

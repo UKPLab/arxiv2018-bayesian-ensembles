@@ -1,0 +1,16 @@
+T1	MajorClaim 1537 1648	English as an elegant language should be advocated in many fields to expand the global trade and communications
+T2	Claim 983 1090	the dominated status of English has destroyed culture diversity and many less-used languages become extinct
+T4	Premise 1407 1523	these languages have special significance for people who belong to them and using English to replace them is crudity
+T6	Premise 359 462	it promotes the communication and interaction between different countries more conveniently and clearly
+T5	Premise 663 746	If we can popularize the use of English, the language hinder will disappear as well
+T7	Premise 761 860	English is a beautiful language, which is more systematical and extensive than many other languages
+T8	Claim 862 945	Learning English can foster people's sentiment and nourish their literature and art
+A4	Stance T8 For
+T9	Premise 464 580	In the ancient time, the different languages and geography set barriers for people to exchange their goods and ideas
+T10	Premise 595 661	the innovation of plane and train solved the geographical barriers
+A1	Stance T2 Against
+T3	Premise 1097 1132	English is a sophisticated language
+T11	Premise 1134 1251	it does not express every detail of life especially in Asia countries, which have totally different linguistic system
+T12	Premise 1275 1394	language contains many aspects of people's daily life, which is influenced by culture, environment as well as religious
+T13	Claim 274 343	the prevalent of English brings a great number of benefits for people
+A3	Stance T13 For

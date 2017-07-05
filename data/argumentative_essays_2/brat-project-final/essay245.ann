@@ -1,0 +1,30 @@
+T1	MajorClaim 169 218	communicating by e-mails or voice mails is better
+T2	Premise 437 516	In this case it is not so difficult to write an e-mail or to leave a voice mail
+T3	Premise 525 571	even shy people feel themselves more confident
+T4	Claim 321 352	communicating by e-mail is easy
+A1	Stance T4 For
+T5	Premise 354 435	Many people have problems with calling a person that they are not acquainted with
+T6	Premise 828 916	I might not have time to call a person or to meet with him or her in an appropriate time
+T7	Premise 920 961	for me it is better to leave a voice mail
+T8	Premise 721 826	I get home at about midnight and I still need to answer some questions and to solve some routine problems
+T9	Premise 642 719	I work and study at the university and I don't have spare time during the day
+T10	Claim 583 629	you can write an e-mail at any time of the day
+A2	Stance T10 For
+T11	Premise 1125 1216	you can change the word order or you can choose more appropriate style to sound more polite
+T12	Premise 1218 1323	When you speak face-to-face you are not as able to control every word as you are when you write an e-mail
+T13	Claim 972 1110	when you write an e-mail you have enough time to think carefully about what you are writing and how it would be better to express yourself
+A3	Stance T13 For
+T14	Claim 1338 1400	there is no chance to disturb people by sending them an e-mail
+A4	Stance T14 For
+T15	Premise 1402 1490	You should not worry about interrupting an important conversation or some other business
+T16	MajorClaim 1631 1693	I would prefer to answer it by means of internet or voice mail
+R1	supports Arg1:T3 Arg2:T2	
+R3	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T2 Arg2:T4	
+R4	supports Arg1:T9 Arg2:T10	
+R5	supports Arg1:T8 Arg2:T10	
+R6	supports Arg1:T6 Arg2:T7	
+R7	supports Arg1:T7 Arg2:T10	
+R8	supports Arg1:T11 Arg2:T13	
+R9	supports Arg1:T12 Arg2:T13	
+R10	supports Arg1:T15 Arg2:T14	

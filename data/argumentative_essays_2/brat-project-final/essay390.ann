@@ -1,0 +1,21 @@
+T1	MajorClaim 1622 1709	celebrities nowadays give more good influence on young people than they were previously
+T2	Claim 1459 1597	people without talents cannot be famous in this changing world and to be accredited they need to contribute positively to young generation
+A1	Stance T2 For
+T3	Claim 769 863	it is not easy to influence young people these days when they are well equipped of life skills
+A2	Stance T3 For
+T4	Premise 643 756	They are mostly being educated at very early ages by family or schools as to distinguish what is benefit for them
+T5	Premise 565 641	the young generation these days is very conscious toward positive lifestyles
+T6	Claim 263 360	people use their money to become an inspiration are definitely not a good mirror for young people
+T7	Premise 362 554	We definitely do not want our children to spend money on luxurious custom or lifestyle just to be similar to someone, especially when these people are not symbols of any talent but showing off
+A3	Stance T6 For
+R1	supports Arg1:T7 Arg2:T6	
+R2	supports Arg1:T5 Arg2:T3	
+T8	Premise 896 983	not many people can exist in the celebrities' world without any talents or achievements
+T9	Claim 1271 1441	only money and glamour look are not enough for a person to be recognized anymore, it is importance that they have to have achievements in order to be a muse to youngsters
+A5	Stance T9 For
+T10	Premise 985 1134	We are giving chances to many teenagers to show their intelligence in different talent shows, for example; The Voice, X Factor or Next Top Models etc
+T11	Premise 1149 1263	to become a star and an inspiration for people, a person need to have real talent to compete with other candidates
+R3	supports Arg1:T10 Arg2:T11	
+R4	supports Arg1:T11 Arg2:T9	
+R5	supports Arg1:T8 Arg2:T9	
+R6	supports Arg1:T4 Arg2:T3	

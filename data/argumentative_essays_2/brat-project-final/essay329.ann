@@ -1,0 +1,30 @@
+T1	MajorClaim 382 451	it is essential to take chances and believe this is going to work out
+T2	MajorClaim 1779 1886	it is necessary to have courage to take risks, be different and pursue your dream to have a successful life
+T3	Claim 1692 1777	sometimes you consider backing down and stay in the same routine that you are used to
+A1	Stance T3 Against
+T4	Claim 1601 1678	in this competitive world you have to be fearless and face all new situations
+A2	Stance T4 For
+T5	Premise 686 806	some people abandon their job, family and friends and go to other country without knowing what the future holds for them
+T6	Premise 808 891	In the beginning, it can be tough to fit in this new place and find any opportunity
+T7	Premise 897 1081	after fighting against the obstacles blocking the way to get what is desired; it is possible to conquer what they are craving as well as start to build a new life in this other country
+R1	attacks Arg1:T7 Arg2:T6	
+T8	Claim 454 525	Assuming new opportunities is indispensable to have diverse experiences
+A3	Stance T8 For
+T9	Premise 536 620	life may not be easy; it will have various challenges especially when you take risks
+T10	Premise 626 670	in the end, it can be surprisingly wonderful
+R2	attacks Arg1:T10 Arg2:T9	
+R3	attacks Arg1:T9 Arg2:T8	
+R4	supports Arg1:T5 Arg2:T8	
+R5	attacks Arg1:T6 Arg2:T8	
+T11	Claim 1191 1233	it is vital to never give up on your dream
+A4	Stance T11 For
+T12	Premise 1250 1309	Walt Disney, whose career is famous, had a challenging life
+T13	Premise 1311 1422	One of the difficulties was some of his histories, such as Mickey Mouse and Three Little Pigs, were turned down
+T14	Premise 1093 1138	many people are afraid to take risks and fail
+T15	Premise 1140 1185	It is possible to get frustrate along the way
+R6	attacks Arg1:T15 Arg2:T11	
+R7	supports Arg1:T12 Arg2:T11	
+R8	supports Arg1:T13 Arg2:T11	
+T16	Premise 1424 1585	He heard lots of "no", furthermore one editor fired him alleging that he had no imagination, after all what he had gone through, he never stop chasing his dreams
+R9	supports Arg1:T16 Arg2:T11	
+R10	attacks Arg1:T14 Arg2:T11	

@@ -1,0 +1,24 @@
+T1	MajorClaim 40 99	It’s certainly better for children to grow up in a big city
+T2	Claim 151 226	I hold this belief because of two main reasons, academic and social reasons
+A1	Stance T2 For
+T3	Premise 998 1096	you won’t know a lot of people, there are gossips everywhere, and your life will be really limited
+T4	Claim 937 996	Growing up in the countryside is not such a good experience
+A2	Stance T4 For
+R1	supports Arg1:T3 Arg2:T4	
+T5	MajorClaim 1151 1242	they will grow up in a good neighborhood of a big city and they will be very happy about it
+T6	Claim 252 351	if a child grows up in a big city they will be all day at home at the computer or at the video-game
+A3	Stance T6 Against
+T7	Premise 357 445	this is not true if you live in a neighborhood with other people about your age as I did
+R2	attacks Arg1:T7 Arg2:T6	
+T8	Premise 447 540	My friends and I used to play soccer, bike, climb trees and do a lot of other stuff every day
+T9	Premise 542 600	We did play video-games, but that wasn't our main activity
+T10	Premise 602 668	In a big city there are more kinds of people and more things to do
+R3	attacks Arg1:T8 Arg2:T6	
+R4	attacks Arg1:T9 Arg2:T6	
+R5	attacks Arg1:T10 Arg2:T6	
+T11	Claim 855 935	In a big city you have more qualified teachers and a better access to technology
+A4	Stance T11 For
+T12	Premise 719 794	He said that he had to study a lot to pass the test to enter the university
+T13	Premise 670 717	I have a friend that grew up in the countryside
+R6	supports Arg1:T13 Arg2:T11	
+R7	supports Arg1:T12 Arg2:T11	

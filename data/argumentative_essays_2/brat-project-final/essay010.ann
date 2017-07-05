@@ -1,0 +1,32 @@
+T3	MajorClaim 328 397	governments spend more money on buses, trains, and subways investment
+T4	Claim 484 578	they help alleviate traffic congestion and decrease the amount of carbon released into the air
+A1	Stance T4 For
+T5	Premise 399 473	Such public vehicles are used to serve a large number of people in society
+R1	supports Arg1:T5 Arg2:T4	
+T1	Claim 1244 1353	the policy that concentrates money on developing public transportation brings an advantageous impact on earth
+A2	Stance T1 For
+T2	Premise 1086 1231	if there are more good buses, trains, or subways, people are inclined to use less private vehicles, which decreases the amount of carbon released
+R2	supports Arg1:T2 Arg2:T1	
+T6	Premise 637 713	carbon emission cut is significantly essential for protecting the atmosphere
+T7	Premise 732 820	the more cars and motorbikes are on roads, the more seriously the ozone layer is damaged
+T8	Premise 822 945	If governments use more money to improve roads, there is a strong likelihood that more people drive their private cars work
+T9	Claim 947 1075	This is sure to lead to more carbon emitted into the atmosphere, which can cause skin cancer and destroy the natural environment
+A4	Stance T9 For
+R3	supports Arg1:T8 Arg2:T9	
+R4	supports Arg1:T6 Arg2:T9	
+R5	supports Arg1:T7 Arg2:T9	
+T10	Premise 1554 1607	there are a great number of vehicles flowing on roads
+T11	Premise 1432 1513	It is quiet clear that traffic congestion is a serious problem in many big cities
+T12	Claim 1641 1732	governments have to turn people' attention on public vehicles to reduce cars and motorbikes
+T13	Premise 1734 1853	There is the possibility that improving roads and highways does not seem to reach the major cause of traffic congestion
+T14	Premise 1369 1430	the policy would play a pivotal part in relieving traffic jam
+T15	Claim 1891 1952	high-quality roads and highways make it easier to move around
+A5	Stance T15 Against
+T16	MajorClaim 1968 2033	public transportation systems even have more important advantages
+T17	Claim 2035 2097	They not only ease traffic jam but also protect the atmosphere
+A6	Stance T17 For
+A3	Stance T12 For
+R6	supports Arg1:T13 Arg2:T12	
+R7	supports Arg1:T11 Arg2:T12	
+R8	supports Arg1:T10 Arg2:T12	
+R9	supports Arg1:T14 Arg2:T12	

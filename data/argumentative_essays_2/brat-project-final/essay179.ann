@@ -1,0 +1,30 @@
+T1	MajorClaim 1939 2045	stress management is an essential skill for everyone to learn and find their own way to solve their stress
+T2	MajorClaim 179 283	stress management, how to survive our unbearable stress, is the most important skill that we should have
+T3	Claim 613 699	if we don't have a good stress management skill, it may lead to some critical problems
+A1	Stance T3 For
+T4	Premise 307 413	Stress, our body's way of responding to any kind of demand, can be caused by both good and bad experiences
+T5	Premise 415 473	Stress may be a positive mobilization to drive for success
+T6	Premise 484 598	it is widely thought that we experience stress any time, which comes across unexpectedly that frustrates our goals
+R1	supports Arg1:T6 Arg2:T3	
+R2	supports Arg1:T4 Arg2:T3	
+R3	supports Arg1:T5 Arg2:T3	
+T7	Claim 1146 1224	stress management recently becomes a more significant issue in our realization
+T8	Premise 933 1040	Some people regard stress as a power, which overcomes the obstacles to motivate themselves to do their best
+A2	Stance T7 For
+T9	Premise 1042 1133	other people cannot charge of their thoughts, emotions, and the way they deal with problems
+R4	supports Arg1:T9 Arg2:T7	
+R5	supports Arg1:T8 Arg2:T7	
+T10	Premise 701 931	In the frenetic, fast-paced world, it is a very common predicament that all of us, from the young to the senior, feel depressed caused by stress, such as financial problems, exam stress, relationship difficulties and work overload
+R6	supports Arg1:T10 Arg2:T7	
+T11	Premise 1446 1512	some people have physical problems, such as insomnia and headaches
+T12	Premise 1514 1591	Melancholia, the most fatal problem, even leads some people to commit suicide
+T13	Claim 1607 1712	it is necessary that we should reduce and cope with our stress in the goal of balancing our mind and body
+A3	Stance T13 For
+T14	Premise 1239 1272	stress takes a toll on our health
+T15	Premise 1365 1438	This is one of the reasons why people were overwhelmed by constant stress
+T16	Premise 1274 1363	It is known that the modern life is frequently full of hassles, frustrations, and demands
+R7	supports Arg1:T16 Arg2:T11	
+R8	supports Arg1:T15 Arg2:T11	
+R9	supports Arg1:T14 Arg2:T13	
+R10	supports Arg1:T12 Arg2:T13	
+R11	supports Arg1:T11 Arg2:T13	

@@ -1,0 +1,22 @@
+T1	MajorClaim 311 343	concerns to save Earth are vital
+T2	Claim 377 458	rapid development of infrastructure is eating most of the forest throughout world
+A1	Stance T2 For
+T3	MajorClaim 1485 1529	Earth is our home and it should be protected
+T4	Premise 460 537	The so-called Concrete jungles have evolved endangering forests and wild life
+T5	Premise 554 637	life saving oxygen is produced by trees after converting harmful carbon dioxide gas
+T6	Premise 649 723	wild life is very essential to maintain ecological balance on planet Earth
+R1	supports Arg1:T4 Arg2:T2	
+R2	supports Arg1:T5 Arg2:T2	
+R3	supports Arg1:T6 Arg2:T2	
+T7	Claim 735 839	large emissions of carbon monoxide gas from refrigerants like air conditioners have depleted ozone layer
+A2	Stance T7 For
+T8	Premise 841 938	Importance of ozone layer is evident by the fact as it protects us from harmful ultra violet rays
+T9	Premise 954 1154	excess emission of carbon dioxide gas mainly by vehicles around the world has increased the average temperature at north pole which in turn has increased water level due to gradual melting of glaciers
+R4	supports Arg1:T8 Arg2:T7	
+R5	supports Arg1:T9 Arg2:T7	
+T10	Claim 1164 1259	either industrial waste or domestic waste produced everyday is badly polluting the planet Earth
+A3	Stance T10 For
+T11	Premise 1274 1376	a large amount of unnoticed industrial waste released in oceans effects aquatic life to a large extent
+T12	Premise 1378 1470	Harmful chemicals present in industrial waste kills lot of sea creatures in oceans or rivers
+R6	supports Arg1:T11 Arg2:T10	
+R7	supports Arg1:T12 Arg2:T10	

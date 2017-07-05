@@ -1,0 +1,21 @@
+T1	MajorClaim 2059 2101	dependence on computers is not a bad thing
+T2	Claim 541 612	Computers have made human life more easy, convenient and lightning fast
+T3	Premise 801 945	Computers provide speed, increase efficiency, accuracy, precision, help to increase productivity and other countless benefits are provided by it
+T5	Claim 1344 1385	Computers have made humans over-dependent
+A3	Stance T5 Against
+T6	Premise 1387 1541	Virus programs, privacy breach, leak of confidential documents, cyber attacks, identity theft, frauds etc. are some of its demerits, from a countless list
+T7	Premise 1543 1588	Computers expose children to vulgar materials
+T8	Claim 1996 2047	computers have provided security and sophistication
+A4	Stance T8 For
+T10	Premise 1590 1738	They have even invaded mental health of humans, for example, FAD (Facebook Addiction Disorder - excessive use of social networking website Facebook)
+T11	Premise 1740 1847	Computers have intruded our lives to the effect that a satellite can peep into our homes and privates lives
+T12	Premise 1849 1947	The recent case of Wikileaks, leaking confidential data is an example of how computers are harmful
+T14	Premise 627 724	in earlier days, if one had to send a message to someone in other country, it used to take months
+T15	Premise 726 799	But today, it can be sent in few minutes by typing a email and few clicks
+A1	Stance T2 For
+T4	Claim 957 1002	future prospects of computers are very bright
+A6	Stance T4 For
+T13	Premise 1004 1085	From a computer as big as a room, it has now been minimized to the size of a palm
+T16	Premise 1087 1165	Nanotechnology is working to make computers to the order of microscopic levels
+T17	Premise 1167 1256	Research on making computerized drone soldiers (unmanned computer controlled) is going on
+T18	Premise 1258 1303	There is no end to the evolution of computers

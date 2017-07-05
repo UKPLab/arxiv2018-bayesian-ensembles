@@ -1,0 +1,32 @@
+T1	MajorClaim 238 441	If a university plans to develop a new research in my country and I have to choose between establishing a centre for business research or a centre for agriculture research, I would opt for the second one
+T2	Premise 457 521	my country has a lot of land which is useful for the agriculture
+T3	Premise 523 573	Most of these lands are left without any treatment
+T4	Claim 575 666	The centre for research in agriculture can help my co-citizens to better exploit these land
+A1	Stance T4 For
+T5	Claim 668 750	This centre can also help people there to solve their issues related to their land
+A2	Stance T5 For
+R1	supports Arg1:T3 Arg2:T4	
+R2	supports Arg1:T2 Arg2:T4	
+T6	Premise 752 816	Especially, if they have no knowledge or education in this field
+R3	supports Arg1:T6 Arg2:T5	
+T7	Claim 828 909	the centre for research in agriculture helps the economy of my country to improve
+A3	Stance T7 For
+T8	Premise 911 973	The agriculture field has only thirty percent as a market part
+T9	Premise 975 1076	The centre of research can raise the market part of this field by developing the agriculture products
+T10	Premise 1091 1157	the dates are the most important agriculture product in my country
+T11	Premise 1159 1334	The centre of research for agriculture can make some research in how to get a good quality of this product, how to treat the Palme and maybe how to treat the land of the palms
+R4	supports Arg1:T8 Arg2:T7	
+R5	supports Arg1:T9 Arg2:T7	
+R6	supports Arg1:T10 Arg2:T7	
+R7	supports Arg1:T11 Arg2:T7	
+T12	Claim 1336 1503	Another reason that makes the centre of research for the agriculture more important than the centre of business research is that the first one can create a lot of jobs
+A4	Stance T12 For
+T13	Premise 1516 1715	showing people how to exploit a land and get good agriculture products will push people to think about working in the field of agriculture rather than working in business or other field to make money
+R8	supports Arg1:T13 Arg2:T12	
+T14	Claim 1741 1788	a centre of business research is more important
+A5	Stance T14 Against
+T15	Premise 1797 1887	we have to be in parallel with the advanced countries which have focused in business field
+R9	supports Arg1:T15 Arg2:T14	
+T16	Premise 1896 2126	being a developed country does not mean that we have to focus only in business, but we have to focus on what really bring us to the level of self satisfaction, and the agriculture for our country is the field that can realize that
+R10	attacks Arg1:T16 Arg2:T14	
+T17	MajorClaim 2128 2341	My country need to focus more on the agriculture by establishing centers for research in this field, which will have some very positive consequences on agriculture people work, on the economy and on the employment

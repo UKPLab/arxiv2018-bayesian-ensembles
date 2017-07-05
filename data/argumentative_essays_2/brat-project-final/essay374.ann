@@ -1,0 +1,18 @@
+T1	MajorClaim 212 259	the zoo deserves maintenance and public respect
+T2	Premise 417 536	With zoos, pupils will have a chance of observing the habit and unique instinct of, for instance, a lion or a crocodile
+T3	Premise 731 793	zoos conduce to the acquisition of knowledge at various levels
+T4	Claim 300 415	the zoo should be considered as a means of education with regard to providing real and vivid materials for learners
+A2	Stance T4 For
+T5	Premise 557 709	it is of university students' benefits to do biological research based on practical statistics and live recordings, which otherwise would not be at hand
+R2	supports Arg1:T2 Arg2:T4	
+R3	supports Arg1:T5 Arg2:T4	
+T6	MajorClaim 1252 1327	the role of zoos towards both human and animals is undeniably indispensable
+T7	Premise 861 1002	Nowadays the process of globalisation is accompanied by the encroachment upon natural habitats, which consequently calls for the help of zoos
+T8	Premise 1018 1099	the ever-increasing huntings are having a heavy toll on rare and specious species
+T9	Premise 1101 1242	Only when zoos appear are such distinction-driven animals as: giraffe, panda, koala or leopard provided with their own inaccessible territory
+T10	Claim 805 859	the zoo also serve as a means of ecological protection
+A3	Stance T10 For
+R6	supports Arg1:T7 Arg2:T10	
+R7	supports Arg1:T8 Arg2:T10	
+R8	supports Arg1:T9 Arg2:T10	
+R1	supports Arg1:T3 Arg2:T4	

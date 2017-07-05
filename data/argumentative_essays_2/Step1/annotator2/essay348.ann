@@ -1,0 +1,14 @@
+T2	Premise 454 611	a large proportion of the tax is spent on national defence and in maintaining social stability, so that every one can work and live in a peaceful environment
+T3	Premise 613 736	The tax is also used to pay the salaries of workers working in public service sectors, such as teachers and police officers
+T4	Premise 747 848	these workers do not produce profit directly, what they do is for the well-being of the whole society
+T6	Claim 271 439	all people who are able to work should pay tax to the government, as it is the most important source of government's revenue, which is mainly used to serve all citizens
+A2	Stance T6 Against
+T5	Claim 878 956	citizens have other important responsibilities to fulfil apart from paying tax
+A1	Stance T5 For
+T7	Premise 970 1066	there are impoverished or disabled people in every society, needing help and support from others
+T8	Premise 1084 1199	the government can provide some fund to ease their difficulties, but such financial help is usually far from enough
+T9	Premise 1215 1336	aids from more capable or wealthier citizens are particularly crucial, which are a great complement to government support
+T10	Premise 1338 1448	Another responsibility all citizens should take is to maintain social stability together with the police force
+T11	Premise 1450 1550	There are criminals in every society, and the number of policemen the government can hire is limited
+T12	Premise 1552 1736	So it is quite necessary for the local residents to take actions and ensure the safety of the communities, by doing things like reporting suspicious activities to the police department
+T13	MajorClaim 1843 1944	they have other critical obligations to take, in order to make our society function in an ordered way

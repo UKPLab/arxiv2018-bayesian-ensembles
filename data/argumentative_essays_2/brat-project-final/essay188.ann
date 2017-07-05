@@ -1,0 +1,28 @@
+T1	MajorClaim 182 237	physical exercise is a crucial part of every school day
+T2	Claim 239 317	Exercise is good not only for having a good health body, but also for the mind
+A1	Stance T2 For
+T3	Claim 332 464	including exercise in children's daily routine, it is a good way to teach them the importance of physical activity from an early age
+A2	Stance T3 For
+T4	Claim 466 530	Physical activity helps children to grow up physically healthier
+A3	Stance T4 For
+T5	Premise 559 749	the rate of obesity in children has increased every year, it will be very beneficial for children to have a daily physical activity and get a break from being sitting several hours at school
+T6	Premise 764 886	exercise will help them to not be less exposed to illness related with cardiovascular, higher blood and cholesterol issues
+R1	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+T7	Claim 888 954	Daily exercise will help also to develop children's brain function
+A4	Stance T7 For
+T8	Premise 956 1053	It is well known how important it is to exercise regularly to help the body system to work better
+T9	Premise 1055 1186	When people exercise, the respiratory system's function is enhanced, helping all organs, including the brain, to get more oxygen in
+T10	Premise 1188 1291	Daily exercise will provide children with a mental break which will boost them to be efficient learners
+R3	supports Arg1:T8 Arg2:T7	
+R4	supports Arg1:T9 Arg2:T7	
+R5	supports Arg1:T10 Arg2:T7	
+T11	Claim 1293 1447	Having children in the daily exercise routine from an early age will teach them the important value of having physical activity in their every day routine
+A5	Stance T11 For
+T12	Premise 1449 1602	Children are bombarded with lectures about nutrition and physical activity; however, they will be more beneficed if that knowledge can be put in practice
+R6	supports Arg1:T12 Arg2:T11	
+T13	Premise 1614 1717	they can stick with the routine and make the daily physical activities a good habit on their whole life
+T14	Claim 1804 2030	It will meliorate not only mental and body health, but also will establish in children a habit of doing it, giving them the opportunity to measure the worth of including such an important activity in their daily live schedules
+A7	Stance T14 For
+T15	MajorClaim 1720 1802	Including physical activity in children's school day should be strongly considered
+R7	supports Arg1:T13 Arg2:T11	

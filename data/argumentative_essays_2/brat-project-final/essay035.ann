@@ -1,0 +1,28 @@
+T1	MajorClaim 183 292	these various advertisements get people to buy products that are unnecessary and only look good on television
+T2	MajorClaim 1463 1577	The power of advertising maybe over-rated, we can not deny that the final decision is on the hands of us consumers
+T3	Claim 446 586	it is not about the function or quality of the commodities themselves but really the promotion of the good feeling of possessing the product
+A1	Stance T3 For
+T4	Premise 326 426	To boost their sales and win over customers, companies pour a great amount of money into advertising
+T5	Premise 605 667	huge cooperation hire celebrities as the face of their product
+T6	Premise 669 794	By casting famous singers in their television advertisement, motorcycles or clothes for example, sales increase significantly
+T7	Premise 801 854	youngsters, as the target consumers, love celebrities
+R1	supports Arg1:T7 Arg2:T6	
+T8	Premise 862 902	having these products shows their status
+T9	Premise 904 953	the quality obviously is not relatively important
+R2	supports Arg1:T8 Arg2:T9	
+R3	supports Arg1:T9 Arg2:T3	
+R4	supports Arg1:T6 Arg2:T3	
+R5	supports Arg1:T5 Arg2:T3	
+R6	supports Arg1:T4 Arg2:T3	
+T10	Claim 1055 1095	it plays and important role economically
+A2	Stance T10 Against
+T11	Premise 1211 1242	they aim to grab your attention
+T12	Premise 1097 1203	They introduce new products, and provide various choices, not to mention they are often visually enjoyable
+R7	supports Arg1:T11 Arg2:T12	
+T13	Premise 986 1032	advertisements can be falseful and exaggerated
+R8	attacks Arg1:T13 Arg2:T10	
+T14	Premise 1244 1357	Advertising also helps to keep prices at reasonable levels, creates a fair environment for commercial competition
+T15	Premise 1359 1461	Otherwise the market may be monopolistic, and the price as well as the choice will not be so selective
+R9	supports Arg1:T15 Arg2:T14	
+R10	supports Arg1:T14 Arg2:T10	
+R11	supports Arg1:T12 Arg2:T10	

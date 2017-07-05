@@ -1,0 +1,18 @@
+T1	MajorClaim 324 416	the classmates should be regarded as the most important influence on individual achievements
+T2	MajorClaim 1574 1625	classmates are unrivalled by the children's parents
+T3	Claim 1629 1756	they provide tremendous incentive and horizon expansion, two crucial commodities leading to a successful presentation at school
+A1	Stance T3 For
+T4	Premise 518 746	In high school, for instance, an individual cannot resist studying painstakingly through day and night when the others who are astoundingly ambitious and set sights on prestigious universities around the globe are doing the same
+T5	Premise 748 977	From a psychological perspective, the feeling of being subordinate to their peers exert enormous pressure on the children, which subsequently transforms into some sort of stimulants and boosts the children's academic performances
+T6	Claim 433 516	the classmates themselves creat a competitive atmoshphere which incent the children
+A2	Stance T6 For
+T7	Premise 1105 1231	students share even more time together than with their parents, explaining a great deal of wisdom they absorb from each others
+T8	Premise 1233 1355	it can be, for example, lessons on the class, social skills or general etiquettes that are sometimes overlooked by parents
+T9	Premise 1357 1545	Sharing the same age, children are at their most comfort to exchange ideas, to query and interpret abstract concepts without fear of parental punishments, resulting in deeper comprehension
+T10	Claim 990 1075	when it comes to knowledge and the acquisition of such, classmates are second to none
+A3	Stance T10 For
+R1	supports Arg1:T4 Arg2:T6	
+R2	supports Arg1:T5 Arg2:T6	
+R3	supports Arg1:T7 Arg2:T10	
+R4	supports Arg1:T8 Arg2:T10	
+R5	supports Arg1:T9 Arg2:T10	

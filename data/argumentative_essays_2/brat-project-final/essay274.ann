@@ -1,0 +1,32 @@
+T1	MajorClaim 415 455	you should focus on what you are good at
+T2	MajorClaim 1777 1869	doing what you can already do well helps you make a big accomplishment and do it much better
+T3	Premise 530 629	the more time you spend on what you do well, the more likely to achieve something great you will be
+T4	Premise 645 819	Albert Einstein, one of the most competent physicians in history, devoted most of his life to develop theory in physics and finally established special and general relativity
+T5	Premise 830 866	he hardly cared about something else
+T6	Premise 868 958	It is said that, surprisingly, he never tried to distinguish a hand soup and a facial soup
+T7	Premise 986 1039	using two different soups properly was quite annoying
+T8	Claim 1073 1160	you will be more likely to accomplish your purpose by concentrating on what you do well
+A1	Stance T8 For
+T9	Premise 457 513	Focusing what you are good at helps you attain your goal
+R3	supports Arg1:T3 Arg2:T8	
+R4	supports Arg1:T4 Arg2:T3	
+R5	supports Arg1:T5 Arg2:T3	
+R6	supports Arg1:T6 Arg2:T3	
+R7	supports Arg1:T7 Arg2:T6	
+T10	Premise 1236 1324	When you're doing something well, you will feel more satisfied and more interested in it
+T11	Premise 1332 1369	you will motivate yourself to do more
+T12	Premise 1391 1449	I used to be good at math when I was in junior high school
+T13	Premise 1459 1522	I was really satisfied with the fact that I could do preferably
+T14	Premise 1524 1593	I became to absorb myself to try more advanced level of math problems
+R8	supports Arg1:T13 Arg2:T14	
+T15	Premise 1608 1700	I could not only get higher scores in math test but also solve the university-level problems
+R9	supports Arg1:T14 Arg2:T15	
+T16	Claim 1708 1763	by doing what you are good at, you will be better at it
+A4	Stance T16 For
+T17	Premise 1162 1234	If you keep doing what you already do well, you can be better good at it
+R12	supports Arg1:T15 Arg2:T12	
+R14	supports Arg1:T12 Arg2:T16	
+R15	supports Arg1:T10 Arg2:T16	
+R16	supports Arg1:T11 Arg2:T16	
+R10	supports Arg1:T17 Arg2:T16	
+R1	supports Arg1:T9 Arg2:T8	

@@ -1,0 +1,24 @@
+T1	MajorClaim 287 346	I would prefer to work for myself, and have my own business
+T2	Claim 1528 1570	working for the other have some advantages
+A1	Stance T2 Against
+T3	MajorClaim 1591 1647	people that have their own business are more comfortable
+T4	Claim 1649 1703	They have more opportunities, profits, and authorities
+A2	Stance T4 For
+T5	Claim 458 570	there are a large number of opportunities in privat works that you cannot find them when you work for the others
+A3	Stance T5 For
+T6	Premise 572 666	In your job you can be boss of yourself; however, in the other jobs someone else are your boss
+T7	Premise 668 771	You always have to be responsible for your task, and it make a stressful situation that I never like it
+R1	supports Arg1:T6 Arg2:T5	
+R2	supports Arg1:T7 Arg2:T5	
+T8	Claim 787 930	when people work for themselves they make more profit for themselves, but in the other jobs you make profits for the other such as your manager
+A4	Stance T8 For
+T9	Premise 946 1080	nowadays most of them pick up this profit without sharing a small sum of it with their workers, and from my point of view it is unfair
+R3	supports Arg1:T9 Arg2:T8	
+T10	Claim 1091 1211	there are some authorities in privat jobs that workers are always looking for them while they are working for the others
+A5	Stance T10 For
+T11	Premise 1213 1288	When you work for yourself you can punch in and punch out whenever you want
+T12	Premise 1290 1413	Sometimes some occasions happen to people for example a disease, sticking in a traffic jam and sometime going on a vacation
+T13	Premise 1415 1503	For all of them we have to ask for a permission, and most of the time we are not allowed
+R4	supports Arg1:T12 Arg2:T10	
+R5	supports Arg1:T11 Arg2:T10	
+R6	supports Arg1:T13 Arg2:T10	

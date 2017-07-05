@@ -1,0 +1,42 @@
+T1	MajorClaim 400 482	students can acquire university knowledge without the prerequisite of passing exam
+T2	MajorClaim 2121 2215	the university should allow the student to participate in the classed without passing the test
+T3	Claim 2224 2359	not only is every students expert in every part of one subject but also it will reduce the student in the campus who leave uncultivated
+A1	Stance T3 For
+T4	Premise 637 661	I don't like electronics
+T5	Premise 671 722	electronics cannot always be seen in the real world
+R1	supports Arg1:T5 Arg2:T4	
+T6	Claim 537 602	the students are not constantly expert in every part of a subject
+A2	Stance T6 For
+T7	Premise 724 786	And I have had 0 in physics score when I study the electronics
+T8	Premise 788 861	But I constantly achieve 100 score when I study other part of the physics
+T9	Premise 863 1025	And if I cannot attend the classes until I pass the exam of electronics, I could not pass the entire part of physics, and I will fail the exam over and over again
+T10	Premise 1027 1115	Luckily, in our university, you can attend the classes regardless of the score you reach
+T11	Premise 1117 1180	And I can study physics without consideration of my electronics
+T12	Premise 1182 1241	And at last, I took the electronics again and pass the exam
+R2	supports Arg1:T4 Arg2:T6	
+R3	supports Arg1:T7 Arg2:T6	
+R4	supports Arg1:T8 Arg2:T6	
+R5	supports Arg1:T9 Arg2:T6	
+R6	supports Arg1:T10 Arg2:T6	
+R7	supports Arg1:T11 Arg2:T6	
+R8	supports Arg1:T12 Arg2:T6	
+T13	Claim 1874 2023	the university student may don't reach a high if the university allow student to participate in the class no matter whether they pass the test or not
+A3	Stance T13 Against
+T14	Premise 2029 2107	the benefit of free to access to the classes eclipse the issue of lower points
+R9	attacks Arg1:T14 Arg2:T13	
+T15	Claim 1253 1392	if the university take the policy that no one can attend the classes without passing exam, students are highly likely to leave uncultivated
+A4	Stance T15 For
+T16	Premise 1394 1489	If one fail most of the exam, it means that he or she cannot participate in most of the classes
+T17	Premise 1491 1545	And the students will have nothing to do in the campus
+T18	Premise 1552 1600	he or she will play online games days and nights
+T19	Premise 1602 1639	The academic achievement will decline
+T20	Premise 1653 1698	this student will become a loser in the world
+T21	Premise 1700 1780	And all this is due to that the university don't permit them to attend the class
+T22	Premise 1782 1860	This is not the failure of the university but also the entire education system
+R10	supports Arg1:T17 Arg2:T15	
+R11	supports Arg1:T16 Arg2:T15	
+R12	supports Arg1:T19 Arg2:T15	
+R13	supports Arg1:T20 Arg2:T15	
+R14	supports Arg1:T18 Arg2:T15	
+R15	supports Arg1:T21 Arg2:T15	
+R16	supports Arg1:T22 Arg2:T15	

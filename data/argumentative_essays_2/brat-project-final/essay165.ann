@@ -1,0 +1,24 @@
+T1	MajorClaim 286 334	going to classes should be optional for students
+T2	Claim 448 547	sometimes the students in the university can learn better from other sources outside the class room
+A1	Stance T2 For
+T3	Premise 549 651	Student can also study by themselves in the library and focus on only the topic they do not understand
+T4	Premise 666 744	I have a close friend who was in the same department with me in the university
+T5	Premise 746 808	She learned quickly and understood everything in class so fast
+T6	Premise 816 890	she rarely went to class but spent most time to understand confusing topic
+T7	Premise 901 948	she got very good grade when she was graduation
+R1	supports Arg1:T7 Arg2:T6	
+R2	supports Arg1:T5 Arg2:T6	
+R3	supports Arg1:T4 Arg2:T6	
+R4	supports Arg1:T6 Arg2:T2	
+R5	supports Arg1:T3 Arg2:T2	
+T8	Claim 1018 1145	they can manage the time spending on classes to do other benefit things if they already understand topic in the class very well
+A2	Stance T8 For
+T9	Premise 1165 1276	many times I did not attend biology class because my university does not require the students to attend classes
+T10	Premise 1284 1352	I had already studied all biology topics before attending university
+T11	Premise 1367 1470	I spent the time of biology class to do my Chemistry research and got A+ for both biology and chemistry
+R6	supports Arg1:T9 Arg2:T11	
+R7	supports Arg1:T10 Arg2:T11	
+R8	supports Arg1:T11 Arg2:T8	
+T12	MajorClaim 1704 1784	attending classes in the university will not be required to the students anymore
+T13	Claim 1496 1612	the students should know what activities they should do at the time and have good management for their learning time
+A3	Stance T13 For

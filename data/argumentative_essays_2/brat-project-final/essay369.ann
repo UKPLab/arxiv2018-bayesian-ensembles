@@ -1,0 +1,25 @@
+T1	MajorClaim 1824 1969	the combination of tourism and teaching process is highly recommended in pursuit of a harmonial relationship between human and their surroundings
+T2	Claim 1694 1807	tourism has proven its friendly attitude towards the exploited areas in terms of finance and environmental impact
+A1	Stance T2 For
+T3	Premise 466 586	places of interest often locate in the wilderness areas, of which economy, before their appearance, haven't blossmed yet
+T4	Premise 588 673	Not until the investment of some companies do chains of hotels and services spring up
+T5	Premise 675 801	It will, by all means, attract considerable attention which goes hand in hand with the enormous income for the local residents
+T6	Premise 818 928	tourism helps divert the local economy to its right direction, which exploit the best out of its own potential
+T7	Claim 366 453	tourism plays an indispensable role in nurturing the economy in a way it is meant to be
+A3	Stance T7 For
+R2	supports Arg1:T3 Arg2:T7	
+R3	supports Arg1:T4 Arg2:T7	
+R4	supports Arg1:T5 Arg2:T7	
+T8	Premise 952 986	environmental damage is inevitable
+T9	Premise 1024 1171	In order to turn a wilderness into a place of attraction, the planners must have taken the nourishment of the sceneries into thorough consideration
+T10	Premise 1202 1353	a fortune is spent on trimming the trees, watering the flowers, preserving and balancing the local fauna and flora, in the hope of beautifying the wild
+T11	Premise 1355 1560	Not to mention ecotourism, a new kind of environment-friendly service, which gives all environmentalists and nature lovers a hand in raising the awareness of people in protecting their coexistent creatures
+T12	Claim 1579 1670	tourism should not be alledged to be notorous for its detriment to the ecological diversity
+A4	Stance T12 For
+T13	Premise 988 1022	it is not tourism to be blamed for
+R8	attacks Arg1:T13 Arg2:T8	
+R9	attacks Arg1:T8 Arg2:T12	
+R10	supports Arg1:T9 Arg2:T12	
+R11	supports Arg1:T10 Arg2:T12	
+R12	supports Arg1:T11 Arg2:T12	
+R1	supports Arg1:T6 Arg2:T7	

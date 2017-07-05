@@ -1,0 +1,32 @@
+T1	MajorClaim 386 450	I would follow the new customs, if I migrated to another country
+T2	MajorClaim 2138 2197	the immigrants should follow the customs in the new country
+T3	Claim 465 558	it will be easier for people to assimilate into a new country, if they follow the new customs
+A1	Stance T3 For
+T4	Premise 560 689	When people migrate to a new country, they are likely to suffer the culture shock, because of the difference between two cultures
+T5	Premise 691 802	The custom is just a form of the culture and following the custom is a good way to know more about this culture
+T6	Premise 817 1027	if one wore in white and went to common Viharas to observe a rather longer-than-usual, full-length Buddhist sutra in Buddha's Birthday in India, he or she would learn something about Indian religion and culture
+T7	Premise 1042 1111	people understand the culture, and then they adapt to the new country
+T8	Claim 1132 1185	keeping own customs stably might cause discrimination
+A2	Stance T8 For
+T9	Premise 1187 1326	When people insist to keep their own customs and refuse to accept the new one, they regard themselves as a special group in the new country
+T10	Premise 1328 1439	The local people may also regard them as a special group as well and separate them from the main-stream society
+T11	Premise 1441 1512	One example of this is that the Chinese immigrants in Indonesia in 1969
+T12	Premise 1514 1579	They formed Chinatown and kept Chinese language and customs in it
+T13	Premise 1581 1691	While the Indonesians stopped working at 4:00 pm and went home for rest, Chinese immigrants were still working
+T14	Premise 1702 1768	being much richer than local people, they faced the discrimination
+T15	Premise 1770 1827	Their houses and private cars were buried by local people
+T16	Premise 1837 1933	the locals were jealous of Chinese people, who had so much wealth, which should have been theirs
+T17	Premise 1935 2124	If the Chinese immigrants had followed the local customs and assimilated into Indonesia, they would not have been regards as a group of Chinese and discrimination might have been alleviated
+R1	supports Arg1:T6 Arg2:T7	
+R2	supports Arg1:T7 Arg2:T3	
+R3	supports Arg1:T4 Arg2:T3	
+R4	supports Arg1:T5 Arg2:T3	
+R5	supports Arg1:T9 Arg2:T8	
+R6	supports Arg1:T10 Arg2:T8	
+R7	supports Arg1:T11 Arg2:T8	
+R8	supports Arg1:T12 Arg2:T8	
+R9	supports Arg1:T13 Arg2:T8	
+R10	supports Arg1:T15 Arg2:T8	
+R11	supports Arg1:T14 Arg2:T8	
+R13	supports Arg1:T17 Arg2:T8	
+R12	supports Arg1:T16 Arg2:T15	

@@ -1,0 +1,34 @@
+T1	MajorClaim 343 379	boys and girls should study together
+T2	Claim 398 480	they have a chance to know each other and learn how to behave with an opposite sex
+A1	Stance T2 For
+T3	Claim 564 685	By attending to the same school, students can learn how to view the opposite gender in classes as a friend or a classmate
+A2	Stance T3 For
+T4	Premise 700 775	a boy would know how to speak with a girl in every situation and vice versa
+T5	Premise 777 888	They would know how to ask her in order to cooperate with his study, how communicate with girls in a group, etc
+T6	Premise 902 991	when they study together and help each other, they exercise the the real life as they age
+T7	Premise 1032 1112	attending both girls and boys in a same school cause many disadvantages for them
+T8	Premise 1224 1263	their thoughts deviate from the studies
+T9	Premise 1129 1208	outdoors relationships may expand and it may accompany with sexual relationship
+T10	Premise 483 562	School is a small society for students, which prepares them for the future life
+T11	Premise 1486 1514	they will study increasingly
+T12	Premise 1397 1474	Boys and girls will try to show their capabilities and abilities in the class
+T13	Premise 1524 1586	Boys do not like to seem weak in front of girls and vice versa
+T14	Premise 1601 1648	the productivity of the class will be increased
+T15	Claim 1276 1395	attending in the school having boys and girls might be beneficial for both to increase their motivation to study better
+T16	MajorClaim 1662 1731	attending boys and girls in a same school would bring many advantages
+T17	Claim 1733 1814	Taking part in the study groups would increase student's motivation to study more
+A4	Stance T17 For
+T18	Claim 1829 1971	they would be able to know the opposite gender, which help them to be prepared for the adult life where they almost will live or work together
+A5	Stance T18 For
+A6	Stance T15 For
+R1	supports Arg1:T10 Arg2:T3	
+R2	supports Arg1:T9 Arg2:T8	
+R3	supports Arg1:T4 Arg2:T3	
+R4	supports Arg1:T5 Arg2:T3	
+R5	supports Arg1:T6 Arg2:T3	
+R6	attacks Arg1:T7 Arg2:T3	
+R7	supports Arg1:T8 Arg2:T7	
+R8	supports Arg1:T12 Arg2:T11	
+R9	supports Arg1:T13 Arg2:T11	
+R10	supports Arg1:T11 Arg2:T14	
+R11	supports Arg1:T14 Arg2:T15	

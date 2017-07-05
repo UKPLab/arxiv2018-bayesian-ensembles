@@ -1,0 +1,24 @@
+T1	MajorClaim 379 439	students can acquire more benefits from the remote education
+T2	Claim 1740 1852	traditional education has some merits like feedbacks and inspirations that cannot be replaced in the near future
+A1	Stance T2 Against
+T3	MajorClaim 1863 2059	distance-learning outweighs the conventional way not only with its efficiency, convenience and economic value, but also with the self-regulated education that pupils can study on their own purpose
+T4	Claim 456 527	studying at home save the pupils enormous time and considerable expense
+A2	Stance T4 For
+T5	Premise 529 679	Students who use distance-learning programs can cut down their commuting time, tuition fees, textbook fees and so forth just by an internet connection
+T6	Premise 681 846	This especially makes a significant difference for the children who live in the far-off countryside and the children whose families are living below the poverty-line
+R1	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+T7	Premise 1237 1322	he can control the learning progress and make satisfactory achievement on this course
+T8	Premise 1137 1233	A student can even select a specific online course based on his own preference and time schedule
+R3	supports Arg1:T8 Arg2:T7	
+T9	Claim 862 998	long-distance education provides students the opportunity to access the immense knowledge resources and a variety of teaching approaches
+A3	Stance T9 For
+T10	Premise 1000 1135	Pupils can obtain materials for their curricula just by one mouse click, such as science reports, study posts, documentary records, etc
+R4	supports Arg1:T10 Arg2:T9	
+R5	supports Arg1:T7 Arg2:T9	
+T11	Claim 1346 1460	traditional education has its advantages in face-to-face communication, mental inspiration and physical educations
+A4	Stance T11 Against
+T12	Premise 1462 1568	These make remarkable contributions in providing immediate feedbacks and cultivating pupils' personalities
+T13	Premise 1574 1708	with the improvements in streaming and sensor technologies, remote education can eliminate the obstacles of distance and body contacts
+R6	supports Arg1:T12 Arg2:T11	
+R7	attacks Arg1:T13 Arg2:T11	

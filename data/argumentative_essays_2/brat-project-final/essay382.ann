@@ -1,0 +1,18 @@
+T1	MajorClaim 274 386	the richness as well as convenience of technology are two main factors that contribute to the students' progress
+T2	Claim 1429 1502	it expedites data availability and accelarates students' learning process
+A1	Stance T2 For
+T3	MajorClaim 1369 1424	I have to consent to the use of technology in education
+T4	Claim 409 532	technology was introduced, student have been exposed to a wide range of information, which neccessarily broaden their minds
+A2	Stance T4 For
+T5	Premise 534 655	The internet, for example, provide knowledge in the form of news, radio talks, tapes or reseachs on any particular fields
+T6	Premise 657 800	There, the students can not only ascertain concerned subjects but they can also get access to relevant issues and discuss with people worldwide
+T7	Premise 1089 1141	students will develop their skills at a greater pace
+T8	Premise 894 1076	The modern world provides learners with the mp3, the mobile phone or the laptop that help them, especially language learners, listen to recordings everywhre or read documents anytime
+T9	Premise 1153 1355	the internet again, is an inexhaustible resource of visual aids, such as educational games, sounds or images with which students may absorb abstract concepts taught at school more briskly and thoroughly
+T10	Claim 802 892	Another point that students may benefit from technology is the shortened time for learning
+A4	Stance T10 For
+R1	supports Arg1:T5 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+R3	supports Arg1:T8 Arg2:T7	
+R4	supports Arg1:T7 Arg2:T10	
+R5	supports Arg1:T9 Arg2:T10	

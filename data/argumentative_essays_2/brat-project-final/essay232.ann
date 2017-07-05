@@ -1,0 +1,22 @@
+T1	MajorClaim 105 133	parents are the best teacher
+T2	Claim 135 267	Children normally think that their parents are somehow special and that makes them the most important people in the children’s lives
+A1	Stance T2 For
+T3	Claim 278 337	the things that parents say have great power to their child
+A2	Stance T3 For
+T4	Premise 339 391	More power than any friend or other adult could have
+T5	Premise 406 616	if someone tells a kid that something is wrong and they shouldn't do it, but his father told him/her that it was right, the kid will listen to the father instead of the other person, even if his father is wrong
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T5 Arg2:T3	
+T6	Premise 628 703	a child normally spends more time with their parents than with other people
+T7	Claim 708 771	their parents have more time to teach him/her than anybody else
+A4	Stance T7 For
+R3	supports Arg1:T6 Arg2:T7	
+T8	Premise 773 833	They have more contact and more intimacy with their children
+R4	supports Arg1:T8 Arg2:T7	
+T9	Premise 931 1051	even if the parents don’t intend to teach their children something, they are always observing and learning by themselves
+T10	Premise 1057 1173	if there is a man that beats his wife and treats her bad, his child probably is going to be rude and treat girls bad
+T11	Claim 844 895	children usually mirror themselves on their parents
+A3	Stance T11 Against
+R5	supports Arg1:T9 Arg2:T11	
+R6	supports Arg1:T10 Arg2:T11	
+T12	MajorClaim 1200 1233	parents are the greatest teachers

@@ -1,0 +1,36 @@
+T1	Claim 200 220	life changes rapidly
+A1	Stance T1 Against
+T2	MajorClaim 222 344	there are many things in the past that we can learn about, such as mistakes, success and knowledge in many fields of study
+T3	MajorClaim 1968 2058	the past's mistakes, success and knowledge all have crucial impact on people's lives today
+T4	Claim 823 883	past obviously saves ourselves a bunch of failures and times
+A2	Stance T4 For
+T5	Premise 462 581	As everyone's life is too short to risk trying anything without any prepare, we all should learn about other's mistakes
+T6	Premise 590 623	we can avoid making the same ones
+R1	supports Arg1:T5 Arg2:T6	
+T7	Premise 625 810	Each mistake, from the smallest to the bigger one, is a treasure of experience, which, if we can make full use of, will make us well-prepared for many complicated situations of our life
+T8	Premise 361 460	the predecessors' mistakes are the first thing that we should consider when learning about the past
+R2	supports Arg1:T6 Arg2:T4	
+R3	supports Arg1:T8 Arg2:T4	
+R4	supports Arg1:T7 Arg2:T4	
+T9	Premise 1040 1094	others' accomplishment can be served as the direct way
+T10	Claim 895 959	people's success in the past is as significant as those mistakes
+A4	Stance T10 For
+T11	Premise 961 1038	If the predecessors' mistakes are the indirect way that leads us to the goals
+R5	supports Arg1:T11 Arg2:T9	
+R6	supports Arg1:T9 Arg2:T10	
+T12	Premise 1096 1265	By looking into the ways other people use to achieve their targets, we have the chance to make those mine, put them into practice and, of course, be successful like them
+R7	supports Arg1:T12 Arg2:T10	
+T13	Premise 1281 1425	Edison's statement "Genius is 1 percent inspiration and 99 percent perspiration" is still helpful for everyone today, and probably in the future
+R8	supports Arg1:T13 Arg2:T10	
+T14	Claim 1448 1531	the past is the basis in which people can use to develope new knowledge, inventions
+A3	Stance T14 For
+T15	Premise 1533 1621	If it had not been for those knowledge in the past, we could never be as modern as today
+T16	Premise 1623 1738	How can America be the world's leading country if Columbus did not accidentally discover it in his search for India
+T17	Premise 1740 1847	How can the comtemporary scientists study the earth's gravity without the apple which fall on Newton's head
+T18	Premise 1849 1920	They are only some of many precious knowledge that the past presents us
+T19	Premise 1922 1954	We cannot ignore them in any way
+R9	supports Arg1:T15 Arg2:T14	
+R10	supports Arg1:T16 Arg2:T14	
+R11	supports Arg1:T17 Arg2:T14	
+R12	supports Arg1:T18 Arg2:T14	
+R13	supports Arg1:T19 Arg2:T14	

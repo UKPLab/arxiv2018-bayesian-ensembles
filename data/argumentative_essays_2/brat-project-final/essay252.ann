@@ -1,0 +1,44 @@
+T1	MajorClaim 371 421	children should learn music and art in a young age
+T2	Claim 430 471	they do contribute several merits to them
+A1	Stance T2 For
+T3	MajorClaim 2048 2113	young age is the perfect time for children to learn music and art
+T4	Claim 2204 2299	Music and art can accompany a spirit as long as they are given the chance to enter his/her life
+A2	Stance T4 For
+T5	Premise 875 977	they are given more freedom and their imagination has not yet been killed due to reality circumstances
+T6	Premise 819 866	Children are privileged to have these abilities
+T7	Claim 481 567	it's very suitable for children to develop senses of music and art when they are young
+T8	Premise 569 667	Children absorb things quickly and they bear exact the ability needed in music and art-imagination
+T9	Premise 669 740	Music and art are not like math or language which has more strict rules
+T10	Premise 742 817	They are more abstract, requiring creativity and imagination to be enriched
+T11	Premise 979 1119	Even if their performances are just some simple drawings and melodies, music and art still bring out children's joy of flying in imagination
+T12	Claim 1322 1425	even if children are not going to be great musicians or artists, learning music and art is still worthy
+A4	Stance T12 For
+T13	Premise 1129 1188	music and art are life-long cultivation worthy of investing
+T14	Premise 1190 1267	They teach us how to appreciate beauty and express feelings in a creative way
+T15	Premise 1269 1309	They are essential to our spiritual life
+T16	Premise 1434 1483	it can nourish your temper and serve as a leisure
+T17	Claim 1523 1571	parents shouldn't put so much stress on children
+A3	Stance T17 Against
+T18	Premise 1579 1633	learning too many skills seems to be a burden for them
+T19	Premise 1650 1714	it depends on how you value these learning activities to be like
+T20	Premise 1716 1842	If parents push their 5 years old child to play piano 8 hours a day just like a professional performer, that might be too much
+T21	Premise 1844 1975	In a child stage, music and art are more like an open door to introduce the art world than training area to acquire specific skills
+T22	Premise 1990 2030	it will not be such pressure on children
+A6	Stance T7 For
+T23	Claim 2118 2202	they are indeed valuable to people not only in their young stage, but in every stage
+A5	Stance T23 For
+R1	supports Arg1:T10 Arg2:T9	
+R2	supports Arg1:T5 Arg2:T6	
+R3	supports Arg1:T8 Arg2:T7	
+R4	supports Arg1:T9 Arg2:T7	
+R5	supports Arg1:T6 Arg2:T7	
+R6	supports Arg1:T11 Arg2:T7	
+R7	supports Arg1:T14 Arg2:T12	
+R8	supports Arg1:T13 Arg2:T12	
+R9	supports Arg1:T15 Arg2:T12	
+R10	supports Arg1:T16 Arg2:T12	
+R11	supports Arg1:T18 Arg2:T17	
+R12	attacks Arg1:T19 Arg2:T17	
+R13	supports Arg1:T20 Arg2:T19	
+R14	supports Arg1:T21 Arg2:T22	
+R15	attacks Arg1:T22 Arg2:T17	

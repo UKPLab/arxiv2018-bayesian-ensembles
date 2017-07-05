@@ -1,0 +1,38 @@
+T1	MajorClaim 333 431	computers have an important and inevitable role in economic, business, and other part of societies
+T2	Claim 446 508	they make the way of living easier by doing our routine duties
+A1	Stance T2 For
+T3	MajorClaim 1859 1905	advantages of computers outweigh disadvantages
+T4	Claim 1907 1965	People benefit more from coming computers into their lives
+A2	Stance T4 For
+T5	Premise 1980 2049	computers can do most difficult tasks which leads to make life easier
+R1	supports Arg1:T5 Arg2:T4	
+T6	Premise 523 590	by using computers in many industries human's role has been reduced
+T7	Premise 592 704	Nowadays, computer can control and perform some routine activities in industries, which were early done by human
+T8	Premise 706 829	Many industries use computers to command to robots in order to do many regular tasks, which were carried out by human early
+T9	Premise 844 942	many processes of production of cars are carrying out by robots, which are controlled by computers
+T10	Premise 957 1034	car companies use computers to simulate and analyze car accident by computers
+T11	Premise 1036 1108	Despite many advantages, by coming computers many jobs has been vanished
+T12	Claim 1110 1218	A large number of industries fire many forces because of doing their works by new technologies and computers
+A4	Stance T12 Against
+R2	supports Arg1:T6 Arg2:T12	
+R3	supports Arg1:T11 Arg2:T12	
+R4	supports Arg1:T9 Arg2:T8	
+R5	supports Arg1:T10 Arg2:T8	
+R6	supports Arg1:T8 Arg2:T12	
+R7	supports Arg1:T7 Arg2:T12	
+T13	Premise 1283 1341	Computers have opened up a network connection among people
+T14	Premise 1343 1419	This technology makes easier for people to send and receive personal message
+T15	Premise 1421 1484	Teenagers and adolescents spend free time in front of computers
+T16	Premise 1496 1566	People can use computers to extract their essential information easily
+T17	Claim 1581 1637	excessive use of computers has brought many difficulties
+A3	Stance T17 Against
+T18	Premise 1639 1747	The results show that teenagers who are addicted to computer games show more violent and stressful behaviors
+T19	Premise 1749 1828	People who have type by computers may suffer from such disease related to knees
+R8	supports Arg1:T18 Arg2:T17	
+R9	supports Arg1:T19 Arg2:T17	
+T20	Claim 1221 1281	Computers have an important role in social and personal life
+A5	Stance T20 For
+R10	supports Arg1:T13 Arg2:T20	
+R11	supports Arg1:T14 Arg2:T20	
+R12	supports Arg1:T15 Arg2:T20	
+R13	supports Arg1:T16 Arg2:T20	

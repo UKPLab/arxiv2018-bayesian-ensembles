@@ -1,0 +1,30 @@
+T1	Claim 370 474	the internet gives daily necessary information, people can gain knowledge and they can explore the world
+A1	Stance T1 For
+T2	MajorClaim 270 321	the internet provides a lot of valuable information
+T3	MajorClaim 1690 1757	people are satisfied with the internet and sometimes even thanks it
+T4	Claim 1766 1829	it helps us in studying, doing business and exploring the world
+A2	Stance T4 For
+T5	Claim 1831 1908	With valuable information it provides, people can enjoy their lives much more
+A3	Stance T5 For
+T6	Premise 578 700	Sometimes, they want an information that can help them in daily life which the internet can provide all of these to people
+T7	Premise 715 851	a businessman who has no time to watch a television or read a newspaper can receive news and check stock markets easily via the internet
+T8	Claim 490 576	everybody would like to know what is going on around the world in their everyday lives
+A4	Stance T8 For
+R1	supports Arg1:T6 Arg2:T8	
+R2	supports Arg1:T7 Arg2:T8	
+T9	Premise 961 1098	Many people such as students can take online courses to study at home or they can watch beneficial videos which also teach them knowledge
+T10	Premise 1100 1176	Not only students but also everyone could get more information and knowledge
+T11	Premise 1192 1275	people who have problems with their health can search for more information about it
+T12	Claim 866 959	people can gain more knowledge by using the internet, the most useful technology in the world
+A5	Stance T12 For
+R3	supports Arg1:T9 Arg2:T12	
+R4	supports Arg1:T10 Arg2:T12	
+R5	supports Arg1:T11 Arg2:T10	
+T13	Premise 1381 1483	people who have no time or have financial problems could travel around the world by using the internet
+T14	Premise 1485 1551	They can see lots of picture and videos of many interesting places
+T15	Premise 1563 1675	people can learn other countries's culture and tradition which makes them have more knowledge about that nations
+T16	Claim 1297 1363	The internet makes the world becomes smaller which is a good thing
+A6	Stance T16 For
+R6	supports Arg1:T13 Arg2:T16	
+R7	supports Arg1:T14 Arg2:T16	
+R8	supports Arg1:T15 Arg2:T16	

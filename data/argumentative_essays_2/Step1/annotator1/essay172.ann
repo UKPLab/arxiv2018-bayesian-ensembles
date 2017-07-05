@@ -1,0 +1,23 @@
+T1	MajorClaim 309 406	I would prefer to live in an apartment in the community rather than in the university dormitories
+T2	Claim 415 472	an apartment provides a lot more freedom than a dormitory
+A1	Stance T2 For
+T3	Premise 474 565	While in a dormitory you have to obey preset rules, in the apartment you set your own rules
+T4	Premise 567 638	You are free to have visits at any time or to be left alone if you want
+T5	Premise 640 757	An apartment offers more privacy because you can choose to have your own room instead of sharing with another student
+T6	Premise 759 848	This is an important factor because you also get more space than you would in a dormitory
+T7	Claim 914 944	an apartment is more expensive
+A2	Stance T7 Against
+T8	Premise 946 1070	This is only partially true, you could rent the extra rooms in the apartment to other people and rent would be a lot cheaper
+T9	Claim 1072 1103	Transportation is another issue
+A3	Stance T9 Against
+T10	Premise 1164 1245	You could choose to use public transportation, a cheaper option, or to have a car
+T11	Premise 1247 1330	The car is an expensive option, but also offers freedom of schedule and destination
+T12	MajorClaim 2123 2222	personally I think the advantages of living in an apartment outshine those of living in a dormitory
+T13	Claim 1340 1390	the studying conditions are better in an apartment
+A4	Stance T13 For
+T14	Premise 1399 1479	you don't have all the noise and distractions that you often have in dormitories
+T15	Premise 1481 1605	A lot of students often complain about their roommate playing music too loud or bringing friends over at inappropriate times
+T16	Premise 1607 1740	Since in an apartment you don't have a roommate, you won't have this problem, and as a result you would be able to concentrate better
+T17	Premise 1763 1874	you won't have a problem if you are the one who wants to play music, bring friends over, or study late at night
+T18	Premise 1876 1902	You set your own schedules
+T19	Premise 1923 2067	living in a dormitory, and being surrounded by students also has some advantages, like being able to get help with any academic issues from them

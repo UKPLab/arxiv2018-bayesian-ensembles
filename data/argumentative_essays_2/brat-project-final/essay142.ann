@@ -1,0 +1,32 @@
+T1	Claim 166 238	the increase in life expectancy has some pressure on the Medicare system
+A1	Stance T1 Against
+T2	Claim 947 1013	the improvement of medical care makes a better life for all people
+A2	Stance T2 For
+T3	MajorClaim 270 343	the advanced medical care brings with it more benefits than disadvantages
+T4	Claim 345 458	The main advantage of high-tech medical care is that people are better taken care so that they have a good health
+A3	Stance T4 For
+T5	Premise 460 525	They can contribute effectively to the development of the economy
+T6	Premise 534 578	healthy workers can create more productivity
+T7	Premise 596 663	they do not have to spend more time in health checking or treatment
+T8	Premise 667 711	this saves an amount of time as well as cost
+T9	Premise 726 844	a community with the elderly who have a good health has a major role to play in a sustainable development of a society
+T10	Premise 856 925	young people will be happy as their parents, grandparents are healthy
+T11	Claim 1060 1135	the increase in life expectancy puts a high pressure on the economic system
+A4	Stance T11 Against
+T12	Premise 1144 1244	more pension have to spend for Medicare instead of investing in other sectors of the economic system
+T13	Premise 1298 1404	the capital that spend on taking care the elderly is contributed by these people during their working time
+T14	Premise 1409 1441	they are worth to have good care
+T15	Premise 1443 1577	They have given their effort to the society so that young people, the governments have a responsibility to improve the Medicare system
+T16	MajorClaim 1617 1690	the development of the health care system helps people have a better life
+T17	Claim 1692 1788	It helps people build a sustainable society where people can live a happy life when they are old
+A5	Stance T17 For
+R1	supports Arg1:T7 Arg2:T8	
+R2	supports Arg1:T5 Arg2:T4	
+R3	supports Arg1:T6 Arg2:T5	
+R4	supports Arg1:T8 Arg2:T4	
+R5	supports Arg1:T10 Arg2:T2	
+R6	supports Arg1:T9 Arg2:T2	
+R7	supports Arg1:T12 Arg2:T11	
+R8	supports Arg1:T13 Arg2:T14	
+R10	attacks Arg1:T14 Arg2:T11	
+R9	supports Arg1:T15 Arg2:T14	

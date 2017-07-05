@@ -1,0 +1,15 @@
+T1	MajorClaim 343 379	boys and girls should study together
+T2	MajorClaim 1662 1731	attending boys and girls in a same school would bring many advantages
+T3	Claim 483 562	School is a small society for students, which prepares them for the future life
+T4	Premise 597 685	students can learn how to view the opposite gender in classes as a friend or a classmate
+T5	Premise 700 775	a boy would know how to speak with a girl in every situation and vice versa
+T6	Premise 777 888	They would know how to ask her in order to cooperate with his study, how communicate with girls in a group, etc
+T7	Premise 902 991	when they study together and help each other, they exercise the the real life as they age
+T8	Premise 1006 1112	some experts believe that attending both girls and boys in a same school cause many disadvantages for them
+T9	Premise 1129 1263	outdoors relationships may expand and it may accompany with sexual relationship and as result, their thoughts deviate from the studies
+A2	Stance T3 For
+T10	Claim 1276 1395	attending in the school having boys and girls might be beneficial for both to increase their motivation to study better
+A1	Stance T10 For
+T11	Premise 1397 1514	Boys and girls will try to show their capabilities and abilities in the class, therefore they will study increasingly
+T12	Premise 1524 1586	Boys do not like to seem weak in front of girls and vice versa
+T13	Premise 1601 1648	the productivity of the class will be increased

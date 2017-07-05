@@ -1,0 +1,24 @@
+T1	MajorClaim 1542 1583	human beings should travel to outer space
+T2	MajorClaim 437 501	there are some reasons for human beings to travel to outer space
+T3	Claim 512 559	many facts about solar system can be discovered
+A1	Stance T3 For
+T4	Premise 575 641	a picture of planet earth proved that the earth is round, not flat
+T5	Premise 667 724	it is the earth which goes around the sun, not vice versa
+T6	Premise 726 798	If it was not for the space exploration, we would never know these facts
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T5 Arg2:T3	
+R3	supports Arg1:T6 Arg2:T3	
+T7	Claim 810 860	people can know more about the planet earth itself
+A2	Stance T7 For
+T8	Premise 862 991	By observing planet earth from outer space, people can find out ample things for example about the atmosphere of the planet earth
+T9	Premise 993 1090	With this knowledge, people can work on something to prevent earth hazards such as global warming
+R4	supports Arg1:T8 Arg2:T7	
+R5	supports Arg1:T9 Arg2:T7	
+T10	Claim 1101 1157	a great deal of sophisticated technology can be invented
+A3	Stance T10 For
+T11	Premise 1159 1308	As astronauts need to travel to outer space which does not have any oxygen to breathe in, scientists are compelled to do research on the oxygen tanks
+T12	Premise 1310 1399	Oxygen tanks, for instance, are proved useful not only in outer space but also underwater
+T13	Premise 1411 1499	spaceships, communication satellites and space pens also contribute a lot to the society
+R6	supports Arg1:T11 Arg2:T10	
+R7	supports Arg1:T12 Arg2:T10	
+R8	supports Arg1:T13 Arg2:T10	

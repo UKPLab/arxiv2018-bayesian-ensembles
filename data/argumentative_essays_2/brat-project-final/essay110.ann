@@ -1,0 +1,23 @@
+T1	MajorClaim 1488 1559	being a citizen involves in a number of duties, other than paying taxes
+T2	Claim 1561 1640	People in society must do more than paying taxes to contribute to their society
+A1	Stance T2 For
+T3	Claim 548 591	they have fulfilled their duty as a citizen
+A2	Stance T3 Against
+T4	Premise 407 535	If people are paying taxes, that means they are taking part in the development of their country as well as the country's economy
+T5	Premise 296 405	Taxes are the income for every country in the world and they are extremely important for developing countries
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T5 Arg2:T3	
+T6	Premise 818 925	the crime rate is reduced and society becomes a peaceful place, so the country will develop at a rapid pace
+T7	Claim 616 700	individuals of a country are responsible for many other things apart from paying tax
+A3	Stance T7 For
+T8	Premise 711 803	in order to develop a country, citizens must obey laws, which were imposed by the government
+R3	supports Arg1:T8 Arg2:T7	
+R4	supports Arg1:T6 Arg2:T8	
+T9	Premise 940 1015	being a citizen in society should protect the country's culture and history
+T10	Premise 1031 1168	people should have knowledge about their own culture and history by studying at school with full concentration or reading them from books
+R5	supports Arg1:T10 Arg2:T9	
+T11	Premise 1189 1275	a person has to unite with other people in the community so as to develop their nation
+T12	Premise 1285 1430	if people in society have a strong bond with each other, society will become a peaceful place, where people are helping and sharing to each other
+R6	supports Arg1:T12 Arg2:T11	
+R7	supports Arg1:T11 Arg2:T7	
+R8	supports Arg1:T9 Arg2:T7	

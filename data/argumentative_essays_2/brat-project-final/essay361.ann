@@ -1,0 +1,22 @@
+T1	MajorClaim 179 281	by allowing students to watch TV at both school and house can adversely impact on their overall growth
+T2	Claim 283 379	If children spend too much time in front of TV, it will negatively impact their health and study
+A1	Stance T2 For
+T3	Premise 452 597	There are international and local news channels like BBC, CNBC, Etv Gujarati, Etv Marathi etc to keep individuals updated about latest happenings
+T4	Premise 688 921	Cooking programs teach about how to make new dishes and similarly, sports events like cricket, football can teach leadership skills, team building skills, communication skills and many more that can help students in their future jobs
+T5	Claim 599 673	By watching TV, children can develop skills in extra-curriculum activities
+A2	Stance T5 Against
+T6	Premise 397 450	TV is one of the prime source of data and information
+R1	supports Arg1:T3 Arg2:T5	
+R2	supports Arg1:T6 Arg2:T5	
+R3	supports Arg1:T4 Arg2:T5	
+T7	Premise 1035 1116	they can get poor eyesight in early ages of childhood, and also develop back pain
+T8	Premise 1118 1242	Sometimes, students watch restrictive programs not allowed for their ages and this can have major psychological consequences
+T9	Premise 1244 1439	Many times, students get addictive to their favorite programs like Cartoon channels, or baseball and easily get distracted from study during exam period and this can seriously impact their grades
+T10	Claim 942 1020	watching TV for a continuously long hours can adversely impact children health
+A3	Stance T10 For
+R4	supports Arg1:T7 Arg2:T10	
+R5	supports Arg1:T8 Arg2:T10	
+R6	supports Arg1:T9 Arg2:T10	
+T11	MajorClaim 1520 1670	if students were allowed to freely watch TV without any proper controls by parents or teachers then it would produce more negative effects on children
+T12	Claim 1467 1510	demerits of watching TV outweigh its merits
+A4	Stance T12 For

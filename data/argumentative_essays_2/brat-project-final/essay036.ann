@@ -1,0 +1,24 @@
+T1	MajorClaim 282 323	it is sensible to enforce the gun control
+T2	MajorClaim 1577 1702	the guns should be strictly limited and the government should enforce a series of laws to prevent our societies from violence
+T3	Claim 1483 1560	considering the rise in accident rates, violent crime rates and suicide rates
+A1	Stance T3 For
+T4	Claim 730 848	most violent crimes are related to the abuse of guns, especially in some countries where guns are available for people
+A2	Stance T4 For
+T5	Premise 862 919	guns will create a violent society if the trend continues
+T6	Premise 938 1058	in American, young adults and even juveniles can get access to guns, which leads to the tragedies of school gun shooting
+T7	Premise 1075 1192	some terrorists are able to possess more advanced weapons than the police, which makes citizens always live in danger
+R1	supports Arg1:T7 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+T8	Claim 599 718	the fewer guns possessed, the fewer accidents would happened, our surroundings would be safer with lower accident rates
+A4	Stance T8 For
+T9	Premise 389 491	The accidents cannot be completely avoided although only those who have gun licenses can purchase guns
+R6	attacks Arg1:T9 Arg2:T8	
+T10	Premise 506 594	we hear some news from time to time that someone was hurt by accident during the hunting
+R7	supports Arg1:T10 Arg2:T8	
+T11	Claim 1203 1261	the possession of guns can also raise the rates of suicide
+A5	Stance T11 For
+T12	Premise 1263 1357	In the US, firearms remain the most common method of suicide, accounting for about 50 per cent
+T13	Premise 1374 1466	there is an increasing trend of adolescent suicides and suicides among those age 75 and over
+R8	supports Arg1:T12 Arg2:T11	
+R9	supports Arg1:T13 Arg2:T11	
+R3	supports Arg1:T5 Arg2:T4	

@@ -1,0 +1,42 @@
+T1	MajorClaim 319 349	cars have improved modern life
+T2	Claim 2223 2252	cars cause a lot of pollution
+A1	Stance T2 Against
+T3	Premise 2261 2333	they provide flexibility, which is important in nearly all areas of life
+R1	attacks Arg1:T3 Arg2:T2	
+T4	MajorClaim 2335 2500	Travelling, social life and employment are highly dependent on the flexibility of a person and there is nothing in the world that makes more flexible than an own car
+T5	Premise 601 659	they can visit each other regularly by using their vehicle
+T6	Claim 521 592	Many people are now able to maintain relationships over great distances
+R2	supports Arg1:T5 Arg2:T6	
+T7	Premise 703 810	my car has always been a great help to see my childhood friends very often although I lived in another city
+T8	Premise 812 892	I was also able to establish a relationship with a man living 89 kilometers away
+T9	Premise 894 985	Thanks to my car we could see each other at the weekends and are still a happy couple today
+T10	Premise 987 1071	Without my automobile we would probably not have been able to develop a relationship
+T11	Premise 381 489	people are now able to overcome long distances in a short amount of time, which leads to numerous advantages
+T12	Premise 1133 1201	people are able to drive to work and can work further away from home
+T13	Premise 1216 1238	they are more flexible
+T14	Premise 1240 1342	My father for example has always been working all around Germany and because of that earned more money
+T15	Premise 1344 1460	He used his car to drive to the other end of the country, worked there during the week and came home for the weekend
+T16	Premise 1462 1627	If he had no car, he wouldn't be able to see his family at the weekends so for him his automobile is a great benefit - not only in financial but also in social terms
+T17	Claim 1086 1124	cars increase the chance of employment
+A3	Stance T17 For
+R8	supports Arg1:T12 Arg2:T17	
+R9	supports Arg1:T13 Arg2:T17	
+R10	supports Arg1:T14 Arg2:T17	
+R11	supports Arg1:T15 Arg2:T17	
+R12	supports Arg1:T16 Arg2:T17	
+T18	Premise 1638 1718	the automobile allows people to travel more often and thus get to know the world
+T19	Premise 1720 1817	If people do not own cars they are likely to stay in their hometown or village most of their life
+T20	Premise 1819 1905	They are mainly using public transport and are thus limited in accessing certain areas
+T21	Premise 1907 2045	There are still places in nearly every country in the world that cannot be reached by public transportation and can only be visited by car
+T22	Claim 2060 2150	people who own a vehicle have greater access to more places and will see more of the world
+A5	Stance T22 For
+R17	supports Arg1:T19 Arg2:T22	
+R18	supports Arg1:T20 Arg2:T22	
+R19	supports Arg1:T21 Arg2:T22	
+R3	supports Arg1:T7 Arg2:T6	
+R4	supports Arg1:T8 Arg2:T6	
+R5	supports Arg1:T9 Arg2:T6	
+R6	supports Arg1:T10 Arg2:T6	
+A2	Stance T6 For
+R7	supports Arg1:T11 Arg2:T6	
+R13	supports Arg1:T18 Arg2:T22	

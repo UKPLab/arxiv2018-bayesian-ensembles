@@ -1,0 +1,36 @@
+T1	MajorClaim 526 573	I prefer to spend money on improving facilities
+T2	MajorClaim 2212 2259	improving facilities is the best way for school
+T3	Claim 2268 2336	the advantages of this are relatively greater than that of the other
+A1	Stance T3 For
+T4	Claim 2354 2413	students can procure more advantages from better facilities
+A2	Stance T4 For
+T5	Premise 638 722	the more advanced facilities we have, the more chances we can increase our knowledge
+T6	Claim 1053 1098	certain facilities are beneficial to students
+A3	Stance T6 For
+T7	Premise 737 794	library is a good place for students to study or research
+T8	Premise 796 918	They can concentrate on the subjects with a tranquil ambience; also, there are a lot of references for students to utilize
+T9	Premise 920 1010	With this convenient and versatile facility, students can improve their learning condition
+R1	supports Arg1:T8 Arg2:T6	
+R2	supports Arg1:T9 Arg2:T6	
+R3	supports Arg1:T7 Arg2:T6	
+R4	supports Arg1:T5 Arg2:T6	
+T10	Premise 1150 1195	students are not always staying in classrooms
+T11	Claim 1596 1660	students would prefer school to spending on improving facilities
+A4	Stance T11 For
+T12	Premise 1197 1236	They have numerous activities in school
+T13	Premise 1238 1329	Consider a circumstance in which a student who is a member of jazz ensemble in their school
+T14	Premise 1331 1408	He must need a better auditorium for him to have an extraordinary performance
+T15	Premise 1410 1540	With this distinguished performance, the student would acquire an unforgettable and valuable experience burring deeply in his mind
+R5	supports Arg1:T15 Arg2:T11	
+R6	supports Arg1:T13 Arg2:T11	
+R7	supports Arg1:T10 Arg2:T11	
+R8	supports Arg1:T12 Arg2:T11	
+R9	supports Arg1:T14 Arg2:T11	
+T16	Claim 1737 1794	schools should spend money on hiring prestigious teachers
+A5	Stance T16 Against
+T17	Premise 1803 1838	they can impart their students well
+R10	supports Arg1:T17 Arg2:T16	
+T18	Premise 1957 2066	A student is good or not do not depend on whether he has a good teacher but is decided by his effort on study
+R11	attacks Arg1:T18 Arg2:T16	
+T19	Premise 2068 2154	It is useless to hire a super famous teacher to teach those who behaviors as sluggards
+R12	attacks Arg1:T19 Arg2:T16	

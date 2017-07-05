@@ -1,0 +1,28 @@
+T1	MajorClaim 226 265	it's a reasonable loss in globalization
+T2	MajorClaim 1583 1691	I'm totally convinced that the prevalent usage of English brings benefits to people and countries all around
+T3	Claim 362 451	No one can deny the huge benefits of the trend that English is being accepted universally
+A1	Stance T3 For
+T4	Premise 468 530	communication between countries and cultures become convenient
+T5	Premise 532 598	In my country, English is a required course from elementary school
+T6	Premise 606 662	studying abroad is easy and becomes hot among youngsters
+R1	supports Arg1:T5 Arg2:T6	
+T7	Premise 674 810	language obstacle is no longer a problem, which results in mutual understanding and trust between their mother land and the host country
+T8	Premise 827 884	enhances relationship and promotes international business
+R2	supports Arg1:T7 Arg2:T8	
+R3	supports Arg1:T8 Arg2:T4	
+R4	supports Arg1:T6 Arg2:T4	
+R5	supports Arg1:T4 Arg2:T3	
+T9	Premise 899 1016	researchers, especially those who work on high-tech, would have wider range of references if they are good at English
+T10	Premise 1018 1098	Taking IT industry for an example, top technical science is published in English
+T11	Premise 1100 1199	It's neither to get a translated version of these articles, nor to always have a translator besides
+T12	Premise 1214 1275	they have no choice but choosing English as a second language
+R6	supports Arg1:T11 Arg2:T12	
+R7	supports Arg1:T10 Arg2:T9	
+R8	supports Arg1:T12 Arg2:T9	
+R9	supports Arg1:T9 Arg2:T3	
+T13	Claim 1383 1430	the culture heritage and nation identity vanish
+A2	Stance T13 Against
+T14	Premise 1314 1374	English is making lesser-known languages disappear ever year
+R10	supports Arg1:T14 Arg2:T13	
+T15	Premise 1441 1531	this is really short-sighted, ignoring the rapid development of native economy and society
+R11	attacks Arg1:T15 Arg2:T13	

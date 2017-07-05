@@ -1,0 +1,36 @@
+T1	MajorClaim 543 603	the excellent knowledge of this job will be more significant
+T2	Claim 354 515	there is only one thing would be beneficial to company, and there is only one way to be an outstanding worker, that is possessing excellent knowledge of this job
+A1	Stance T2 For
+T3	Claim 2228 2291	we can use the ability of adapting oneself in a new environment
+A2	Stance T3 Against
+T4	MajorClaim 2293 2343	the excellent knowledge will be of more importance
+T5	Claim 2353 2427	it can not only benefit our employers, but also ourselves will be rewarded
+A3	Stance T5 For
+T6	Premise 704 821	This ability is helpful in communicating with other workmates, cooperating with other workers needs this ability, too
+T7	Premise 827 880	working alone is a longer-term job than communicating
+T8	Premise 985 1051	the excellent knowledge of this job will be benefit till one leave
+T9	Claim 617 702	the ability to adapt oneself to the new environment has been proven to be part of job
+A4	Stance T9 Against
+R1	supports Arg1:T6 Arg2:T9	
+T10	Premise 891 979	the ability of adapting oneself to a new environment may be necessary for a fresh worker
+R2	attacks Arg1:T7 Arg2:T9	
+R3	supports Arg1:T8 Arg2:T7	
+R4	attacks Arg1:T10 Arg2:T7	
+T11	Premise 1121 1286	The core and most profitable technology of an IT company is invented by a worker with excellent computer knowledge, not a worker with outstanding communicating skill
+T12	Premise 1288 1448	The high reputation and popularity of a company is earned by some brilliant workers in public relation department with excellent skill to propagate this company
+T13	Claim 1054 1119	The company will benefit from every worker of excellent knowledge
+A5	Stance T13 For
+T14	Premise 1453 1544	the company will earn more money and reputation from these workers with excellent knowledge
+R6	supports Arg1:T11 Arg2:T13	
+R8	supports Arg1:T12 Arg2:T13	
+T15	Premise 1621 1843	Through our whole study life, undergraduate and graduate, we keep learning with the purpose of exerting these knowledge and experience on our job, just like an old Chinese scholar said, the essence of study is utilizing it
+T16	Premise 1845 2078	After we get a job, the destination of we keep accumulating and collecting knowledge is rooted not in fawn on our manager with the ability to adapt this kind of business culture, but in making us excellent and totally master this job
+T17	Premise 2089 2119	we will be rewarded with pride
+T18	Premise 2132 2181	we can obtain reward from out excellent knowledge
+T19	Claim 1547 1619	Employees will obtain reward from hard-work pursuing excellent knowledge
+A8	Stance T19 For
+R11	supports Arg1:T15 Arg2:T19	
+R12	supports Arg1:T16 Arg2:T19	
+R10	supports Arg1:T17 Arg2:T19	
+R13	supports Arg1:T18 Arg2:T19	
+R5	supports Arg1:T14 Arg2:T13	

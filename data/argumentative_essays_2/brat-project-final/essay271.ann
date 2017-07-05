@@ -1,0 +1,26 @@
+T1	MajorClaim 530 575	being present at classes seems a wiser option
+T2	Claim 618 818	being present at classes provide students with opportunity of communicating with other students that is beneficial for understanding new material by reviewing them throughout the free times in college
+T3	Premise 826 880	they can help each other for learning materials better
+T4	Premise 891 1007	if they do not attend classes they cannot use the help of others for assisting them to comprehend difficult problems
+R1	supports Arg1:T4 Arg2:T2	
+R2	supports Arg1:T3 Arg2:T2	
+A1	Stance T2 For
+T5	Claim 1084 1156	by the help of teachers, students can understand ideas faster and easier
+A2	Stance T5 For
+T6	Premise 1163 1273	teachers explain them thoroughly in the class and after that give them a lot of examples to clarify the points
+T7	Premise 1275 1464	In this way attending classes not only wastes their time but also facilitates their understanding process that takes them less time for comprehending materials in comparison with self-study
+R3	supports Arg1:T6 Arg2:T5	
+R4	supports Arg1:T7 Arg2:T5	
+T8	Premise 1551 1672	they have to obey class’s disciplines and they practice to be more perseverance in the process of doing their assignments
+T9	Premise 1683 1821	the ones who choose to study at home do not have any discipline for their studies and cannot force themselves to study in particular times
+T10	Premise 1841 1921	they may miss some important parts in virtue of the chaotic and incoherent study
+R5	supports Arg1:T9 Arg2:T10	
+T11	Claim 1492 1544	appearing in class makes students more conscientious
+A3	Stance T11 For
+R6	supports Arg1:T8 Arg2:T11	
+R7	supports Arg1:T10 Arg2:T11	
+T12	MajorClaim 1985 2064	communicating and studying with peer group is a good way for learning materials
+T13	Claim 2076 2216	teachers have a conspicuous role in assisting students for learning materials that being present at classes is a requisite for benefiting it
+A4	Stance T13 For
+T14	Claim 2224 2356	attending to classes makes students more attentive and have them to do their studies on time that this attitude lead them to success
+A5	Stance T14 For

@@ -1,0 +1,28 @@
+T1	MajorClaim 49 147	a quintessence of any visit to an excellent museum of a new place would be the best part of a tour
+T4	Claim 574 641	museums can help us know the history and the customs of a new place
+A2	Stance T4 For
+T5	Premise 207 254	it is easy to know the history of the new place
+T6	Premise 256 404	Last year, I went to Ellis Island and the immigration museum, where is a symbol of American immigration and the immigrant experience in the New York
+T7	Premise 406 566	Through the exhibit, I found that the Statue of Liberty symbolized freedom, and Ellis Island may be the place, where the immigration took their dreams and fears
+R1	supports Arg1:T7 Arg2:T4	
+R2	supports Arg1:T6 Arg2:T4	
+R3	supports Arg1:T5 Arg2:T4	
+T8	Claim 654 711	visiting a well-known museum also can broaden our horizon
+A3	Stance T8 For
+T2	Premise 713 821	Those outstanding and diverse range of objects,with classic and magnificent art, is guaranteed to inspire us
+T3	Premise 823 915	In my city, National Palace Museum is celebrated for collection of ancient Chinese artifacts
+T9	Premise 917 1026	To my astonishment, Jadeite cabbage is the most famous artistic work, which is made of jade, is vividly shown
+R4	supports Arg1:T2 Arg2:T8	
+R5	supports Arg1:T3 Arg2:T8	
+R6	supports Arg1:T9 Arg2:T8	
+T10	Claim 1038 1111	a local museum could be a top choice and destination for tourist to visit
+A1	Stance T10 For
+T11	Premise 1113 1225	Someone take a trip without making any plans, so they may waste their time on shopping or staying at their hotel
+T12	Premise 1240 1305	visiting a museum saves their precious time for making a decision
+R7	supports Arg1:T11 Arg2:T12	
+T13	Premise 1330 1450	a local museum represent its own typical culture so that visitors may easily acquaint with the new place in a short time
+R8	supports Arg1:T13 Arg2:T10	
+R9	supports Arg1:T12 Arg2:T10	
+T14	MajorClaim 1475 1559	if we have a chance to visit top museums in the world, we must stop by these museums
+T15	Claim 1578 1634	it is worthwhile for us to visit a museum of a new place
+A4	Stance T15 For

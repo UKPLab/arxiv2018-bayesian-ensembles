@@ -1,0 +1,22 @@
+T1	MajorClaim 156 233	universities should provide free of cost education to the interested scholars
+T2	Claim 242 345	now-a-days universities with good name charge high fees and this leads one to think about affordability
+A1	Stance T2 For
+T3	Premise 368 448	many of the interested scholars failed to get the admission in good universities
+T4	Premise 457 565	they have to think about work along with the studies, and this left them with only one choice, which is work
+R1	supports Arg1:T4 Arg2:T3	
+R2	supports Arg1:T3 Arg2:T2	
+T6	Claim 628 689	the issue of affordability has become crucial to the students
+A2	Stance T6 For
+T7	Premise 567 626	University is more likely to become a money making business
+T8	Premise 691 828	In today’s world education is getting expensive, and people are tending to apply for self-finance education in order to get the admission
+R3	supports Arg1:T8 Arg2:T6	
+R4	supports Arg1:T7 Arg2:T6	
+T9	Premise 839 1077	the scholars are facing a lot of difficulties apart from their high requirements of previous education, they has a lot to face the other difficulties and burden while getting admission such as accommodation, food, traveling, clothing, etc
+R5	supports Arg1:T9 Arg2:T6	
+T11	Premise 1089 1248	it is hard to get manage two things at a time for instance, working and studying is not an easy job for the scholars, they need to concentrate on their studies
+T5	Premise 1250 1365	MPhils and PhDs scholars are probably engage in the research work, which takes their full concentration and surveys
+T10	Claim 1367 1504	The idea of free of charge education inspires those scholars who really want to put their efforts and get a degree from best universities
+A3	Stance T10 For
+R6	supports Arg1:T5 Arg2:T10	
+R7	supports Arg1:T11 Arg2:T10	
+T12	MajorClaim 1517 1702	universities have to look over the issues face by most of the scholars; their message should be spread education, not making money, and motivate those scholars who want to get education

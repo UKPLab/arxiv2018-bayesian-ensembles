@@ -1,0 +1,17 @@
+T1	MajorClaim 418 486	family plays a more important role in helping one to pursuit success
+T2	MajorClaim 1767 1831	with the help of our family, we can achieve success quite easily
+T3	MajorClaim 300 372	one can achieve success more easily with the help from his or her family
+T4	Claim 613 736	Since our parents receive better education than our grandparents did, they can provide more advices and helps in our career
+A1	Stance T4 For
+T5	Premise 533 611	more and more people have the opportunity to receive education from university
+T6	Premise 738 800	In the past, seldom people have the chance to attend a collage
+T7	Premise 815 984	my grandparents did not get a education even in high school, so when my father had difficulty in solving a problem in his childhood, he had to go to his teacher for help
+T8	Premise 1065 1127	Whenever I have problems, I can always ask my parents for help
+T9	Premise 1129 1201	They can solve the problem quickly because they have learned quite a lot
+T10	Claim 1218 1266	family members can help us in many other aspects
+A2	Stance T10 For
+T11	Premise 1281 1391	when I did not know what major to choose when I attend university, my father told a lot about different majors
+T12	Premise 1460 1554	Parents are quite experienced than their child, they can guide them toward the right direction
+T13	Premise 1565 1616	parents can told their children as many as they can
+T14	Premise 1618 1671	What they want is help their child to make a progress
+T15	Premise 1013 1063	I grow up in a better condition than my father did

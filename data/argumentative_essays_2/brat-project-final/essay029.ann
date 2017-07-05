@@ -1,0 +1,26 @@
+T1	MajorClaim 76 212	married women nowadays have right to take up jobs like men when employment discrimination based on gender have been erased significantly
+T2	Claim 214 305	Working outside home will bring a lot of benefits to both married woman and their household
+A1	Stance T2 For
+T3	Claim 635 701	it is a normal practice for women to be helpmates in earning money
+A2	Stance T3 For
+T4	MajorClaim 1439 1521	married women could go to work in order to enjoy the working life outside the home
+T5	Claim 1355 1434	a well-organized home does not need the housewife's presence the whole day long
+A3	Stance T5 For
+T6	Premise 364 435	extra income that women earn will contribute to their family's expenses
+T7	Premise 437 510	By taking up a job, a wife can earn more money to support her family life
+T8	Premise 512 629	This is really necessary in cases of her husband's low salary and the difficulty of getting a good job at the present
+R1	supports Arg1:T8 Arg2:T3	
+R2	supports Arg1:T7 Arg2:T3	
+R3	supports Arg1:T6 Arg2:T3	
+T9	Claim 996 1064	it is no doubt that they play roles as a mother and as a wife better
+A4	Stance T9 For
+T10	Premise 713 862	working outside the house creates opportunities for married women to contact with the outer world, strengthen their character and show their capacity
+T11	Premise 864 927	These things in turn will make them more confident, independent
+T12	Premise 929 983	These women will set a good example for their children
+R4	supports Arg1:T12 Arg2:T9	
+R5	supports Arg1:T10 Arg2:T9	
+R6	supports Arg1:T11 Arg2:T9	
+T13	Claim 1096 1175	there are many supporting conditions that help women balance housework and work
+A5	Stance T13 For
+T14	Premise 1177 1338	Besides the gorvernment's policies on limited families and their husbands' sharing in the housework, many employers are willing to offer part-time jobs for women
+R7	supports Arg1:T14 Arg2:T13	

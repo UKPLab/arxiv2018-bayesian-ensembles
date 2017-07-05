@@ -1,0 +1,32 @@
+T1	MajorClaim 307 454	every prospective between generations alters and especially the challenges for this generation are significantly different from the last generation
+T2	MajorClaim 1957 2090	challenges for this generation are more complicated and diverse than the past generation, whether in career or in self-identification
+T3	Claim 2163 2276	it is no doubt that until the next generation, there will be whole new challenges waiting for the next youngsters
+A1	Stance T3 For
+T4	Premise 691 762	In the past, focusing on one skill was enough to deal with the problems
+T5	Premise 771 831	every industry was rather small in size and simple to manage
+T6	Premise 842 975	as those industries expand and become internationalized, people are required to equip with multiple skills to answer those challenges
+T7	Premise 990 1060	now there are more chances to do business with people around the world
+T8	Premise 1065 1132	besides one's own profession, language ability is essential as well
+R1	supports Arg1:T7 Arg2:T8	
+T9	Premise 1155 1203	financial crimes are rampant in the 21st century
+T10	Premise 1210 1286	surging up demands for those who excel at both laws and financial management
+R2	supports Arg1:T9 Arg2:T10	
+R3	supports Arg1:T8 Arg2:T6	
+R4	supports Arg1:T10 Arg2:T6	
+T11	Claim 463 603	under globalization and industrial integration, the work-related challenges for this generation are getting more complicated and challenging
+A2	Stance T11 For
+R5	supports Arg1:T4 Arg2:T11	
+R6	supports Arg1:T5 Arg2:T11	
+R7	supports Arg1:T6 Arg2:T11	
+T12	Premise 1415 1535	The past generation was given less freedom and was usually asked to follow the paths their parents had prepared for them
+T13	Claim 1550 1646	young people in this generation are exposed to more creative ideas and rather think individually
+A3	Stance T13 For
+T14	Claim 1297 1413	this generation is encountering the self-recognition issue which could not be experienced by the previous generation
+A4	Stance T14 For
+R8	supports Arg1:T12 Arg2:T14	
+T15	Premise 1648 1713	They are eager for finding who they are and what they really want
+T16	Premise 1715 1827	It is fortunate that they can struggle with these sweet worries and these worries are indeed never easy for them
+T17	Premise 1829 1939	They have to make decisions between so many possibilities and they are responsible for taking the consequences
+R9	supports Arg1:T17 Arg2:T13	
+R10	supports Arg1:T16 Arg2:T13	
+R11	supports Arg1:T15 Arg2:T13	
