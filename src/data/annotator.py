@@ -26,7 +26,7 @@ class Annotator(object):
     def annotate_document(self, document):
         
         # initialise annotation vector
-        annotation = np.ones(document.shape) * -1
+        annotation = -np.ones(document.shape)
         
         while True:
         

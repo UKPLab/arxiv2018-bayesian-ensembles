@@ -8,6 +8,7 @@ import unittest
 import numpy as np
 from src.baselines import ibcc 
 from src.algorithm import bac
+from src.data.data_generator import DataGenerator
 
     
 class Test(unittest.TestCase):
@@ -148,9 +149,11 @@ class Test(unittest.TestCase):
         
         result = bac.expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start)
         
+        
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(np.sum(result,-1),-1),1, atol=1e-10)
         
+        # test whether flags set the correct values to zero 
         assert np.all(result[0,:-1,:] == 0)
         assert np.all(result[1,-1,:] == 0)
         assert np.all(result[2,-1,:] == 0)
@@ -158,7 +161,7 @@ class Test(unittest.TestCase):
     def test_forward_pass(self):
         initProbs = np.log(np.array([.5,.5]))
         lnA = np.log(np.array([[.7,.3],[.3,.7]]))
-        lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,np.newaxis,np.newaxis],2,axis=2))
+        lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,None,None],2,axis=2))
         
         C = np.ones((10,1))
         C[[2,7],0] = 2
@@ -177,7 +180,7 @@ class Test(unittest.TestCase):
         
     def test_backward_pass(self):
         lnA = np.log(np.array([[.7,.3],[.3,.7]]))
-        lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,np.newaxis,np.newaxis],2,axis=2))
+        lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,None,None],2,axis=2))
         
         C = np.ones((10,1))
         C[[2,7],0] = 2
@@ -195,7 +198,7 @@ class Test(unittest.TestCase):
         assert np.allclose(lambdNorm,target,atol=1e-4)
         
     def test_bac(self):
-        C = np.ones((5,10)) * 2
+        C = np.ones((5,10)) 
         
         doc_start = np.zeros((5,1))
         doc_start[[0,2]] = 1
@@ -209,8 +212,11 @@ class Test(unittest.TestCase):
         assert np.allclose(target, result, atol=1e-4)
         
     def test_bac_2(self):
-        C = np.genfromtxt('../src/output/data/annotations.csv', delimiter=',') + 1
-        gt = np.genfromtxt('../src/output/data/ground_truth.csv', delimiter=',')[:,1] + 1
+
+        generator = DataGenerator('../src/config/data.ini', seed=42)
+        
+        generator.init_crowd_model(10, 0, 0)
+        gt, C, _ = generator.generate_dataset(num_docs=2, doc_length=10, crowd_size=10, save_to_file=False)
         
         doc_start = np.zeros((20,1))
         doc_start[[0,10]] = 1
@@ -222,7 +228,7 @@ class Test(unittest.TestCase):
         target = np.zeros((20,3))
         
         for t in xrange(20):
-            target[t,int(gt[t]-1)] = 1
+            target[t,int(gt[t,1])] = 1
         
         assert np.allclose(target, result, atol=1e-4)
         

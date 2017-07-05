@@ -5,10 +5,24 @@ Created on Oct 19, 2016
 '''
 from src.data.data_generator import DataGenerator
 from src.evaluation.experiment import Experiment
+import cProfile
+import os
 
-e = Experiment(DataGenerator('config/data.ini', seed=42), 'config/experiment.ini')
+profile_out = 'output/profiler/stats'
 
-result = e.run_config()
+if not os.path.exists(profile_out):
+    os.makedirs(profile_out)
+
+dataGen = DataGenerator('config/data.ini', seed=42)
+exp = Experiment(dataGen, 'config/experiment.ini')
+cProfile.run('exp.run_config()',profile_out+'/test')
+
+#acc_exp = 'config/acc_experiment.ini'
+
+#cProfile.run('Experiment(dataGen, acc_exp ).run_config()', 'out/profiler/stats')
+#Experiment(dataGen, 'config/class_bias_experiment.ini').run_config()
+#Experiment(dataGen, 'config/crowd_size_experiment.ini').run_config()
+#Experiment(dataGen, 'config/short_bias_experiment.ini').run_config()
 
 if __name__ == '__main__':
     pass

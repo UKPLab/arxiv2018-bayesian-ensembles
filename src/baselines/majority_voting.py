@@ -31,10 +31,11 @@ class MajorityVoting(object):
         self.num_words, self.num_annotators = annotations.shape
         self.num_labels = num_labels
         self.accuracies = np.ones(self.num_annotators)
+        self.probabilities = np.zeros((self.num_words, self.num_labels))
         
     def vote(self, weighted=False, threshold=0.5): 
         
-        self.majority = -1 * np.ones((self.num_words, 1))  
+        self.majority = -np.ones((self.num_words, 1))  
         votes = np.zeros((self.num_words, self.num_labels))     
         
         # iterate through words
@@ -58,8 +59,10 @@ class MajorityVoting(object):
                     self.majority[i] = 2
                 else:
                     self.majority[i] = 1
-                    
-        return self.majority, (votes/np.sum(votes, axis=1)[:,None])
+        
+        self.probabilities = (votes/np.sum(votes, axis=1)[:,None])            
+        
+        return self.majority, self.probabilities
                     
                     
     def update_accuracies(self):
@@ -83,4 +86,4 @@ class MajorityVoting(object):
             accuracies_old = self.accuracies
             self.update_accuracies()
         
-        return self.majority
+        return self.majority, self.probabilities
