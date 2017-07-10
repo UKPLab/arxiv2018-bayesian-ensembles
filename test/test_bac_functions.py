@@ -153,6 +153,8 @@ class Test(unittest.TestCase):
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(np.sum(result,-1),-1),1, atol=1e-10)
         
+        print result[0,:,:]
+        
         # test whether flags set the correct values to zero 
         assert np.all(result[0,:-1,:] == 0)
         assert np.all(result[1,-1,:] == 0)
@@ -216,7 +218,7 @@ class Test(unittest.TestCase):
         generator = DataGenerator('../src/config/data.ini', seed=42)
         
         generator.init_crowd_model(10, 0, 0)
-        gt, C, _ = generator.generate_dataset(num_docs=2, doc_length=10, crowd_size=10, save_to_file=False)
+        gt, C, _ = generator.generate_dataset(num_docs=2, doc_length=10, group_sizes=10, save_to_file=False)
         
         doc_start = np.zeros((20,1))
         doc_start[[0,10]] = 1

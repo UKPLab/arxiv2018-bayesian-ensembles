@@ -49,11 +49,11 @@ class BAC(object):
         
         # initialise transition and confusion matrices
         self.lnA = np.log(np.ones((L+1, L))/L)
-        self.lnA[[1,3],0] = np.nextafter(0,1)
+        self.lnA[[1,3],0] = np.log(np.nextafter(0,1))
         #self.lnA[1,0] = np.nextafter(0,1)
         
         self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 2)[:,:,None,:])
-        self.lnPi[:,0,[3,1],:] = np.nextafter(0,1)
+        self.lnPi[:,0,[3,1],:] = np.log(np.nextafter(0,1))
         
         
         self.max_iter = max_iter
@@ -66,7 +66,8 @@ class BAC(object):
         assert C.shape[0] == doc_start.shape[0]
         
         #
-        C = C + 1
+        C = C.astype(int) + 1
+        
         
         doc_start = doc_start.astype(bool)
         
@@ -151,14 +152,14 @@ def expec_t(lnR_, lnLambda):
 
     
 def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
-    
+      
     # initialise variables
     T = lnR_.shape[0]
     L = lnA.shape[-1]
     K = lnPi.shape[-1]
     
-    lnS = np.ones((T, L+1, L))
-    flags = -np.inf * np.ones(lnS.shape)
+    lnS = np.repeat(lnLambda[:,None,:], L+1, 1)
+    flags = -np.inf * np.ones_like(lnS)
     
     # iterate though everything, calculate joint expectations
     for t in xrange(T):
@@ -167,10 +168,10 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
                 
                 if doc_start[t]:
                     flags[t, -1, l_next] = 0
-                    lnS[t, -1, l_next] += lnLambda[t, l_next] + lnA[-1, l_next]
+                    lnS[t, -1, l_next] += lnA[-1, l_next]
                 else:
                     flags[t, l, l_next] = 0
-                    lnS[t, l, l_next] += lnR_[t-1, l] + lnLambda[t, l_next] + lnA[l, l_next]
+                    lnS[t, l, l_next] += lnR_[t-1, l] + lnA[l, l_next]
                     
                 for k in xrange(K):
                     
@@ -179,18 +180,17 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
                         
                         if C[t,k]==0: # ignore unannotated tokens
                             continue
-                        lnS[t, -1, l_next] += lnPi[l, int(C[t,k])-1, -1, k]
+                        lnS[t, -1, l_next] += lnPi[l, C[t,k]-1, -1, k]
                     else:
                         
                         
                         if C[t,k]==0: # ignore unannotated tokens
                             continue
-                        lnS[t, l, l_next] += lnPi[l, int(C[t,k])-1, int(C[t-1,k])-1, k]
+                        lnS[t, l, l_next] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
             
         
-    
         #normalise and return  
-        #lnS[t,:,:] = lnS[t,:,:] + flags[t,:,:]
+        lnS[t,:,:] = lnS[t,:,:] + flags[t,:,:] 
         lnS[t,:,:] = lnS[t,:,:] - logsumexp(lnS[t,:,:]) 
         
     #print lnS
@@ -201,7 +201,7 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
     T = C.shape[0]
     L = lnA.shape[0]
     K = lnPi.shape[-1]
-    lnR_ = np.zeros((T,L)) 
+    lnR_ = np.zeros((T, L)) 
     
     for t in xrange(T):
         for l in xrange(L):
@@ -215,7 +215,7 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
                     # skip unannotated tokens
                     if skip and C[t,k] == 0:
                         continue
-                    lnR_[t,l] += lnPi[l, int(C[t,k])-1, -1, k]
+                    lnR_[t,l] += lnPi[l, C[t,k]-1, -1, k]
             else:
                 for l_prev in xrange(L):
                     lnR_[t,l] += np.exp(lnR_[t-1,l_prev] + lnA[l_prev,l])
@@ -227,10 +227,9 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
                     if skip and C[t,k] == 0:
                         continue
                     
-                    lnR_[t,l] += lnPi[l,int(C[t,k])-1,int(C[t-1,k])-1, k]
+                    lnR_[t,l] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
         
         # normalise
-        
         lnR_[t,:] = lnR_[t,:] - logsumexp(lnR_[t,:])
             
     return lnR_        
@@ -242,7 +241,7 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
     K = lnPi.shape[-1]
     lnLambda = np.zeros((T,L)) 
     
-    for t in xrange(T-1,-1,-1):
+    for t in xrange(T-2,-1,-1):
         for l in xrange(L):              
                  
             lambdaL_next_sum = 0
@@ -262,7 +261,7 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
                     if skip and C[t,k] == 0:
                         continue
             
-                    lambdaL_next += lnPi[l_next, int(C[t,k])-1, int(C[t-1,k])-1, k]
+                    lambdaL_next += lnPi[l_next, C[t+1,k]-1, C[t,k]-1, k]
                     
                 lambdaL_next_sum += np.exp(lambdaL_next)
             
