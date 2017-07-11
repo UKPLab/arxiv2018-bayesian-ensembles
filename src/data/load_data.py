@@ -5,8 +5,9 @@ Created on Jul 6, 2017
 '''
 
 import os
-import pandas
+import pandas as pd
 import numpy as np
+import glob
 
 def convert(x):
     label = x.split('-')[0]
@@ -18,13 +19,19 @@ def convert(x):
         return 2
     
 
-path = '../../data/argmin/full0.dat.out'
+def load_argmin_data():    
 
-data = pandas.read_csv(path,sep='\t', usecols=(0,5,6), converters={5:convert, 6:convert})
+    path = '../../data/argmin/'
+    all_files = glob.glob(os.path.join(path, "*.dat.out"))
+    df_from_each_file = (pd.read_csv(f, sep='\t',  usecols=(0,5,6), converters={5:convert,6:convert}, header=None) for f in all_files)
+    concatenated = pd.concat(df_from_each_file, ignore_index=True, axis=1).as_matrix()
 
-print data
+    annos = concatenated[:,1::3]
+    gt = concatenated[:,2][:,None]
+    doc_start = np.zeros((annos.shape[0],1))    
+    doc_start[np.where(annos[:,0]==1)] = 1
 
-print data.as_matrix()
+    return gt, annos, doc_start
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
-
+import metrics
 
 class Experiment(object):
     '''
@@ -101,6 +101,58 @@ class Experiment(object):
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
         
+    
+    def run_methods(self, annotations, ground_truth, doc_start, param_idx):
+        for method_idx in xrange(len(self.methods)):
+            
+            if self.methods[method_idx] == 'majority':
+                    
+                mv = majority_voting.MajorityVoting(annotations, self.num_classes)
+                agg, probs = mv.vote()
+            
+            if self.methods[method_idx] == 'clustering':
+                    
+                cl = clustering.Clustering(ground_truth, annotations)
+                agg = cl.run()
+                    
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                for k in xrange(ground_truth.shape[0]):
+                    probs[k, int(agg[k])] = 1      
+                
+            if self.methods[method_idx] == 'mace':
+                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--distribution', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
+                
+                result = np.genfromtxt('output/data/mace.prediction')
+                    
+                agg = result[:, 0]
+                    
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                for i in xrange(result.shape[0]):
+                    for j in xrange(0, self.num_classes * 2, 2):
+                        probs[i, int(result[i, j])] = result[i, j + 1]  
+                
+            if self.methods[method_idx] == 'ibcc':
+                
+                alpha0 = np.ones((self.num_classes, self.num_classes, 10))
+                alpha0[:, :, 5] = 2.0
+                alpha0[np.arange(3), np.arange(3), :] += 1.0
+                
+                nu0 = np.array([1, 1, 1], dtype=float)
+                
+                ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
+                probs = ibc.combine_classifications(annotations, table_format=True)
+                
+                agg = probs.argmax(axis=1)
+                
+            if self.methods[method_idx] == 'bac':
+                
+                alg = bac.BAC(L=3, K=annotations.shape[1])
+                
+                probs = alg.run(annotations, doc_start)
+                agg = probs.argmax(axis=1)
+                    
+            #self.update_scores(scores, param_idx, method_idx, agg, ground_truth, probs, doc_start)
+        
         
     def single_run(self):
         
@@ -183,7 +235,7 @@ class Experiment(object):
     
     def update_scores(self, scores, param_idx, method_idx, agg, ground_truth, probs, doc_start):
         
-        scores[param_idx, 7, method_idx] = num_invalid_labels(agg)
+        scores[param_idx, 7, method_idx] = metrics.num_invalid_labels(agg)
         
         if self.postprocess:
             agg = data_utils.postprocess(agg, doc_start)
@@ -195,9 +247,9 @@ class Experiment(object):
         auc_score += skm.roc_auc_score(ground_truth[:, 1] == 2, agg == 2) * np.sum(ground_truth[:, 1] == 2)
         scores[param_idx, 4, method_idx] = auc_score / float(ground_truth.shape[0])
         scores[param_idx, 5, method_idx] = skm.log_loss(ground_truth[:, 1], probs, eps=1e-100)
-        scores[param_idx, 6, method_idx] = abs_count_error(agg, ground_truth[:, 1])
+        scores[param_idx, 6, method_idx] = metrics.abs_count_error(agg, ground_truth[:, 1])
         
-        scores[param_idx, 8, method_idx] = mean_length_error(agg, ground_truth[:, 1])
+        scores[param_idx, 8, method_idx] = metrics.mean_length_error(agg, ground_truth[:, 1])
     
     
     def run(self):
@@ -266,30 +318,3 @@ class Experiment(object):
         
             if show_plot:
                 plt.show()
-
-'''
-Calculates the absolute difference of numbers of found annotations between the prediction and the target sequence. 
-This is done by counting the number of 'B' tokens in each sequence. 
-'''        
-def abs_count_error(pred, target):
-    return np.abs(len(pred == 2) - len(target == 2))
-
-'''
-
-'''        
-def num_invalid_labels(pred):    
-    return len(np.where(pred[np.r_[0, np.where(pred[:-1] == 1)[0] + 1]] == 0)[0])
-     
-
-'''
-
-'''        
-def mean_length_error(pred, target):
-    # delete 'O'-tokens
-    pred = np.delete(pred, np.where(pred == 1)[0])
-    target = np.delete(target, np.where(target == 1)[0])
-
-    return np.abs(np.mean(np.array([len(x) for x in np.split(target, np.where(target == 2)[0])[1:]])) - np.mean(np.array([len(x) for x in np.split(pred, np.where(pred == 2)[0])[1:]])))
-
-
-            
