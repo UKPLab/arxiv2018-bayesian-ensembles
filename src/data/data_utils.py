@@ -76,6 +76,4 @@ def remove_span_overlaps(span_data):
             spanwords += words        
             
     return span_data[span_ids, :]
-            
-    
     

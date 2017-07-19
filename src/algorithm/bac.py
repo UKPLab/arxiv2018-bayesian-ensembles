@@ -5,8 +5,9 @@ Created on Jan 28, 2017
 '''
 
 import numpy as np
-from scipy.special import psi
 from scipy.misc import logsumexp
+from scipy.special import psi
+
 
 class BAC(object):
     '''

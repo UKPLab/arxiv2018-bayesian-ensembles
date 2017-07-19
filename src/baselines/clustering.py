@@ -23,7 +23,7 @@ class Clustering(object):
     
     curent_doc = None
 
-    def __init__(self, ground_truth, annotations):
+    def __init__(self, ground_truth, annotations, doc_start):
         '''
         Constructor
         '''
@@ -32,18 +32,14 @@ class Clustering(object):
         self.annotations = annotations
         
         self.anno_binary = np.where(annotations != 1)[0]
-        
         self.anno_binary = self.anno_binary.reshape(-1, 1)
         
-        self.num_docs = int(ground_truth[-1,0]+1)
-        self.doc_length = int(ground_truth.shape[0]/self.num_docs)
+        self.num_docs = int(np.sum(doc_start))
+        self.doc_length = int(annotations.shape[0]/self.num_docs)
         
         self.gt_spans = dut.iob_to_span(ground_truth, self.num_docs)
         self.anno_spans = dut.iob_to_span(annotations, self.num_docs)
-        
-        #print self.ground_truth
-        #print self.num_docs
-        
+
         
     def run(self):
         
@@ -72,24 +68,22 @@ class Clustering(object):
             
         return result
     
-    
+    '''
+    Calculates the data log-likelihood of the model with a given log bandwidth.
+    '''
     def calc_data_likelihood(self, lnBandwidth):
         
+        # return negative infinity if bandwidth is too small
         h = np.exp(lnBandwidth)
         if h <= 0.1: 
             return -np.inf
-                    
-        #score = 0.0
         
-        #for doc in xrange(int(self.num_docs)):
-        
-        kde = KernelDensity(bandwidth=h, kernel='gaussian').fit(self.doc_anno)
-        #score += kde.score(self.anno_binary)
-            
-            
-        return kde.score(self.doc_anno)
+        return KernelDensity(bandwidth=h, kernel='gaussian').fit(self.doc_anno).score(self.doc_anno)
     
-    
+    '''
+    Label all tokens using the given kde and threshold. If the kde-score of a position is above this threshold the label at this position will be marked as 'inside'.
+    Tokens marked as 'inside' where the previous label is marked 'outside' will be marked as 'beginning'. Output can be either in 'IOB'-format or in 'span'-format.
+    '''
     def label_tokens(self, kde, threshold, return_spans=False):
         
         result = np.zeros((self.doc_length,1))
@@ -102,28 +96,19 @@ class Clustering(object):
         
         if result[0]==0:  
             result[0] = 2 
-            
-        #for token in xrange(int(self.doc_length)):
-            
-        #    score = np.exp(kde.score_samples(np.array([token+self.curent_doc*self.doc_length]).reshape(-1, 1)))
-            
-        #    if score >= threshold:
-        #        if result[token-1]==1 or token==0:
-        #            result[token] = 2
-        #        else:
-        #            result[token] = 0
-        #    else:
-        #        result[token] = 1
         
         if return_spans:
             return dut.iob_to_span(result, 1)
         
         return result
     
-    
+    '''
+    Calculates the difference between the mean lengths of the predicted sequence and the gold standard.
+    '''
     def mean_length_diff(self, kde, threshold):
         spans = self.label_tokens(kde, threshold, return_spans=True)[:,-1]
         
+        # set to infinity if no spans were predicted
         if spans.size == 0:
             return np.inf
         

@@ -13,6 +13,7 @@ import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
 import metrics
+import glob
 
 class Experiment(object):
     '''
@@ -33,6 +34,8 @@ class Experiment(object):
     
     param_names = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
     score_names = ['accuracy', 'precision', 'recall', 'f1-score', 'auc-score', 'cross-entropy-error', 'count error', 'number of invalid labels', 'mean length error']
+    
+    generate_data= False
     
     methods = None
     
@@ -93,6 +96,7 @@ class Experiment(object):
         self.group_sizes = np.array(eval(parameters['group_sizes'].split('#')[0].strip()))
         self.num_classes = int(parameters['num_classes'].split('#')[0].strip())
         self.num_docs = int(parameters['num_docs'].split('#')[0].strip())
+        self.generate_data = eval(parameters['generate_data'].split('#')[0].strip())
         
         # set up output
         parameters = dict(parser.items('output'))
@@ -102,17 +106,20 @@ class Experiment(object):
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
         
     
-    def run_methods(self, annotations, ground_truth, doc_start, param_idx):
-        for method_idx in xrange(len(self.methods)):
-            
+    def run_methods(self, annotations, ground_truth, doc_start, param_idx, anno_path):
+        
+        scores = np.zeros((len(self.score_names), len(self.methods)))
+        predictions = -np.ones((annotations.shape[0], len(self.methods)))
+        
+        for method_idx in xrange(len(self.methods)):  
             if self.methods[method_idx] == 'majority':
                     
-                mv = majority_voting.MajorityVoting(annotations, self.num_classes)
-                agg, probs = mv.vote()
+                agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
+                #agg, probs = mv.vote()
             
             if self.methods[method_idx] == 'clustering':
                     
-                cl = clustering.Clustering(ground_truth, annotations)
+                cl = clustering.Clustering(ground_truth, annotations, doc_start)
                 agg = cl.run()
                     
                 probs = np.zeros((ground_truth.shape[0], self.num_classes))
@@ -120,7 +127,7 @@ class Experiment(object):
                     probs[k, int(agg[k])] = 1      
                 
             if self.methods[method_idx] == 'mace':
-                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--distribution', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
+                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--distribution', '--prefix', 'output/data/mace', anno_path])
                 
                 result = np.genfromtxt('output/data/mace.prediction')
                     
@@ -136,28 +143,48 @@ class Experiment(object):
                 alpha0 = np.ones((self.num_classes, self.num_classes, 10))
                 alpha0[:, :, 5] = 2.0
                 alpha0[np.arange(3), np.arange(3), :] += 1.0
-                
                 nu0 = np.array([1, 1, 1], dtype=float)
                 
                 ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
                 probs = ibc.combine_classifications(annotations, table_format=True)
-                
                 agg = probs.argmax(axis=1)
                 
             if self.methods[method_idx] == 'bac':
                 
                 alg = bac.BAC(L=3, K=annotations.shape[1])
-                
                 probs = alg.run(annotations, doc_start)
                 agg = probs.argmax(axis=1)
                     
-            #self.update_scores(scores, param_idx, method_idx, agg, ground_truth, probs, doc_start)
+            scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth, probs, doc_start)
+            predictions[:,method_idx] = agg.flatten()
+            
+        return scores, predictions
+    
+    
+    def calculate_scores(self, agg, gt, probs, doc_start):
         
+        result = -np.ones((9,1))
         
-    def single_run(self):
+        result[7] = metrics.num_invalid_labels(agg, doc_start)
         
-        scores = np.zeros((self.param_values.shape[0], len(self.score_names), len(self.methods)))
-       
+        if self.postprocess:
+            agg = data_utils.postprocess(agg, doc_start)
+        
+        result[0] = skm.accuracy_score(gt, agg)
+        result[1] = skm.precision_score(gt, agg, pos_label=0, average='macro')
+        result[2] = skm.recall_score(gt, agg, pos_label=0, average='macro')
+        result[3] = skm.f1_score(gt, agg, pos_label=0, average='macro')
+        auc_score = skm.roc_auc_score(gt==0, agg==0) * np.sum(gt==0)
+        auc_score += skm.roc_auc_score(gt==1, agg==1) * np.sum(gt==1)
+        auc_score += skm.roc_auc_score(gt==2, agg==2) * np.sum(gt==2)
+        result[4] = auc_score / float(gt.shape[0])
+        result[5] = skm.log_loss(gt, probs, eps=1e-100)
+        result[6] = metrics.abs_count_error(agg, gt)
+        result[8] = metrics.mean_length_error(agg, gt, doc_start)
+        
+        return result
+        
+    def create_experiment_data(self):
         for param_idx in xrange(self.param_values.shape[0]):
             # update tested parameter
             if self.param_idx == 0:
@@ -175,111 +202,58 @@ class Experiment(object):
             else:
                 print 'Encountered invalid test index!'
                 
-            self.generator.init_crowd_models(self.acc_bias, self.miss_bias, self.short_bias, self.group_sizes)
-            ground_truth, annotations, doc_start = self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length, group_sizes=self.group_sizes, save_to_file=True)
-            agg = None
-            
-            for method_idx in xrange(len(self.methods)):
-            
-                if self.methods[method_idx] == 'majority':
-                    
-                    mv = majority_voting.MajorityVoting(annotations, self.num_classes)
-                    agg, probs = mv.vote()
-            
-                if self.methods[method_idx] == 'clustering':
-                    
-                    cl = clustering.Clustering(ground_truth, annotations)
-                    agg = cl.run()
-                    
-                    probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                    for k in xrange(ground_truth.shape[0]):
-                        probs[k, int(agg[k])] = 1      
-                
-                if self.methods[method_idx] == 'mace':
-                    subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--distribution', '--prefix', 'output/data/mace', 'output/data/annotations.csv'])
-                
-                    result = np.genfromtxt('output/data/mace.prediction')
-                    
-                    agg = result[:, 0]
-                    
-                    probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                    for i in xrange(result.shape[0]):
-                        for j in xrange(0, self.num_classes * 2, 2):
-                            probs[i, int(result[i, j])] = result[i, j + 1]  
-                
-                if self.methods[method_idx] == 'ibcc':
-                
-                    alpha0 = np.ones((self.num_classes, self.num_classes, 10))
-                    alpha0[:, :, 5] = 2.0
-                    alpha0[np.arange(3), np.arange(3), :] += 1.0
-                
-                    nu0 = np.array([1, 1, 1], dtype=float)
-                
-                    ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
-                    probs = ibc.combine_classifications(annotations, table_format=True)
-                
-                    agg = probs.argmax(axis=1)
-                
-                if self.methods[method_idx] == 'bac':
-                
-                    alg = bac.BAC(L=3, K=annotations.shape[1])
-                
-                    probs = alg.run(annotations, doc_start)
-                
-                    agg = probs.argmax(axis=1)
-                    
-                self.update_scores(scores, param_idx, method_idx, agg, ground_truth, probs, doc_start)
+            param_path = self.output_dir + 'data/param' + str(param_idx) + '/'
         
-        return scores
+            for i in xrange(self.num_runs):
+                path = param_path + 'set' + str(i) + '/'
+                self.generator.init_crowd_models(self.acc_bias, self.miss_bias, self.short_bias, self.group_sizes)
+                self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length, group_sizes=self.group_sizes, save_to_file=True, output_dir=path)
     
-    
-    def update_scores(self, scores, param_idx, method_idx, agg, ground_truth, probs, doc_start):
-        
-        scores[param_idx, 7, method_idx] = metrics.num_invalid_labels(agg)
-        
-        if self.postprocess:
-            agg = data_utils.postprocess(agg, doc_start)
-        
-        scores[param_idx, 0, method_idx] = skm.accuracy_score(ground_truth[:, 1], agg)
-        scores[param_idx, 1, method_idx], scores[param_idx, 2, method_idx], scores[param_idx, 3, method_idx], _ = skm.precision_recall_fscore_support(ground_truth[:, 1], agg, pos_label=0, average='macro')
-        auc_score = skm.roc_auc_score(ground_truth[:, 1] == 0, agg == 0) * np.sum(ground_truth[:, 1] == 0)
-        auc_score += skm.roc_auc_score(ground_truth[:, 1] == 1, agg == 1) * np.sum(ground_truth[:, 1] == 1)
-        auc_score += skm.roc_auc_score(ground_truth[:, 1] == 2, agg == 2) * np.sum(ground_truth[:, 1] == 2)
-        scores[param_idx, 4, method_idx] = auc_score / float(ground_truth.shape[0])
-        scores[param_idx, 5, method_idx] = skm.log_loss(ground_truth[:, 1], probs, eps=1e-100)
-        scores[param_idx, 6, method_idx] = metrics.abs_count_error(agg, ground_truth[:, 1])
-        
-        scores[param_idx, 8, method_idx] = metrics.mean_length_error(agg, ground_truth[:, 1])
-    
-    
-    def run(self):
-        
+    def run_exp(self):
+        # initialise result array
         results = np.zeros((self.param_values.shape[0], len(self.score_names), len(self.methods), self.num_runs))
-        
-        print 'Running experiments...'
-        
-        for i in xrange(self.num_runs):   
-            print 'Run number:', i 
-            results[:, :, :, i] = self.single_run() 
+        # read experiment directory
+        param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
+       
+        # iterate through parameter settings
+        for param_idx in xrange(len(param_dirs)):
             
+            # read parameter directory 
+            path_pattern = self.output_dir + 'data/param{0}/set{1}/'
+
+            # iterate through data sets
+            for run_idx in xrange(self.num_runs):
+                data_path = path_pattern.format(*(param_idx,run_idx))
+                # read data
+                doc_start, gt, annos = self.generator.read_data_file(data_path + "full_data.csv")                
+                # run methods
+                results[param_idx,:,:,run_idx], preds = self.run_methods(annos, gt, doc_start, param_idx, data_path + "annotations.csv")
+                # save predictions
+                np.savetxt(data_path + "predictions.csv", preds)
+                
         if self.save_results:
             if not os.path.exists(self.output_dir):
                 os.makedirs(self.output_dir)
                 
             print 'Saving results...'
-            np.savetxt(self.output_dir + 'results.csv', np.mean(results, 3)[:, :, 0])
+            #np.savetxt(self.output_dir + 'results.csv', np.mean(results, 3)[:, :, 0])
+            results.dump(self.output_dir + 'results')
 
         if self.show_plots or self.save_plots:
             self.plot_results(results, self.show_plots, self.save_plots, self.output_dir)
         
         return results
     
-    
-    def run_config(self):
-        if self.config_file == None:
-            raise RuntimeError('No config file specified.')
+    def run(self):
         
-        return self.run()
+        if self.generate_data:
+            self.create_experiment_data()
+        
+        if not glob.glob(os.path.join(self.output_dir, "data/*")):
+            print 'No data found at specified path! Exiting!'
+            return
+        else:
+            return self.run_exp()
     
     
     def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/'):
@@ -310,6 +284,7 @@ class Experiment(object):
             plt.xlabel(self.param_names[self.param_idx])
             plt.xticks(x_vals, x_ticks_labels)
             plt.ylim([0, np.max([1, np.max(results[:, i, :, :])])])
+            #plt.xlim([0,np.max(x_vals)])
         
             if save_plot:
                 print 'Saving plot...'

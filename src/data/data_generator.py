@@ -34,19 +34,25 @@ class DataGenerator(object):
         self.read_config_file()
         if not seed==None:
             np.random.seed(seed)
+            
+    
+    def read_data_file(self, path):
+        data = np.genfromtxt(path, delimiter=',')
+        doc_start = data[:,0]
+        gt = data[:,1]
+        annos = data[:,2:]
         
+        return doc_start[:,None], gt[:,None], annos
         
     def read_config_file(self):
         parser = ConfigParser.ConfigParser()
         parser.read(self.config_file)
         
-    
         # set up crowd model
         parameters = dict(parser.items('crowd_model'))
         group_sizes = np.array(eval(parameters['group_sizes'].split('#')[0].strip()))
         self.init_crowd_models(np.array(eval(parameters['acc_bias'])),np.array(eval(parameters['miss_bias'])),np.array(eval(parameters['short_bias'])), group_sizes)
         #self.group_sizes = np.array(eval(parameters['group_sizes']))
-        
         
         # set up ground truth model
         parameters = dict(parser.items('ground_truth'))
@@ -89,23 +95,23 @@ class DataGenerator(object):
         
         doc_length = int(doc_length)
         
-        data = -np.ones((num_docs*doc_length, 2))
+        data = -np.ones((num_docs*doc_length, 1))
         
         # generate documents
         for i in xrange(num_docs):
             # filling document index column
-            data[i*doc_length:(i+1)*doc_length,0] = i
+            #data[i*doc_length:(i+1)*doc_length,0] = i
             
             # repeat creating documents...
             while True:
-                data[i*doc_length, 1] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[-1,:])
+                data[i*doc_length] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[-1,:])
             
                 # generate document content
                 for j in xrange(i*doc_length + 1,(i+1)*doc_length):
-                    data[j, 1] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[int(data[j-1,1]), :])
+                    data[j] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[int(data[j-1]), :])
                 
                 # ...break if document has valid syntax
-                if data_utils.check_document_syntax(data[i*doc_length:(i+1)*doc_length,1]):
+                if data_utils.check_document_syntax(data[i*doc_length:(i+1)*doc_length]):
                     break
 
         return data
@@ -129,13 +135,13 @@ class DataGenerator(object):
         return crowd
     
     
-    def generate_annotations(self, ground_truth, crowd):
+    def generate_annotations(self, doc_start, ground_truth, crowd):
         
         data = np.ones((ground_truth.shape[0], len(crowd)))
         
         # iterate through crowd
         for i in xrange(len(crowd)):    
-            data[:,i] = crowd[i].annotate(ground_truth)
+            data[:,i] = crowd[i].annotate(ground_truth, doc_start)
             
         return data
 
@@ -143,9 +149,13 @@ class DataGenerator(object):
     def generate_dataset(self, num_docs=5, doc_length=10, group_sizes=10, save_to_file=False, output_dir=None):
         
         ground_truth = self.generate_ground_truth(num_docs, doc_length)
+        
+        doc_start = np.zeros_like(ground_truth)
+        doc_start[np.arange(num_docs)*doc_length] = 1
+        
         crowd = self.build_crowd(group_sizes)
         
-        annotations = self.generate_annotations(ground_truth, crowd)
+        annotations = self.generate_annotations(doc_start, ground_truth, crowd)
         
         if save_to_file:
             if output_dir==None:
@@ -154,7 +164,7 @@ class DataGenerator(object):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
                 
-            np.savetxt(output_dir + 'full_data.csv', np.concatenate((ground_truth, annotations), 1), fmt='%s', delimiter=',')
+            np.savetxt(output_dir + 'full_data.csv', np.concatenate((doc_start,ground_truth, annotations),1), fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'annotations.csv', annotations, fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
             
