@@ -6,7 +6,7 @@ import numpy as np
 from copy import deepcopy
 from scipy.sparse import coo_matrix, csr_matrix
 from scipy.special import psi, gammaln
-from src.baselines.ibccdata import DataHandler
+from baselines.ibccdata import DataHandler
 from scipy.optimize import fmin, fmin_cobyla
 from scipy.stats import gamma
 
