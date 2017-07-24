@@ -32,8 +32,8 @@ class Experiment(object):
     miss_bias = None
     short_bias = None
     
-    param_names = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
-    score_names = ['accuracy', 'precision', 'recall', 'f1-score', 'auc-score', 'cross-entropy-error', 'count error', 'number of invalid labels', 'mean length error']
+    PARAM_NAMES = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
+    SCORE_NAMES = ['accuracy', 'precision', 'recall', 'f1-score', 'auc-score', 'cross-entropy-error', 'count error', 'number of invalid labels', 'mean length error']
     
     generate_data= False
     
@@ -108,14 +108,16 @@ class Experiment(object):
     
     def run_methods(self, annotations, ground_truth, doc_start, param_idx, anno_path):
         
-        scores = np.zeros((len(self.score_names), len(self.methods)))
+        scores = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
         predictions = -np.ones((annotations.shape[0], len(self.methods)))
         
-        for method_idx in xrange(len(self.methods)):  
+        for method_idx in xrange(len(self.methods)): 
+            
+            print 'running method: {0}'.format(self.methods[method_idx]), 
+            
             if self.methods[method_idx] == 'majority':
                     
                 agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
-                #agg, probs = mv.vote()
             
             if self.methods[method_idx] == 'clustering':
                     
@@ -127,7 +129,9 @@ class Experiment(object):
                     probs[k, int(agg[k])] = 1      
                 
             if self.methods[method_idx] == 'mace':
-                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--distribution', '--prefix', 'output/data/mace', anno_path])
+                
+                devnull = open(os.devnull, 'w')
+                subprocess.call(['java', '-jar', 'MACE/MACE.jar', '--distribution', '--prefix', 'output/data/mace', anno_path], stdout=devnull, stderr=devnull)
                 
                 result = np.genfromtxt('output/data/mace.prediction')
                     
@@ -158,6 +162,8 @@ class Experiment(object):
             scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth, probs, doc_start)
             predictions[:,method_idx] = agg.flatten()
             
+            print '...done'
+            
         return scores, predictions
     
     
@@ -171,9 +177,9 @@ class Experiment(object):
             agg = data_utils.postprocess(agg, doc_start)
         
         result[0] = skm.accuracy_score(gt, agg)
-        result[1] = skm.precision_score(gt, agg, pos_label=0, average='macro')
-        result[2] = skm.recall_score(gt, agg, pos_label=0, average='macro')
-        result[3] = skm.f1_score(gt, agg, pos_label=0, average='macro')
+        result[1] = skm.precision_score(gt, agg, average='macro')
+        result[2] = skm.recall_score(gt, agg, average='macro')
+        result[3] = skm.f1_score(gt, agg, average='macro')
         auc_score = skm.roc_auc_score(gt==0, agg==0) * np.sum(gt==0)
         auc_score += skm.roc_auc_score(gt==1, agg==1) * np.sum(gt==1)
         auc_score += skm.roc_auc_score(gt==2, agg==2) * np.sum(gt==2)
@@ -211,18 +217,22 @@ class Experiment(object):
     
     def run_exp(self):
         # initialise result array
-        results = np.zeros((self.param_values.shape[0], len(self.score_names), len(self.methods), self.num_runs))
+        results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES), len(self.methods), self.num_runs))
         # read experiment directory
         param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
        
         # iterate through parameter settings
         for param_idx in xrange(len(param_dirs)):
             
+            print 'parameter setting: {0}'.format(param_idx)
+            
             # read parameter directory 
             path_pattern = self.output_dir + 'data/param{0}/set{1}/'
 
             # iterate through data sets
             for run_idx in xrange(self.num_runs):
+                print 'data set number: {0}'.format(run_idx)
+                
                 data_path = path_pattern.format(*(param_idx,run_idx))
                 # read data
                 doc_start, gt, annos = self.generator.read_data_file(data_path + "full_data.csv")                
@@ -254,6 +264,19 @@ class Experiment(object):
             return
         else:
             return self.run_exp()
+        
+        
+    def make_plot(self, x_vals, y_vals, x_ticks_labels, ylabel):
+        for j in xrange(len(self.methods)):
+            plt.errorbar(x_vals, np.mean(y_vals[:, j, :], 1), yerr=np.std(y_vals[:, j, :], 1), label=self.methods[j])
+                  
+        plt.legend(loc='best')
+        
+        plt.title('parameter influence')
+        plt.ylabel(ylabel)
+        plt.xlabel(self.PARAM_NAMES[self.param_idx])
+        plt.xticks(x_vals, x_ticks_labels)
+        plt.ylim([0, np.max([1, np.max(y_vals)])])
     
     
     def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/'):
@@ -271,25 +294,25 @@ class Experiment(object):
         # initialise x-tick labels 
         x_ticks_labels = map(str, self.param_values)
             
-        for i in xrange(len(self.score_names)):    
-            for j in xrange(len(self.methods)):
-                
-                plt.errorbar(x_vals, np.mean(results[:, i, j, :], 1), yerr=np.std(results[:, i, j, :], 1), label=self.methods[j])
-                
-            
-            plt.legend(loc=0)
-        
-            plt.title('parameter influence')
-            plt.ylabel(self.score_names[i])
-            plt.xlabel(self.param_names[self.param_idx])
-            plt.xticks(x_vals, x_ticks_labels)
-            plt.ylim([0, np.max([1, np.max(results[:, i, :, :])])])
-            #plt.xlim([0,np.max(x_vals)])
+        for i in xrange(len(self.SCORE_NAMES)):  
+            self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, self.SCORE_NAMES[i])
         
             if save_plot:
                 print 'Saving plot...'
-                plt.savefig(self.output_dir + 'plot_' + self.score_names[i] + '.png') 
+                plt.savefig(self.output_dir + 'plot_' + self.SCORE_NAMES[i] + '.png') 
                 plt.clf()
         
             if show_plot:
                 plt.show()
+                
+            if i == 5:
+                self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, self.SCORE_NAMES[i])
+                plt.ylim([0,1])
+                
+                if save_plot:
+                    print 'Saving plot...'
+                    plt.savefig(self.output_dir + 'plot_' + self.SCORE_NAMES[i] + '_zoomed' + '.png') 
+                    plt.clf()
+        
+                if show_plot:
+                    plt.show()
