@@ -4,9 +4,9 @@ Created on Nov 1, 2016
 @author: Melvin Laux
 '''
 
-from src.baselines import ibcc, clustering, majority_voting
-from src.algorithm import bac
-from src.data import data_utils
+from baselines import ibcc, clustering, majority_voting
+from algorithm import bac
+from data import data_utils
 import ConfigParser
 import os, subprocess
 import sklearn.metrics as skm
