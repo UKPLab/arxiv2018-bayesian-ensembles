@@ -6,7 +6,7 @@ Created on Oct 19, 2016
 from data.data_generator import DataGenerator
 from evaluation.experiment import Experiment
 import cProfile
-import os, sys
+import os
 
 #profile_out = 'output/profiler/stats'
 
@@ -14,9 +14,9 @@ import os, sys
 #    os.makedirs(profile_out)
 
 dataGen = DataGenerator('../config/data.ini', seed=42)
-exp = Experiment(dataGen, '../config/experiment.ini')#.run_config()
-exp.create_experiment_data()
-exp.run_exp()
+#exp = Experiment(dataGen, '../config/experiment.ini')#.run_config()
+#exp.create_experiment_data()
+#exp.run_exp()
 #cProfile.run('exp.run_config()',profile_out+'/test')
 
 acc_exp = '../config/acc_experiment.ini'
