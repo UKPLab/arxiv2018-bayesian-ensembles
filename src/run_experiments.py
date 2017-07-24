@@ -8,10 +8,10 @@ from src.evaluation.experiment import Experiment
 import cProfile
 import os
 
-profile_out = 'output/profiler/stats'
+#profile_out = 'output/profiler/stats'
 
-if not os.path.exists(profile_out):
-    os.makedirs(profile_out)
+#if not os.path.exists(profile_out):
+#    os.makedirs(profile_out)
 
 dataGen = DataGenerator('../config/data.ini', seed=42)
 #exp = Experiment(dataGen, 'config/experiment.ini')#.run_config()
@@ -23,11 +23,11 @@ acc_exp = '../config/acc_experiment.ini'
 
 #cProfile.run('Experiment(dataGen, acc_exp ).run_config()', profile_out+'/test')
 
-#Experiment(dataGen, 'config/class_bias_experiment.ini').run_config()
-#Experiment(dataGen, 'config/crowd_size_experiment.ini').run_config()
-#Experiment(dataGen, 'config/short_bias_experiment.ini').run_config()
-#Experiment(dataGen, 'config/doc_length_experiment.ini').run_config()
-#Experiment(dataGen, 'config/group_ratio_experiment.ini').run_config()
+Experiment(dataGen, 'config/class_bias_experiment.ini').run_config()
+Experiment(dataGen, 'config/crowd_size_experiment.ini').run_config()
+Experiment(dataGen, 'config/short_bias_experiment.ini').run_config()
+Experiment(dataGen, 'config/doc_length_experiment.ini').run_config()
+Experiment(dataGen, 'config/group_ratio_experiment.ini').run_config()
 Experiment(dataGen, acc_exp).run()
 
 
