@@ -4,7 +4,7 @@ Created on Nov 2, 2016
 @author: Melvin Laux
 '''
 from sklearn.neighbors.kde import KernelDensity
-import src.data.data_utils as dut
+import data.data_utils as dut
 import numpy as np
 from scipy.optimize import basinhopping          
             

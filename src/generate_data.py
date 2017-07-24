@@ -5,7 +5,6 @@ Created on Oct 25, 2016
 '''
 
 from data.data_generator import DataGenerator
-import data.data_utils as dut
 from baselines.majority_voting import MajorityVoting
 from evaluation.experiment import Experiment
 from baselines.clustering import Clustering
