@@ -13,12 +13,10 @@ class Clustering(object):
     classdocs
     '''
 
-    ground_truth = None
     annotations = None
     num_docs = None
     doc_length = None
     
-    gt_spans = None
     doc_anno = None
     
     curent_doc = None
@@ -28,7 +26,6 @@ class Clustering(object):
         Constructor
         '''
         
-        self.ground_truth = ground_truth
         self.annotations = annotations
         
         self.anno_binary = np.where(annotations != 1)[0]
@@ -37,7 +34,6 @@ class Clustering(object):
         self.num_docs = int(np.sum(doc_start))
         self.doc_length = int(annotations.shape[0]/self.num_docs)
         
-        self.gt_spans = dut.iob_to_span(ground_truth, self.num_docs)
         self.anno_spans = dut.iob_to_span(annotations, self.num_docs)
 
         
@@ -112,5 +108,5 @@ class Clustering(object):
         if spans.size == 0:
             return np.inf
         
-        return np.abs(np.mean(self.gt_spans[:,-1]) - np.mean(spans))
+        return np.abs(np.mean(self.anno_spans[:,-1]) - np.mean(spans))
         
