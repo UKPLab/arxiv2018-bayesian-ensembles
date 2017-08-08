@@ -194,6 +194,9 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
         lnS[t,:,:] = lnS[t,:,:] + flags[t,:,:] 
         lnS[t,:,:] = lnS[t,:,:] - logsumexp(lnS[t,:,:]) 
         
+        if np.any(np.isnan(np.exp(lnS[t,:,:]))):
+            print 'expec_joint_t: nan value encountered' 
+        
     #print lnS
     
     return np.exp(lnS)
@@ -245,7 +248,7 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
     for t in xrange(T-2,-1,-1):
         for l in xrange(L):              
                  
-            lambdaL_next_sum = 0
+            lambdaL_next_sum = np.zeros((L,1))
                 
             for l_next in xrange(L):
                 
@@ -264,12 +267,17 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
             
                     lambdaL_next += lnPi[l_next, C[t+1,k]-1, C[t,k]-1, k]
                     
-                lambdaL_next_sum += np.exp(lambdaL_next)
+                lambdaL_next_sum[l_next] = lambdaL_next
             
-            lnLambda[t,l] += np.log(lambdaL_next_sum)
-            
+            lnLambda[t,l] += logsumexp(lambdaL_next_sum)
+        
+        if(np.any(np.isnan(lnLambda[t,:]))):    
+            print 'backward pass: nan value encountered'
         
         # normalise  
-        lnLambda[t,:] = lnLambda[t,:] - logsumexp(lnLambda[t,:])                
+        lnLambda[t,:] = lnLambda[t,:] - logsumexp(lnLambda[t,:])   
+        
+        if(np.any(np.isnan(lnLambda[t,:]))):    
+            print 'backward pass: nan value encountered'             
   
     return lnLambda                

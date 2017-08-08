@@ -20,6 +20,8 @@ class Clustering(object):
     doc_anno = None
     
     curent_doc = None
+    
+    doc_start = None
 
     def __init__(self, ground_truth, annotations, doc_start):
         '''
@@ -32,19 +34,23 @@ class Clustering(object):
         self.anno_binary = self.anno_binary.reshape(-1, 1)
         
         self.num_docs = int(np.sum(doc_start))
-        self.doc_length = int(annotations.shape[0]/self.num_docs)
         
         self.anno_spans = dut.iob_to_span(annotations, self.num_docs)
+        
+        self.doc_start = doc_start
 
         
     def run(self):
         
         result = np.zeros((0,1))
         
+        self.start_idxs = np.r_[np.where(self.doc_start==1)[0],len(self.doc_start)]
         for doc in xrange(self.num_docs):
             
             self.curent_doc = doc
-            self.doc_anno = np.extract(np.logical_and(self.anno_binary >= doc*self.doc_length, self.anno_binary <= (doc+1)*self.doc_length), self.anno_binary)[:,None]
+            
+            self.doc_anno = np.extract(np.logical_and(self.anno_binary >= self.start_idxs[doc], self.anno_binary < self.start_idxs[doc+1]), self.anno_binary)[:,None]
+            self.doc_length = self.doc_anno.shape[0]
         
             # function to minimise: negative data-log-likelihood
             f = lambda x: -self.calc_data_likelihood(x)
