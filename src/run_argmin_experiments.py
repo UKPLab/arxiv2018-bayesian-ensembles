@@ -4,7 +4,7 @@ Created on Aug 8, 2017
 @author: Melvin Laux
 '''
 from evaluation.experiment import Experiment
-from src.data import load_data
+from data import load_data
 
 
 exp = Experiment(None, None)
