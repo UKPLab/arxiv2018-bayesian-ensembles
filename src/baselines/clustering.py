@@ -45,12 +45,16 @@ class Clustering(object):
         result = np.zeros((0,1))
         
         self.start_idxs = np.r_[np.where(self.doc_start==1)[0],len(self.doc_start)]
+        self.doc_length = self.start_idxs[0]
         for doc in xrange(self.num_docs):
             
             self.curent_doc = doc
             
             self.doc_anno = np.extract(np.logical_and(self.anno_binary >= self.start_idxs[doc], self.anno_binary < self.start_idxs[doc+1]), self.anno_binary)[:,None]
-            self.doc_length = self.doc_anno.shape[0]
+            if doc < self.num_docs:
+                self.doc_length = self.start_idxs[doc+1] - self.start_idxs[doc]
+            else:
+                self.doc_length = self.annotations.shape[0] - self.start_idxs[doc]
         
             # function to minimise: negative data-log-likelihood
             f = lambda x: -self.calc_data_likelihood(x)
