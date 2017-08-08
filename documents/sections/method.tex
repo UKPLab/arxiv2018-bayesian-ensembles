@@ -225,13 +225,50 @@ In our experiments, we define a baseline \emph{majority voting} method, which ad
 
 The voting procedure outlined above produces annotations where the annotations of at least 50\% of workers intersect. A stricter approach can be used, which requires that all the annotators mark a token for it to be included (e.g. \cite{farra2015annotating}). We refer to this approach as the \emph{intersect} method. For tasks where workers are likely to miss many spans, it is also possible to lower the threshold so that we do not require a majority of workers to mark a token as I/B before we accept it as such during aggregation.
 
-\subsection{Worker Accuracy-Based Methods}
+% \subsection{Worker Accuracy-Based Methods}
+% 
+% Determine worker accuracy from a number of gold-standard tasks. Weight the workers' votes by accuracy and apply the majority voting approach above to produce a \emph{weighted majority voting} method.
+% 
+% An interesting approach is used by \cite{hsueh2009data} that takes into account amibiguity in sentiment classifications. It is unclear whether this can be generalised to other types of annotation such as argument components. 
+% 
+% The weights can also be obtained using unsupervised and semi-supervised learning. In this case we use an EM algorithm, in which we initialise the true annotations using the majority voting method, then use these to compute worker accuracies. The true annotations are then re-estimated using a weighted majority vote. The process repeats until convergence. This method is labelled \emph{weighted majority voting (EM)}. 
 
-Determine worker accuracy from a number of gold-standard tasks. Weight the workers' votes by accuracy and apply the majority voting approach above to produce a \emph{weighted majority voting} method.
+\subsection{Item-response Methods}
 
-An interesting approach is used by \cite{hsueh2009data} that takes into account amibiguity in sentiment classifications. It is unclear whether this can be generalised to other types of annotation such as argument components. 
+*this should be moved to an earlier section and used to build up to the proposed method*
 
-The weights can also be obtained using unsupervised and semi-supervised learning. In this case we use an EM algorithm, in which we initialise the true annotations using the majority voting method, then use these to compute worker accuracies. The true annotations are then re-estimated using a weighted majority vote. The process repeats until convergence. This method is labelled \emph{weighted majority voting (EM)}. 
+The current state-of-the-art methods are termed \emph{Item-response} models \cite{Felt2016SemanticAA},
+which are based on the approach by \cite{dawid_maximum_1979}. These approaches use a confusion matrix
+to model the likelihood that annotator $k$ gives response $c$ to an item $i$. 
+This approach naturally accounts for bias toward a particular answer and varying accuracy 
+depending on the true class, and has been 
+shown to outperform techniques such as majority voting and weighted sums\cite{simpsonlong,raykar12,kim2003}.
+Recent extensions follow the Bayesian treatment of \cite{kim2003}, called IBCC,
+to deal with specific problems in crowdsourcing with large numbers of workers:
+\cite{moreno_bayesian_2015,venanzi2014community} identify clusters of crowd workers
+with shared confusion matrices to improve performance when information about individual workers is sparse;
+\cite{venanzi2016time} account for the time each worker takes to complete a task;
+\cite{Felt2016SemanticAA, simpson2015language} additionally model language features in text classification tasks
+to improve performance when data is sparse.
+However, none of these methods consider the sequential nature of classifications and treat each item as i.i.d.
+Therefore, they cannot take advantage of the dependencies between each token's annotation to improve
+predictions and ensure valid sequences. 
+In this paper, we propose and evaluate a method that resolves this problem. 
+The modular nature of graphical models means that the extensions described above could in future be combined
+with our approach in suitable situations.
+
+A method that simplifies the confusion matrix, \emph{MACE}, was proposed by \cite{hovy2013learning}
+to reduce the cost of learning. This is particularly suitable for tasks with a large number of classes
+since the number of parameters in the confusion matrix typically grows $\mathcal{O}(J^2)$, where $J$ is the number of classes.
+
+* show mathematically how this method is related to IBCC *
+
+However, there are some potential downsides to this simplification. Bias toward a particular class is fixed,
+and skill level no longer depends on the ground-truth class. The class proportions distribution is also omitted
+in both \cite{hovy2013learning} and the accompanying published software implementation, which
+could lead to reduced performance when classes are highly imbalanced. 
+In our experiments, we compare MACE to both standard IBCC and our proposed method, BAC to illustrate the 
+types of situation where each approach may be advantageous. 
 
 \subsection{Clustering Methods}
 

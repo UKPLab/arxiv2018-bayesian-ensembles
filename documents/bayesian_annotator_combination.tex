@@ -48,7 +48,7 @@
 
 \title{ 
 %A Bayesian Method for Vetting and Combining Crowds of Text Annotators
-A Bayesian Method for Obtaining Valid Text Annotations from Crowdsourced Labels
+A Bayesian Method for Combining Multiple Unreliable Text Annotators
 }
 
 \author{\IEEEauthorblockN{Anonymous}
@@ -72,6 +72,22 @@ Email: anonymous}
 \maketitle
 
 \begin{abstract}
+A common task in NLP is sequence labelling, which is performed by both human annotators to 
+produce training data and by automatic classifiers that extract information from text.
+However, different annotators can often disagree and may have highly varying levels of reliability,
+particularly when crowdsourcing is used to annotate spans of text. 
+High error rates can be mitigated by combining annotations from multiple annotators,
+a technique that is also used by ensembles of classifiers to boost performance.
+Existing approaches that model the biases and error rates of annotators have been shown to 
+improve over simple heuristics such as majority voting. However, existing methods
+ignore the sequential nature of text span annotations and may therefore underperform.
+We propose a new Bayesian technique to combined multiple annotators of differing reliability 
+and make the software available publicly. 
+Using a series of simulations, we show how several different probabilistic
+and heuristic approaches perform under different conditions. 
+We illustrate how our approach can improve sequential classification performance on a 
+real-world argumentation mining task by using it to combine both human annotators and 
+an ensemble of automated classifiers.
 \end{abstract}
 
 % For peer review papers, you can put extra information on the cover
