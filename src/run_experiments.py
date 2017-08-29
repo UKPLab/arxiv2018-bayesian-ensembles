@@ -5,8 +5,6 @@ Created on Oct 19, 2016
 '''
 from data.data_generator import DataGenerator
 from evaluation.experiment import Experiment
-import cProfile
-import os
 
 #profile_out = 'output/profiler/stats'
 
@@ -23,12 +21,12 @@ acc_exp = '../config/acc_experiment.ini'
 
 #cProfile.run('Experiment(dataGen, acc_exp ).run_config()', profile_out+'/test')
 
-#Experiment(dataGen, '../config/class_bias_experiment.ini').run()
+Experiment(dataGen, '../config/class_bias_experiment.ini').run()
 Experiment(dataGen, '../config/crowd_size_experiment.ini').run()
 Experiment(dataGen, '../config/short_bias_experiment.ini').run()
-Experiment(dataGen, '../config/doc_length_experiment.ini').run()
-Experiment(dataGen, '../config/group_ratio_experiment.ini').run()
-Experiment(dataGen, acc_exp).run()
+#Experiment(dataGen, '../config/doc_length_experiment.ini').run()
+#Experiment(dataGen, '../config/group_ratio_experiment.ini').run()
+#Experiment(dataGen, acc_exp).run()
 
 
 if __name__ == '__main__':
