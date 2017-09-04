@@ -4,24 +4,16 @@ Created on Oct 25, 2016
 @author: Melvin Laux
 '''
 
-from data.data_generator import DataGenerator
-from baselines.majority_voting import MajorityVoting
-from evaluation.experiment import Experiment
-from baselines.clustering import Clustering
 from data.load_data import load_crowdsourcing_data
+from algorithm import bac
+import numpy as np
 
-#generator = DataGenerator('config/data.ini')
+annos, doc_start = load_crowdsourcing_data()
 
-#gt, annos, _ = generator.generate_dataset(num_docs=2, doc_length=10, save_to_file=True)
+alg = bac.BAC(L=3, K=annos.shape[1])
+probs = alg.run(annos, doc_start)
 
-#e = Experiment(generator, 'config/experiment.ini')
-
-#result = e.run_config()
-
-load_crowdsourcing_data()
-
-
-
+np.savetxt('../data/crowdsourcing/probs.csv', probs, fmt='%s', delimiter=',')
 
 
 if __name__ == '__main__':

@@ -57,20 +57,26 @@ def load_crowdsourcing_data():
     for i in xrange(1,50):
         convs[i] = convert_crowdsourcing
     
-    df_from_each_file = (pd.read_csv(f, sep=',', header=None, skiprows=1, converters=convs) for f in all_files)
-    concatenated = pd.concat(df_from_each_file, ignore_index=True, axis=1).as_matrix()
+    df_from_each_file = [pd.read_csv(f, sep=',', header=None, skiprows=1, converters=convs) for f in all_files]
+    concatenated = pd.concat(df_from_each_file, ignore_index=False, axis=1).as_matrix()
+    
+    concatenated = np.delete(concatenated, 25, 1);
     
     annos = concatenated[:,1:]
     
     doc_start = np.zeros((annos.shape[0],1))
     doc_start[0] = 1
     
+    
+    
     for i in xrange(1,annos.shape[0]):
-        if '_00' in str(annos[i,0]):
+        if '_00' in str(concatenated[i,0]):
             doc_start[i] = 1
     
     np.savetxt('../data/crowdsourcing/annos.csv', annos, fmt='%s', delimiter=',')
     np.savetxt('../data/crowdsourcing/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    
+    return annos, doc_start
 
 if __name__ == '__main__':
     pass
