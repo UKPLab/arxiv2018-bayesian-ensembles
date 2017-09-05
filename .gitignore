@@ -6,6 +6,7 @@ documents/bayesian_annotator_combination.synctex.gz
 documents/bayesian_annotator_combination.log
 documents/bayesian_annotator_combination.aux
 documents/bayesian_annotator_combination.blg
+output/data/*
 *.dat.out
 *.pyc
 *.pyo
