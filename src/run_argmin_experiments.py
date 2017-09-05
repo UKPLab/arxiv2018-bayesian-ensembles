@@ -5,19 +5,24 @@ Created on Aug 8, 2017
 '''
 from evaluation.experiment import Experiment
 from data import load_data
-
+import numpy as np
 
 exp = Experiment(None, None)
-exp.methods = ['ibcc', 'mace', 'majority']
+exp.methods = ['bac', 'clustering', 'ibcc', 'mace', 'majority']
 
 gt, annos, doc_start = load_data.load_argmin_data()
 
 exp.save_results = True
 exp.num_classes = 3
 
-results  = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin/annos.csv')
+results, preds = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin/annos.csv')
 
-results.dump('../output/argmin/')
+
+np.savetxt('../output/argmin/result', results, fmt='%s', delimiter=',')
+np.savetxt('../output/argmin/pred', preds, fmt='%s', delimiter=',')
+
+results.dump('../output/argmin/results')
+preds.dump('../output/argmin/preds')
 
 if __name__ == '__main__':
     pass
