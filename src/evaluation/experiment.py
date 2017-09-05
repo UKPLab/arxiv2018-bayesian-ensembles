@@ -169,6 +169,12 @@ class Experiment(object):
     
     def calculate_scores(self, agg, gt, probs, doc_start):
         
+        
+        agg = agg[gt!=-1]
+        probs = probs[gt!=-1]
+        doc_start = doc_start[gt!=-1]
+        gt = gt[gt!=-1]
+        
         result = -np.ones((9,1))
         
         result[7] = metrics.num_invalid_labels(agg, doc_start)
