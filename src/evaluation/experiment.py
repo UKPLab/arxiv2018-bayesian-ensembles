@@ -14,6 +14,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import metrics
 import glob
+from src.baselines.hmm import HMM_crowd
+from src.baselines.util import crowd_data
+from baselines.util import crowdlab, instance
 
 class Experiment(object):
     '''
@@ -158,9 +161,41 @@ class Experiment(object):
                 alg = bac.BAC(L=3, K=annotations.shape[1])
                 probs = alg.run(annotations, doc_start)
                 agg = probs.argmax(axis=1)
-                    
+                       
+            if self.methods[method_idx] == 'HMM_crowd':
+                sentences = []
+                crowd_labels = []
+                for i in range(annotations.shape[0]):
+                    if doc_start[i]:
+                        sentence = []
+                        sentence.append(instance([], 0))
+                        sentences.append(sentence)
+                        crowd_labs = []
+                        for worker in range(annotations.shape[1]):
+                            worker_labs = crowdlab(worker, len(sentences) - 1, [int(annotations[i, worker])])
+                
+                            crowd_labs.append(worker_labs)
+                        crowd_labels.append(crowd_labs)
+                        
+                    else:
+                        sentence.append(instance([], 0))
+                        for worker in range(annotations.shape[1]):
+                            crowd_labs[worker].sen.append(int(annotations[i,worker]))
+                
+                data = crowd_data(sentences, crowd_labels)
+                hc = HMM_crowd(3, 1, data, None, None, vb=[0.1, 0.1], ne=1)
+                hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
+                hc.em(20)
+                hc.mls()              
+                agg = np.array(hc.res).flatten() 
+                probs = []
+                for sentence_post_arr in hc.sen_posterior:
+                    for tok_post_arr in sentence_post_arr:
+                        probs.append(tok_post_arr)
+                probs = np.array(probs)
+            
             scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth, probs, doc_start)
-            predictions[:,method_idx] = agg.flatten()
+            predictions[:,method_idx] = agg.flatten()            
             
             print '...done'
             
