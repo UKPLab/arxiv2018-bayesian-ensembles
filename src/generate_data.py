@@ -4,13 +4,15 @@ Created on Oct 25, 2016
 @author: Melvin Laux
 '''
 
-from data.load_data import load_crowdsourcing_data
+from data.load_data import load_crowdsourcing_data, load_argmin_data
 from algorithm import bac
 from baselines import majority_voting
 import numpy as np
 
 # load data
 annos, doc_start = load_crowdsourcing_data()
+load_argmin_data()
+
 
 # run majority voting
 base = majority_voting.MajorityVoting(annos, 3)
