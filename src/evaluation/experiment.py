@@ -186,7 +186,7 @@ class Experiment(object):
                 hc = HMM_crowd(3, 1, data, None, None, vb=[0.1, 0.1], ne=1)
                 hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
                 hc.em(20)
-                hc.mls()              
+                hc.mls()
                 agg = np.array(hc.res).flatten() 
                 probs = []
                 for sentence_post_arr in hc.sen_posterior:
@@ -194,8 +194,8 @@ class Experiment(object):
                         probs.append(tok_post_arr)
                 probs = np.array(probs)
             
-            scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth, probs, doc_start)
-            predictions[:,method_idx] = agg.flatten()            
+            scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth.flatten(), probs, doc_start)
+            predictions[:,method_idx] = agg.flatten()
             
             print '...done'
             

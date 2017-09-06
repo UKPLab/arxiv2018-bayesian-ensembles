@@ -20,5 +20,10 @@ from evaluation.experiment import Experiment
 
 if __name__ == '__main__':
     dataGen = DataGenerator('./config/data.ini', seed=42)
+    Experiment(dataGen, './config/nguyen_acc_experiment.ini').run()
     Experiment(dataGen, './config/nguyen_class_bias_experiment.ini').run()
+    Experiment(dataGen, './config/nguyen_crowd_size_experiment.ini').run()
+    Experiment(dataGen, './config/nguyen_doc_length_experiment.ini').run()
+    Experiment(dataGen, './config/nguyen_group_ratio_experiment.ini').run()
+    Experiment(dataGen, './config/nguyen_short_bias_experiment.ini').run()
     

@@ -226,18 +226,18 @@ class WorkerModel:
                 if true_lab == lab:
                     return self.cv[w][0]
                 else:
-                    return 1 - self.cv[w][0]
+                    return (1 - self.cv[w][0]) / float(self.n - 1)
             else:
                 if true_lab == lab:
                     return self.cv[w][1]
                 else:
-                    return 1 - self.cv[w][1]
+                    return (1 - self.cv[w][1]) / float(self.n - 1)
 
         elif self.rep == 'cv':
             if true_lab == lab:
                 return self.cv[w][true_lab]
             else:
-                return 1 - self.cv[w][true_lab]
+                return (1 - self.cv[w][true_lab]) / float(self.n - 1)
         elif self.rep == 'cm_sage':
             return self.cm[w][true_lab][lab]
         else:
