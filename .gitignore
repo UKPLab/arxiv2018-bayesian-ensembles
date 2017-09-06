@@ -11,3 +11,6 @@ output/data/*
 *.pyc
 *.pyo
 
+output/nguyen_class_bias_exp_25
+**/.swp
+**/*.swp
