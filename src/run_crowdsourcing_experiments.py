@@ -20,7 +20,7 @@ num_annos = annos.shape[1]
 l = range(num_annos)
 
 exp = Experiment(None, None)
-exp.methods = ['bac', 'ibcc', 'mace', 'majority']
+exp.methods = ['mace', 'majority']
 exp.num_classes = 3
 
 
@@ -31,11 +31,14 @@ for k in xrange(3, 25, 3):
         
         output_dir = '../output/crowdsourcing/k' + str(k) + '/run' + str(run) + '/'
         subannos = annos[:, it.next()]
+        subannos = subannos.astype(str)
+        subannos[subannos == '-1.0'] = ''
         
         if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
+                
         np.savetxt(output_dir + 'annos.csv', subannos, fmt='%s', delimiter=',')
-        results, preds = exp.run_methods(annos, gold, doc_start[:, None], -666, output_dir + 'annos.csv')
+        results, preds = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos.csv')
         np.savetxt(output_dir + 'results.csv', results, fmt='%s', delimiter=',')
         np.savetxt(output_dir + 'preds.csv', preds, fmt='%s', delimiter=',')
 

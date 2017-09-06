@@ -130,8 +130,8 @@ class Experiment(object):
                 
             if self.methods[method_idx] == 'mace':
                 
-                devnull = open(os.devnull, 'w')
-                subprocess.call(['java', '-jar', '../MACE/MACE.jar', '--distribution', '--prefix', '../output/data/mace', anno_path], stdout = devnull, stderr = devnull)
+                #devnull = open(os.devnull, 'w')
+                subprocess.call(['java', '-jar', '../MACE/MACE.jar', '--distribution', '--prefix', '../output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
                 
                 result = np.genfromtxt('../output/data/mace.prediction')
                     
