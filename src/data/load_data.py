@@ -42,15 +42,15 @@ def load_argmin_data():
     doc_start[np.where(concatenated[:, 0] == 1)] = 1
     
     np.savetxt('../data/argmin/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../data/argmin/gt.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../data/argmin/doc_start.csv', annos, fmt='%s', delimiter=',')
+    np.savetxt('../data/argmin/gt.csv', gt, fmt='%s', delimiter=',')
+    np.savetxt('../data/argmin/doc_start.csv', doc_start, fmt='%s', delimiter=',')
 
     return gt, annos, doc_start
 
 
 def load_crowdsourcing_data():
     path = '../data/crowdsourcing/'
-    all_files = glob.glob(os.path.join(path, "*.csv"))
+    all_files = glob.glob(os.path.join(path, "exported*.csv"))
     print all_files
     
     convs = {}
@@ -73,8 +73,8 @@ def load_crowdsourcing_data():
         if '_00' in str(concatenated[i,0]):
             doc_start[i] = 1
     
-    np.savetxt('../data/crowdsourcing/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../data/crowdsourcing/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    np.savetxt('../data/crowdsourcing/gen/annos.csv', annos, fmt='%s', delimiter=',')
+    np.savetxt('../data/crowdsourcing/gen/doc_start.csv', doc_start, fmt='%s', delimiter=',')
     
     return annos, doc_start
 

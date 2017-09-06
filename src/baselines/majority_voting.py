@@ -43,7 +43,8 @@ class MajorityVoting(object):
         
             # count all votes
             for j in xrange(self.num_annotators):
-                votes[i, int(self.annotations[i,j])] += self.accuracies[j]
+                if int(self.annotations[i,j]) >= 0:
+                    votes[i, int(self.annotations[i,j])] += self.accuracies[j]
         
             # determine all labels with most votes
             winners = [(j,votes[i,j]) for j in xrange(self.num_labels) if votes[i,j] == votes[i,:].max()]
