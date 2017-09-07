@@ -20,7 +20,7 @@ num_annos = annos.shape[1]
 l = range(num_annos)
 
 exp = Experiment(None, None)
-exp.methods = ['mace', 'majority']
+exp.methods = ['bac', 'ibcc', 'mace', 'majority']
 exp.num_classes = 3
 
 
