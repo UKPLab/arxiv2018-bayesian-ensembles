@@ -14,8 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import metrics
 import glob
-from src.baselines.hmm import HMM_crowd
-from src.baselines.util import crowd_data
+from baselines.hmm import HMM_crowd
+from baselines.util import crowd_data
 from baselines.util import crowdlab, instance
 
 class Experiment(object):
