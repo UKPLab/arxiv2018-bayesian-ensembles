@@ -12,11 +12,10 @@ import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
-import metrics
+import evaluation.metrics as metrics
 import glob
-from src.baselines.hmm import HMM_crowd
-from src.baselines.util import crowd_data
-from baselines.util import crowdlab, instance
+from baselines.hmm import HMM_crowd
+from baselines.util import crowd_data, crowdlab, instance
 
 class Experiment(object):
     '''
@@ -159,6 +158,7 @@ class Experiment(object):
             if self.methods[method_idx] == 'bac':
                 
                 alg = bac.BAC(L=3, K=annotations.shape[1])
+                alg.verbose = True
                 probs = alg.run(annotations, doc_start)
                 agg = probs.argmax(axis=1)
                        

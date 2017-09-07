@@ -53,12 +53,14 @@ class BAC(object):
         self.lnA[[1,3],0] = np.log(np.nextafter(0,1))
         #self.lnA[1,0] = np.nextafter(0,1)
         
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 2)[:,:,None,:])
+        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])
         self.lnPi[:,0,[3,1],:] = np.log(np.nextafter(0,1))
         
         
         self.max_iter = max_iter
         self.eps = eps
+        
+        self.verbose = False # can change this if you want progress updates to be printed
         
             
     def run(self, C, doc_start):
@@ -77,6 +79,9 @@ class BAC(object):
         self.q_t = np.ones((C.shape[0], self.L))
         
         while not self.converged():
+            
+            if self.verbose:
+                print "BAC iteration %i in progress" % self.iter
             
             self.iter += 1
             
@@ -103,6 +108,8 @@ class BAC(object):
     
             
     def converged(self):
+        if self.verbose:
+            print "Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t)))
         return ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps)
     
     
