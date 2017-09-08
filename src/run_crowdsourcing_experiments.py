@@ -6,7 +6,7 @@ Created on Sep 4, 2017
 import numpy as np
 import itertools
 import os
-from random import shuffle 
+from random import shuffle
 from evaluation.experiment import Experiment
 
 # load data
@@ -20,24 +20,22 @@ num_annos = annos.shape[1]
 l = range(num_annos)
 
 exp = Experiment(None, None)
-exp.methods = ['majority']
+exp.methods = ['bac', 'ibcc', 'mace', 'majority']
 exp.num_classes = 3
-
 
 for k in xrange(3, 25, 3):
     shuffle(l)
     it = itertools.combinations(l, k)
     for run in xrange(10):
-        
         output_dir = '../output/crowdsourcing/k' + str(k) + '/run' + str(run) + '/'
         subannos = annos[:, it.next()]
-        subannos = subannos.astype(str)
-        subannos[subannos == '-1.0'] = ''
-        
+        subannos_str = subannos.astype(str)
+        subannos_str[subannos_str == '-1.0'] = ''
+
         if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-                
-        np.savetxt(output_dir + 'annos.csv', subannos, fmt='%s', delimiter=',')
+
+        np.savetxt(output_dir + 'annos.csv', subannos_str, fmt='%s', delimiter=',')
         results, preds = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos.csv')
         np.savetxt(output_dir + 'results.csv', results, fmt='%s', delimiter=',')
         np.savetxt(output_dir + 'preds.csv', preds, fmt='%s', delimiter=',')

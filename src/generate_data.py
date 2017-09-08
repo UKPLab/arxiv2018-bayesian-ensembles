@@ -11,8 +11,6 @@ import numpy as np
 
 # load data
 annos, doc_start = load_crowdsourcing_data()
-load_argmin_data()
-
 
 # run majority voting
 base = majority_voting.MajorityVoting(annos, 3)
