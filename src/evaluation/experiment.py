@@ -307,8 +307,12 @@ class Experiment(object):
         
         
     def make_plot(self, x_vals, y_vals, x_ticks_labels, ylabel):
+        
+        styles = ['-', '--', '-.', ':']
+        markers = ['o', 'v', 's', 'p', '*']
+        
         for j in xrange(len(self.methods)):
-            plt.errorbar(x_vals, np.mean(y_vals[:, j, :], 1), yerr=np.std(y_vals[:, j, :], 1), label=self.methods[j])
+            plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=self.methods[j], ls=styles[j%4], marker=markers[j%5])
                   
         plt.legend(loc='best')
         
@@ -339,7 +343,7 @@ class Experiment(object):
         
             if save_plot:
                 print 'Saving plot...'
-                plt.savefig(self.output_dir + 'plot_' + self.SCORE_NAMES[i] + '.png') 
+                plt.savefig(output_dir + 'plot_' + self.SCORE_NAMES[i] + '.png') 
                 plt.clf()
         
             if show_plot:
@@ -351,7 +355,7 @@ class Experiment(object):
                 
                 if save_plot:
                     print 'Saving plot...'
-                    plt.savefig(self.output_dir + 'plot_' + self.SCORE_NAMES[i] + '_zoomed' + '.png') 
+                    plt.savefig(output_dir + 'plot_' + self.SCORE_NAMES[i] + '_zoomed' + '.png') 
                     plt.clf()
         
                 if show_plot:

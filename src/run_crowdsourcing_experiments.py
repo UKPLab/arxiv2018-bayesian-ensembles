@@ -24,11 +24,10 @@ exp.methods = ['bac', 'ibcc', 'mace', 'majority']
 exp.num_classes = 3
 
 
-for k in xrange(2, 25, 2):
+for k in xrange(3, 25, 3):
     shuffle(l)
     it = itertools.combinations(l, k)
     for run in xrange(10):
-        
         output_dir = '../output/crowdsourcing/k' + str(k) + '/run' + str(run) + '/'
         subannos = annos[:, it.next()]
         subannos_str = subannos.astype(str)

@@ -171,6 +171,8 @@ class DataGenerator(object):
         doc_start = np.zeros((num_docs*int(doc_length),1))
         doc_start[range(0,num_docs*doc_length,doc_length)] = 1
         
+        np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
+        
         return ground_truth, annotations, doc_start
 
 
