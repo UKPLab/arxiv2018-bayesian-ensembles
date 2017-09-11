@@ -176,15 +176,13 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, outsideidx=-1):
                 
                 if doc_start[t]:
                     flags[t, -1, l] = 0
-                    if l_prev!=0: # don't repeatedly do this for each value of l_prev
-                        continue
-                    lnS[t, -1, l] += lnA[-1, l] + np.sum((C[t,:]==0) * lnPi[l, C[t,:]-1, outsideidx,
+                    if l_prev==0: # only add these values once
+                        lnS[t, -1, l] += lnA[-1, l] + np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, outsideidx,
                                                                              np.arange(K)])
                 else:
                     flags[t, l_prev, l] = 0
                     lnS[t, l_prev, l] += lnR_[t-1, l_prev] + lnA[l_prev, l]
-                
-                    lnS[t, l_prev, l] += np.sum((C[t,:]==0) * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])   
+                    lnS[t, l_prev, l] += np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])   
 #                 for k in xrange(K):
 #                     
 #                     if doc_start[t]:
