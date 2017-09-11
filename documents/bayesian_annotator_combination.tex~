@@ -5,24 +5,49 @@
 %\documentclass{sig-alternate-05-2015}
 %\documentclass[a4paper]{article}
 % \documentclass[12pt,a4paper]{article}
-\input{reportlatexsettings}
+
+%\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+%\usepackage[hmargin=2.9cm,vmargin=2.9cm]{geometry}
+
+%\usepackage{times}
+\usepackage{graphicx}
+%\usepackage{tabularx}
+%\usepackage[toc]{appendix}
+%\usepackage{epsfig}
+
+\usepackage[fleqn]{amsmath}
+\usepackage{amssymb}
+\usepackage{amstext}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+
+\usepackage{cite}
+\usepackage{algorithm2e}
+\usepackage{array}
+ \usepackage[caption=false,font=footnotesize]{subfig}
+% \usepackage{fixltx2e}
+ %\usepackage{stfloats}
+ \usepackage{url}
+
+\newcommand{\bs}{\boldsymbol}  
+\newcommand{\wrtd}{\mathrm{d}}
+
+%\usepackage{booktabs}
+
+\makeatletter
+\makeatother %some sort of hack related to the symbol @
+
+% \usepackage{breakcites}
+% \usepackage{etoolbox}
+% \patchcmd{\@citex}{,}{;}{}{}
+
+\DeclareMathOperator*{\argmax}{\arg\!\max\!} %argmax operator
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \title{ 
-Bayesian Heatmaps: Probabilistic Classification with Multiple Unreliable Information Sources
-%Bayesian Heatmaps: Discrete Density Estimation from Unreliable %, Noisy and Biased 
-% Information Sources
-%Bayesian Heat-maps: Crowdsourcing a Gaussian Process Classifier
-% Title is for a combined paper, but adds more focus on the general method.
-% Application paper:
-% Bayesian Situation Awareness Heatmaps: Fusing Social Media Reports from an
-% Unreliable Crowd
-% Method paper: GP Classification with Unreliable Training Data.
-% Combined paper: Learning a GP Classifier from Crowdsourced Data
-% Learning a GP Classifier with an Unreliable Crowd
-% Trust-enabled GP Classifiers: Crowdsourcing for Situation Awareness
-% Learning a GP Classifier with a Crowd of Annotators
+A Bayesian Method for Vetting and Combining Crowds of Text Annotators
 }
 
 \author{\IEEEauthorblockN{Anonymous}
@@ -41,209 +66,12 @@ Anonymous \\
 Email: anonymous}
 }
 
-%\author{\IEEEauthorblockN{Edwin Simpson}
-%\IEEEauthorblockA{Department of Engineering Science, \\
-%University of Oxford, UK, and \\
-%Department of Computer Science, \\
-%Technische Universit{\"a}t Darmstadt, Germany. \\
-%Email: edwin.simpson@gmail.com}
-%\and
-%\IEEEauthorblockN{Steven Reece}
-%\IEEEauthorblockA{Department of Engineering Science, \\
-%University of Oxford, UK. \\
-%Email: reece@robots.ox.ac.uk}
-%\and
-%% BROOKE
-%\IEEEauthorblockN{Stephen J. Roberts}
-%\IEEEauthorblockA{Oxford MAN Institute and \\
-%Department of Engineering Science, \\
-%University of Oxford, UK. \\
-%Email: sjrob@robots.ox.ac.uk}
-%}
-
-% conference papers do not typically use \thanks and this command
-% is locked out in conference mode. If really needed, such as for
-% the acknowledgment of grants, issue a \IEEEoverridecommandlockouts
-% after \documentclass
-
-% for over three affiliations, or if they all won't fit within the width
-% of the page, use this alternative format:
-% 
-%\author{\IEEEauthorblockN{Michael Shell\IEEEauthorrefmark{1},
-%Homer Simpson\IEEEauthorrefmark{2},
-%James Kirk\IEEEauthorrefmark{3}, 
-%Montgomery Scott\IEEEauthorrefmark{3} and
-%Eldon Tyrell\IEEEauthorrefmark{4}}
-%\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Electrical and Computer Engineering\\
-%Georgia Institute of Technology,
-%Atlanta, Georgia 30332--0250\\ Email: see http://www.michaelshell.org/contact.html}
-%\IEEEauthorblockA{\IEEEauthorrefmark{2}Twentieth Century Fox, Springfield, USA\\
-%Email: homer@thesimpsons.com}
-%\IEEEauthorblockA{\IEEEauthorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
-%Telephone: (800) 555--1212, Fax: (888) 555--1212}
-%\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
-
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-
-% COMPLETE
-
-% Abstract: switch emphasis/ordering to talk about 
-%probabilistic classification, how this is useful for situation awareness mapping/classifying the situation on the ground using heatmaps/
-% these maps can be generated using probabilistic classification techniques such as 
-% GPs that can interpolate between observations and fold in background knowledge, giving
-% not only estimates of probability across an entire area, but also providing a measure of
-% uncertainy. Often in these situations, the information comes form multiple, unreliable 
-% sources. For example...
-% Current methods for probbilistic classifiaction do not provide a way to combine this
-% unreliable information into a single heatmap.
-
-% title to include probabilistic classification, multiple
-% Section II: therefore... given a set of Nstar locations, Xstar
-
-% The set of hyperparameters theta (cut the = {l,...})
-% Remove "and a function scale"
-% remove "is" just after equation 7
-
-% method 4th paragraph: reference to consuion matrices in other papers. 
-
-% remove/Move the sentence about learning hyperparameters to the next section.
-
-% At the paragraph beginning "the gaussian process means that"... delete up to f_j = . Replace with "we write at the inputs x, f_j =" 
-
-% In equation (11) we can remove reference to Rx. 
-%After equation (12) 
-%Equation 14 remove Rx
-
-% rho = { rho... missing commma
-
-% Eq 15... the p(tx=j, c) things should be q(). Remove Rx
-
-% Last paragraph of B.Last sentence: remove "which are expectations..."
-
-% "which performs no interpolation... between spatial points"
-% "IBCC +GP) in which the class outputs of IBCC are used as training label for the GP classifier"
-
-% Correct line 13 -- the diagonals of alpha, also further donw, alpha_j l
-
-% delte " Each method was THE run
-
-%  Class 1 instead of 0?
-
-% large error bars show the the 
-
-% Remove word consistently
-
-% with more than 700 labels... add "GP and IBCC+GP"
-
-% "bias the density function" remove "incorrectly"
-% "damage level 3" " significant structural damage"
-% remove "a", "buildings with major damage"
-
-%Figure 12 (level 3)
-
-% "to toward"
-
-% remove "and is therefore considered reliable"
-%"does not contain reports stating that no emergency"
-
-% "the strength of correlation"
-
-% Density estimation --> probabilistic classification
-
-% Change y axis labels to AUC difference
-
-% Remove "zones"
-
-% "has an auc"
-
-% To illustrate how our method can be used... we first plot the spatial distribution.
-
-% Can also be used to identify regions where information is lacking and further reconn is necessary
-
-% Some of the posterior parameters are strictly speaking variational parameters, or at least variational posterior parameters
-
-% vector of probabilities instead of density function. Drop the functional form of rho and talk only about probabilities at particular points -- simplify notation remove multiple \rhos.
-
-%   Nj things should use square brackets for vector notation. There may be others like this too. 
-
-% length scale = 18 (include units)
-
-% Paragraph 3 of intro:  first two sentences need to say what a heatmap is. Visualisation of the intensity or probability of some variable in geographic space, using colours.
-
-% Cut the references to cox processes and poisson -- no details, make it clear that
-% this is related work and not the basis of our work.
-
-% Rephrase: "differs from satellite labelling task because we are now taking different memers of the public into account who have different motivations, and many of the reports may not be relevant"
-
-% " Unfortunately we do not have ground truth labels, so we defined some..."
-
-% Why did we choose the values in the synthetic dataset. These are typical values in situation x. 
-
-% Move paragraph to intro "In scenarios such as disaster response...". Perhaps mention this when we talk about GP. "Damage is typically spread over a region" Where damage occurs, this is typically widespread, with whole areas affected to a similar degree, so that a single report gives an indication of the likely state in the whole area. As we move FURTHER away from the report location.
-
-% REmove stuff about max likelihood length scale from earlier. 
-
-% Add justification about highly nonconjugate relationship between prior over l and rest of the model. 
-
-% TODO
-
-%check tense consistency in the experiments
-
-% CUTTING DOWN:
-
-% PUT anything that is cut into a supplementary material paper that will act as an appendix.
-
-% References that give clues about authors.
-
-% Merging some of noise and bias. Summarise how similar the results are between noise and bias.
-
-% Remove sparse reports plot?
-
-% Unnecessary derivations -- to appendix/supplementary material.
-
-%CUTS MADE:
-
-% cutting some explanation about length scales
-
-% FOR LONG PAPER:
-
-% Flesh out the discussion of learning length scale from other datasets. -- could cut from conference paper. Take out the ML bit. More detail about the assumptions made here.
-
-% for long paper: shorten "the spread of emergencies across an earthquake area is similar to the distrubtion of building damage".
-
-% Abstract:
-
-%Social media enables members of the public to post realtime text messages, photographs and 
-%videos describing events taking place close to them. While many of these reports may be 
-%irrelevant, social media can provide a stream of up-to-date information across a wide area when 
-%other sources are limited. Information about a region of interest may also be contained in other %types of unstructured data, such as satellite images. 
-Unstructured data from sources such as social media and aerial imagery can provide 
-valuable up-to-date information for learning about the situation in an area of interest.
-Mining these different information sources could bring major benefits to applications such as situation awareness in disaster zones and mapping the spread of diseases.
-Such applications depend on classifying the situation across a region of interest, which can be
-depicted as a ``heatmap". By annotating the unstructured data using crowdsourcing or automated feature extraction, it is possible to obtain classifications at specific locations, but these are typically sparse and contain many errors.
-Probabilistic techniques for generating heatmaps, such as Gaussian process classifiers, interpolate between sparse observations, fold in background knowledge, and provide estimates of parameter uncertainty that indicate where more information may be needed. However, current methods fail to account for differing relevance, error rates and bias when combining information from multiple, heterogeneous, data sources or crowds of annotators. 
-
-In this paper, we propose a novel Bayesian approach that models the reliability of each information source, enabling us to learn a spatio-temporal Gaussian Process classifier by aggregating data from sources with varying reliability and relevance. 
-%Our method integrates Bayesian classifier combination techniques to learn a reliability model for 
-%each information source without the need for 
-Our method does not require ground truth training data, and can make predictions at any location in an area of interest given only sparse observations.
-%enable 
-%We thereby provide a tool for mining sparse, heterogeneous, crowdsourced data, which can infer 
-%the state at any location in an area of interest and quantify the uncertainty in that state.
-%
-%, such as those from experienced first responders attending a disaster zone.
- We show empirically that our approach effectively deals with noisy and biased data sources, and that simultaneously inferring reliability and transferring information between neighbouring reports leads to more accurate predictions.
- We demonstrate our method on two real-world problems from disaster response, 
- showing how our approach effectively reduces the cost of crowdsourcing, handles data sparsity,
-and can be used to generate heatmap visualisations.
- % Finally, we illustrate the use of this approach for presenting spatial, probabilistic ``heatmap" 
- %visualisations to improve situation awareness.
- \end{abstract}
+\end{abstract}
 
 % For peer review papers, you can put extra information on the cover
 % page as needed:

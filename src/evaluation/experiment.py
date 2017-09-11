@@ -165,8 +165,8 @@ class Experiment(object):
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels)
                 alg.verbose = True
                 alg.outsideidx = 1
-                probs = alg.run(annotations, doc_start)
-                agg = probs.argmax(axis=1)
+                probs, agg = alg.run(annotations, doc_start)
+                #agg = probs.argmax(axis=1)
     
             if self.methods[method_idx] == 'HMM_crowd':
                 sentences = []
@@ -201,7 +201,7 @@ class Experiment(object):
                 probs = np.array(probs)
             
             scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth.flatten(), probs, doc_start)
-            predictions[:,method_idx] = agg.flatten()
+            predictions[:, method_idx] = agg.flatten()
             
             print '...done'
             
@@ -227,9 +227,9 @@ class Experiment(object):
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
-        auc_score = skm.roc_auc_score(gt==0, agg==0) * np.sum(gt==0)
-        auc_score += skm.roc_auc_score(gt==1, agg==1) * np.sum(gt==1)
-        auc_score += skm.roc_auc_score(gt==2, agg==2) * np.sum(gt==2)
+        auc_score = skm.roc_auc_score(gt==0, probs[:, 0]) * np.sum(gt==0)
+        auc_score += skm.roc_auc_score(gt==1, probs[:, 1]) * np.sum(gt==1)
+        auc_score += skm.roc_auc_score(gt==2, probs[:, 2]) * np.sum(gt==2)
         result[4] = auc_score / float(gt.shape[0])
         result[5] = skm.log_loss(gt, probs, eps=1e-100)
         result[6] = metrics.abs_count_error(agg, gt)

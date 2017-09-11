@@ -53,6 +53,9 @@ def convert_crowdsourcing(x):
 def load_argmin_data():    
 
     path = '../data/argmin/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+            
     all_files = glob.glob(os.path.join(path, "*.dat.out"))
     df_from_each_file = (pd.read_csv(f, sep='\t', usecols=(0, 5, 6), converters={5:convert_argmin, 6:convert_argmin}, header=None) for f in all_files)
     concatenated = pd.concat(df_from_each_file, ignore_index=True, axis=1).as_matrix()
@@ -71,6 +74,9 @@ def load_argmin_data():
 def load_argmin_7class_data():    
 
     path = '../data/argmin/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    
     all_files = glob.glob(os.path.join(path, "*.dat.out"))
     df_from_each_file = (pd.read_csv(f, sep='\t', usecols=(0, 5, 6), converters={5:convert_7class_argmin, 
                                                         6:convert_7class_argmin}, header=None) for f in all_files)
@@ -81,14 +87,21 @@ def load_argmin_7class_data():
     doc_start = np.zeros((annos.shape[0], 1))    
     doc_start[np.where(concatenated[:, 0] == 1)] = 1
     
-    np.savetxt('../data/argmin7/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../data/argmin7/gt.csv', gt, fmt='%s', delimiter=',')
-    np.savetxt('../data/argmin7/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    outpath = '../data/argmin7/'
+    if not os.path.isdir(outpath):
+        os.mkdir(outpath)
+    
+    np.savetxt(outpath + 'annos.csv', annos, fmt='%s', delimiter=',')
+    np.savetxt(outpath + 'gt.csv', gt, fmt='%s', delimiter=',')
+    np.savetxt(outpath + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
 
     return gt, annos, doc_start
 
 def load_crowdsourcing_data():
     path = '../data/crowdsourcing/'
+    if not os.path.isdir(path):
+        os.mkdir(path)
+            
     all_files = glob.glob(os.path.join(path, "exported*.csv"))
     print all_files
     
@@ -104,9 +117,7 @@ def load_crowdsourcing_data():
     annos = concatenated[:,1:]
     
     doc_start = np.zeros((annos.shape[0],1))
-    doc_start[0] = 1
-    
-    
+    doc_start[0] = 1    
     
     for i in xrange(1,annos.shape[0]):
         if '_00' in str(concatenated[i,0]):

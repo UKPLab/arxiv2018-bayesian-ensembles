@@ -18,8 +18,8 @@ exp.num_classes = 3
 results, preds = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin/annos.csv')
 
 
-np.savetxt('../output/argmin/result_bac', results, fmt='%s', delimiter=',')
-np.savetxt('../output/argmin/pred_bac', preds, fmt='%s', delimiter=',')
+np.savetxt('../output/argmin/result_bac_viterbi', results, fmt='%s', delimiter=',')
+np.savetxt('../output/argmin/pred_bac_viterbi', preds, fmt='%s', delimiter=',')
 
 #results.dump('../output/argmin/results')
 #preds.dump('../output/argmin/preds')

@@ -43,19 +43,20 @@ class BAC(object):
         self.K = K
         
         self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + \
-                                    20.0 * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+                                    1.0 * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
     
-        self.nu0 = np.ones((L+1, L)) * 20.0
+        self.nu0 = np.ones((L+1, L)) * 1.0
         for inside_label in inside_labels:
-            self.alpha0[:, inside_label, [1,-1], :] = 0.5 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
+            self.alpha0[:, inside_label, [1,-1], :] = 0.1 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
             self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
+        self.nu0[1, 1] += 1.0
         
         # initialise transition and confusion matrices
         self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
         
         self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])
         
-        self.outsideidx = -1 # identifies which true class value is assumed for the label before the start of a document
+        self.before_doc_idx = -1 # identifies which true class value is assumed for the label before the start of a document
         
         self.max_iter = max_iter
         self.eps = eps
@@ -86,7 +87,7 @@ class BAC(object):
             
             # calculate alphas and betas using forward-backward algorithm 
             r_ = forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start, 
-                              self.outsideidx)
+                              self.before_doc_idx)
             lambd = backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start)
             
             # update q_t
@@ -94,17 +95,52 @@ class BAC(object):
             self.q_t = expec_t(r_, lambd)
             
             # update q_t_joint
-            self.q_t_joint = expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.outsideidx)
+            self.q_t_joint = expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
             
             # update E_lnA
             self.lnA, nu = calc_q_A(self.q_t_joint, self.nu0)
             
-            alpha = post_alpha(self.q_t, C, self.alpha0, doc_start, self.outsideidx)
+            alpha = post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
 
             # update E_lnpi
             self.lnPi = calc_q_pi(alpha)
 
-        return self.q_t #, self.most_probable_sequence(C, doc_start)
+        return self.most_probable_sequence(C, doc_start)
+    
+    def most_probable_sequence(self, C, doc_start):
+        # Use Viterbi decoding to ensure we make a valid prediction. There
+        # are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
+        # [[0.41, 0.4, 0.19], [[0.41, 0.42, 0.17]].
+        # Taking the most probable labels results in an illegal sequence of [0, 1]. 
+        # Using most probable sequence would result in [0, 0].
+        
+        lnV = np.zeros((C.shape[0], self.L))
+        prev = np.zeros((C.shape[0], self.L)) # most likely previous states
+                
+        for t in range(0, C.shape[0]):
+            for l in range(self.L):
+                if doc_start[t]:
+                    likelihood_current = np.sum((C[0, :]!=0) * self.lnPi[l, C[0, :]-1, self.before_doc_idx, 
+                                                                         np.arange(self.K)])
+                    lnV[t, l] = self.lnA[self.before_doc_idx, l] + likelihood_current
+                else:
+                    likelihood_current = np.sum((C[t, :]!=0) * self.lnPi[l, C[t, :]-1, C[t-1, :]-1, np.arange(self.K)]) 
+                    p_current = lnV[t-1, :] + self.lnA[:self.L, l] + likelihood_current
+                    lnV[t, l] = np.max(p_current)
+                    prev[t, l] = np.argmax(p_current, axis=0)
+            
+        # decode
+        seq = np.zeros(C.shape[0], dtype=int)
+        pseq = np.zeros((C.shape[0], self.L), dtype=float)
+        
+        for t in range(C.shape[0]-1, -1, -1):
+            if t+1 == C.shape[0] or doc_start[t+1]:
+                seq[t] = np.argmax(lnV[t, :])
+            else:
+                seq[t] = prev[t+1, seq[t+1]]
+            pseq[t, :] = np.exp(lnV[t, :] - logsumexp(lnV[t, :]))
+        
+        return pseq, seq
 
     def converged(self):
         if self.verbose:
@@ -133,7 +169,7 @@ def calc_q_pi(alpha):
     
     return q_pi
     
-def post_alpha(E_t, C, alpha0, doc_start, outsideidx=-1):  # Posterior Hyperparameters
+def post_alpha(E_t, C, alpha0, doc_start, before_doc_idx=-1):  # Posterior Hyperparameters
     
     dims = alpha0.shape
     
@@ -144,13 +180,10 @@ def post_alpha(E_t, C, alpha0, doc_start, outsideidx=-1):  # Posterior Hyperpara
         for l in range(dims[1]): 
             
             counts = ((C==l+1) * doc_start).T.dot(Tj).reshape(-1)    
-            alpha[j, l, outsideidx, :] = alpha0[j, l, outsideidx, :] + counts
+            alpha[j, l, before_doc_idx, :] = alpha0[j, l, before_doc_idx, :] + counts
             
             for m in range(dims[1]): 
-                
-                #counts = ((C==l+1)[1:,:] * np.invert(doc_start[1:]) * (C==m+1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
                 counts = ((C==l+1)[1:,:] * (1-doc_start[1:]) * (C==m+1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
-                
                 alpha[j, l, m, :] = alpha[j, l, m, :] + counts
     
     return alpha
@@ -159,7 +192,7 @@ def expec_t(lnR_, lnLambda):
     r_lambd = np.exp(lnR_ + lnLambda)
     return r_lambd/np.sum(r_lambd,1)[:, None]
     
-def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, outsideidx=-1):
+def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
       
     # initialise variables
     T = lnR_.shape[0]
@@ -175,24 +208,14 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, outsideidx=-1):
             for l in xrange(L):
                 
                 if doc_start[t]:
-                    flags[t, -1, l] = 0
+                    flags[t, before_doc_idx, l] = 0
                     if l_prev==0: # only add these values once
-                        lnS[t, -1, l] += lnA[-1, l] + np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, outsideidx,
+                        lnS[t, -1, l] += lnA[-1, l] + np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, before_doc_idx,
                                                                              np.arange(K)])
                 else:
                     flags[t, l_prev, l] = 0
                     lnS[t, l_prev, l] += lnR_[t-1, l_prev] + lnA[l_prev, l]
                     lnS[t, l_prev, l] += np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])   
-#                 for k in xrange(K):
-#                     
-#                     if doc_start[t]:
-#                         if C[t,k]==0 or l_prev!=0: # ignore unannotated tokens and don't add more than once
-#                             continue
-#                         lnS[t, -1, l] += lnPi[l, C[t,k]-1, -1, k]
-#                     else:
-#                         if C[t,k]==0: # ignore unannotated tokens
-#                             continue
-#                         lnS[t, l_prev, l] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
 
                 if np.any(np.isnan(np.exp(lnS[t,l_prev,:]))):
                     print 'expec_joint_t: nan value encountered for t=%i, l_prev=%i' % (t,l_prev)
@@ -214,7 +237,7 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, outsideidx=-1):
     
     return np.exp(lnS)
 
-def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, outsideidx=-1):
+def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=-1):
     T = C.shape[0]
     L = lnA.shape[0]
     K = lnPi.shape[-1]
@@ -229,36 +252,18 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, outsideidx=-1):
                     mask = C[t,:] != 0
                 else:
                     mask = 1                
-                lnR_[t,l] += initProbs[l] + np.sum(mask * lnPi[l, C[t,:]-1, outsideidx, np.arange(K)])
-#                 
-#                 for k in xrange(K):
-#                     # skip unannotated tokens
-#                     if skip and C[t,k] == 0:
-#                         continue
-#                     lnR_[t,l] += lnPi[l, C[t,k]-1, -1, k]
+                lnR_[t,l] += initProbs[l] + np.sum(mask * lnPi[l, C[t,:]-1, before_doc_idx, np.arange(K)])
             else:
                 if skip:
                     mask = C[t,:] != 0
                 else:
                     mask = 1
                 lnR_[t,l] = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(mask * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
-#                 for l_prev in xrange(L):
-#                     lnR_[t,l] += np.exp(lnR_[t-1,l_prev] + lnA[l_prev,l])
-#                 
-#                 lnR_[t,l] = np.log(lnR_[t,l])
-#                 
-#                 for k in xrange(K):
-#                     # skip unannotated tokens
-#                     if skip and C[t,k] == 0:
-#                         continue
-#                     
-#                     lnR_[t,l] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
         
         # normalise
         lnR_[t,:] = lnR_[t,:] - logsumexp(lnR_[t,:])
             
     return lnR_        
-
         
 def backward_pass(C, lnA, lnPi, doc_start, skip=True):
     T = C.shape[0]
@@ -283,13 +288,6 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
                 lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask * lnPi[l_next, C[t+1,:]-1, C[t,:], 
                                                                          np.arange(K)])
             
-#                 for k in xrange(K):
-#                     # skip unannotated tokens
-#                     if skip and C[t+1,k] == 0:
-#                         continue
-#                 
-#                     lambdaL_next += lnPi[l_next, C[t+1,k]-1, C[t,k] - 1, k]
-
                 lambdaL_next += lnA[l,l_next]                        
                 lambdaL_next_sum[l_next] = lambdaL_next
             
