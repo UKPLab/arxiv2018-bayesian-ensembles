@@ -8,7 +8,6 @@ import numpy as np
 from scipy.misc import logsumexp
 from scipy.special import psi
 
-
 class BAC(object):
     '''
     classdocs
@@ -34,7 +33,7 @@ class BAC(object):
     eps = None
     
 
-    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5):
+    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0]):
         '''
         Constructor
         '''
@@ -43,20 +42,20 @@ class BAC(object):
         self.nscores = L
         self.K = K
         
-        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
-        self.alpha0[:, 0, [1,3], :] = 0.5 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
-        
-        self.nu0 = np.ones((L+1, L))
-        self.nu0[[1,3],0] = np.nextafter(0,1)
+        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + \
+                                    20.0 * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+    
+        self.nu0 = np.ones((L+1, L)) * 20.0
+        for inside_label in inside_labels:
+            self.alpha0[:, inside_label, [1,-1], :] = 0.5 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
+            self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
         
         # initialise transition and confusion matrices
-        self.lnA = np.log(np.ones((L+1, L))/L)
-        self.lnA[[1,3],0] = np.log(np.nextafter(0,1))
-        #self.lnA[1,0] = np.nextafter(0,1)
+        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
         
         self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])
-        self.lnPi[:,0,[3,1],:] = np.log(np.nextafter(0,1))
         
+        self.outsideidx = -1 # identifies which true class value is assumed for the label before the start of a document
         
         self.max_iter = max_iter
         self.eps = eps
@@ -72,7 +71,6 @@ class BAC(object):
         #
         C = C.astype(int) + 1
         
-        
         doc_start = doc_start.astype(bool)
         
         self.iter = 0
@@ -87,7 +85,8 @@ class BAC(object):
             self.iter += 1
             
             # calculate alphas and betas using forward-backward algorithm 
-            r_ = forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start)
+            r_ = forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start, 
+                              self.outsideidx)
             lambd = backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start)
             
             # update q_t
@@ -95,12 +94,12 @@ class BAC(object):
             self.q_t = expec_t(r_, lambd)
             
             # update q_t_joint
-            self.q_t_joint = expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start)
+            self.q_t_joint = expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.outsideidx)
             
             # update E_lnA
             self.lnA, nu = calc_q_A(self.q_t_joint, self.nu0)
             
-            alpha = post_alpha(self.q_t, C, self.alpha0, doc_start)
+            alpha = post_alpha(self.q_t, C, self.alpha0, doc_start, self.outsideidx)
 
             # update E_lnpi
             self.lnPi = calc_q_pi(alpha)
@@ -114,7 +113,10 @@ class BAC(object):
 
 def calc_q_A(E_t, nu0):
     nu = nu0 + np.sum(E_t,0)
-    q_A = (psi(nu).T - psi(np.sum(nu, -1))).T
+    q_A = psi(nu) - psi(np.sum(nu, -1))[:, None]
+    
+    # for last row, use all data points, not just doc starts
+    #q_A[-1, :] = psi(np.sum(nu, 0)) - psi(np.sum(nu))
     
     if np.any(np.isnan(q_A)):
         print 'calc_q_A: nan value encountered!'
@@ -127,10 +129,11 @@ def calc_q_pi(alpha):
     q_pi = np.zeros(dims)
     for s in range(dims[1]): 
         q_pi[:, s, :, :] = psi(alpha[:, s, :, :]) - psi(alpha_sum)
+        #q_pi[:, s, -1, :] = psi(np.sum(alpha[:, s, :, :], 1)) - psi(np.sum(alpha_sum, 1))
     
     return q_pi
     
-def post_alpha(E_t, C, alpha0, doc_start):  # Posterior Hyperparameters
+def post_alpha(E_t, C, alpha0, doc_start, outsideidx=-1):  # Posterior Hyperparameters
     
     dims = alpha0.shape
     
@@ -141,7 +144,7 @@ def post_alpha(E_t, C, alpha0, doc_start):  # Posterior Hyperparameters
         for l in range(dims[1]): 
             
             counts = ((C==l+1) * doc_start).T.dot(Tj).reshape(-1)    
-            alpha[j, l, -1, :] = alpha0[j, l, -1, :] + counts
+            alpha[j, l, outsideidx, :] = alpha0[j, l, outsideidx, :] + counts
             
             for m in range(dims[1]): 
                 
@@ -153,12 +156,10 @@ def post_alpha(E_t, C, alpha0, doc_start):  # Posterior Hyperparameters
     return alpha
 
 def expec_t(lnR_, lnLambda):
-    r_ = np.exp(lnR_)
-    lambd = np.exp(lnLambda)
-    return (r_*lambd)/np.sum(r_*lambd,1)[:, None]
-
+    r_lambd = np.exp(lnR_ + lnLambda)
+    return r_lambd/np.sum(r_lambd,1)[:, None]
     
-def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
+def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, outsideidx=-1):
       
     # initialise variables
     T = lnR_.shape[0]
@@ -177,25 +178,26 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
                     flags[t, -1, l] = 0
                     if l_prev!=0: # don't repeatedly do this for each value of l_prev
                         continue
-                    lnS[t, -1, l] += lnA[-1, l]
+                    lnS[t, -1, l] += lnA[-1, l] + np.sum((C[t,:]==0) * lnPi[l, C[t,:]-1, outsideidx,
+                                                                             np.arange(K)])
                 else:
                     flags[t, l_prev, l] = 0
                     lnS[t, l_prev, l] += lnR_[t-1, l_prev] + lnA[l_prev, l]
-                    
-                for k in xrange(K):
-                    
-                    if doc_start[t]:
-                        if C[t,k]==0 or l_prev!=0: # ignore unannotated tokens and don't add more than once
-                            continue
-                        lnS[t, -1, l] += lnPi[l, C[t,k]-1, -1, k]
-                    else:
-                        if C[t,k]==0: # ignore unannotated tokens
-                            continue
-                        lnS[t, l_prev, l] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
+                
+                    lnS[t, l_prev, l] += np.sum((C[t,:]==0) * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])   
+#                 for k in xrange(K):
+#                     
+#                     if doc_start[t]:
+#                         if C[t,k]==0 or l_prev!=0: # ignore unannotated tokens and don't add more than once
+#                             continue
+#                         lnS[t, -1, l] += lnPi[l, C[t,k]-1, -1, k]
+#                     else:
+#                         if C[t,k]==0: # ignore unannotated tokens
+#                             continue
+#                         lnS[t, l_prev, l] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
 
                 if np.any(np.isnan(np.exp(lnS[t,l_prev,:]))):
                     print 'expec_joint_t: nan value encountered for t=%i, l_prev=%i' % (t,l_prev)
-            
         
         #normalise and return  
         lnS[t,:,:] = lnS[t,:,:] + flags[t,:,:] 
@@ -214,7 +216,7 @@ def expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start):
     
     return np.exp(lnS)
 
-def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
+def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, outsideidx=-1):
     T = C.shape[0]
     L = lnA.shape[0]
     K = lnPi.shape[-1]
@@ -225,31 +227,34 @@ def forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True):
             
             if doc_start[t]:
                 # compute values for document start
-                
-                lnR_[t,l] += initProbs[l] 
-                
-                for k in xrange(K):
-                    # skip unannotated tokens
-                    if skip and C[t,k] == 0:
-                        continue
-                    lnR_[t,l] += lnPi[l, C[t,k]-1, -1, k]
+                if skip:
+                    mask = C[t,:] != 0
+                else:
+                    mask = 1                
+                lnR_[t,l] += initProbs[l] + np.sum(mask * lnPi[l, C[t,:]-1, outsideidx, np.arange(K)])
+#                 
+#                 for k in xrange(K):
+#                     # skip unannotated tokens
+#                     if skip and C[t,k] == 0:
+#                         continue
+#                     lnR_[t,l] += lnPi[l, C[t,k]-1, -1, k]
             else:
-                altval = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
-                for l_prev in xrange(L):
-                    lnR_[t,l] += np.exp(lnR_[t-1,l_prev] + lnA[l_prev,l])
-                
-                lnR_[t,l] = np.log(lnR_[t,l])
-                
-                for k in xrange(K):
-                    # skip unannotated tokens
-                    if skip and C[t,k] == 0:
-                        continue
-                    if C[t-1,k] == 0:
-                        prev_anno = -1
-                    else:
-                        prev_anno = C[t-1, k] - 1
-                    
-                    lnR_[t,l] += lnPi[l, C[t,k]-1, prev_anno, k]
+                if skip:
+                    mask = C[t,:] != 0
+                else:
+                    mask = 1
+                lnR_[t,l] = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(mask * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
+#                 for l_prev in xrange(L):
+#                     lnR_[t,l] += np.exp(lnR_[t-1,l_prev] + lnA[l_prev,l])
+#                 
+#                 lnR_[t,l] = np.log(lnR_[t,l])
+#                 
+#                 for k in xrange(K):
+#                     # skip unannotated tokens
+#                     if skip and C[t,k] == 0:
+#                         continue
+#                     
+#                     lnR_[t,l] += lnPi[l, C[t,k]-1, C[t-1,k]-1, k]
         
         # normalise
         lnR_[t,:] = lnR_[t,:] - logsumexp(lnR_[t,:])
@@ -273,33 +278,31 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
             lambdaL_next_sum = np.zeros((L,1))
             
             for l_next in xrange(L):
-                lambdaL_next = lnLambda[t+1,l_next]
+                if skip:
+                    mask = C[t+1,:] != 0
+                else:
+                    mask = 1
+                lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask * lnPi[l_next, C[t+1,:]-1, C[t,:], 
+                                                                         np.arange(K)])
             
-                for k in xrange(K):
-                    # skip unannotated tokens
-                    if skip and C[t+1,k] == 0:
-                        continue
-                    if C[t,k] == 0:
-                        curr_anno = -1
-                    else:
-                        curr_anno = C[t,k] - 1
-                
-                    lambdaL_next += lnPi[l_next, C[t+1,k]-1, curr_anno, k]
+#                 for k in xrange(K):
+#                     # skip unannotated tokens
+#                     if skip and C[t+1,k] == 0:
+#                         continue
+#                 
+#                     lambdaL_next += lnPi[l_next, C[t+1,k]-1, C[t,k] - 1, k]
 
                 lambdaL_next += lnA[l,l_next]                        
                 lambdaL_next_sum[l_next] = lambdaL_next
             
             lnLambda[t,l] = logsumexp(lambdaL_next_sum)
         
-        if(np.any(np.isnan(lnLambda[t,:]))):    
-            print 'backward pass: nan value encountered'
-        
         # normalise
-        #unnormed_lnLambda = lnLambda[t, :]
-        #lnLambda[t,:] = lnLambda[t,:] - logsumexp(lnLambda[t,:])   
+        unnormed_lnLambda = lnLambda[t, :]
+        lnLambda[t,:] = lnLambda[t,:] - logsumexp(lnLambda[t,:])   
         
         if(np.any(np.isnan(lnLambda[t,:]))):    
             print 'backward pass: nan value encountered: '
-            #print unnormed_lnLambda
+            print unnormed_lnLambda
   
     return lnLambda                

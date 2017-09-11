@@ -148,19 +148,26 @@ class Experiment(object):
                 
                 alpha0 = np.ones((self.num_classes, self.num_classes, 10))
                 alpha0[:, :, 5] = 2.0
-                alpha0[np.arange(3), np.arange(3), :] += 1.0
-                nu0 = np.array([1, 1, 1], dtype=float)
+                alpha0 += np.eye(self.num_classes)[:, :, None]
+                nu0 = np.ones(self.num_classes, dtype=float)
                 
-                ibc = ibcc.IBCC(nclasses=3, nscores=3, nu0=nu0, alpha0=alpha0)
+                ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=nu0, alpha0=alpha0)
                 probs = ibc.combine_classifications(annotations, table_format=True)
                 agg = probs.argmax(axis=1)
                 
             if self.methods[method_idx] == 'bac':
+                L = self.num_classes
+                if L == 7:
+                    inside_labels = [0, 3, 5]
+                else:
+                    inside_labels = [0]
                 
-                alg = bac.BAC(L=3, K=annotations.shape[1])
+                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels)
+                alg.verbose = True
+                alg.outsideidx = 1
                 probs = alg.run(annotations, doc_start)
                 agg = probs.argmax(axis=1)
-                       
+    
             if self.methods[method_idx] == 'HMM_crowd':
                 sentences = []
                 crowd_labels = []
@@ -182,7 +189,7 @@ class Experiment(object):
                             crowd_labs[worker].sen.append(int(annotations[i,worker]))
                 
                 data = crowd_data(sentences, crowd_labels)
-                hc = HMM_crowd(3, 1, data, None, None, vb=[0.1, 0.1], ne=1)
+                hc = HMM_crowd(self.num_classes, 1, data, None, None, vb=[0.1, 0.1], ne=1)
                 hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
                 hc.em(20)
                 hc.mls()

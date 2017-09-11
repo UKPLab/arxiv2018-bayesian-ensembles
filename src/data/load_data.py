@@ -17,6 +17,27 @@ def convert_argmin(x):
         return 1
     if label == 'B':
         return 2
+
+def convert_7class_argmin(x):
+    label = x.split('-')[0]
+    if label == 'I':
+        label = x.split('-')[1].split(':')[0]
+        if label == 'MajorClaim':
+            return 0
+        elif label == 'Claim':
+            return 3
+        elif label == 'Premise':
+            return 5
+    if label == 'O':
+        return 1
+    if label == 'B':
+        label = x.split('-')[1].split(':')[0]
+        if label == 'MajorClaim':        
+            return 2
+        elif label == 'Claim':
+            return 4
+        elif label == 'Premise':
+            return 6
     
 def convert_crowdsourcing(x):
     if x == 'Premise-I':
@@ -47,6 +68,24 @@ def load_argmin_data():
 
     return gt, annos, doc_start
 
+def load_argmin_7class_data():    
+
+    path = '../data/argmin/'
+    all_files = glob.glob(os.path.join(path, "*.dat.out"))
+    df_from_each_file = (pd.read_csv(f, sep='\t', usecols=(0, 5, 6), converters={5:convert_7class_argmin, 
+                                                        6:convert_7class_argmin}, header=None) for f in all_files)
+    concatenated = pd.concat(df_from_each_file, ignore_index=True, axis=1).as_matrix()
+
+    annos = concatenated[:, 1::3]
+    gt = concatenated[:, 2][:, None]
+    doc_start = np.zeros((annos.shape[0], 1))    
+    doc_start[np.where(concatenated[:, 0] == 1)] = 1
+    
+    np.savetxt('../data/argmin7/annos.csv', annos, fmt='%s', delimiter=',')
+    np.savetxt('../data/argmin7/gt.csv', gt, fmt='%s', delimiter=',')
+    np.savetxt('../data/argmin7/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+
+    return gt, annos, doc_start
 
 def load_crowdsourcing_data():
     path = '../data/crowdsourcing/'
