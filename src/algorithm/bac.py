@@ -49,7 +49,7 @@ class BAC(object):
         for inside_label in inside_labels:
             self.alpha0[:, inside_label, [1,-1], :] = 0.1 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
             self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
-        self.nu0[1, 1] += 1.0
+        #self.nu0[1, 1] += 1.0
         
         # initialise transition and confusion matrices
         self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
@@ -285,7 +285,7 @@ def backward_pass(C, lnA, lnPi, doc_start, skip=True):
                     mask = C[t+1,:] != 0
                 else:
                     mask = 1
-                lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask * lnPi[l_next, C[t+1,:]-1, C[t,:], 
+                lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask * lnPi[l_next, C[t+1,:]-1, C[t,:]-1, 
                                                                          np.arange(K)])
             
                 lambdaL_next += lnA[l,l_next]                        
