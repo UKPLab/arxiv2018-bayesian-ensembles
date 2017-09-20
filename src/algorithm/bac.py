@@ -33,7 +33,7 @@ class BAC(object):
     eps = None
     
 
-    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0]):
+    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0], alpha0=None):
         '''
         Constructor
         '''
@@ -42,8 +42,10 @@ class BAC(object):
         self.nscores = L
         self.K = K
         
-        self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) + \
-                                    1.0 * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+        if alpha0 == None:
+            self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) +  1.0 * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+        else:
+            self.alpha0 = alpha0
     
         self.nu0 = np.ones((L+1, L)) * 1.0
         for inside_label in inside_labels:
