@@ -7,6 +7,8 @@ Created on Jan 28, 2017
 import numpy as np
 from scipy.misc import logsumexp
 from scipy.special import psi
+from scipy.special.basic import gammaln
+from scipy.optimize.optimize import fmin
 
 class BAC(object):
     '''
@@ -32,8 +34,7 @@ class BAC(object):
     max_iter = None
     eps = None
     
-
-    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0], alpha0=None):
+    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0], alpha0=None, alpha0_diag=1.0):
         '''
         Constructor
         '''
@@ -42,8 +43,10 @@ class BAC(object):
         self.nscores = L
         self.K = K
         
-        if alpha0 == None:
-            self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) +  1.0 * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
+        self.inside_labels = inside_labels
+        
+        if alpha0 is None:
+            self.alpha0 = np.ones((self.L, self.nscores, self.nscores+1, self.K)) +  alpha0_diag * np.eye(self.L)[:,:,None,None] # dims: previous_anno c[t-1], current_annoc[t], true_label[t], annoator k
         else:
             self.alpha0 = alpha0
     
@@ -54,9 +57,8 @@ class BAC(object):
         #self.nu0[1, 1] += 1.0
         
         # initialise transition and confusion matrices
-        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
-        
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])
+        self._initA()
+        self._init_lnPi()
         
         self.before_doc_idx = -1 # identifies which true class value is assumed for the label before the start of a document
         
@@ -65,6 +67,98 @@ class BAC(object):
         
         self.verbose = False # can change this if you want progress updates to be printed
         
+    def _initA(self):
+        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
+
+    def _init_lnPi(self):
+        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])        
+        
+    def lowerbound(self, C, doc_start):
+        '''
+        Compute the variational lower bound on the log marginal likelihood. 
+        '''
+        
+        # E[ln p(data, t | parameters)]
+        lnpCt = 0
+        
+        C = C.astype(int)
+        
+        C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
+        C_prev[doc_start.flatten()==1, :] = 0
+        C_prev[C_prev == 0] = self.before_doc_idx + 1 # document starts or missing labels
+        
+        valid_labels = (C!=0).astype(float)
+        
+        for j in range(self.L):
+            lnpCt += valid_labels * self.lnPi[j, C-1, C_prev-1, np.arange(self.K)[None, :]] * self.q_t[:, j:j+1]
+        lnpCt = np.sum(lnpCt)
+            
+        # E[ln p(\pi | \alpha_0)]
+        x = np.sum((self.alpha0 - 1) * self.lnPi, 1)
+        z = gammaln(np.sum(self.alpha0, 1)) - np.sum(gammaln(self.alpha0), 1)
+        lnpPi = np.sum(x + z)
+                    
+        # E[ln q(\pi)]
+        x = np.sum((self.alpha - 1) * self.lnPi, 1)
+        z = gammaln(np.sum(self.alpha,1)) - np.sum(gammaln(self.alpha),1)
+        lnqPi = np.sum(x + z)
+        
+        # E[ln p(A | nu_0)]
+        x = np.sum((self.nu0 - 1) * self.lnA, 1)
+        x[np.isinf(x)] = 0
+        z = gammaln(np.sum(self.nu0, 1)) - np.sum(gammaln(self.nu0), 1)
+        z[np.isinf(z)] = 0
+        lnpA = np.sum(x + z) 
+        
+        # E[ln q(A)]
+        x = np.sum((self.nu - 1) * self.lnA, 1)
+        x[np.isinf(x)] = 0
+        z = gammaln(np.sum(self.nu, 1)) - np.sum(gammaln(self.nu), 1)
+        z[np.isinf(z)] = 0
+        lnqA = np.sum(x + z)
+        
+        lb = lnpCt + lnpPi - lnqPi + lnpA - lnqA        
+        return lb
+        
+    def optimize(self, C, doc_start, maxfun=50):
+        ''' 
+        Run with MLII optimisation over the lower bound on the log-marginal likelihood. Optimizes the diagonals of the
+        confusion matrix prior (assuming a single value for all diagonals) and the scaling of the transition matrix 
+        hyperparameters.
+        '''
+        
+        def neg_marginal_likelihood(hyperparams, C, doc_start):
+            # set hyperparameters
+            diagidxs = np.arange(self.L)
+            self.alpha0[diagidxs, diagidxs, :, :] = np.exp(hyperparams[0]) * np.ones(self.L)[:, None, None]
+            
+            self.nu0 = np.ones((self.L+1, self.L)) * np.exp(hyperparams[1])
+            for inside_label in self.inside_labels:
+                self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
+                        
+            self._initA()
+            self._init_lnPi()
+                        
+            # run the method
+            self.run(C, doc_start)
+            
+            # compute lower bound
+            lb = self.lowerbound(C, doc_start)
+            
+            print "Lower bound: %.5f, alpha_0 diagonals = %.3f, nu0 scale = %.3f" % (lb, np.exp(hyperparams[0]), 
+                                                                                         np.exp(hyperparams[1]))
+            
+            return -lb
+        
+        initialguess = [np.log(self.alpha0[0, 0, 0, 0]), np.log(self.nu0[0, 0])]
+        ftol = 1e-3
+        opt_hyperparams, _, _, _, _ = fmin(neg_marginal_likelihood, initialguess, args=(C, doc_start), maxfun=maxfun,
+                                                     full_output=True, ftol=ftol, xtol=1e100) 
+            
+        print "Optimal hyper-parameters: alpha_0 diagonals = %.3f, nu0 scale = %.3f" % (np.exp(opt_hyperparams[0]), 
+                                                                                        np.exp(opt_hyperparams[1]))
+
+        return self.most_probable_sequence(C, doc_start)
             
     def run(self, C, doc_start):
         
@@ -79,6 +173,8 @@ class BAC(object):
         self.iter = 0
         self.q_t_old = np.zeros((C.shape[0], self.L))
         self.q_t = np.ones((C.shape[0], self.L))
+        
+        oldlb = -np.inf
         
         while not self.converged():
             
@@ -100,12 +196,16 @@ class BAC(object):
             self.q_t_joint = expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
             
             # update E_lnA
-            self.lnA, nu = calc_q_A(self.q_t_joint, self.nu0)
+            self.lnA, self.nu = calc_q_A(self.q_t_joint, self.nu0)
             
-            alpha = post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
+            self.alpha = post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
 
             # update E_lnpi
-            self.lnPi = calc_q_pi(alpha)
+            self.lnPi = calc_q_pi(self.alpha)
+            
+            lb = self.lowerbound(C, doc_start)
+            print 'Lower bound = %.5f, diff = %.5f' % (lb, lb - oldlb)
+            oldlb = lb
 
         return self.most_probable_sequence(C, doc_start)
     
