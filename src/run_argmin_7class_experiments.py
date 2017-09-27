@@ -8,7 +8,7 @@ from data import load_data
 import numpy as np
 
 exp = Experiment(None, None)
-exp.methods = ['bac', 'clustering', 'HMM_crowd', 'ibcc', 'mace' , 'majority'] # 'bac', 'clustering', 'ibcc', 'mace', 
+exp.methods = ['bac', 'clustering', 'ibcc', 'mace' , 'majority'] # 'bac', 'clustering', 'ibcc', 'mace', 
 
 gt, annos, doc_start = load_data.load_argmin_7class_data()
 
