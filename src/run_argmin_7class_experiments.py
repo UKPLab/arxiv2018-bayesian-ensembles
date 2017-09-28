@@ -15,6 +15,8 @@ gt, annos, doc_start = load_data.load_argmin_7class_data()
 exp.save_results = True
 exp.num_classes = 7
 
+exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, annos.shape[1])) +  1.0 * np.eye(exp.num_classes)[:,:,None,None]
+
 results, preds = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin7/annos.csv')
 
 np.savetxt('../output/argmin7/result_full', results, fmt='%s', delimiter=',')
