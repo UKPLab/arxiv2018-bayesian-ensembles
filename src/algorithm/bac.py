@@ -7,6 +7,9 @@ Created on Jan 28, 2017
 import numpy as np
 from scipy.misc import logsumexp
 from scipy.special import psi
+from scipy.special.basic import gammaln
+from scipy.optimize.optimize import fmin
+from numpy import argmax
 
 class BAC(object):
     '''
@@ -66,8 +69,8 @@ class BAC(object):
             
         
         # initialise transition and confusion matrices
-        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])
+        self._initA()
+        self._init_lnPi()
         
         self.before_doc_idx = -1 # identifies which true class value is assumed for the label before the start of a document
         
@@ -76,6 +79,102 @@ class BAC(object):
         
         self.verbose = False # can change this if you want progress updates to be printed
         
+    def _initA(self):
+        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
+
+    def _init_lnPi(self):
+        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])        
+        
+    def lowerbound(self, C, doc_start):
+        '''
+        Compute the variational lower bound on the log marginal likelihood. 
+        '''
+        
+        # E[ln p(data, t | parameters)]
+        lnpCt = 0
+        
+        C = C.astype(int)
+        
+        C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
+        C_prev[doc_start.flatten()==1, :] = 0
+        C_prev[C_prev == 0] = self.before_doc_idx + 1 # document starts or missing labels
+        
+        valid_labels = (C!=0).astype(float)
+        
+        for j in range(self.L):
+            lnpCt += valid_labels * self.lnPi[j, C-1, C_prev-1, np.arange(self.K)[None, :]] * self.q_t[:, j:j+1]
+        lnpCt = np.sum(lnpCt)
+            
+        # E[ln p(\pi | \alpha_0)]
+        x = np.sum((self.alpha0 - 1) * self.lnPi, 1)
+        x[np.isinf(x)] = 0
+        z = gammaln(np.sum(self.alpha0, 1)) - np.sum(gammaln(self.alpha0), 1)
+        z[np.isinf(z)] = 0
+        lnpPi = np.sum(x + z)
+                    
+        # E[ln q(\pi)]
+        x = np.sum((self.alpha - 1) * self.lnPi, 1)
+        x[np.isinf(x)] = 0
+        z = gammaln(np.sum(self.alpha,1)) - np.sum(gammaln(self.alpha),1)
+        z[np.isinf(z)] = 0
+        lnqPi = np.sum(x + z)
+        
+        # E[ln p(A | nu_0)]
+        x = np.sum((self.nu0 - 1) * self.lnA, 1)
+        x[np.isinf(x)] = 0
+        z = gammaln(np.sum(self.nu0, 1)) - np.sum(gammaln(self.nu0), 1)
+        z[np.isinf(z)] = 0
+        lnpA = np.sum(x + z) 
+        
+        # E[ln q(A)]
+        x = np.sum((self.nu - 1) * self.lnA, 1)
+        x[np.isinf(x)] = 0
+        z = gammaln(np.sum(self.nu, 1)) - np.sum(gammaln(self.nu), 1)
+        z[np.isinf(z)] = 0
+        lnqA = np.sum(x + z)
+        
+        lb = lnpCt + lnpPi - lnqPi + lnpA - lnqA        
+        return lb
+        
+    def optimize(self, C, doc_start, maxfun=50):
+        ''' 
+        Run with MLII optimisation over the lower bound on the log-marginal likelihood. Optimizes the diagonals of the
+        confusion matrix prior (assuming a single value for all diagonals) and the scaling of the transition matrix 
+        hyperparameters.
+        '''
+        
+        def neg_marginal_likelihood(hyperparams, C, doc_start):
+            # set hyperparameters
+            diagidxs = np.arange(self.L)
+            self.alpha0[diagidxs, diagidxs, :, :] = np.exp(hyperparams[0]) * np.ones(self.L)[:, None, None]
+            
+            self.nu0 = np.ones((self.L+1, self.L)) * np.exp(hyperparams[1])
+            for inside_label in self.inside_labels:
+                self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
+                        
+            self._initA()
+            self._init_lnPi()
+                        
+            # run the method
+            self.run(C, doc_start)
+            
+            # compute lower bound
+            lb = self.lowerbound(C, doc_start)
+            
+            print "Lower bound: %.5f, alpha_0 diagonals = %.3f, nu0 scale = %.3f" % (lb, np.exp(hyperparams[0]), 
+                                                                                         np.exp(hyperparams[1]))
+            
+            return -lb
+        
+        initialguess = [np.log(self.alpha0[0, 0, 0, 0]), np.log(self.nu0[0, 0])]
+        ftol = 1e-3
+        opt_hyperparams, _, _, _, _ = fmin(neg_marginal_likelihood, initialguess, args=(C, doc_start), maxfun=maxfun,
+                                                     full_output=True, ftol=ftol, xtol=1e100) 
+            
+        print "Optimal hyper-parameters: alpha_0 diagonals = %.3f, nu0 scale = %.3f" % (np.exp(opt_hyperparams[0]), 
+                                                                                        np.exp(opt_hyperparams[1]))
+
+        return self.most_probable_sequence(C, doc_start)
             
     def run(self, C, doc_start):
         '''
@@ -93,6 +192,8 @@ class BAC(object):
         self.iter = 0
         self.q_t_old = np.zeros((C.shape[0], self.L))
         self.q_t = np.ones((C.shape[0], self.L))
+        
+        oldlb = -np.inf
         
         # main inference loop
         while not self._converged():
@@ -114,15 +215,19 @@ class BAC(object):
             self.q_t_joint = _expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
             
             # update E_lnA
-            self.lnA, _ = _calc_q_A(self.q_t_joint, self.nu0)
-            
-            alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
+            self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
+    
+            self.alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
 
             # update E_lnpi
-            self.lnPi = _calc_q_pi(alpha) 
             
             # increase iteration number
             self.iter += 1
+            self.lnPi = _calc_q_pi(self.alpha)
+            
+            #lb = self.lowerbound(C, doc_start)
+            #print 'Lower bound = %.5f, diff = %.5f' % (lb, lb - oldlb)
+            #oldlb = lb
 
         return self._most_probable_sequence(C, doc_start)
     
@@ -302,30 +407,39 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=
     # initialise variables
     lnR_ = np.zeros((T, L)) 
     
+    mask = np.ones_like(C)
+    
+    if skip:
+        mask = (C!=0)
+    
     # iterate through all tokens, starting at the beginning going forward
     for t in xrange(T):
-        # iterate through all possible labels
-        for l in xrange(L):
+        if doc_start[t]:
+            lnR_[t,:] += initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)],mask[t,:][:,None]), axis=1)
+            
+        else:
+            # iterate through all possible labels
+            for l in xrange(L):
             
             # check if the current token marks the start of a new document
-            if doc_start[t]:
+            #if doc_start[t]:
                 # check if token needs to be skipped
-                if skip:
-                    mask = C[t,:] != 0
-                else:
-                    mask = 1    
+                #if skip:
+                #    mask = C[t,:] != 0
+                #else:
+                #    mask = 1    
                 
                 # compute likelihood for document start token being the current label           
-                lnR_[t,l] += initProbs[l] + np.sum(mask * lnPi[l, C[t,:]-1, before_doc_idx, np.arange(K)])
-            else:
+                #lnR_[t,l] += initProbs[l] + np.sum(mask[t,:] * lnPi[l, C[t,:]-1, before_doc_idx, np.arange(K)])
+            #else:
                 # check if token needs to be skipped
-                if skip:
-                    mask = C[t,:] != 0
-                else:
-                    mask = 1
+                #if skip:
+                #    mask = C[t,:] != 0
+                #else:
+                #    mask = 1
                 
                 # compute likelihood for current token and label
-                lnR_[t,l] = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(mask * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
+                lnR_[t,l] = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(mask[t,:] * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
         
         # normalise
         lnR_[t,:] = lnR_[t,:] - logsumexp(lnR_[t,:])
@@ -344,6 +458,11 @@ def _backward_pass(C, lnA, lnPi, doc_start, skip=True):
     # initialise variables
     lnLambda = np.zeros((T,L)) 
     
+    mask = np.ones_like(C)
+    
+    if skip:
+        mask = (C!=0)
+    
     # iterate through all tokens, starting at the end going backwards
     for t in xrange(T-1,-1,-1):
         # check whether the previous token was a document start
@@ -359,14 +478,14 @@ def _backward_pass(C, lnA, lnPi, doc_start, skip=True):
             
             # iterate through all possible labels (again)
             for l_next in xrange(L):
-                # check if the token needs to be skipped
-                if skip:
-                    mask = C[t+1,:] != 0
-                else:
-                    mask = 1
+                # # check if the token needs to be skipped
+                # if skip:
+                #     mask = C[t+1,:] != 0
+                # else:
+                #     mask = 1
                     
                 # calculate likelihood of current token and label
-                lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask * lnPi[l_next, C[t+1,:]-1, C[t,:]-1, 
+                lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask[t+1,:] * lnPi[l_next, C[t+1,:]-1, C[t,:]-1, 
                                                                          np.arange(K)])
                 lambdaL_next += lnA[l,l_next]                        
                 lambdaL_next_sum[l_next] = lambdaL_next
