@@ -145,7 +145,7 @@ class IBCC(object):
         self.alpha0 = self.alpha0[:, :, :self.K] # make this the right size if there are fewer classifiers than expected
         self.alpha = np.zeros((self.nclasses, self.nscores, self.K), dtype=np.float) + self.alpha0
         self.lnPi = np.zeros((self.nclasses, self.nscores, self.K))        
-        self.calc_q_pi(posterior=False) # calculate alpha from the initial/prior values only in the first iteration
+        self._calc_q_pi(posterior=False) # calculate alpha from the initial/prior values only in the first iteration
 
     def init_t(self):
         kappa = (self.nu0 / np.sum(self.nu0, axis=0)).T
@@ -364,21 +364,21 @@ class IBCC(object):
         logging.info('IBCC: combining %i training points + %i noisy-labelled points' % (np.sum(self.trainidxs), 
                                                                                         len(self.observed_idxs)))
         oldL = -np.inf
-        converged = False
+        _converged = False
         self.nIts = 0 #object state so we can check it later
-        while not converged and self.keeprunning:
+        while not _converged and self.keeprunning:
             oldET = self.E_t.copy()
             #update targets
-            #self.expec_t()
+            #self._expec_t()
             self.lnjoint()
-            self.E_t[self.testidxs, :] = expec_t(self.lnpCT, self.testidxs)
+            self.E_t[self.testidxs, :] = _expec_t(self.lnpCT, self.testidxs)
             #update params
-            #self.calc_q_A()
-            self.lnkappa, self.nu = calc_q_A(self.E_t, self.nu0)
-            #self.calc_q_pi()
+            #self._calc_q_A()
+            self.lnkappa, self.nu = _calc_q_A(self.E_t, self.nu0)
+            #self._calc_q_pi()
             if np.any(self.E_t):
-                self.post_alpha()
-            self.lnPi = calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores)
+                self._post_alpha()
+            self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores)
             #check convergence every x iterations
             if np.mod(self.nIts, self.conv_check_freq) == self.conv_check_freq - 1:
                 if self.uselowerbound:
@@ -393,7 +393,7 @@ class IBCC(object):
                 else:
                     self.change = self.convergence_measure(oldET)
                 if self.convergence_check():
-                    converged = True            
+                    _converged = True            
                 elif self.verbose:
                     logging.debug('IBCC iteration %i absolute change was %s' % (self.nIts, self.change))
                     
@@ -402,7 +402,7 @@ class IBCC(object):
         logging.info('IBCC finished in %i iterations (max iterations allowed = %i).' % (self.nIts, self.max_iterations))
 
 # Posterior Updates to Hyperparameters --------------------------------------------------------------------------------
-    def post_alpha(self):  # Posterior Hyperparams
+    def _post_alpha(self):  # Posterior Hyperparams
         # Save the counts from the training data so we only recalculate the test data on every iteration
         if self.alpha_tr == []:
             self.alpha_tr = np.zeros(self.alpha.shape)
@@ -420,22 +420,22 @@ class IBCC(object):
                 self.alpha[j, l, :] = self.alpha_tr[j, l, :] + counts
 
 # Expectations: methods for calculating expectations with respect to parameters for the VB algorithm ------------------
-    def calc_q_A(self):
+    def _calc_q_A(self):
         sumET = np.sum(self.E_t, 0)
         for j in range(self.nclasses):
             self.nu[j] = self.nu0[j] + sumET[j]
         self.lnkappa = psi(self.nu) - psi(np.sum(self.nu))
 
-    def calc_q_pi(self, posterior=True):
+    def _calc_q_pi(self, posterior=True):
         # check if E_t has been initialised. Only update alpha if it has. Otherwise E[lnPi] is given by the prior
         if np.any(self.E_t) and posterior:
-            self.post_alpha()
+            self._post_alpha()
         sumAlpha = np.sum(self.alpha, 1)
         psiSumAlpha = psi(sumAlpha)
         for s in range(self.nscores): 
             self.lnPi[:, s, :] = psi(self.alpha[:, s, :]) - psiSumAlpha
 
-    def expec_t(self):
+    def _expec_t(self):
         self.lnjoint()
         joint = self.lnpCT
         joint = joint[self.testidxs, :]
@@ -625,19 +625,19 @@ class IBCC(object):
         return self.E_t
     
 # static functions
-def calc_q_A(E_t, nu0):
+def _calc_q_A(E_t, nu0):
     nu = nu0 + np.reshape(np.sum(E_t,0), nu0.shape)
     lnkappa = (psi(nu).T - psi(np.sum(nu, -1))).T
     return lnkappa, nu
 
-def calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True):
+def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True):
     alpha_sum = np.sum(alpha, 1)
     for s in range(nscores): 
         lnPi[:, s, :] = psi(alpha[:, s, :]) - psi(alpha_sum)
     
     return lnPi
 
-def expec_t(lnpCT, testidxs):
+def _expec_t(lnpCT, testidxs):
     # self.lnjoint()
     joint = lnpCT[testidxs, :]
     # ensure that the values are not too small 
