@@ -162,10 +162,10 @@ class Experiment(object):
                 else:
                     inside_labels = [0]
                 
-                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0_diag=200.0)
+                #alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0_diag=200.0)
+                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
-                alg.max_iter = 100
                 probs, agg = alg.run(annotations, doc_start)
                 #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
@@ -212,7 +212,6 @@ class Experiment(object):
     
     def calculate_scores(self, agg, gt, probs, doc_start):
         
-        
         agg = agg[gt!=-1]
         probs = probs[gt!=-1]
         doc_start = doc_start[gt!=-1]
@@ -229,9 +228,10 @@ class Experiment(object):
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
-        auc_score = skm.roc_auc_score(gt==0, probs[:, 0]) * np.sum(gt==0)
-        auc_score += skm.roc_auc_score(gt==1, probs[:, 1]) * np.sum(gt==1)
-        auc_score += skm.roc_auc_score(gt==2, probs[:, 2]) * np.sum(gt==2)
+        
+        auc_score = 0
+        for i in xrange(probs.shape[1]):
+            auc_score += skm.roc_auc_score(gt==i, probs[:, i]) * np.sum(gt==i)
         result[4] = auc_score / float(gt.shape[0])
         result[5] = skm.log_loss(gt, probs, eps=1e-100)
         result[6] = metrics.abs_count_error(agg, gt)
