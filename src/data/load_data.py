@@ -61,6 +61,10 @@ def load_argmin_data():
     concatenated = pd.concat(df_from_each_file, ignore_index=True, axis=1).as_matrix()
 
     annos = concatenated[:, 1::3]
+    
+    for t in range(1, annos.shape[0]):
+        annos[t, (annos[t-1, :] == 1) & (annos[t, :] == 0)] = 2
+    
     gt = concatenated[:, 2][:, None]
     doc_start = np.zeros((annos.shape[0], 1))    
     doc_start[np.where(concatenated[:, 0] == 1)] = 1

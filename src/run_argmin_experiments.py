@@ -15,10 +15,10 @@ gt, annos, doc_start = load_data.load_argmin_data()
 exp.save_results = True
 exp.num_classes = 3
 
-exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, annos.shape[1])) +  1.0 * np.eye(exp.num_classes)[:,:,None,None]
+exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
+                          annos.shape[1])) +  1.0 * np.eye(exp.num_classes)[:,:,None,None]                   
 
 results, preds = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin/annos.csv')
-
 
 np.savetxt('../output/argmin/result_bugfix', results, fmt='%s', delimiter=',')
 np.savetxt('../output/argmin/pred_bugfix', preds, fmt='%s', delimiter=',')
