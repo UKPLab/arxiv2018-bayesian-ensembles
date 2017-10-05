@@ -40,11 +40,11 @@ class Experiment(object):
     generate_data= False
     
     methods = None
-    
+        
     bac_alpha0 = None
     
-    exclusions = None
-    
+    exclusions = {}
+
     num_runs = None
     doc_length = None
     group_sizes = None
@@ -163,13 +163,37 @@ class Experiment(object):
                 L = self.num_classes
                 if L == 7:
                     inside_labels = [0, 3, 5]
+                    
+                    # transitions from o to i
+                    self.exclusions[1] = 0
+                    self.exclusions[1] = 3                
+                    self.exclusions[1] = 5
+                    
+                    # transitions between classes                    
+                    self.exclusions[3] = 0
+                    self.exclusions[4] = 0
+                    self.exclusions[5] = 0
+                    self.exclusions[6] = 0
+
+                    self.exclusions[0] = 3
+                    self.exclusions[2] = 3
+                    self.exclusions[5] = 3
+                    self.exclusions[6] = 3
+                    
+                    self.exclusions[0] = 5
+                    self.exclusions[2] = 5
+                    self.exclusions[3] = 5
+                    self.exclusions[4] = 5                    
                 else:
                     inside_labels = [0]
-                
-                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, exclusions=self.exclusions)
+                    self.exclusions[1] = 0
+                    
+                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
+                              exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
                 probs, agg = alg.run(annotations, doc_start)
+                #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
     
             if self.methods[method_idx] == 'HMM_crowd':
@@ -240,7 +264,6 @@ class Experiment(object):
         result[8] = metrics.mean_length_error(agg, gt, doc_start)
         
         return result
-        
         
     def create_experiment_data(self):
         for param_idx in xrange(self.param_values.shape[0]):
