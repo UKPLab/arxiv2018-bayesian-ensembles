@@ -162,10 +162,12 @@ class Experiment(object):
                 else:
                     inside_labels = [0]
                 
-                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels)
+                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0_diag=200.0)
                 alg.verbose = True
                 alg.outsideidx = 1
+                alg.max_iter = 100
                 probs, agg = alg.run(annotations, doc_start)
+                #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
     
             if self.methods[method_idx] == 'HMM_crowd':

@@ -1,4 +1,18 @@
 '''
+Error analysis -- cases include:
+- Assuming an annotation provided by only one base classifier ( p(O | B or I ) = high for other base classifiers)
+- Switching from I-O-O-O to I-O-B-I -- hard to see why this would occur unless transition matrix contains
+ p(B | prev_I) < p(B | prev_O) and confusion matrices contain p( I | B ) > p(I | O). 
+ Another cause: p( c=O | c_prev = O, t=B) = high (missing an annotation is quite common), 
+ p( c=O | c_prev = I, t=B) = low (missing a new annotation straight after another is rare). 
+ This error occurs when
+ some annotators continue the annotation for longer than others; BAC decides there are two annotations,
+ one that agrees with the other combination methods, and one that contains the tail of the overly long
+ annotations.  
+
+Possible solution to these two cases is to reduce the prior on missing an annotation, i.e. p( c=O | c_next=whatever, t=B)?
+reduce alpha0[2, 1, 1, :], reduce alpha0[2,0,0,:], perhaps increase alpha0[2,2,:,:] to compensate?
+
 Created on Jan 28, 2017
 
 @author: Melvin Laux
