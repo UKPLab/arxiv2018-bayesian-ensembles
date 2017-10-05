@@ -40,7 +40,11 @@ class Experiment(object):
     generate_data= False
     
     methods = None
+        
+    bac_alpha0 = None
     
+    exclusions = None
+
     num_runs = None
     doc_length = None
     group_sizes = None
@@ -163,7 +167,8 @@ class Experiment(object):
                     inside_labels = [0]
                 
                 #alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0_diag=200.0)
-                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, exclusions=self.exclusions)
+                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
+                              exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
                 probs, agg = alg.run(annotations, doc_start)
