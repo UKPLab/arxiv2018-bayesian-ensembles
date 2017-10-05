@@ -43,7 +43,7 @@ class Experiment(object):
         
     bac_alpha0 = None
     
-    exclusions = None
+    exclusions = {}
 
     num_runs = None
     doc_length = None
@@ -163,10 +163,31 @@ class Experiment(object):
                 L = self.num_classes
                 if L == 7:
                     inside_labels = [0, 3, 5]
+                    
+                    # transitions from o to i
+                    self.exclusions[1] = 0
+                    self.exclusions[1] = 3                
+                    self.exclusions[1] = 5
+                    
+                    # transitions between classes                    
+                    self.exclusions[3] = 0
+                    self.exclusions[4] = 0
+                    self.exclusions[5] = 0
+                    self.exclusions[6] = 0
+
+                    self.exclusions[0] = 3
+                    self.exclusions[2] = 3
+                    self.exclusions[5] = 3
+                    self.exclusions[6] = 3
+                    
+                    self.exclusions[0] = 5
+                    self.exclusions[2] = 5
+                    self.exclusions[3] = 5
+                    self.exclusions[4] = 5                    
                 else:
                     inside_labels = [0]
-                
-                #alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0_diag=200.0)
+                    self.exclusions[1] = 0
+                    
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
                               exclusions=self.exclusions)
                 alg.verbose = True
