@@ -126,7 +126,7 @@ class BAC(object):
         
         lnpCt  = np.sum(lnpC) + np.sum(lnpt)
                         
-        lnqt = np.log(self.q_t_joint) * self.q_t_joint
+        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=1)[:, None, :]) * self.q_t_joint
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
         lnqt = np.sum(lnqt)
             
@@ -238,6 +238,7 @@ class BAC(object):
             
             # update q_t_joint
             self.q_t_joint = _expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
+            self.q_t_alt = np.sum(self.q_t_joint, axis=1)
             
             # update E_lnA
             self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
@@ -319,11 +320,11 @@ def _calc_q_pi(alpha):
     '''
     Update the annotator models.
     '''
-    alpha_sum = np.sum(alpha, 1)
+    psi_alpha_sum = psi(np.sum(alpha, 1))
     dims = alpha.shape
     q_pi = np.zeros(dims)
     for s in range(dims[1]): 
-        q_pi[:, s, :, :] = psi(alpha[:, s, :, :]) - psi(alpha_sum)
+        q_pi[:, s, :, :] = psi(alpha[:, s, :, :]) - psi_alpha_sum
     
     return q_pi
     
@@ -368,29 +369,26 @@ def _expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
     flags = -np.inf * np.ones_like(lnS)
     # iterate though everything, calculate joint expectations
     for t in xrange(T):
-        for l_prev in xrange(L):
-            
-            if doc_start[t]:
-                flags[t,before_doc_idx,:] = 0
-                lnS[t,before_doc_idx,:] += np.dot(lnPi[:,C[t,:]-1,before_doc_idx, np.arange(K)], C[t,:]!=0) \
-                                                + lnA[before_doc_idx,:]
-            else:
-                flags[t, l_prev,:] = 0 
-                lnS[t,l_prev,:] += lnR_[t-1,l_prev] + lnA[l_prev,:] + np.dot(lnPi[:, C[t,:]-1, C[t-1,:]-1, 
-                                                                                       np.arange(K)], C[t,:]!=0)
-        #normalise and return  
-        lnS[t,:,:] = lnS[t,:,:] + flags[t,:,:] 
-        if np.any(np.isnan(np.exp(lnS[t,:,:]))):
-            print '_expec_joint_t: nan value encountered (1) '
-            print logsumexp(lnS[t,:,:])
-            print lnS[t,:,:]
-            
-        lnS[t,:,:] = lnS[t,:,:] - logsumexp(lnS[t,:,:])
         
-        if np.any(np.isnan(np.exp(lnS[t,:,:]))):
-            print '_expec_joint_t: nan value encountered' 
-            print logsumexp(lnS[t,:,:])
-            print lnS[t,:,:]
+        if doc_start[t]:
+            flags[t, before_doc_idx, :] = 0
+            lnS[t, before_doc_idx, :] += np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)], C[t,:]!=0) \
+                                                + lnA[before_doc_idx,:]        
+            continue
+        
+        for l_prev in xrange(L):
+            flags[t, l_prev, :] = 0 
+            lnS[t, l_prev, :] += np.dot(lnPi[:, C[t,:]-1, C[t-1,:]-1, np.arange(K)], C[t,:]!=0) \
+                                                + lnA[l_prev,:] + lnR_[t-1,l_prev]  
+    #normalise and return  
+    lnS = lnS + flags 
+    if np.any(np.isnan(np.exp(lnS))):
+        print '_expec_joint_t: nan value encountered (1) '
+        
+    lnS = lnS - logsumexp(lnS, axis=(1,2))[:, None, None]
+        
+    if np.any(np.isnan(np.exp(lnS))):
+        print '_expec_joint_t: nan value encountered' 
             
     return np.exp(lnS)
 
@@ -414,31 +412,11 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=
     # iterate through all tokens, starting at the beginning going forward
     for t in xrange(T):
         if doc_start[t]:
-            lnR_[t,:] += initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)],mask[t,:][:,None]), axis=1)
-            
+            lnR_[t,:] = initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)],mask[t,:][:,None]), 
+                                           axis=1)
         else:
             # iterate through all possible labels
-            for l in xrange(L):
-            
-            # check if the current token marks the start of a new document
-            #if doc_start[t]:
-                # check if token needs to be skipped
-                #if skip:
-                #    mask = C[t,:] != 0
-                #else:
-                #    mask = 1    
-                
-                # compute likelihood for document start token being the current label           
-                #lnR_[t,l] += initProbs[l] + np.sum(mask[t,:] * lnPi[l, C[t,:]-1, before_doc_idx, np.arange(K)])
-            #else:
-                # check if token needs to be skipped
-                #if skip:
-                #    mask = C[t,:] != 0
-                #else:
-                #    mask = 1
-                
-                # compute likelihood for current token and label
-                #lnR_[t,l] = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(mask[t,:] * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
+            for l in xrange(L):            
                 lnR_[t, l] = logsumexp(lnR_[t-1, :] + lnA[:, l]) + np.sum(mask[t, :] * lnPi[l, C[t, :]-1, C[t-1, :]-1, 
                                                                                         np.arange(K)])
         
