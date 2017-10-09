@@ -13,6 +13,14 @@ Error analysis -- cases include:
 Possible solution to these two cases is to reduce the prior on missing an annotation, i.e. p( c=O | c_next=whatever, t=B)?
 reduce alpha0[2, 1, 1, :], reduce alpha0[2,0,0,:], perhaps increase alpha0[2,2,:,:] to compensate?
 
+Example error:
+-- line 2600, argmin binary experiment
+-- Some annotators start the annotation early
+-- The annotation is split because the B labels are well trusted
+-- But the early annotation is marked because there is a high chance of missing annotations by some annotators.
+-- Better model might assume lower chance of I-B transition + lower change of missing something?
+
+
 Created on Jan 28, 2017
 
 @author: Melvin Laux
@@ -228,9 +236,9 @@ class BAC(object):
                 print "BAC iteration %i in progress" % self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
-            r_, scaling_factor = _forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start, 
-                              self.before_doc_idx)
-            lambd = _backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start, scaling_factor)
+            r_, scaling_factor = _forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[self.before_doc_idx,:], 
+                                               doc_start, self.before_doc_idx)
+            lambd = _backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start, scaling_factor, self.before_doc_idx)
             
             # update q_t
             self.q_t_old = self.q_t
@@ -337,6 +345,9 @@ def _post_alpha(E_t, C, alpha0, doc_start, before_doc_idx=-1):  # Posterior Hype
     
     alpha = alpha0.copy()
     
+    prev_missing = np.concatenate((np.zeros((1, C.shape[1])), C[:-1, :]==0), axis=0)
+    doc_start = doc_start + prev_missing
+    
     for j in range(dims[0]): 
         Tj = E_t[:, j] 
         for l in range(dims[1]): 
@@ -373,12 +384,14 @@ def _expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
         if doc_start[t]:
             flags[t, before_doc_idx, :] = 0
             lnS[t, before_doc_idx, :] += np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)], C[t,:]!=0) \
-                                                + lnA[before_doc_idx,:]        
+                                                + lnA[before_doc_idx,:] 
             continue
         
         for l_prev in xrange(L):
             flags[t, l_prev, :] = 0 
-            lnS[t, l_prev, :] += np.dot(lnPi[:, C[t,:]-1, C[t-1,:]-1, np.arange(K)], C[t,:]!=0) \
+            prev_idx = C[t-1, :]-1
+            prev_idx[prev_idx == -1] = before_doc_idx            
+            lnS[t, l_prev, :] += np.dot(lnPi[:, C[t,:]-1, prev_idx, np.arange(K)], C[t,:]!=0) \
                                                 + lnA[l_prev,:] + lnR_[t-1,l_prev]  
     #normalise and return  
     lnS = lnS + flags 
@@ -392,7 +405,7 @@ def _expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
             
     return np.exp(lnS)
 
-def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=-1):
+def _forward_pass(C, lnA, lnPi, initProbs, doc_start, before_doc_idx=-1, skip=True):
     '''
     Perform the forward pass of the Forward-Backward algorithm (for each document separately).
     '''
@@ -412,12 +425,14 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=
     # iterate through all tokens, starting at the beginning going forward
     for t in xrange(T):
         if doc_start[t]:
-            lnR_[t,:] = initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)],mask[t,:][:,None]), 
+            lnR_[t,:] = initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)], mask[t,:][:,None]), 
                                            axis=1)
         else:
             # iterate through all possible labels
             for l in xrange(L):            
-                lnR_[t, l] = logsumexp(lnR_[t-1, :] + lnA[:, l]) + np.sum(mask[t, :] * lnPi[l, C[t, :]-1, C[t-1, :]-1, 
+                prev_idx = C[t-1, :]-1
+                prev_idx[prev_idx == -1] = before_doc_idx
+                lnR_[t, l] = logsumexp(lnR_[t-1, :] + lnA[:, l]) + np.sum(mask[t, :] * lnPi[l, C[t, :]-1, prev_idx, 
                                                                                         np.arange(K)])
         
         # normalise
@@ -426,7 +441,7 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=
             
     return lnR_, scaling_factor
         
-def _backward_pass(C, lnA, lnPi, doc_start, scaling_factor, skip=True):
+def _backward_pass(C, lnA, lnPi, doc_start, scaling_factor, before_doc_idx=-1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for each document separately).
     '''
@@ -456,11 +471,14 @@ def _backward_pass(C, lnA, lnPi, doc_start, scaling_factor, skip=True):
         # iterate through all possible labels
         for l in xrange(L):              
             
+            prev_idx = C[t, :]-1
+            prev_idx[prev_idx == -1] = before_doc_idx              
+            
             # iterate through all possible labels (again)
             for l_next in xrange(L):
-                # calculate likelihood of current token and label
+                # calculate likelihood of current token and label                
                 lambdaL_next[l, l_next] = lnA[l,l_next] + lnLambda[t+1,l_next] + \
-                                            np.sum(mask[t+1,:] * lnPi[l_next, C[t+1, :]-1, C[t, :]-1, np.arange(K)])
+                                        np.sum(mask[t+1,:] * lnPi[l_next, C[t+1, :]-1, prev_idx, np.arange(K)])
                         
             lnLambda[t,l] = logsumexp(lambdaL_next[l, :]) - scaling_factor[t+1, :] 
         
