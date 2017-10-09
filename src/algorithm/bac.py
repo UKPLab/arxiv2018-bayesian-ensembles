@@ -13,6 +13,14 @@ Error analysis -- cases include:
 Possible solution to these two cases is to reduce the prior on missing an annotation, i.e. p( c=O | c_next=whatever, t=B)?
 reduce alpha0[2, 1, 1, :], reduce alpha0[2,0,0,:], perhaps increase alpha0[2,2,:,:] to compensate?
 
+Example error:
+-- line 2600, argmin binary experiment
+-- Some annotators start the annotation early
+-- The annotation is split because the B labels are well trusted
+-- But the early annotation is marked because there is a high chance of missing annotations by some annotators.
+-- Better model might assume lower chance of I-B transition + lower change of missing something?
+
+
 Created on Jan 28, 2017
 
 @author: Melvin Laux
@@ -49,7 +57,8 @@ class BAC(object):
     eps = None # maximum difference of estimate differences in convergence chack
     
 
-    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0], exclusions=None, alpha0=None, nu0=None):
+    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0], outside_labels=[1,-1], before_doc_idx=-1, 
+                 exclusions=None, alpha0=None, nu0=None):
         '''
         Constructor
         '''
@@ -72,8 +81,8 @@ class BAC(object):
         
         # set priors for invalid transitions (to low values)
         for inside_label in inside_labels:
-            self.alpha0[:, inside_label, [1,-1], :] = 0.1 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
-            self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
+            self.alpha0[:, inside_label, outside_labels, :] = np.nextafter(0, 1)
+            self.nu0[outside_labels, inside_label] = np.nextafter(0,1)
         #self.nu0[1, 1] += 1.0
         
         if exclusions is not None:
@@ -81,12 +90,11 @@ class BAC(object):
                 self.alpha0[:,excluded,label,:] = np.nextafter(0,1)
                 self.nu0[label,excluded] = np.nextafter(0,1)
             
-        
         # initialise transition and confusion matrices
         self._initA()
         self._init_lnPi()
         
-        self.before_doc_idx = -1 # identifies which true class value is assumed for the label before the start of a document
+        self.before_doc_idx = before_doc_idx # identifies which true class value is assumed for the label before the start of a document
         
         self.max_iter = max_iter # maximum number of iterations
         self.eps = eps # threshold for convergence 
@@ -105,7 +113,7 @@ class BAC(object):
         '''
         
         # E[ln p(data, t | parameters)]
-        lnpCt = 0
+        lnpC = 0
         
         C = C.astype(int)
         
@@ -115,9 +123,20 @@ class BAC(object):
         
         valid_labels = (C!=0).astype(float)
         
+        # this doesn't seem quite right -- should include the transition matrix
         for j in range(self.L):
-            lnpCt += valid_labels * self.lnPi[j, C-1, C_prev-1, np.arange(self.K)[None, :]] * self.q_t[:, j:j+1]
-        lnpCt = np.sum(lnpCt)
+            lnpCj = valid_labels * self.lnPi[j, C-1, C_prev-1, np.arange(self.K)[None, :]] * self.q_t[:, j:j+1]
+            lnpCj[np.isinf(lnpCj) | np.isnan(lnpCj)] = 0
+            lnpC += lnpCj            
+            
+        lnpt = self.lnA[None, :, :] * self.q_t_joint
+        lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
+        
+        lnpCt  = np.sum(lnpC) + np.sum(lnpt)
+                        
+        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=1)[:, None, :]) * self.q_t_joint
+        lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
+        lnqt = np.sum(lnqt)
             
         # E[ln p(\pi | \alpha_0)]
         x = np.sum((self.alpha0 - 1) * self.lnPi, 1)
@@ -147,7 +166,7 @@ class BAC(object):
         z[np.isinf(z)] = 0
         lnqA = np.sum(x + z)
         
-        lb = lnpCt + lnpPi - lnqPi + lnpA - lnqA        
+        lb = lnpCt - lnqt + lnpPi - lnqPi + lnpA - lnqA        
         return lb
         
     def optimize(self, C, doc_start, maxfun=50):
@@ -217,9 +236,9 @@ class BAC(object):
                 print "BAC iteration %i in progress" % self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
-            r_ = _forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[-1,:], doc_start, 
-                              self.before_doc_idx)
-            lambd = _backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start)
+            r_, scaling_factor = _forward_pass(C, self.lnA[0:self.L,:], self.lnPi, self.lnA[self.before_doc_idx,:], 
+                                               doc_start, self.before_doc_idx)
+            lambd = _backward_pass(C, self.lnA[0:self.L,:], self.lnPi, doc_start, scaling_factor, self.before_doc_idx)
             
             # update q_t
             self.q_t_old = self.q_t
@@ -227,6 +246,7 @@ class BAC(object):
             
             # update q_t_joint
             self.q_t_joint = _expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
+            self.q_t_alt = np.sum(self.q_t_joint, axis=1)
             
             # update E_lnA
             self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
@@ -234,14 +254,14 @@ class BAC(object):
             self.alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
 
             # update E_lnpi
-            
-            # increase iteration number
-            self.iter += 1
             self.lnPi = _calc_q_pi(self.alpha)
             
-            #lb = self.lowerbound(C, doc_start)
-            #print 'Lower bound = %.5f, diff = %.5f' % (lb, lb - oldlb)
-            #oldlb = lb
+            lb = self.lowerbound(C, doc_start)
+            print 'Lower bound = %.5f, diff = %.5f' % (lb, lb - oldlb)
+            oldlb = lb
+            
+            # increase iteration number
+            self.iter += 1            
 
         return self._most_probable_sequence(C, doc_start)
     
@@ -308,11 +328,11 @@ def _calc_q_pi(alpha):
     '''
     Update the annotator models.
     '''
-    alpha_sum = np.sum(alpha, 1)
+    psi_alpha_sum = psi(np.sum(alpha, 1))
     dims = alpha.shape
     q_pi = np.zeros(dims)
     for s in range(dims[1]): 
-        q_pi[:, s, :, :] = psi(alpha[:, s, :, :]) - psi(alpha_sum)
+        q_pi[:, s, :, :] = psi(alpha[:, s, :, :]) - psi_alpha_sum
     
     return q_pi
     
@@ -324,6 +344,9 @@ def _post_alpha(E_t, C, alpha0, doc_start, before_doc_idx=-1):  # Posterior Hype
     dims = alpha0.shape
     
     alpha = alpha0.copy()
+    
+    prev_missing = np.concatenate((np.zeros((1, C.shape[1])), C[:-1, :]==0), axis=0)
+    doc_start = doc_start + prev_missing
     
     for j in range(dims[0]): 
         Tj = E_t[:, j] 
@@ -342,8 +365,7 @@ def _expec_t(lnR_, lnLambda):
     '''
     Calculate label probabilities for each token.
     '''
-    r_lambd = np.exp(lnR_ + lnLambda)
-    return r_lambd/np.sum(r_lambd,1)[:, None]
+    return np.exp(lnR_ + lnLambda)
     
 def _expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
     '''
@@ -355,62 +377,35 @@ def _expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
     K = lnPi.shape[-1]
     
     lnS = np.repeat(lnLambda[:,None,:], L+1, 1)    
-    lnS_test = lnS
     flags = -np.inf * np.ones_like(lnS)
-    flags_test = flags
-    
     # iterate though everything, calculate joint expectations
     for t in xrange(T):
+        
+        if doc_start[t]:
+            flags[t, before_doc_idx, :] = 0
+            lnS[t, before_doc_idx, :] += np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)], C[t,:]!=0) \
+                                                + lnA[before_doc_idx,:] 
+            continue
+        
         for l_prev in xrange(L):
-            
-            if doc_start[t]:
-                flags_test[t,before_doc_idx,:] = 0
-                lnS_test[t,before_doc_idx,:] += np.dot(lnPi[:,C[t,:]-1,before_doc_idx,np.arange(K)],(C[t,:]!=0)) + lnA[-1,:]
-            else:
-                flags_test[t, l_prev,:] = 0 
-                lnS_test[t,l_prev,:] += lnR_[t-1,l_prev] + lnA[l_prev,:] + np.dot(lnPi[:,C[t,:]-1,C[t-1,:]-1,np.arange(K)],(C[t,:]!=0))
-                
- #           for l in xrange(L):
-                
-                # check if current token is at document start
-  #              if doc_start[t]:
-  #                  flags[t, before_doc_idx, l] = 0
-  #                  if l_prev==0: # only add these values once
-  #                      lnS[t, -1, l] += lnA[-1, l] + np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, before_doc_idx,
- #                                                                            np.arange(K)])
-                # TODO: replace with np.dot(lnPi[:,C[t,:]-1,before_doc_idx,np.arange(K)],(C[t,:]!=0)) + lnA[-1,:] + np.repeat(lnLambda[:,None,:], L+1, 1) [t,-1,:]
-                
-  #              else:
-  #                  flags[t, l_prev, l] = 0
-  #                  lnS[t, l_prev, l] += lnR_[t-1, l_prev] + lnA[l_prev, l]
-   #                 lnS[t, l_prev, l] += np.sum((C[t,:]!=0) * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])   
-                    
-                # TODO: replace with np.repeat(lnLambda[:,None,:], L+1, 1) [t,l_prev,:] + 
-
-  #              if np.any(np.isnan(np.exp(lnS[t,l_prev,:]))):
-  #                  print '_expec_joint_t: nan value encountered for t=%i, l_prev=%i' % (t,l_prev)
+            flags[t, l_prev, :] = 0 
+            prev_idx = C[t-1, :]-1
+            prev_idx[prev_idx == -1] = before_doc_idx            
+            lnS[t, l_prev, :] += np.dot(lnPi[:, C[t,:]-1, prev_idx, np.arange(K)], C[t,:]!=0) \
+                                                + lnA[l_prev,:] + lnR_[t-1,l_prev]  
+    #normalise and return  
+    lnS = lnS + flags 
+    if np.any(np.isnan(np.exp(lnS))):
+        print '_expec_joint_t: nan value encountered (1) '
         
-        #normalise and return  
-        lnS[t,:,:] = lnS[t,:,:] + flags[t,:,:] 
-        lnS_test[t,:,:] = lnS_test[t,:,:] + flags_test[t,:,:] 
-        if np.any(np.isnan(np.exp(lnS[t,:,:]))):
-            print '_expec_joint_t: nan value encountered (1) '
-            print logsumexp(lnS[t,:,:])
-            print lnS[t,:,:]
-            
-        lnS[t,:,:] = lnS[t,:,:] - logsumexp(lnS[t,:,:]) 
+    lnS = lnS - logsumexp(lnS, axis=(1,2))[:, None, None]
         
-        if np.any(np.isnan(np.exp(lnS[t,:,:]))):
-            print '_expec_joint_t: nan value encountered' 
-            print logsumexp(lnS[t,:,:])
-            print lnS[t,:,:]
+    if np.any(np.isnan(np.exp(lnS))):
+        print '_expec_joint_t: nan value encountered' 
             
-        if np.any(lnS_test[t,:,:] != lnS[t,:,:]) or np.any(flags[t,:,:]!=flags_test[t,:,:]):
-            print 'Vectorisation Speedup Error!'
-    
-    return np.exp(lnS_test)
+    return np.exp(lnS)
 
-def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=-1):
+def _forward_pass(C, lnA, lnPi, initProbs, doc_start, before_doc_idx=-1, skip=True):
     '''
     Perform the forward pass of the Forward-Backward algorithm (for each document separately).
     '''
@@ -419,7 +414,8 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=
     K = lnPi.shape[-1] # infer number of annotators
     
     # initialise variables
-    lnR_ = np.zeros((T, L)) 
+    lnR_ = np.zeros((T, L))
+    scaling_factor = np.zeros((T, 1))
     
     mask = np.ones_like(C)
     
@@ -429,38 +425,23 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=True, before_doc_idx=
     # iterate through all tokens, starting at the beginning going forward
     for t in xrange(T):
         if doc_start[t]:
-            lnR_[t,:] += initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)],mask[t,:][:,None]), axis=1)
-            
+            lnR_[t,:] = initProbs + np.sum(np.dot(lnPi[:, C[t,:]-1, before_doc_idx, np.arange(K)], mask[t,:][:,None]), 
+                                           axis=1)
         else:
             # iterate through all possible labels
-            for l in xrange(L):
-            
-            # check if the current token marks the start of a new document
-            #if doc_start[t]:
-                # check if token needs to be skipped
-                #if skip:
-                #    mask = C[t,:] != 0
-                #else:
-                #    mask = 1    
-                
-                # compute likelihood for document start token being the current label           
-                #lnR_[t,l] += initProbs[l] + np.sum(mask[t,:] * lnPi[l, C[t,:]-1, before_doc_idx, np.arange(K)])
-            #else:
-                # check if token needs to be skipped
-                #if skip:
-                #    mask = C[t,:] != 0
-                #else:
-                #    mask = 1
-                
-                # compute likelihood for current token and label
-                lnR_[t,l] = logsumexp(lnR_[t-1,:] + lnA[:,l]) + np.sum(mask[t,:] * lnPi[l, C[t,:]-1, C[t-1,:]-1, np.arange(K)])                
+            for l in xrange(L):            
+                prev_idx = C[t-1, :]-1
+                prev_idx[prev_idx == -1] = before_doc_idx
+                lnR_[t, l] = logsumexp(lnR_[t-1, :] + lnA[:, l]) + np.sum(mask[t, :] * lnPi[l, C[t, :]-1, prev_idx, 
+                                                                                        np.arange(K)])
         
         # normalise
-        lnR_[t,:] = lnR_[t,:] - logsumexp(lnR_[t,:])
+        scaling_factor[t,:] = logsumexp(lnR_[t,:])
+        lnR_[t,:] = lnR_[t,:] - scaling_factor[t,:]
             
-    return lnR_        
+    return lnR_, scaling_factor
         
-def _backward_pass(C, lnA, lnPi, doc_start, skip=True):
+def _backward_pass(C, lnA, lnPi, doc_start, scaling_factor, before_doc_idx=-1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for each document separately).
     '''
@@ -479,41 +460,30 @@ def _backward_pass(C, lnA, lnPi, doc_start, skip=True):
     
     # iterate through all tokens, starting at the end going backwards
     for t in xrange(T-1,-1,-1):
-        # check whether the previous token was a document start
+        # check whether the next token was a document start
         if t==T-1 or doc_start[t+1]:
             lnLambda[t,:] = 0
             continue
+
+        # initialise variable
+        lambdaL_next = np.zeros((L,L))
         
         # iterate through all possible labels
         for l in xrange(L):              
             
-            # initialise variable
-            lambdaL_next_sum = np.zeros((L,1))
+            prev_idx = C[t, :]-1
+            prev_idx[prev_idx == -1] = before_doc_idx              
             
             # iterate through all possible labels (again)
             for l_next in xrange(L):
-                # # check if the token needs to be skipped
-                # if skip:
-                #     mask = C[t+1,:] != 0
-                # else:
-                #     mask = 1
-                    
-                # calculate likelihood of current token and label
-                lambdaL_next = lnLambda[t+1,l_next] + np.sum(mask[t+1,:] * lnPi[l_next, C[t+1,:]-1, C[t,:]-1, 
-                                                                         np.arange(K)])
-                lambdaL_next += lnA[l,l_next]                        
-                lambdaL_next_sum[l_next] = lambdaL_next
-                
-                # TODO: why in 3 steps?
-            
-            lnLambda[t,l] = logsumexp(lambdaL_next_sum)
-        
-        # normalise
-        unnormed_lnLambda = lnLambda[t, :]
-        lnLambda[t,:] = lnLambda[t,:] - logsumexp(lnLambda[t,:])   
+                # calculate likelihood of current token and label                
+                lambdaL_next[l, l_next] = lnA[l,l_next] + lnLambda[t+1,l_next] + \
+                                        np.sum(mask[t+1,:] * lnPi[l_next, C[t+1, :]-1, prev_idx, np.arange(K)])
+                        
+            lnLambda[t,l] = logsumexp(lambdaL_next[l, :]) - scaling_factor[t+1, :] 
         
         if(np.any(np.isnan(lnLambda[t,:]))):    
             print 'backward pass: nan value encountered: '
-            print unnormed_lnLambda
+            print lnLambda[t, :]
   
     return lnLambda                
