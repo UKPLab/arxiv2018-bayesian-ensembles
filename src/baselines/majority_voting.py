@@ -56,7 +56,7 @@ class MajorityVoting(object):
                 else:
                     self.majority[i] = 1
             else:
-                if (not (1 in winners)) and (winners[0][1] >= threshold):
+                if (not (1 in zip(*winners)[0])) and (winners[0][1] >= threshold):
                     self.majority[i] = 2
                 else:
                     self.majority[i] = 1

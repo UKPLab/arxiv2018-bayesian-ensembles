@@ -38,7 +38,7 @@ for k in xrange(3, num_annos, 3):
                 os.makedirs(output_dir)
 
         np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
-        results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos.csv')
+        results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
         np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
         np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
 
