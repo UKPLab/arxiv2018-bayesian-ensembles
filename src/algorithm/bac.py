@@ -23,7 +23,6 @@ from scipy.misc import logsumexp
 from scipy.special import psi
 from scipy.special.basic import gammaln
 from scipy.optimize.optimize import fmin
-from numpy import argmax
 
 class BAC(object):
     '''
@@ -72,7 +71,7 @@ class BAC(object):
         
         # set priors for invalid transitions (to low values)
         for inside_label in inside_labels:
-            self.alpha0[:, inside_label, [1,-1], :] = 0.1 # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
+            self.alpha0[:, inside_label, [1,-1], :] = np.nextafter(0,1) # don't set this too close to zero because there are some cases where it was possible for annotators to provide invalid sequences.
             self.nu0[[1,-1], inside_label] = np.nextafter(0,1)
         #self.nu0[1, 1] += 1.0
         
@@ -94,10 +93,10 @@ class BAC(object):
         self.verbose = False # can change this if you want progress updates to be printed
         
     def _initA(self):
-        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
+        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None] + np.nextafter(0,1))
 
     def _init_lnPi(self):
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:])        
+        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:,None,:,:]+ np.nextafter(0,1))        
         
     def lowerbound(self, C, doc_start):
         '''
@@ -284,7 +283,7 @@ class BAC(object):
 
     def _converged(self):
         '''
-        Calculates whether the algorithm has _converged or the maximum number of iterations is reached.
+        Calculates whether the algorithm has converged or the maximum number of iterations is reached.
         The algorithm has _converged when the maximum difference of an entry of q_t between two iterations is 
         smaller than the given epsilon.
         '''

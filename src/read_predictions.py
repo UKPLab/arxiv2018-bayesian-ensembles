@@ -69,15 +69,34 @@ def load_results(config):
         param_id += 1 
             
     exp.plot_results(results, False, True, exp.output_dir+'new')
-               
-            
     
-load_results('../config/acc_experiment.ini')
-load_results('../config/class_bias_experiment.ini')
-load_results('../config/short_bias_experiment.ini')
-load_results('../config/doc_length_experiment.ini')
-load_results('../config/crowd_size_experiment.ini')
-load_results('../config/group_ratio_experiment.ini')
+    
+def plot_crowdsourcing_results():
+    exp = experiment.Experiment(None, None)
+    exp.param_values = np.array([3,6,9,12,15,18,21,24])
+    exp.param_idx =  -1
+    exp.methods = np.array(['bac','ibcc', 'mace', 'majority'])
+    
+    all_dirs = glob.glob('../output/crowdsourcing/k*')
+    all_dirs.sort(key=lambda s: int(s.split('/')[3][1:]))
+    
+    scores = np.zeros((8,9,4,10))
+    
+    for j in xrange(len(all_dirs)):
+        for i in xrange(10):
+            scores[j,:,:,i] = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results.csv', delimiter=',')
+            
+            
+        
+    exp.plot_results(scores, False, True, '../output/crowdsourcing/plots/')
+            
+plot_crowdsourcing_results()    
+#load_results('../config/acc_experiment.ini')
+#load_results('../config/class_bias_experiment.ini')
+#load_results('../config/short_bias_experiment.ini')
+#load_results('../config/doc_length_experiment.ini')
+#load_results('../config/crowd_size_experiment.ini')
+#load_results('../config/group_ratio_experiment.ini')
 
 
 
