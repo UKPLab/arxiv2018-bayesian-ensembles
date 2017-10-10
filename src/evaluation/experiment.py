@@ -193,6 +193,7 @@ class Experiment(object):
                               exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
+                alg.before_doc_idx = 1
                 probs, agg = alg.run(annotations, doc_start)
                 #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
