@@ -19,28 +19,40 @@ num_tokens = annos.shape[0]
 num_annos = annos.shape[1]
 
 exp = Experiment(None, None)
-exp.methods = ['bac' ,'ibcc', 'mace', 'majority']
+exp.methods = ['bac', 'clustering', 'Hmm_crowd', 'ibcc', 'mace', 'majority']
 exp.num_classes = 3
 
-for k in xrange(3, num_annos, 3):
-    combs = set()
-    while len(combs) < 10:
-        combs.add(tuple(sorted(random.sample(range(num_annos),k))))
-        
-    for run in xrange(10):
-        
-        output_dir = '../output/crowdsourcing/k' + str(k) + '/run' + str(run) + '/'
-        subannos = annos[:, list(combs)[run]]
-        subannos_str = subannos.astype(str)
-        subannos_str[subannos_str == '-1.0'] = ''
+annosA = annos[:,:24]
+annosB = annos[:,24:]
 
-        if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+for k in xrange(3, 25):
+        
+        
+    output_dir = '../output/crowdsourcing/k' + str(k) + '/run0/'
+    subannos = annosA[:, :k]
+    subannos_str = subannos.astype(str)
+    subannos_str[subannos_str == '-1.0'] = ''
 
-        np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
-        results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
-        np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
-        np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
+    if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
+    results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
+    np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
+    np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
+    
+    output_dir = '../output/crowdsourcing/k' + str(k) + '/run1/'
+    subannos = annosB[:, :k]
+    subannos_str = subannos.astype(str)
+    subannos_str[subannos_str == '-1.0'] = ''
+
+    if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
+    results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
+    np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
+    np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
 
 if __name__ == '__main__':
     pass
