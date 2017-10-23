@@ -224,6 +224,7 @@ class Experiment(object):
                 hc.em(20)
                 hc.mls()
                 agg = np.array(hc.res).flatten() 
+                agg = np.concatenate(hc.res)[:,None]
                 probs = []
                 for sentence_post_arr in hc.sen_posterior:
                     for tok_post_arr in sentence_post_arr:

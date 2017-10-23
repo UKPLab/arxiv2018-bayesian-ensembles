@@ -4,9 +4,7 @@ Created on Sep 4, 2017
 @author: Melvin Laux
 '''
 import numpy as np
-import itertools
-import os, random
-from random import shuffle
+import os
 from evaluation.experiment import Experiment
 
 # load data
@@ -19,17 +17,32 @@ num_tokens = annos.shape[0]
 num_annos = annos.shape[1]
 
 exp = Experiment(None, None)
-exp.methods = ['bac', 'clustering', 'Hmm_crowd', 'ibcc', 'mace', 'majority']
+exp.methods = ['bac', 'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority']
 exp.num_classes = 3
 
-annosA = annos[:,:24]
-annosB = annos[:,24:]
+annosA = annos[:, :24]
+annosB = annos[:, 24:]
 
-for k in xrange(3, 25):
+# create list of doc start idxs
+
+doc_start_idxs = np.where(doc_start == 1)[0]
+np.append(doc_start_idxs, annosA.shape[0])
+
+dataA = -np.ones_like(annosA)
+dataB = -np.ones_like(annosB)
+
+for k in xrange(1, 9):    
+    
+    for i in xrange(len(doc_start_idxs) - 1):
         
-        
+        col = np.where(np.cumsum(annosA[doc_start_idxs[i], :] != -1) == k)[0][0]
+        dataA[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col] = annosA[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col]
+    
+        col = np.where(np.cumsum(annosB[doc_start_idxs[i], :] != -1) == k)[0][0]
+        dataB[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col] = annosB[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col]
+    
     output_dir = '../output/crowdsourcing/k' + str(k) + '/run0/'
-    subannos = annosA[:, :k]
+    subannos = dataA
     subannos_str = subannos.astype(str)
     subannos_str[subannos_str == '-1.0'] = ''
 
@@ -42,7 +55,7 @@ for k in xrange(3, 25):
     np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
     
     output_dir = '../output/crowdsourcing/k' + str(k) + '/run1/'
-    subannos = annosB[:, :k]
+    subannos = dataB
     subannos_str = subannos.astype(str)
     subannos_str[subannos_str == '-1.0'] = ''
 

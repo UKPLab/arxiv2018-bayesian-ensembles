@@ -73,18 +73,20 @@ def load_results(config):
     
 def plot_crowdsourcing_results():
     exp = experiment.Experiment(None, None)
-    exp.param_values = np.array([3,6,9,12,15,18,21,24])
-    exp.param_idx =  -1
-    exp.methods = np.array(['bac','ibcc', 'mace', 'majority'])
+    exp.param_values = np.arange(1,9)
+    exp.param_idx = -1
+    exp.methods = np.array(['bac', 'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
+    
+    num_runs = 2
     
     all_dirs = glob.glob('../output/crowdsourcing/k*')
     all_dirs.sort(key=lambda s: int(s.split('/')[3][1:]))
     
-    scores = np.zeros((8,9,4,10))
+    scores = np.zeros((len(exp.param_values),len(exp.SCORE_NAMES),len(exp.methods),num_runs))
     
     for j in xrange(len(all_dirs)):
-        for i in xrange(10):
-            scores[j,:,:,i] = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results.csv', delimiter=',')
+        for i in xrange(num_runs):
+            scores[j,:,:,i] = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
             
             
         

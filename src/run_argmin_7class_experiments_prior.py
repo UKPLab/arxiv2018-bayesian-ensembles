@@ -14,7 +14,7 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 exp = Experiment(None, None)
-exp.methods = ['bac'] # 'bac', 'clustering', 'ibcc', 'mace', 
+exp.methods = ['ibcc','mace','majority'] # 'bac', 'clustering', 'ibcc', 'mace', 
 
 gt, annos, doc_start = load_data.load_argmin_7class_data()
 
@@ -28,8 +28,8 @@ exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, a
 
 results, preds, _ = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin7/annos.csv')
 
-np.savetxt(output_dir + 'result_7class_prior_50000', results, fmt='%s', delimiter=',')
-np.savetxt(output_dir + 'pred_7class_prior_50000', preds, fmt='%s', delimiter=',')
+np.savetxt(output_dir + 'result_7class_maj', results, fmt='%s', delimiter=',')
+np.savetxt(output_dir + 'pred_7class_maj', preds, fmt='%s', delimiter=',')
 
 
 #results.dump('../output/argmin/results')
