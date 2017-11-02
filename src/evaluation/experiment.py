@@ -193,7 +193,7 @@ class Experiment(object):
                               exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
-                alg.before_doc_idx = 1
+                alg.before_doc_idx = -1
                 probs, agg = alg.run(annotations, doc_start)
                 #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
@@ -321,7 +321,7 @@ class Experiment(object):
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities
-                probabilities.dump(data_path + 'probabilites', probabilities)
+                probabilities.dump(data_path + 'probabilites')
                 
         if self.save_results:
             if not os.path.exists(self.output_dir):

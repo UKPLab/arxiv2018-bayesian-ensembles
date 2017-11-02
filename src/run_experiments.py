@@ -16,11 +16,11 @@ acc_exp = '../config/acc_bias_experiment.ini'
 
 
 
-#Experiment(dataGen, '../config/class_bias_experiment.ini').run()
+Experiment(dataGen, '../config/class_bias_experiment.ini').run()
 Experiment(dataGen, '../config/crowd_size_experiment.ini').run()
-#Experiment(dataGen, '../config/short_bias_experiment.ini').run()
-#Experiment(dataGen, '../config/doc_length_experiment.ini').run()
-#Experiment(dataGen, '../config/group_ratio_experiment.ini').run()
+Experiment(dataGen, '../config/short_bias_experiment.ini').run()
+Experiment(dataGen, '../config/doc_length_experiment.ini').run()
+Experiment(dataGen, '../config/group_ratio_experiment.ini').run()
 Experiment(dataGen, acc_exp).run()
 
 
