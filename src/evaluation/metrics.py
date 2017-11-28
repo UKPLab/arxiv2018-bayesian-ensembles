@@ -35,6 +35,8 @@ def mean_length_error(pred, target, doc_start):
     not_empty = lambda x: np.size(x) > 0
     
     mean_pred = np.mean(np.array([len(x) for x in filter(not_empty, map(del_o, get_annos(pred)))]))
+    if mean_pred == np.nan:
+        mean_pred = 0
     mean_target = np.mean(np.array([len(x) for x in filter(not_empty, map(del_o, get_annos(target)))]))
 
     return np.abs(mean_pred-mean_target)

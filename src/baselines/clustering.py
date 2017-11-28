@@ -30,7 +30,7 @@ class Clustering(object):
         
         self.annotations = annotations
         
-        self.anno_binary = np.where(annotations != 1)[0]
+        self.anno_binary = np.where(np.isin(annotations,[0,2]))[0]
         self.anno_binary = self.anno_binary.reshape(-1, 1)
         
         self.num_docs = int(np.sum(doc_start))
@@ -55,6 +55,10 @@ class Clustering(object):
                 self.doc_length = self.start_idxs[doc+1] - self.start_idxs[doc]
             else:
                 self.doc_length = self.annotations.shape[0] - self.start_idxs[doc]
+                
+            if self.doc_anno.shape == (0,1):
+                result = np.append(result,np.zeros((self.doc_length,1)), axis=0)
+                continue
         
             # function to minimise: negative data-log-likelihood
             f = lambda x: -self.calc_data_likelihood(x)

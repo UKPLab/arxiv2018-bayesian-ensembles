@@ -116,6 +116,7 @@ class Experiment(object):
         
         scores = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
         predictions = -np.ones((annotations.shape[0], len(self.methods)))
+        probabilities = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
         
         for method_idx in xrange(len(self.methods)): 
             
@@ -165,34 +166,34 @@ class Experiment(object):
                     inside_labels = [0, 3, 5]
                     
                     # transitions from o to i
-                    self.exclusions[1] = 0
-                    self.exclusions[1] = 3                
-                    self.exclusions[1] = 5
+                    #self.exclusions[1] = 0
+                    #self.exclusions[1] = 3                
+                    #self.exclusions[1] = 5
                     
                     # transitions between classes                    
-                    self.exclusions[3] = 0
-                    self.exclusions[4] = 0
-                    self.exclusions[5] = 0
-                    self.exclusions[6] = 0
+                    #self.exclusions[3] = 0
+                    #self.exclusions[4] = 0
+                    #self.exclusions[5] = 0
+                    #self.exclusions[6] = 0
 
-                    self.exclusions[0] = 3
-                    self.exclusions[2] = 3
-                    self.exclusions[5] = 3
-                    self.exclusions[6] = 3
+                    #self.exclusions[0] = 3
+                    #self.exclusions[2] = 3
+                    #self.exclusions[5] = 3
+                    #self.exclusions[6] = 3
                     
-                    self.exclusions[0] = 5
-                    self.exclusions[2] = 5
-                    self.exclusions[3] = 5
-                    self.exclusions[4] = 5                    
+                    #self.exclusions[0] = 5
+                    #self.exclusions[2] = 5
+                    #self.exclusions[3] = 5
+                    #self.exclusions[4] = 5                    
                 else:
                     inside_labels = [0]
-                    self.exclusions[1] = 0
+                    #self.exclusions[1] = 0
                     
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
                               exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
-                alg.before_doc_idx = 1
+                alg.before_doc_idx = -1
                 probs, agg = alg.run(annotations, doc_start)
                 #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
@@ -223,6 +224,7 @@ class Experiment(object):
                 hc.em(20)
                 hc.mls()
                 agg = np.array(hc.res).flatten() 
+                agg = np.concatenate(hc.res)[:,None]
                 probs = []
                 for sentence_post_arr in hc.sen_posterior:
                     for tok_post_arr in sentence_post_arr:
@@ -231,10 +233,12 @@ class Experiment(object):
             
             scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth.flatten(), probs, doc_start)
             predictions[:, method_idx] = agg.flatten()
+            probabilities[:,:,method_idx] = probs
+            
             
             print '...done'
             
-        return scores, predictions
+        return scores, predictions, probabilities
     
     
     def calculate_scores(self, agg, gt, probs, doc_start):
@@ -311,11 +315,13 @@ class Experiment(object):
                 
                 data_path = path_pattern.format(*(param_idx,run_idx))
                 # read data
-                doc_start, gt, annos = self.generator.read_data_file(data_path + "full_data.csv")                
+                doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
                 # run methods
-                results[param_idx,:,:,run_idx], preds = self.run_methods(annos, gt, doc_start, param_idx, data_path + "annotations.csv")
+                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start, param_idx, data_path + 'annotations.csv')
                 # save predictions
-                np.savetxt(data_path + "predictions.csv", preds)
+                np.savetxt(data_path + 'predictions.csv', preds)
+                # save probabilities
+                probabilities.dump(data_path + 'probabilites')
                 
         if self.save_results:
             if not os.path.exists(self.output_dir):
@@ -335,7 +341,7 @@ class Experiment(object):
         if self.generate_data:
             self.create_experiment_data()
         
-        if not glob.glob(os.path.join(self.output_dir, "data/*")):
+        if not glob.glob(os.path.join(self.output_dir, 'data/*')):
             print 'No data found at specified path! Exiting!'
             return
         else:
