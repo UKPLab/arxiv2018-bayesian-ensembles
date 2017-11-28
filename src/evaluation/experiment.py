@@ -156,8 +156,8 @@ class Experiment(object):
                 nu0 = np.ones(self.num_classes, dtype=float)
                 
                 ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=nu0, alpha0=alpha0)
-                probs = ibc.combine_classifications(annotations, table_format=True)
-                agg = probs.argmax(axis=1)
+                probs = ibc.combine_classifications(annotations, table_format=True) # posterior class probabilities
+                agg = probs.argmax(axis=1) # aggregated class labels
                 
             if self.methods[method_idx] == 'bac':
                 L = self.num_classes
