@@ -52,7 +52,7 @@ def convert_crowdsourcing(x):
 
 def load_argmin_data():    
 
-    path = '../data/argmin/'
+    path = './data/argmin/'
     if not os.path.isdir(path):
         os.mkdir(path)
             
@@ -69,15 +69,15 @@ def load_argmin_data():
     doc_start = np.zeros((annos.shape[0], 1))    
     doc_start[np.where(concatenated[:, 0] == 1)] = 1
     
-    np.savetxt('../data/argmin/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../data/argmin/gt.csv', gt, fmt='%s', delimiter=',')
-    np.savetxt('../data/argmin/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    np.savetxt('./data/argmin/annos.csv', annos, fmt='%s', delimiter=',')
+    np.savetxt('./data/argmin/gt.csv', gt, fmt='%s', delimiter=',')
+    np.savetxt('./data/argmin/doc_start.csv', doc_start, fmt='%s', delimiter=',')
 
     return gt, annos, doc_start
 
 def load_argmin_7class_data():    
 
-    path = '../data/argmin/'
+    path = './data/argmin/'
     if not os.path.isdir(path):
         os.mkdir(path)
     
@@ -91,7 +91,7 @@ def load_argmin_7class_data():
     doc_start = np.zeros((annos.shape[0], 1))    
     doc_start[np.where(concatenated[:, 0] == 1)] = 1
     
-    outpath = '../data/argmin7/'
+    outpath = './data/argmin7/'
     if not os.path.isdir(outpath):
         os.mkdir(outpath)
     
@@ -102,7 +102,7 @@ def load_argmin_7class_data():
     return gt, annos, doc_start
 
 def load_crowdsourcing_data():
-    path = '../data/crowdsourcing/'
+    path = './data/crowdsourcing/'
     if not os.path.isdir(path):
         os.mkdir(path)
             
@@ -127,8 +127,8 @@ def load_crowdsourcing_data():
         if '_00' in str(concatenated[i,0]):
             doc_start[i] = 1
     
-    np.savetxt('../data/crowdsourcing/gen/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../data/crowdsourcing/gen/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    np.savetxt('./data/crowdsourcing/gen/annos.csv', annos, fmt='%s', delimiter=',')
+    np.savetxt('./data/crowdsourcing/gen/doc_start.csv', doc_start, fmt='%s', delimiter=',')
     
     return annos, doc_start
 

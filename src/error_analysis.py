@@ -40,7 +40,5 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path, output_p
 
     np.savetxt(output_path, analysis, delimiter=',', fmt='%i')
     
-error_analysis('../data/argmin/gt.csv', '../data/argmin/annos.csv', '../data/argmin/doc_start.csv', '../output/argmin/pred_err_prior_1', '../output/argmin/analysis_prior_1')
-
 if __name__ == '__main__':
-    pass
+    error_analysis('./data/argmin/gt.csv', './data/argmin/annos.csv', './data/argmin/doc_start.csv', './output/argmin/pred_err_prior_1', './output/argmin/analysis_prior_1')

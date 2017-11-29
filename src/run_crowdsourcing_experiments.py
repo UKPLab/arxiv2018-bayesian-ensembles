@@ -8,9 +8,9 @@ import os
 from evaluation.experiment import Experiment
 
 # load data
-gold = np.genfromtxt('../data/crowdsourcing/gen/gold2.csv', delimiter=',')
-annos = np.genfromtxt('../data/crowdsourcing/gen/annos.csv', delimiter=',')
-doc_start = np.genfromtxt('../data/crowdsourcing/gen/doc_start.csv', delimiter=',')
+gold = np.genfromtxt('./data/crowdsourcing/gen/gold2.csv', delimiter=',')
+annos = np.genfromtxt('./data/crowdsourcing/gen/annos.csv', delimiter=',')
+doc_start = np.genfromtxt('./data/crowdsourcing/gen/doc_start.csv', delimiter=',')
 
 # setup
 num_tokens = annos.shape[0]
@@ -41,7 +41,7 @@ for k in xrange(1, 9):
         col = np.where(np.cumsum(annosB[doc_start_idxs[i], :] != -1) == k)[0][0]
         dataB[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col] = annosB[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col]
     
-    output_dir = '../output/crowdsourcing/k' + str(k) + '/run0/'
+    output_dir = './output/crowdsourcing/k' + str(k) + '/run0/'
     subannos = dataA
     subannos_str = subannos.astype(str)
     subannos_str[subannos_str == '-1.0'] = ''
@@ -54,7 +54,7 @@ for k in xrange(1, 9):
     np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
     np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
     
-    output_dir = '../output/crowdsourcing/k' + str(k) + '/run1/'
+    output_dir = './output/crowdsourcing/k' + str(k) + '/run1/'
     subannos = dataB
     subannos_str = subannos.astype(str)
     subannos_str[subannos_str == '-1.0'] = ''
