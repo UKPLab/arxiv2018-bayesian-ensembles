@@ -29,7 +29,7 @@ Created on Jan 28, 2017
 import numpy as np
 from scipy.misc import logsumexp
 from scipy.special import psi
-from scipy.special.basic import gammaln
+from scipy.special import gammaln
 from scipy.optimize.optimize import fmin
 from numpy import argmax
 from joblib import Parallel, delayed
