@@ -103,10 +103,16 @@ class BAC(object):
         self.verbose = False  # can change this if you want progress updates to be printed
         
     def _initA(self):
-        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
+        #self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
+        self.lnA = psi(self.nu0) - psi(np.sum(self.nu0, -1))[:, None]
 
     def _init_lnPi(self):
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:, None, :, :])        
+        #self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:, None, :, :])
+        psi_alpha_sum = psi(np.sum(self.alpha0, 1))
+        dims = self.alpha0.shape
+        self.lnPi = np.zeros(dims)
+        for s in range(dims[1]):  
+            self.lnPi[:, s, :, :] = psi(self.alpha0[:, s, :, :]) - psi_alpha_sum        
         
     def lowerbound(self, C, doc_start):
         '''
@@ -126,7 +132,7 @@ class BAC(object):
         
         # this doesn't seem quite right -- should include the transition matrix
         for j in range(self.L):
-            lnpCj = valid_labels * self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]] * self.q_t[:, j:j + 1]
+            lnpCj = valid_labels * self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]] * self.q_t[:, j:j+1]
             lnpCj[np.isinf(lnpCj) | np.isnan(lnpCj)] = 0
             lnpC += lnpCj            
             
@@ -167,6 +173,7 @@ class BAC(object):
         z[np.isinf(z)] = 0
         lnqA = np.sum(x + z)
         
+        print 'Computing LB: %f, %f, %f, %f, %f, %f' % (lnpCt, lnqt, lnpPi, lnqPi, lnpA, lnqA)
         lb = lnpCt - lnqt + lnpPi - lnqPi + lnpA - lnqA        
         return lb
         
@@ -237,27 +244,14 @@ class BAC(object):
                 print "BAC iteration %i in progress" % self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
-            # r_, scaling_factor = _forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
-            #                                   doc_start, self.before_doc_idx)
             r_, scaling_factor = _parallel_forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
                                                doc_start, self.before_doc_idx)
-            
-            # print np.all(test == r_)
-            
-            #lambd = _backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, scaling_factor, self.before_doc_idx)
             lambd = _parallel_backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, scaling_factor, self.before_doc_idx)
             
-            #print np.all(test == lambd)
-            
-            # update q_t
+            # update q_t and q_t_joint
             self.q_t_old = self.q_t
-            self.q_t = _expec_t(r_, lambd)
-            
-            # update q_t_joint
-            # self.q_t_joint = _expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
             self.q_t_joint = _parallel_expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
-            
-            self.q_t_alt = np.sum(self.q_t_joint, axis=1)
+            self.q_t = np.sum(self.q_t_joint, axis=1)
             
             # update E_lnA
             self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
