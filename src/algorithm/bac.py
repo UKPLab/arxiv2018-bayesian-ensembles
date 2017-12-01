@@ -80,8 +80,17 @@ class BAC(object):
         else:
             self.nu0 = nu0
         
+        beginning_labels = np.ones(self.nscores + 1, dtype=bool)
+        beginning_labels[inside_labels] = False
+        beginning_labels[outside_labels] = False
+                
         # set priors for invalid transitions (to low values)
         for inside_label in inside_labels:
+            # pseudo-counts for the transitions that are not allowed from outside to inside
+            #disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - 1 # pseudocount is (alpha0 - 1)
+            # split the disallowed count between the possible beginning labels
+            #self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
+            # set the disallowed transition to as close to zero as possible
             self.alpha0[:, inside_label, outside_labels, :] = np.nextafter(0, 1)
             self.nu0[outside_labels, inside_label] = np.nextafter(0, 1)
         # self.nu0[1, 1] += 1.0
@@ -118,16 +127,11 @@ class BAC(object):
         '''
         Compute the variational lower bound on the log marginal likelihood. 
         '''
-        
-        # E[ln p(data, t | parameters)]
         lnpC = 0
-        
         C = C.astype(int)
-        
         C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
         C_prev[doc_start.flatten() == 1, :] = 0
         C_prev[C_prev == 0] = self.before_doc_idx + 1  # document starts or missing labels
-        
         valid_labels = (C != 0).astype(float)
         
         # this doesn't seem quite right -- should include the transition matrix
@@ -141,7 +145,7 @@ class BAC(object):
         
         lnpCt = np.sum(lnpC) + np.sum(lnpt)
                         
-        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=1)[:, None, :]) * self.q_t_joint
+        lnqt = np.log(self.q_t_joint) * self.q_t_joint
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
         lnqt = np.sum(lnqt)
             
@@ -244,9 +248,9 @@ class BAC(object):
                 print "BAC iteration %i in progress" % self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
-            r_, scaling_factor = _parallel_forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
+            r_ = _parallel_forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
                                                doc_start, self.before_doc_idx)
-            lambd = _parallel_backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, scaling_factor, self.before_doc_idx)
+            lambd = _parallel_backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, self.before_doc_idx)
             
             # update q_t and q_t_joint
             self.q_t_old = self.q_t
@@ -255,10 +259,9 @@ class BAC(object):
             
             # update E_lnA
             self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
-    
-            self.alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)
 
             # update E_lnpi
+            self.alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)            
             self.lnPi = _calc_q_pi(self.alpha)
             
             lb = self.lowerbound(C, doc_start)
@@ -370,7 +373,7 @@ def _expec_t(lnR_, lnLambda):
     '''
     Calculate label probabilities for each token.
     '''
-    return np.exp(lnR_ + lnLambda)
+    return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None]) 
     
 def _expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start, before_doc_idx=-1):
     '''
@@ -501,7 +504,7 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, before_doc_idx=-1, skip=Tr
         scaling_factor[t, :] = logsumexp(lnR_[t, :])
         lnR_[t, :] = lnR_[t, :] - scaling_factor[t, :]
             
-    return lnR_, scaling_factor
+    return lnR_
 
 def _doc_forward_pass(C, lnA, lnPi, initProbs, before_doc_idx=-1, skip=True):
     '''
@@ -538,7 +541,7 @@ def _doc_forward_pass(C, lnA, lnPi, initProbs, before_doc_idx=-1, skip=True):
         scaling_factor[t, :] = logsumexp(lnR_[t, :])
         lnR_[t, :] = lnR_[t, :] - scaling_factor[t, :]
             
-    return lnR_, scaling_factor
+    return lnR_
 
 def _parallel_forward_pass(C, lnA, lnPi, initProbs, doc_start, before_doc_idx=-1, skip=True):
     '''
@@ -549,14 +552,12 @@ def _parallel_forward_pass(C, lnA, lnPi, initProbs, doc_start, before_doc_idx=-1
     # run forward pass for each doc concurrently
     res = Parallel(n_jobs=-1)(delayed(_doc_forward_pass)(doc, lnA, lnPi, initProbs, before_doc_idx, skip) for doc in docs)
     # reformat results
-    results = map(list, zip(*res))
-    lnR_ = np.concatenate(results[0], axis=0)
-    scaling_factor = np.concatenate(results[1], axis=0)
+    lnR_ = np.concatenate(res, axis=0)
     
-    return lnR_, scaling_factor
+    return lnR_
     
         
-def _backward_pass(C, lnA, lnPi, doc_start, scaling_factor, before_doc_idx=-1, skip=True):
+def _backward_pass(C, lnA, lnPi, doc_start, before_doc_idx=-1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for each document separately).
     '''
@@ -595,7 +596,7 @@ def _backward_pass(C, lnA, lnPi, doc_start, scaling_factor, before_doc_idx=-1, s
   
     return lnLambda
 
-def _parallel_backward_pass(C, lnA, lnPi, doc_start, scaling_factor, before_doc_idx=-1, skip=True):
+def _parallel_backward_pass(C, lnA, lnPi, doc_start, before_doc_idx=-1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for multiple documents in parallel).
     '''
@@ -603,13 +604,13 @@ def _parallel_backward_pass(C, lnA, lnPi, doc_start, scaling_factor, before_doc_
     docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
     #docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
     # run forward pass for each doc concurrently
-    res = Parallel(n_jobs=-1)(delayed(_doc_backward_pass)(doc, lnA, lnPi, scaling_factor, before_doc_idx, skip) for doc in docs)
+    res = Parallel(n_jobs=-1)(delayed(_doc_backward_pass)(doc, lnA, lnPi, before_doc_idx, skip) for doc in docs)
     # reformat results
     lnLambda = np.concatenate(res, axis=0)
     
     return lnLambda
 
-def _doc_backward_pass(C, lnA, lnPi, scaling_factor, before_doc_idx=-1, skip=True):
+def _doc_backward_pass(C, lnA, lnPi, before_doc_idx=-1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for a single document).
     '''
