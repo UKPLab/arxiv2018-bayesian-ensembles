@@ -7,6 +7,10 @@ import numpy as np
 import os
 from evaluation.experiment import Experiment
 
+# TODO: we are cutting off the last token of each document in annos2.csv
+# TODO: why is accuracy so much higher with majority vote, yet AUC is low?
+# TODO: why is F1 score initially much lower with BAC?
+
 # load data
 gold = np.genfromtxt('./data/crowdsourcing/gen/gold2.csv', delimiter=',')
 annos = np.genfromtxt('./data/crowdsourcing/gen/annos.csv', delimiter=',')
@@ -36,10 +40,10 @@ for k in xrange(1, 9):
     for i in xrange(len(doc_start_idxs) - 1):
         
         col = np.where(np.cumsum(annosA[doc_start_idxs[i], :] != -1) == k)[0][0]
-        dataA[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col] = annosA[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col]
+        dataA[doc_start_idxs[i]:doc_start_idxs[i + 1], col] = annosA[doc_start_idxs[i]:doc_start_idxs[i + 1], col]
     
         col = np.where(np.cumsum(annosB[doc_start_idxs[i], :] != -1) == k)[0][0]
-        dataB[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col] = annosB[doc_start_idxs[i]:doc_start_idxs[i + 1] - 1, col]
+        dataB[doc_start_idxs[i]:doc_start_idxs[i + 1], col] = annosB[doc_start_idxs[i]:doc_start_idxs[i + 1], col]
     
     output_dir = './output/crowdsourcing/k' + str(k) + '/run0/'
     subannos = dataA

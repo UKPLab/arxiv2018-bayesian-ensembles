@@ -27,11 +27,8 @@ Created on Jan 28, 2017
 '''
 
 import numpy as np
-from scipy.misc import logsumexp
-from scipy.special import psi
-from scipy.special import gammaln
+from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
-from numpy import argmax
 from joblib import Parallel, delayed
 
 class BAC(object):
@@ -87,9 +84,9 @@ class BAC(object):
         # set priors for invalid transitions (to low values)
         for inside_label in inside_labels:
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            #disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - 1 # pseudocount is (alpha0 - 1)
+            disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - 1 # pseudocount is (alpha0 - 1)
             # split the disallowed count between the possible beginning labels
-            #self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
+            self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
             # set the disallowed transition to as close to zero as possible
             self.alpha0[:, inside_label, outside_labels, :] = np.nextafter(0, 1)
             self.nu0[outside_labels, inside_label] = np.nextafter(0, 1)
@@ -112,16 +109,16 @@ class BAC(object):
         self.verbose = False  # can change this if you want progress updates to be printed
         
     def _initA(self):
-        #self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
-        self.lnA = psi(self.nu0) - psi(np.sum(self.nu0, -1))[:, None]
+        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
+        #self.lnA = psi(self.nu0) - psi(np.sum(self.nu0, -1))[:, None]
 
     def _init_lnPi(self):
-        #self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:, None, :, :])
-        psi_alpha_sum = psi(np.sum(self.alpha0, 1))
-        dims = self.alpha0.shape
-        self.lnPi = np.zeros(dims)
-        for s in range(dims[1]):  
-            self.lnPi[:, s, :, :] = psi(self.alpha0[:, s, :, :]) - psi_alpha_sum        
+        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:, None, :, :])
+        #psi_alpha_sum = psi(np.sum(self.alpha0, 1))
+        #dims = self.alpha0.shape
+        #self.lnPi = np.zeros(dims)
+        #for s in range(dims[1]):  
+        #    self.lnPi[:, s, :, :] = psi(self.alpha0[:, s, :, :]) - psi_alpha_sum        
         
     def lowerbound(self, C, doc_start):
         '''
@@ -248,9 +245,9 @@ class BAC(object):
                 print "BAC iteration %i in progress" % self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
-            r_ = _parallel_forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
+            r_ = _forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
                                                doc_start, self.before_doc_idx)
-            lambd = _parallel_backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, self.before_doc_idx)
+            lambd = _backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, self.before_doc_idx)
             
             # update q_t and q_t_joint
             self.q_t_old = self.q_t
@@ -490,8 +487,8 @@ def _forward_pass(C, lnA, lnPi, initProbs, doc_start, before_doc_idx=-1, skip=Tr
     # iterate through all tokens, starting at the beginning going forward
     for t in xrange(T):
         if doc_start[t]:
-            lnR_[t, :] = initProbs + np.sum(np.dot(lnPi[:, C[t, :] - 1, before_doc_idx, np.arange(K)], mask[t, :][:, None]),
-                                           axis=1)
+            lnR_[t, :] = initProbs + np.sum(np.dot(lnPi[:, C[t, :] - 1, before_doc_idx, np.arange(K)], 
+                                                   mask[t, :][:, None]), axis=1)
         else:
             # iterate through all possible labels
             for l in xrange(L):            
@@ -586,10 +583,12 @@ def _backward_pass(C, lnA, lnPi, doc_start, before_doc_idx=-1, skip=True):
             
             prev_idx = C[t, :] - 1
             prev_idx[prev_idx == -1] = before_doc_idx              
-            
                         
-            lnLambda[t, l] = logsumexp(lnA[l, :] + lnLambda[t + 1, :] + np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, np.arange(K)], axis=1)) #- scaling_factor[t + 1, :] 
-        
+            lnLambda[t, l] = logsumexp(lnA[l, :] + lnLambda[t+1, :] + np.sum(mask[t+1, :] * lnPi[:, C[t+1, :] - 1,
+                                        prev_idx, np.arange(K)], axis=1)) #- scaling_factor[t + 1, :]
+
+        lnLambda[t] -= logsumexp(lnLambda[t])
+
         if(np.any(np.isnan(lnLambda[t, :]))):    
             print 'backward pass: nan value encountered: '
             print lnLambda[t, :]
@@ -627,18 +626,18 @@ def _doc_backward_pass(C, lnA, lnPi, before_doc_idx=-1, skip=True):
     if skip:
         mask = (C != 0)
         
-    lnLambda[T - 1, :] = 0
-    
     # iterate through all tokens, starting at the end going backwards
     for t in xrange(T - 2, -1, -1): 
         
         # iterate through all possible labels
-        for l in xrange(L):              
+        for l in xrange(L):
             
             prev_idx = C[t, :] - 1
             prev_idx[prev_idx == -1] = before_doc_idx              
              
-            lnLambda[t, l] = logsumexp(lnA[l, :] + lnLambda[t + 1, :] + np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, np.arange(K)], axis=1))# - scaling_factor[t + 1, :] 
+            lnLambda[t, l] = logsumexp(lnA[l, :] + lnLambda[t + 1, :] + np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, np.arange(K)], axis=1))# - scaling_factor[t + 1, :]
+
+        lnLambda[t] -= logsumexp(lnLambda[t])
         
         if(np.any(np.isnan(lnLambda[t, :]))):    
             print 'backward pass: nan value encountered: '
