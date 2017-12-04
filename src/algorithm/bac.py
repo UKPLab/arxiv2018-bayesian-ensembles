@@ -145,7 +145,7 @@ class BAC(object):
         
         lnpCt = np.sum(lnpC) + np.sum(lnpt)
                         
-        lnqt = np.log(self.q_t_joint) * self.q_t_joint
+        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=1)[:, None, :]) * self.q_t_joint
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
         lnqt = np.sum(lnqt)
             
