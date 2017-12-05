@@ -282,14 +282,16 @@ class BAC(object):
         lnV = np.zeros((C.shape[0], self.L))
         prev = np.zeros((C.shape[0], self.L))  # most likely previous states
                 
+        mask = C != 0
+                
         for t in range(0, C.shape[0]):
             for l in xrange(self.L):
                 if doc_start[t]:
-                    likelihood_current = np.sum((C[0, :] != 0) * self.lnPi[l, C[0, :] - 1, self.before_doc_idx,
+                    likelihood_current = np.sum(mask[t, :] * self.lnPi[l, C[t, :] - 1, self.before_doc_idx,
                                                                          np.arange(self.K)])
                     lnV[t, l] = self.lnA[self.before_doc_idx, l] + likelihood_current
                 else:
-                    likelihood_current = np.sum((C[t, :] != 0) * self.lnPi[l, C[t, :] - 1, C[t - 1, :] - 1, np.arange(self.K)]) 
+                    likelihood_current = np.sum(mask[t, :] * self.lnPi[l, C[t, :] - 1, C[t - 1, :] - 1, np.arange(self.K)]) 
                     p_current = lnV[t - 1, :] + self.lnA[:self.L, l] + likelihood_current
                     lnV[t, l] = np.max(p_current)
                     prev[t, l] = np.argmax(p_current, axis=0)
