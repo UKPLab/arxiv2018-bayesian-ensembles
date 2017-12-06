@@ -24,17 +24,17 @@ exp.num_classes = 3
 # exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
 #                           annos.shape[1])) +  5.0 * np.eye(exp.num_classes)[:,:,None,None]
 
-priorstr = 'prior_3_try2' # We address the imbalance between rows with exclusions and rows without. When there is an exclusion,
-# weights on the correct answer are 0.667 instead of 0.5. Weights on the incorrect answer are 0.333 instead of 0.25, so
-# the correct answer benefits more. Solution: put the pseudo-counts from the excluded transition onto the next-best answer,
-# e.g. the best answer given that the previous one had missed the start of the annotation.
-# BAC has now been changed to make this work: 
-exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
-                            annos.shape[1])) +  1.0 * np.eye(exp.num_classes)[:,:,None,None]
-
-# priorstr = 'prior_4_try2' 
+# priorstr = 'prior_3_try2' # We address the imbalance between rows with exclusions and rows without. When there is an exclusion,
+# # weights on the correct answer are 0.667 instead of 0.5. Weights on the incorrect answer are 0.333 instead of 0.25, so
+# # the correct answer benefits more. Solution: put the pseudo-counts from the excluded transition onto the next-best answer,
+# # e.g. the best answer given that the previous one had missed the start of the annotation.
+# # BAC has now been changed to make this work: 
 # exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
-#                            annos.shape[1])) +  5.0 * np.eye(exp.num_classes)[:,:,None,None]
+#                             annos.shape[1])) +  1.0 * np.eye(exp.num_classes)[:,:,None,None]
+
+priorstr = 'prior_4_try2' 
+exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
+                           annos.shape[1])) +  5.0 * np.eye(exp.num_classes)[:,:,None,None]
 
 # TODO: check out the NANs?
 # priorstr = 'prior_5_try2' 

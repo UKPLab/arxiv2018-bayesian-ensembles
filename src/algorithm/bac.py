@@ -84,9 +84,9 @@ class BAC(object):
         # set priors for invalid transitions (to low values)
         for inside_label in inside_labels:
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - 1 # pseudocount is (alpha0 - 1)
+            #disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - 1 # pseudocount is (alpha0 - 1)
             # split the disallowed count between the possible beginning labels
-            self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
+            #self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
             # set the disallowed transition to as close to zero as possible
             self.alpha0[:, inside_label, outside_labels, :] = np.nextafter(0, 1)
             self.nu0[outside_labels, inside_label] = np.nextafter(0, 1)

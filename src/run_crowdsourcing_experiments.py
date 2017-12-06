@@ -54,7 +54,7 @@ for k in xrange(1, 9):
             os.makedirs(output_dir)
 
     np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
-    exp.bac_alpha0 = np.ones((3, 3, 4, subannos.shape[1])) + 1.0 * np.eye(3)[:, :, None, None]    
+    exp.bac_alpha0 = np.ones((3, 3, 4, subannos.shape[1])) + 5.0 * np.eye(3)[:, :, None, None]    
     results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
     np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
     np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')

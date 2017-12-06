@@ -191,7 +191,7 @@ class Experiment(object):
                     
                 # TODO: still have lower bound decreases -- did something go wrong when we merged? Try out on desktop-169 without updating the code.
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
-                              nu0 = np.ones((L + 1, L)) * 1000, exclusions=self.exclusions)
+                              nu0 = np.ones((L + 1, L)) * 5, exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
                 alg.before_doc_idx = -1
