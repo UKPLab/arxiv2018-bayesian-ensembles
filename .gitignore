@@ -17,3 +17,20 @@ output/nguyen_class_bias_exp_25
 **/*.DS_Store
 
 output/nguyen**
+output/argmin/analysis_prior_1_v2.xlsx
+output/argmin/~$analysis_prior_1.xlsx
+output/argmin/analysis_prior_1.xlsx
+output/argmin/analysis_prior_3.xlsx
+output/argmin/pred_err_lowerbound_debug
+output/argmin/result_err_lowerbound_debug
+output/argmin/pred_err_prior_2_try2
+output/argmin/pred_err_prior_3_try2
+output/argmin/pred_err_prior_4_try2
+output/argmin/result_err_prior_2_try2
+output/argmin/result_err_prior_3_try2
+output/argmin/result_err_prior_4_try2
+output/argmin/*~lock*
+**~lock*
+output/argmin/pred_err_lowerbound_debug2
+output/argmin/result_err_lowerbound_debug2
+output/argmin/analysis_prior_1_old.csv

@@ -17,13 +17,13 @@ exp.num_classes = 7
 
 exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, annos.shape[1])) +  1.0 * np.eye(exp.num_classes)[:,:,None,None]
 
-results, preds = exp.run_methods(annos, gt, doc_start, -666, '../data/argmin7/annos.csv')
+results, preds = exp.run_methods(annos, gt, doc_start, -666, './data/argmin7/annos.csv')
 
-np.savetxt('../output/argmin7/result_full', results, fmt='%s', delimiter=',')
-np.savetxt('../output/argmin7/pred_full', preds, fmt='%s', delimiter=',')
+np.savetxt('./output/argmin7/result_full', results, fmt='%s', delimiter=',')
+np.savetxt('./output/argmin7/pred_full', preds, fmt='%s', delimiter=',')
 
-#results.dump('../output/argmin/results')
-#preds.dump('../output/argmin/preds')
+#results.dump('./output/argmin/results')
+#preds.dump('./output/argmin/preds')
 
 if __name__ == '__main__':
     pass

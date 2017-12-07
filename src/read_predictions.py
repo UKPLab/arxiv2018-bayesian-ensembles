@@ -75,11 +75,11 @@ def plot_crowdsourcing_results():
     exp = experiment.Experiment(None, None)
     exp.param_values = np.arange(1,9)
     exp.param_idx = -1
-    exp.methods = np.array(['bac', 'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
+    exp.methods = np.array(['bac', 'majority'])#'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
     
     num_runs = 2
     
-    all_dirs = glob.glob('../output/crowdsourcing/k*')
+    all_dirs = glob.glob('./output/crowdsourcing/k*')
     all_dirs.sort(key=lambda s: int(s.split('/')[3][1:]))
     
     scores = np.zeros((len(exp.param_values),len(exp.SCORE_NAMES),len(exp.methods),num_runs))
@@ -90,15 +90,15 @@ def plot_crowdsourcing_results():
             
             
         
-    exp.plot_results(scores, False, True, '../output/crowdsourcing/plots/')
+    exp.plot_results(scores, False, True, './output/crowdsourcing/plots/')
             
 plot_crowdsourcing_results()    
-#load_results('../config/acc_experiment.ini')
-#load_results('../config/class_bias_experiment.ini')
-#load_results('../config/short_bias_experiment.ini')
-#load_results('../config/doc_length_experiment.ini')
-#load_results('../config/crowd_size_experiment.ini')
-#load_results('../config/group_ratio_experiment.ini')
+#load_results('./config/acc_experiment.ini')
+#load_results('./config/class_bias_experiment.ini')
+#load_results('./config/short_bias_experiment.ini')
+#load_results('./config/doc_length_experiment.ini')
+#load_results('./config/crowd_size_experiment.ini')
+#load_results('./config/group_ratio_experiment.ini')
 
 
 

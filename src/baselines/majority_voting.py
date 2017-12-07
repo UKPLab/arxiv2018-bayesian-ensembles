@@ -89,7 +89,7 @@ class MajorityVoting(object):
                 
         
         if np.all(np.sum(votes, axis=1)[:,None]) != 0:
-            self.probabilities = (votes/np.sum(votes, axis=1)[:,None])  
+            self.probabilities = votes/np.sum(votes, axis=1)[:,None].astype(float)  
 
         return self.majority, self.probabilities
                     

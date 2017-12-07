@@ -42,6 +42,7 @@ class Experiment(object):
     methods = None
         
     bac_alpha0 = None
+    bac_nu0 = None
     
     exclusions = {}
 
@@ -138,9 +139,9 @@ class Experiment(object):
             if self.methods[method_idx] == 'mace':
                 
                 #devnull = open(os.devnull, 'w')
-                subprocess.call(['java', '-jar', '../MACE/MACE.jar', '--distribution', '--prefix', '../output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
+                subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix', './output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
                 
-                result = np.genfromtxt('../output/data/mace.prediction')
+                result = np.genfromtxt('./output/data/mace.prediction')
                     
                 agg = result[:, 0]
                     
@@ -157,8 +158,8 @@ class Experiment(object):
                 nu0 = np.ones(self.num_classes, dtype=float)
                 
                 ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=nu0, alpha0=alpha0)
-                probs = ibc.combine_classifications(annotations, table_format=True)
-                agg = probs.argmax(axis=1)
+                probs = ibc.combine_classifications(annotations, table_format=True) # posterior class probabilities
+                agg = probs.argmax(axis=1) # aggregated class labels
                 
             if self.methods[method_idx] == 'bac':
                 L = self.num_classes
@@ -189,8 +190,9 @@ class Experiment(object):
                     inside_labels = [0]
                     #self.exclusions[1] = 0
                     
+                # TODO: still have lower bound decreases -- did something go wrong when we merged? Try out on desktop-169 without updating the code.
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
-                              exclusions=self.exclusions)
+                              nu0=self.bac_nu0, exclusions=self.exclusions)
                 alg.verbose = True
                 alg.outsideidx = 1
                 alg.before_doc_idx = -1
