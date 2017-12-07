@@ -75,7 +75,7 @@ def plot_crowdsourcing_results():
     exp = experiment.Experiment(None, None)
     exp.param_values = np.arange(1,9)
     exp.param_idx = -1
-    exp.methods = np.array(['bac', 'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
+    exp.methods = np.array(['bac', 'majority'])#'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
     
     num_runs = 2
     

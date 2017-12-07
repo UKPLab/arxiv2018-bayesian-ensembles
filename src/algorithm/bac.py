@@ -73,7 +73,7 @@ class BAC(object):
             self.alpha0 = alpha0
     
         if nu0 is None:
-            self.nu0 = np.ones((L + 1, L))
+            self.nu0 = np.ones((L + 1, L)) * 10 
         else:
             self.nu0 = nu0
         
@@ -142,35 +142,43 @@ class BAC(object):
         
         lnpCt = np.sum(lnpC) + np.sum(lnpt)
                         
-        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=1)[:, None, :]) * self.q_t_joint
+        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=2)[:, :, None]) * self.q_t_joint                        
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
         lnqt = np.sum(lnqt)
             
         # E[ln p(\pi | \alpha_0)]
         x = np.sum((self.alpha0 - 1) * self.lnPi, 1)
         x[np.isinf(x)] = 0
-        z = gammaln(np.sum(self.alpha0, 1)) - np.sum(gammaln(self.alpha0), 1)
+        gammaln_alpha0 = gammaln(self.alpha0)
+        gammaln_alpha0[np.isinf(gammaln_alpha0)] = 0 # these possibilities should be excluded
+        z = gammaln(np.sum(self.alpha0, 1)) - np.sum(gammaln_alpha0, 1)
         z[np.isinf(z)] = 0
         lnpPi = np.sum(x + z)
                     
         # E[ln q(\pi)]
         x = np.sum((self.alpha - 1) * self.lnPi, 1)
         x[np.isinf(x)] = 0
-        z = gammaln(np.sum(self.alpha, 1)) - np.sum(gammaln(self.alpha), 1)
+        gammaln_alpha = gammaln(self.alpha)
+        gammaln_alpha[np.isinf(gammaln_alpha)] = 0 # these possibilities should be excluded        
+        z = gammaln(np.sum(self.alpha, 1)) - np.sum(gammaln_alpha, 1)
         z[np.isinf(z)] = 0
         lnqPi = np.sum(x + z)
         
         # E[ln p(A | nu_0)]
         x = np.sum((self.nu0 - 1) * self.lnA, 1)
         x[np.isinf(x)] = 0
-        z = gammaln(np.sum(self.nu0, 1)) - np.sum(gammaln(self.nu0), 1)
+        gammaln_nu0 = gammaln(self.nu0)
+        gammaln_nu0[np.isinf(gammaln_nu0)] = 0
+        z = gammaln(np.sum(self.nu0, 1)) - np.sum(gammaln_nu0, 1)
         z[np.isinf(z)] = 0
         lnpA = np.sum(x + z) 
         
         # E[ln q(A)]
         x = np.sum((self.nu - 1) * self.lnA, 1)
         x[np.isinf(x)] = 0
-        z = gammaln(np.sum(self.nu, 1)) - np.sum(gammaln(self.nu), 1)
+        gammaln_nu = gammaln(self.nu)
+        gammaln_nu[np.isinf(gammaln_nu)] = 0
+        z = gammaln(np.sum(self.nu, 1)) - np.sum(gammaln_nu, 1)
         z[np.isinf(z)] = 0
         lnqA = np.sum(x + z)
         
@@ -245,13 +253,14 @@ class BAC(object):
                 print "BAC iteration %i in progress" % self.iter
             
             # calculate alphas and betas using forward-backward algorithm 
-            r_ = _forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
+            self.lnR_ = _forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
                                                doc_start, self.before_doc_idx)
-            lambd = _backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, self.before_doc_idx)
+            lnLambd = _backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, self.before_doc_idx)
             
             # update q_t and q_t_joint
             self.q_t_old = self.q_t
-            self.q_t_joint = _parallel_expec_joint_t(r_, lambd, self.lnA, self.lnPi, C, doc_start, self.before_doc_idx)
+            self.q_t_joint = _parallel_expec_joint_t(self.lnR_, lnLambd, self.lnA, self.lnPi, C, doc_start, 
+                                                     self.before_doc_idx)
             self.q_t = np.sum(self.q_t_joint, axis=1)
             
             # update E_lnA
@@ -262,7 +271,7 @@ class BAC(object):
             self.lnPi = _calc_q_pi(self.alpha)
             
             lb = self.lowerbound(C, doc_start)
-            print 'Lower bound = %.5f, diff = %.5f' % (lb, lb - oldlb)
+            print 'Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb)
             oldlb = lb
             
             # increase iteration number
@@ -283,16 +292,19 @@ class BAC(object):
         prev = np.zeros((C.shape[0], self.L))  # most likely previous states
                 
         mask = C != 0
+        
+        lnEA = np.log(self.nu / np.sum(self.nu, axis=1)[:, None])
+        lnEPi = np.log(self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :])
                 
         for t in range(0, C.shape[0]):
             for l in xrange(self.L):
                 if doc_start[t]:
-                    likelihood_current = np.sum(mask[t, :] * self.lnPi[l, C[t, :] - 1, self.before_doc_idx,
+                    likelihood_current = np.sum(mask[t, :] * lnEPi[l, C[t, :] - 1, self.before_doc_idx,
                                                                          np.arange(self.K)])
-                    lnV[t, l] = self.lnA[self.before_doc_idx, l] + likelihood_current
+                    lnV[t, l] = lnEA[self.before_doc_idx, l] + likelihood_current
                 else:
-                    likelihood_current = np.sum(mask[t, :] * self.lnPi[l, C[t, :] - 1, C[t - 1, :] - 1, np.arange(self.K)]) 
-                    p_current = lnV[t - 1, :] + self.lnA[:self.L, l] + likelihood_current
+                    likelihood_current = np.sum(mask[t, :] * lnEPi[l, C[t, :] - 1, C[t - 1, :] - 1, np.arange(self.K)]) 
+                    p_current = lnV[t - 1, :] + lnEA[:self.L, l] + likelihood_current
                     lnV[t, l] = np.max(p_current)
                     prev[t, l] = np.argmax(p_current, axis=0)
             
@@ -303,9 +315,11 @@ class BAC(object):
         for t in xrange(C.shape[0] - 1, -1, -1):
             if t + 1 == C.shape[0] or doc_start[t + 1]:
                 seq[t] = np.argmax(lnV[t, :])
+                pseq[t, :] = lnV[t, :]
             else:
                 seq[t] = prev[t + 1, seq[t + 1]]
-            pseq[t, :] = np.exp(lnV[t, :] - logsumexp(lnV[t, :]))
+                pseq[t, :] = lnV[t, :] + lnV[t+1, :]
+            pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
         
         return pseq, seq
 
