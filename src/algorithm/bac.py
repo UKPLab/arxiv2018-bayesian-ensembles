@@ -289,7 +289,7 @@ class BAC(object):
         '''
         
         lnV = np.zeros((C.shape[0], self.L))
-        prev = np.zeros((C.shape[0], self.L))  # most likely previous states
+        prev = np.zeros((C.shape[0], self.L), dtype=int)  # most likely previous states
                 
         mask = C != 0
         
@@ -318,7 +318,9 @@ class BAC(object):
                 pseq[t, :] = lnV[t, :]
             else:
                 seq[t] = prev[t + 1, seq[t + 1]]
-                pseq[t, :] = lnV[t, :] + lnV[t+1, :]
+                pseq[t, :] = lnV[t, :] + np.max((pseq[t+1, :] - lnV[t, prev[t+1, :]] - 
+                                                 lnEA[prev[t+1, :], np.arange(lnEA.shape[1])])[None, :]
+                                                 + lnEA[:lnV.shape[1]], axis=1)
             pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
         
         return pseq, seq
