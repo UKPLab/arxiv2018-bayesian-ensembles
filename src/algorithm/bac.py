@@ -291,7 +291,7 @@ class BAC(object):
             # increase iteration number
             self.iter += 1            
 
-        return self._most_probable_sequence(C, doc_start)
+        return self.q_t, self._most_probable_sequence(C, doc_start)[1]
     
     def _most_probable_sequence(self, C, doc_start):
         '''

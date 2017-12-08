@@ -263,7 +263,7 @@ class Experiment(object):
             for j in range(nclasses):
                 conf[i, j] = np.sum((gt==i).flatten() & (agg==j).flatten())
                 
-            print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
+            #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
         print conf
         
         result[1] = skm.precision_score(gt, agg, average='macro')
@@ -273,7 +273,7 @@ class Experiment(object):
         auc_score = 0
         for i in xrange(probs.shape[1]):
             auc_i = skm.roc_auc_score(gt==i, probs[:, i]) 
-            print 'AUC for class %i: %f' % (i, auc_i)
+            #print 'AUC for class %i: %f' % (i, auc_i)
             auc_score += auc_i * np.sum(gt==i)
         result[4] = auc_score / float(gt.shape[0])
         result[5] = skm.log_loss(gt, probs, eps=1e-100)

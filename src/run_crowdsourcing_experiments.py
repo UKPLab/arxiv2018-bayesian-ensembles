@@ -12,7 +12,8 @@ alpha0_factor = 100.0
 nu0_factor = 100.0
 L = 3
 
-# TODO: best results so far show overly high bias toward class I when true class is O
+# TODO: take a look at the excluded labels from the gold standard -- can we include these or define a better gold 
+# standard somehow, since MV may be incorrect even with 18 labels?  
 
 # load data
 gold = np.genfromtxt('./data/crowdsourcing/gen/gold2.csv', delimiter=',')
