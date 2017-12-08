@@ -34,3 +34,4 @@ output/argmin/*~lock*
 output/argmin/pred_err_lowerbound_debug2
 output/argmin/result_err_lowerbound_debug2
 output/argmin/analysis_prior_1_old.csv
+output/crowdsourcing/afac_500_adiag_1_nfac_500*/**

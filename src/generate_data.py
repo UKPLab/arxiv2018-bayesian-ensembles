@@ -4,10 +4,11 @@ Created on Oct 25, 2016
 @author: Melvin Laux
 '''
 
-from data.load_data import load_crowdsourcing_data, load_argmin_data
+from data.load_data import load_crowdsourcing_data
 from algorithm import bac
 from baselines import majority_voting
 import numpy as np
+from data import data_utils
 
 # load data
 annos, doc_start = load_crowdsourcing_data()
@@ -18,9 +19,10 @@ L = 3
 # run majority voting
 base = majority_voting.MajorityVoting(annos, 3)
 maj, votes = base.vote()
+maj = data_utils.postprocess(maj, doc_start)
 
 # run BAC 
-bac_ = bac.BAC(L=L, K=K, nu0=np.ones((L+1, L)) * 0.1, alpha0=0.1 * np.ones((L, L, L+1, K)) + 0.1 * np.eye(3)[:, :, None, None])
+bac_ = bac.BAC(L=L, K=K, nu0=np.ones((L+1, L)) * 100, alpha0=100.0 * (np.ones((L, L, L+1, K)) + 1.0 * np.eye(3)[:, :, None, None]))
 probs, agg = bac_.run(annos, doc_start)
 
 np.savetxt('./data/crowdsourcing/gen/probs2.csv', probs, delimiter=',')

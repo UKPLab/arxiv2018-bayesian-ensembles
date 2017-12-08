@@ -192,10 +192,8 @@ class Experiment(object):
                     
                 # TODO: still have lower bound decreases -- did something go wrong when we merged? Try out on desktop-169 without updating the code.
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
-                              nu0=self.bac_nu0, exclusions=self.exclusions)
+                              nu0=self.bac_nu0, exclusions=self.exclusions, before_doc_idx=-1)
                 alg.verbose = True
-                alg.outsideidx = 1
-                alg.before_doc_idx = -1
                 probs, agg = alg.run(annotations, doc_start)
                 #probs, agg = alg.optimize(annotations, doc_start)
                 #agg = probs.argmax(axis=1)
@@ -237,7 +235,6 @@ class Experiment(object):
             predictions[:, method_idx] = agg.flatten()
             probabilities[:,:,method_idx] = probs
             
-            
             print '...done'
             
         return scores, predictions, probabilities
@@ -245,26 +242,39 @@ class Experiment(object):
     
     def calculate_scores(self, agg, gt, probs, doc_start):
         
+        result = -np.ones((9,1))        
+        result[7] = metrics.num_invalid_labels(agg, doc_start)        
+        
         agg = agg[gt!=-1]
         probs = probs[gt!=-1]
         doc_start = doc_start[gt!=-1]
         gt = gt[gt!=-1]
-        
-        result = -np.ones((9,1))
-        
-        result[7] = metrics.num_invalid_labels(agg, doc_start)
-        
+                        
         if self.postprocess:
             agg = data_utils.postprocess(agg, doc_start)
         
         result[0] = skm.accuracy_score(gt, agg)
+        
+        print 'Plotting confusion matrix for errors: '
+        
+        nclasses = probs.shape[1]
+        conf = np.zeros((nclasses, nclasses))
+        for i in range(nclasses):
+            for j in range(nclasses):
+                conf[i, j] = np.sum((gt==i).flatten() & (agg==j).flatten())
+                
+            print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
+        print conf
+        
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
         
         auc_score = 0
         for i in xrange(probs.shape[1]):
-            auc_score += skm.roc_auc_score(gt==i, probs[:, i]) * np.sum(gt==i)
+            auc_i = skm.roc_auc_score(gt==i, probs[:, i]) 
+            print 'AUC for class %i: %f' % (i, auc_i)
+            auc_score += auc_i * np.sum(gt==i)
         result[4] = auc_score / float(gt.shape[0])
         result[5] = skm.log_loss(gt, probs, eps=1e-100)
         result[6] = metrics.abs_count_error(agg, gt)
