@@ -1,0 +1,60 @@
+--- Combination of ideas for the BAC paper. ---
+
+*** Current status:
+-- appears to work on our test datasets with very small improvement over other methods
+-- limitation: argmin dataset already has high performance with majority voting, so differences between methods are small
+-- limitation: crowdsourcing dataset needs to generate gold labels using all workers, then test on subsets. However, some data points never get a consensus, so we have just ignored them. This could be disadvantaging some methods that are better at resolving difficult cases. 
+
+*** Contributions -- the work for these is incomplete:
+
+Bayesian method:
+-- We show how the Bayesian variant of the model can outperform others
+-- Analysis of priors and how to choose them
+-- Show that Bayesian method helps do active learning.
+
+MACE vs. IBCC comparion:
+-- Show when/why the full confusion matrix is needed -- guidelines for NLP crowdsourcing users
+
+How best to do classifier combination:
+-- Suitability of the method for classifier combination
+-- Show how we can integrate any classifier into the VB loop
+-- Comparisons between using the automated classifier as 
+(1) an additional base classifier (retrained on soft/hard labels after crowdsourced labels have been combined; predictions then made as a combination of crowd+newly trained classifier)
+(2) an additional base classifier (iteratively retrained on soft labels inside the VB loop)
+(3) using the probabilities output by the classifier as a q() distribution inside the graphical model (as in WWW 16 paper) (retraining inside the VB loop until convergence). 
+(4) Other approach taken in EMNLP 2017 paper?
+The distinction is important because intuitively many people use a pipeline: first, get gold or soft-gold labels by applying MACE to the crowdsourced labels, then train a classifier. We show how iterative training improves things. 
+
+Overlapping sequential annotations of different types.
+-- Show that this can be modelled simply by treating the combined predictions from other labelling types as additional base classifiers, setting very weak (uncorrelated) priors! No new methodology is required. Instead, we can do the same thing we do when integrating classifiers into the loop, i.e. alternate between updating the models.  
+
+*** What we need to do:
+
+0. Check the EMNLP 2017 paper and make sure our contributions are distinctive:
+a) Is their data available?
+b) How do they integrate the automated classifiers? Is our VB method really different? A key difference may be in the use of soft labels; also in showing that a generic simple classifier could work well to guide the active learning process; also, the use of the confusion matrix to Bayesianize the output of the automated classifier vs. integrating it directly. 
+
+1. New crowdsourcing dataset with reliable gold standard; preferably multiple datasets for different tasks. Options for this:
+a) Take a gold-labelled dataset and crowdsource it
+b) Reuse the dataset from EMNLP 2017
+
+2. New classifier combination dataset. We could achieve by finding a hard shared task where the classifications are already available.
+
+3. Write the methodology section on integrating base classifiers. Needs to show how any classifier could approximate a q() distribution in the model as in WWW15. 
+
+4. Run the experiments on the new datasets in different forms:
+a) without training further automated classifiers
+b) training automated classifier on the combined output of the crowd
+c) training as part of the VB loop. 
+
+5. Overlapping annotations dataset, e.g. evidence span and conclusion spans. Ask Claudia Schulz. 
+
+6. Experiments on overlapping annotations. Baseline: we use an independent model for each type, but sometimes the types are correlated.
+
+7. Active learning simulation to show benefits of Bayesian approach. 
+a) Devise a suitable batch processing AL method. Block certain workers (how to choose the threshold? Look at entropy reduction on a hypothetical data point given their confusion matrix. If the entropy reduction is close to zero, then block. E.g. set the threshold to the level you would need if five workers label each item to give you 90% confidence); choose documents (uncertainty sampling + random exploration?)
+b) Either vary batch size to show how much a smaller batch size would help or (future work?) find a way to set batch size as a trade-off against requester input, speed, budget.
+c) Run on AMT? Probably not required given the contributions so far. 
+
+***Additional Ideas
+
