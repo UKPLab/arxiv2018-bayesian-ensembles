@@ -8,12 +8,12 @@ import os
 from evaluation.experiment import Experiment
 
 alpha0_diags = 1.0
-alpha0_factor = 0.1
-nu0_factor = 0.1
+alpha0_factor = 100.0
+nu0_factor = 100.0
 L = 3
 
-# TODO: check results with nu0_factor = 0.1
-# TODO: why do results with nu0_factor = 1 not follow majority vote? Weakness of priors on alpha0_diags?
+# TODO: take a look at the excluded labels from the gold standard -- can we include these or define a better gold 
+# standard somehow, since MV may be incorrect even with 18 labels?  
 
 # load data
 gold = np.genfromtxt('./data/crowdsourcing/gen/gold2.csv', delimiter=',')
@@ -64,6 +64,7 @@ for k in xrange(1, 9):
     results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
     np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
     np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
+    np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s', delimiter=',')
     
     output_dir = './output/crowdsourcing/k' + str(k) + '/run1/'
     subannos = dataB
@@ -79,6 +80,7 @@ for k in xrange(1, 9):
     results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
     np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',')
     np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',')
+    np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s', delimiter=',')
 
 if __name__ == '__main__':
     pass
