@@ -20,6 +20,8 @@ Example error:
 -- But the early annotation is marked because there is a high chance of missing annotations by some annotators.
 -- Better model might assume lower chance of I-B transition + lower change of missing something?
 
+TODO: task 1 from the HMM Crowd paper looks like it might work well with BAC because Dawid and Skene beats MACE -->
+confusion matrix is useful, but HMM_Crowd beats D&S --> sequence is good.
 
 Created on Jan 28, 2017
 
@@ -119,14 +121,14 @@ class BAC(object):
         psi_alpha_sum = psi(np.sum(self.alpha0, 1))
         self.lnPi = psi(self.alpha0) - psi_alpha_sum[:, None, :, :]
         
-    def lowerbound(self, C, doc_start):
+    def lowerbound(self):
         '''
         Compute the variational lower bound on the log marginal likelihood. 
         '''
         lnpC = 0
-        C = C.astype(int)
+        C = self.C.astype(int)
         C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
-        C_prev[doc_start.flatten() == 1, :] = 0
+        C_prev[self.doc_start.flatten() == 1, :] = 0
         C_prev[C_prev == 0] = self.before_doc_idx + 1  # document starts or missing labels
         valid_labels = (C != 0).astype(float)
         
@@ -258,6 +260,9 @@ class BAC(object):
         
         oldlb = -np.inf
         
+        self.doc_start = doc_start
+        self.C = C
+        
         # main inference loop
         while not self._converged():
             
@@ -284,7 +289,7 @@ class BAC(object):
             self.alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)            
             self.lnPi = _calc_q_pi(self.alpha)
             
-            lb = self.lowerbound(C, doc_start)
+            lb = self.lowerbound()
             print 'Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb)
             oldlb = lb
             
