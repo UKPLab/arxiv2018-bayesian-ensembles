@@ -23,9 +23,26 @@ In this paper develop a Bayesian machine learning algorithm for combining multip
 The method we propose is based on the classifier combination method described by \cite{kim2012bayesian}, 
 which was shown to be effective for handling the unreliable classifications provided by a crowd of workers. A scalable implementation of this method using variational Bayes was described by \cite{simpsonlong}, which we use as the basis for our implementation in the current work. This paper provides the following contributions:
 \begin{itemize}
-  \item Propose a probabilistic model for combining classifications to combine annotations over sequences of words
-  \item Describes and tests a scalable inference algorithm for the proposed model that adapts the existing variational Bayes implementation for classifier combination
+  \item Novel Bayesian methodology
+  \begin{itemize}
+     \item Propose a probabilistic model for combining classifications to combine annotations over sequences of words
+     \item Describes and tests a scalable inference algorithm for the proposed model that adapts the existing variational Bayes implementation for classifier combination
+     \item Analysis of priors and how to choose them
+     \item Guidelines for NLP crowdsourcing users on why and when to use MACE/IBCC (spam probability vs. confusion matrix) models for workers (this requires a task with many classes to show value of MACE, e.g. from the MACE paper itself)
+  \end{itemize}
   \item Compares the approach on real-world NLP datasets with simple heuristic methods (e.g. mode) and alternatives such as weighted combinations
+  \begin{itemize}
+     \item Demonstrate the technique outperforms previous methods on two crowdsourcing problems?
+     \item Show that the technique also works well for forming ensembles of classifiers
+  \end{itemize}
+  \item Evaluates the different possibilities for integrating a task-specific classifier using one of the following methods:
+  \begin{itemize}
+     \item (1) an additional base classifier (retrained on soft/hard labels after crowdsourced labels have been combined; predictions then made as a combination of crowd+newly trained classifier)
+     \item (2) an additional base classifier (iteratively retrained on soft labels inside the VB loop)
+     \item (3) using the probabilities output by the classifier as a q() distribution inside the graphical model (as in WWW 16 paper) (retraining inside the VB loop until convergence). 
+     \item (4) Other approach taken in ACL 2017 paper?
+     \item The distinction is important because intuitively many people use a pipeline: first, get gold or soft-gold labels by applying MACE to the crowdsourced labels, then train a classifier. We show how iterative training improves things. 
+  \end{itemize} 
   \item Demonstrates how using the proposed Bayesian model enables an active learning approach that improves crowdsourcing efficiency
 \end{itemize}
 
