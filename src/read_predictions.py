@@ -82,25 +82,53 @@ def plot_crowdsourcing_results():
     all_dirs = glob.glob('./output/crowdsourcing/k*')
     all_dirs.sort(key=lambda s: int(s.split('/')[3][1:]))
     
-    scores = np.zeros((len(exp.param_values),len(exp.SCORE_NAMES),len(exp.methods),num_runs))
+    scores = np.zeros((len(exp.param_values), len(exp.SCORE_NAMES), len(exp.methods), num_runs))
     
     for j in xrange(len(all_dirs)):
         for i in xrange(num_runs):
             scores[j,:,:,i] = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
-            
-            
-        
+    
     exp.plot_results(scores, False, True, './output/crowdsourcing/plots/')
+
             
-plot_crowdsourcing_results()    
-#load_results('./config/acc_experiment.ini')
-#load_results('./config/class_bias_experiment.ini')
-#load_results('./config/short_bias_experiment.ini')
-#load_results('./config/doc_length_experiment.ini')
-#load_results('./config/crowd_size_experiment.ini')
-#load_results('./config/group_ratio_experiment.ini')
-
-
-
+def plot_hyperparameter_results():
+    exp = experiment.Experiment(None, None)
+    
+    alpha0_factors = np.arange(1, 20) ** 2 # 100.0 --> the working value
+    exp.param_values = alpha0_factors
+    
+    exp.PARAM_NAMES = ['alpha0 factor']
+    exp.param_idx = 0
+    exp.methods = np.array(['bac'])#, 'majority'])#'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
+     
+    num_runs = 2
+     
+    all_dirs = glob.glob('./output/hyperparameters_crowdsourcing/alphafactor*')
+    all_dirs.sort(key=lambda s: float(s.split('/')[3][11:]))
+     
+    scores = np.zeros((len(all_dirs),len(exp.SCORE_NAMES),len(exp.methods),num_runs))
+    lb = np.zeros((len(all_dirs), len(exp.methods), num_runs))
+     
+    for j in xrange(len(all_dirs)):
+        print all_dirs[j]
+        for i in xrange(num_runs):
+            scores_ji = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
+            if scores_ji.ndim == 1:
+                scores_ji = scores_ji[:, None]
+            scores[j,:,:,i] = scores_ji[:len(exp.SCORE_NAMES), :]
+            if scores_ji.shape[0] > len(exp.SCORE_NAMES):
+                lb[j, :, i] = scores_ji[len(exp.SCORE_NAMES), :] # the lower bound values 
+                 
+    exp.plot_results(scores, False, True, './output/hyperparameters_crowdsourcing/plots/')
+    exp.plot_results(lb[:, None, :, :], False, True, './output/hyperparameters_crowdsourcing/plots/', ['ELBO'])
+            
 if __name__ == '__main__':
-    pass
+    plot_hyperparameter_results()
+#    plot_crowdsourcing_results()    
+    #load_results('./config/acc_experiment.ini')
+    #load_results('./config/class_bias_experiment.ini')
+    #load_results('./config/short_bias_experiment.ini')
+    #load_results('./config/doc_length_experiment.ini')
+    #load_results('./config/crowd_size_experiment.ini')
+    #load_results('./config/group_ratio_experiment.ini')
+

@@ -35,7 +35,8 @@ class Experiment(object):
     short_bias = None
     
     PARAM_NAMES = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
-    SCORE_NAMES = ['accuracy', 'precision', 'recall', 'f1-score', 'auc-score', 'cross-entropy-error', 'count error', 'number of invalid labels', 'mean length error']
+    SCORE_NAMES = ['accuracy', 'precision', 'recall', 'f1-score', 'auc-score', 'cross-entropy-error', 'count error', 
+                   'number of invalid labels', 'mean length error']
     
     generate_data= False
     
@@ -113,11 +114,13 @@ class Experiment(object):
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
         
     
-    def run_methods(self, annotations, ground_truth, doc_start, param_idx, anno_path):
+    def run_methods(self, annotations, ground_truth, doc_start, param_idx, anno_path, return_model=False):
         
         scores = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
         predictions = -np.ones((annotations.shape[0], len(self.methods)))
         probabilities = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
+        
+        model = None # pass out to other functions if required
         
         for method_idx in xrange(len(self.methods)): 
             
@@ -165,41 +168,15 @@ class Experiment(object):
                 L = self.num_classes
                 if L == 7:
                     inside_labels = [0, 3, 5]
-                    
-                    # transitions from o to i
-                    #self.exclusions[1] = 0
-                    #self.exclusions[1] = 3                
-                    #self.exclusions[1] = 5
-                    
-                    # transitions between classes                    
-                    #self.exclusions[3] = 0
-                    #self.exclusions[4] = 0
-                    #self.exclusions[5] = 0
-                    #self.exclusions[6] = 0
-
-                    #self.exclusions[0] = 3
-                    #self.exclusions[2] = 3
-                    #self.exclusions[5] = 3
-                    #self.exclusions[6] = 3
-                    
-                    #self.exclusions[0] = 5
-                    #self.exclusions[2] = 5
-                    #self.exclusions[3] = 5
-                    #self.exclusions[4] = 5                    
                 else:
                     inside_labels = [0]
-                    #self.exclusions[1] = 0
                     
-                # TODO: still have lower bound decreases -- did something go wrong when we merged? Try out on desktop-169 without updating the code.
                 alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
-                              nu0=self.bac_nu0, exclusions=self.exclusions)
+                              nu0=self.bac_nu0, exclusions=self.exclusions, before_doc_idx=-1)
                 alg.verbose = True
-                alg.outsideidx = 1
-                alg.before_doc_idx = -1
                 probs, agg = alg.run(annotations, doc_start)
-                #probs, agg = alg.optimize(annotations, doc_start)
-                #agg = probs.argmax(axis=1)
-    
+                model = alg
+                
             if self.methods[method_idx] == 'HMM_crowd':
                 sentences = []
                 crowd_labels = []
@@ -237,34 +214,49 @@ class Experiment(object):
             predictions[:, method_idx] = agg.flatten()
             probabilities[:,:,method_idx] = probs
             
-            
             print '...done'
             
-        return scores, predictions, probabilities
+        if return_model:
+            return scores, predictions, probabilities, model
+        else:
+            return scores, predictions, probabilities
     
     
     def calculate_scores(self, agg, gt, probs, doc_start):
+        
+        result = -np.ones((9,1))        
+        result[7] = metrics.num_invalid_labels(agg, doc_start)        
         
         agg = agg[gt!=-1]
         probs = probs[gt!=-1]
         doc_start = doc_start[gt!=-1]
         gt = gt[gt!=-1]
-        
-        result = -np.ones((9,1))
-        
-        result[7] = metrics.num_invalid_labels(agg, doc_start)
-        
+                        
         if self.postprocess:
             agg = data_utils.postprocess(agg, doc_start)
         
         result[0] = skm.accuracy_score(gt, agg)
+        
+        print 'Plotting confusion matrix for errors: '
+        
+        nclasses = probs.shape[1]
+        conf = np.zeros((nclasses, nclasses))
+        for i in range(nclasses):
+            for j in range(nclasses):
+                conf[i, j] = np.sum((gt==i).flatten() & (agg==j).flatten())
+                
+            #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
+        print conf
+        
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
         
         auc_score = 0
         for i in xrange(probs.shape[1]):
-            auc_score += skm.roc_auc_score(gt==i, probs[:, i]) * np.sum(gt==i)
+            auc_i = skm.roc_auc_score(gt==i, probs[:, i]) 
+            #print 'AUC for class %i: %f' % (i, auc_i)
+            auc_score += auc_i * np.sum(gt==i)
         result[4] = auc_score / float(gt.shape[0])
         result[5] = skm.log_loss(gt, probs, eps=1e-100)
         result[6] = metrics.abs_count_error(agg, gt)
@@ -364,10 +356,19 @@ class Experiment(object):
         plt.ylabel(ylabel)
         plt.xlabel(self.PARAM_NAMES[self.param_idx])
         plt.xticks(x_vals, x_ticks_labels)
-        plt.ylim([0, np.max([1, np.max(y_vals)])])
+        plt.grid(True)
+        plt.grid(True, which='Minor', axis='y')
+        
+        if np.min(y_vals) < 0:
+            plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
+        else:
+            plt.ylim([0, np.max([1, np.max(y_vals)])])
     
     
-    def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/'):
+    def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/', score_names=None):
+        
+        if score_names is None: 
+            score_names = self.SCORE_NAMES
         
         # create output directory if necessary
         if save_plot and not os.path.exists(output_dir):
@@ -382,24 +383,24 @@ class Experiment(object):
         # initialise x-tick labels 
         x_ticks_labels = map(str, self.param_values)
             
-        for i in xrange(len(self.SCORE_NAMES)):  
-            self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, self.SCORE_NAMES[i])
+        for i in xrange(len(score_names)):  
+            self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
         
             if save_plot:
                 print 'Saving plot...'
-                plt.savefig(output_dir + 'plot_' + self.SCORE_NAMES[i] + '.png') 
+                plt.savefig(output_dir + 'plot_' + score_names[i] + '.png') 
                 plt.clf()
         
             if show_plot:
                 plt.show()
                 
             if i == 5:
-                self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, self.SCORE_NAMES[i])
+                self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
                 plt.ylim([0,1])
                 
                 if save_plot:
                     print 'Saving plot...'
-                    plt.savefig(output_dir + 'plot_' + self.SCORE_NAMES[i] + '_zoomed' + '.png') 
+                    plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.png') 
                     plt.clf()
         
                 if show_plot:

@@ -20,6 +20,8 @@ Example error:
 -- But the early annotation is marked because there is a high chance of missing annotations by some annotators.
 -- Better model might assume lower chance of I-B transition + lower change of missing something?
 
+TODO: task 1 from the HMM Crowd paper looks like it might work well with BAC because Dawid and Skene beats MACE -->
+confusion matrix is useful, but HMM_Crowd beats D&S --> sequence is good.
 
 Created on Jan 28, 2017
 
@@ -30,6 +32,7 @@ import numpy as np
 from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
 from joblib import Parallel, delayed
+import warnings
 
 class BAC(object):
     '''
@@ -55,7 +58,7 @@ class BAC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
     
 
-    def __init__(self, L=3, K=5, max_iter=100, eps=1e-5, inside_labels=[0], outside_labels=[1, -1], before_doc_idx=-1,
+    def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], before_doc_idx=-1,
                  exclusions=None, alpha0=None, nu0=None):
         '''
         Constructor
@@ -84,9 +87,10 @@ class BAC(object):
         # set priors for invalid transitions (to low values)
         for inside_label in inside_labels:
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            #disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - 1 # pseudocount is (alpha0 - 1)
+            disallowed_count = self.alpha0[:, inside_label, outside_labels, :] - np.min(self.alpha0[:, :, outside_labels, :], axis=1) 
+            # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
             # split the disallowed count between the possible beginning labels
-            #self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
+            self.alpha0[:, beginning_labels[:self.nscores], outside_labels, :] += disallowed_count / np.sum(beginning_labels)
             # set the disallowed transition to as close to zero as possible
             self.alpha0[:, inside_label, outside_labels, :] = np.nextafter(0, 1)
             self.nu0[outside_labels, inside_label] = np.nextafter(0, 1)
@@ -109,75 +113,86 @@ class BAC(object):
         self.verbose = False  # can change this if you want progress updates to be printed
         
     def _initA(self):
-        self.lnA = np.log(self.nu0 / np.sum(self.nu0, 1)[:, None])
-        #self.lnA = psi(self.nu0) - psi(np.sum(self.nu0, -1))[:, None]
+        self.nu = self.nu0
+        self.lnA = psi(self.nu0) - psi(np.sum(self.nu0, -1))[:, None]
 
     def _init_lnPi(self):
-        self.lnPi = np.log(self.alpha0 / np.sum(self.alpha0, 1)[:, None, :, :])
-        #psi_alpha_sum = psi(np.sum(self.alpha0, 1))
-        #dims = self.alpha0.shape
-        #self.lnPi = np.zeros(dims)
-        #for s in range(dims[1]):  
-        #    self.lnPi[:, s, :, :] = psi(self.alpha0[:, s, :, :]) - psi_alpha_sum        
+        self.alpha = self.alpha0
+        psi_alpha_sum = psi(np.sum(self.alpha0, 1))
+        self.lnPi = psi(self.alpha0) - psi_alpha_sum[:, None, :, :]
         
-    def lowerbound(self, C, doc_start):
+    def lowerbound(self):
         '''
         Compute the variational lower bound on the log marginal likelihood. 
         '''
         lnpC = 0
-        C = C.astype(int)
+        C = self.C.astype(int)
         C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
-        C_prev[doc_start.flatten() == 1, :] = 0
+        C_prev[self.doc_start.flatten() == 1, :] = 0
         C_prev[C_prev == 0] = self.before_doc_idx + 1  # document starts or missing labels
         valid_labels = (C != 0).astype(float)
         
         # this doesn't seem quite right -- should include the transition matrix
         for j in range(self.L):
             lnpCj = valid_labels * self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]] * self.q_t[:, j:j+1]
-            lnpCj[np.isinf(lnpCj) | np.isnan(lnpCj)] = 0
             lnpC += lnpCj            
             
-        lnpt = self.lnA[None, :, :] * self.q_t_joint
+        lnpt = self.lnA.copy()[None, :, :]
         lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
+        lnpt = lnpt * self.q_t_joint
         
         lnpCt = np.sum(lnpC) + np.sum(lnpt)
-                        
-        lnqt = np.log(self.q_t_joint / np.sum(self.q_t_joint, axis=2)[:, :, None]) * self.q_t_joint                        
+
+        # trying to handle warnings        
+        qt_sum = np.sum(self.q_t_joint, axis=2)[:, :, None]
+        qt_sum[qt_sum==0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
+        q_t_cond = self.q_t_joint / qt_sum
+        q_t_cond[q_t_cond == 0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
+        lnqt = self.q_t_joint * np.log(q_t_cond)
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
-        lnqt = np.sum(lnqt)
+        lnqt = np.sum(lnqt) 
+        warnings.filterwarnings('always')
             
         # E[ln p(\pi | \alpha_0)]
-        x = np.sum((self.alpha0 - 1) * self.lnPi, 1)
-        x[np.isinf(x)] = 0
+        x = (self.alpha0 - 1) * self.lnPi
         gammaln_alpha0 = gammaln(self.alpha0)
-        gammaln_alpha0[np.isinf(gammaln_alpha0)] = 0 # these possibilities should be excluded
+        invalid_alphas = np.isinf(gammaln_alpha0) | np.isinf(x) | np.isnan(x) 
+        gammaln_alpha0[invalid_alphas] = 0 # these possibilities should be excluded
+        x[invalid_alphas] = 0
+        x = np.sum(x, axis=1)
         z = gammaln(np.sum(self.alpha0, 1)) - np.sum(gammaln_alpha0, 1)
         z[np.isinf(z)] = 0
         lnpPi = np.sum(x + z)
                     
         # E[ln q(\pi)]
-        x = np.sum((self.alpha - 1) * self.lnPi, 1)
+        x = (self.alpha - 1) * self.lnPi
         x[np.isinf(x)] = 0
         gammaln_alpha = gammaln(self.alpha)
-        gammaln_alpha[np.isinf(gammaln_alpha)] = 0 # these possibilities should be excluded        
+        gammaln_alpha[invalid_alphas] = 0 # these possibilities should be excluded
+        x[invalid_alphas] = 0
+        x = np.sum(x, axis=1)
         z = gammaln(np.sum(self.alpha, 1)) - np.sum(gammaln_alpha, 1)
         z[np.isinf(z)] = 0
         lnqPi = np.sum(x + z)
         
         # E[ln p(A | nu_0)]
-        x = np.sum((self.nu0 - 1) * self.lnA, 1)
-        x[np.isinf(x)] = 0
+        x = (self.nu0 - 1) * self.lnA
         gammaln_nu0 = gammaln(self.nu0)
-        gammaln_nu0[np.isinf(gammaln_nu0)] = 0
-        z = gammaln(np.sum(self.nu0, 1)) - np.sum(gammaln_nu0, 1)
+        invalid_nus = np.isinf(gammaln_nu0) | np.isinf(x) | np.isnan(x)
+        gammaln_nu0[invalid_nus] = 0
+        x[invalid_nus] = 0
+        x = np.sum(x, axis=1)
+        z = gammaln(np.sum(self.nu0, 1) ) - np.sum(gammaln_nu0, 1)
         z[np.isinf(z)] = 0
         lnpA = np.sum(x + z) 
         
         # E[ln q(A)]
-        x = np.sum((self.nu - 1) * self.lnA, 1)
+        x = (self.nu - 1) * self.lnA
         x[np.isinf(x)] = 0
         gammaln_nu = gammaln(self.nu)
-        gammaln_nu[np.isinf(gammaln_nu)] = 0
+        gammaln_nu[invalid_nus] = 0
+        x[invalid_nus] = 0
+        x = np.sum(x, axis=1)
         z = gammaln(np.sum(self.nu, 1)) - np.sum(gammaln_nu, 1)
         z[np.isinf(z)] = 0
         lnqA = np.sum(x + z)
@@ -245,6 +260,9 @@ class BAC(object):
         
         oldlb = -np.inf
         
+        self.doc_start = doc_start
+        self.C = C
+        
         # main inference loop
         while not self._converged():
             
@@ -252,17 +270,18 @@ class BAC(object):
             if self.verbose:
                 print "BAC iteration %i in progress" % self.iter
             
+            self.q_t_old = self.q_t
+            
             # calculate alphas and betas using forward-backward algorithm 
             self.lnR_ = _forward_pass(C, self.lnA[0:self.L, :], self.lnPi, self.lnA[self.before_doc_idx, :],
                                                doc_start, self.before_doc_idx)
             lnLambd = _backward_pass(C, self.lnA[0:self.L, :], self.lnPi, doc_start, self.before_doc_idx)
             
             # update q_t and q_t_joint
-            self.q_t_old = self.q_t
             self.q_t_joint = _parallel_expec_joint_t(self.lnR_, lnLambd, self.lnA, self.lnPi, C, doc_start, 
                                                      self.before_doc_idx)
             self.q_t = np.sum(self.q_t_joint, axis=1)
-            
+                        
             # update E_lnA
             self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
 
@@ -270,14 +289,14 @@ class BAC(object):
             self.alpha = _post_alpha(self.q_t, C, self.alpha0, doc_start, self.before_doc_idx)            
             self.lnPi = _calc_q_pi(self.alpha)
             
-            lb = self.lowerbound(C, doc_start)
+            lb = self.lowerbound()
             print 'Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb)
             oldlb = lb
             
             # increase iteration number
             self.iter += 1            
 
-        return self._most_probable_sequence(C, doc_start)
+        return self.q_t, self._most_probable_sequence(C, doc_start)[1]
     
     def _most_probable_sequence(self, C, doc_start):
         '''
@@ -293,8 +312,15 @@ class BAC(object):
                 
         mask = C != 0
         
-        lnEA = np.log(self.nu / np.sum(self.nu, axis=1)[:, None])
-        lnEPi = np.log(self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :])
+        EA = self.nu / np.sum(self.nu, axis=1)[:, None]
+        lnEA = np.zeros_like(EA)
+        lnEA[EA != 0] = np.log(EA[EA != 0])
+        lnEA[EA == 0] = -np.inf
+        
+        EPi = self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :]
+        lnEPi = np.zeros_like(EPi)
+        lnEPi[EPi != 0] = np.log(EPi[EPi != 0])
+        lnEPi[EPi == 0] = -np.inf
                 
         for t in range(0, C.shape[0]):
             for l in xrange(self.L):
@@ -351,12 +377,8 @@ def _calc_q_pi(alpha):
     '''
     Update the annotator models.
     '''
-    psi_alpha_sum = psi(np.sum(alpha, 1))
-    dims = alpha.shape
-    q_pi = np.zeros(dims)
-    for s in range(dims[1]): 
-        q_pi[:, s, :, :] = psi(alpha[:, s, :, :]) - psi_alpha_sum
-    
+    psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :, :]
+    q_pi = psi(alpha) - psi_alpha_sum
     return q_pi
     
 def _post_alpha(E_t, C, alpha0, doc_start, before_doc_idx=-1):  # Posterior Hyperparameters
@@ -376,11 +398,11 @@ def _post_alpha(E_t, C, alpha0, doc_start, before_doc_idx=-1):  # Posterior Hype
         
         for l in xrange(dims[1]): 
             counts = ((C == l + 1) * doc_start).T.dot(Tj).reshape(-1)    
-            alpha[j, l, before_doc_idx, :] = alpha0[j, l, before_doc_idx, :] + counts
+            alpha[j, l, before_doc_idx, :] += counts
             
             for m in xrange(dims[1]): 
                 counts = ((C == l + 1)[1:, :] * (1 - doc_start[1:]) * (C == m + 1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
-                alpha[j, l, m, :] = alpha[j, l, m, :] + counts
+                alpha[j, l, m, :] += counts
     
     return alpha
 
