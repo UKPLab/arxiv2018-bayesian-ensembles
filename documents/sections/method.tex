@@ -1,5 +1,11 @@
 \section{Modelling Text Span Annotations}\label{sec:model}
 
+\begin{itemize}
+\item model description, VB equations, algorithm summary...
+\item ...How to set priors for IOB – incorporating sequence knowledge
+\end{itemize}
+
+
 We model annotations using the IOB schema, in which each token in a document is labelled as either I (in), O (out), or B (begin). The IOB schema requires that the label I cannot directly follow a label O, since a B token must precede the first I in any span. The IOB schema allows us to identify whether a token forms part of an annotation or not, and the use of the B label enables us to separate annotations when one annotation span begins immediately after another without any gap. This schema does not permit overlapping annotations, which are typically undesirable in crowdsourcing tasks where the crowd is instructed to provide one type of annotation. The schema also does not consider different types of annotation, although it is trivial to extend both the schema and our model to permit this case. Using a single model for different types of annotation may be desirable if the annotators are likely to have consistent confusion patterns betweeen different annotation types. 
 
 We propose an extension of the independent Bayesian classifier combination (IBCC) 

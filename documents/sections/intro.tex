@@ -1,5 +1,18 @@
 \section{Introduction}\label{sec:intro}
 
+\begin{itemize}
+\item sequential annotation problems are very frequent in NLP; high cost of labelling means we need crowdsourcing; 
+\item Example of a sequential span and disagreement between workers
+\item ...we treat the crowd workers as classifiers and combine; can also do this with ensembles of ML classifiers
+\item ...current methods don’t take advantage of sequential information
+\item Add in description of rival method – non-Bayesian, missing sequential model for workers, has no way to set priors to specify IOB rules, 
+\item (Put into a later related work section?) HMM\_crowd includes features but we don't consider that aspect here because it is task-specific. 
+Using a generic word-based model may be effective in some cases but could be problematic if using small datasets where the words are not actually good features, e.g. argument labelling. 
+The best models for doing this are... Any problem-specific model can be incorporated into VB. Here, we focus on the combination of workers and sequential labelling.
+\item Bayesian approaches to classifier combination without sequential information are state-of-the-art
+\item We develop a Bayesian approach that takes full advantage of knowledge of sequential labelling rules, such as BIO.
+\end{itemize}
+
 Scientific research relies on humans to recognise important patterns in data – even if we employ automated methods, these typically require training labels produced by human annotators. 
 Natural language processing (NLP) often requires people to annotate segments of text, which we then use to train machine learning algorithms and evaluate our results.
 Many NLP tasks require training data in the form of annotations of phrases and propositions in text. These annotations are spans of varying length, and different pieces of text may contain different numbers of spans. An example is highlighting claims in argumentative text. Annotators will typically make mistakes and may disagree with each other about the correct annotation, even if they are experts. When processing large datasets we may use crowdsourcing to reduce costs/time of experts, which increases the amount of noise and disagreements as the annotators are non-experts. Therefore, we require a method for aggregating text span annotations from multiple annotators.
@@ -23,4 +36,3 @@ There are several annotation tasks for NLP that we are interested in:
   \item Argument component labelling -- identifying claims and premises that form an argument. This requires marking individual sentences, clauses, or spans that cross sentence boundaries. Some schemas allow for the component to be split so that it consists of multiple spans with excluded text between the spans.
   \item Semantic role labelling (SRL).
 \end{itemize}
-

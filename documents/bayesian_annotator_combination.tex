@@ -1,76 +1,74 @@
-% Root file for the contributions of a Decision Making with Multiple Imperfect
-% Decision Makers
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Springer %%%%%%%%%%%%%%%%%%%%%%%%%%
-\documentclass[conference]{IEEEtran}
-%\documentclass{sig-alternate-05-2015}
-%\documentclass[a4paper]{article}
-% \documentclass[12pt,a4paper]{article}
 
-%\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
-%\usepackage[hmargin=2.9cm,vmargin=2.9cm]{geometry}
+% Copied from EMNLP 2018 template
+\documentclass[11pt,a4paper]{article}
+\usepackage[hyperref]{emnlp2018}
+\usepackage{times}
+\usepackage{latexsym}
 
-%\usepackage{times}
+\usepackage{url}
+
+%\aclfinalcopy % Uncomment this line for the final submission
+%\def\aclpaperid{***} %  Enter the acl Paper ID here
+
+%\setlength\titlebox{5cm}
+% You can expand the titlebox if you need extra space
+% to show all the authors. Please do not make the titlebox
+% smaller than 5cm (the original size); we will check this
+% in the camera-ready version and ask you to change it back.
+
+%Additional commands added by ES
+
+\newcommand\BibTeX{B{\sc ib}\TeX}
+\newcommand\confname{EMNLP 2018}
+\newcommand\conforg{SIGDAT}
+
 \usepackage{graphicx}
-%\usepackage{tabularx}
-%\usepackage[toc]{appendix}
-%\usepackage{epsfig}
+\usepackage{tabularx}
 
 \usepackage[fleqn]{amsmath}
-\usepackage{amssymb}
-\usepackage{amstext}
 \usepackage{amsfonts}
-\usepackage{amsthm}
-
-\usepackage{cite}
 \usepackage{algorithm2e}
-\usepackage{array}
- \usepackage[caption=false,font=footnotesize]{subfig}
-% \usepackage{fixltx2e}
- %\usepackage{stfloats}
- \usepackage{url}
 
-\newcommand{\bs}{\boldsymbol}  
-\newcommand{\wrtd}{\mathrm{d}}
-
-%\usepackage{booktabs}
+\usepackage{numprint}
+\usepackage{url}
+\usepackage[caption=false,font=footnotesize]{subfig}
 
 \makeatletter
 \makeatother %some sort of hack related to the symbol @
 
-% \usepackage{breakcites}
-% \usepackage{etoolbox}
-% \patchcmd{\@citex}{,}{;}{}{}
-
+\newcommand{\bs}{\boldsymbol} 
 \DeclareMathOperator*{\argmax}{\arg\!\max\!} %argmax operator
-
+\newcommand{\wrtd}{\mathrm{d}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{ 
-%A Bayesian Method for Vetting and Combining Crowds of Text Annotators
-A Bayesian Method for Combining Multiple Unreliable Text Annotators
+\title{A Bayesian Method for Combining Multiple Unreliable Text Annotators}
 
-}
-
-\author{\IEEEauthorblockN{Anonymous}
-\IEEEauthorblockA{Anonymous, \\
-Anonymous \\
-Email: anonymous}
-\and
-\IEEEauthorblockN{Anonymous}
-\IEEEauthorblockA{Anonymous, \\
-Anonymous \\
-Email: anonymous}
-\and
-\IEEEauthorblockN{Anonymous}
-\IEEEauthorblockA{Anonymous, \\
-Anonymous \\
-Email: anonymous}
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\\And
+  Third Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\
 }
 
 \begin{document}
 
 \maketitle
+
+% up to eight (8) pages of content, plus unlimited pages for references
+% Each EMNLP 2018 submission can be accompanied by a single PDF appendix <--put equations in here
+% + one .tgz or .zip archive containing software, and one .tgz or .zip archive containing data
+% make sure that these are also anonymized.
 
 \begin{abstract}
 VERSION 1:
@@ -107,16 +105,6 @@ However, while Bayesian methods have proved effective in combining unreliable cl
 Bayesian classifier combination methods can be used both to obtain reliable classifications from crowdsourced annotations and to combine an ensemble of automated classifiers to reduce overall error rates. 
 \end{abstract}
 
-% For peer review papers, you can put extra information on the cover
-% page as needed:
-% \ifCLASSOPTIONpeerreview
-% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
-% \fi
-%
-% For peerreview papers, this IEEEtran command inserts a page break and
-% creates the second title. It will be ignored for other modes.
-\IEEEpeerreviewmaketitle
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \input{sections/intro}
@@ -126,12 +114,12 @@ Bayesian classifier combination methods can be used both to obtain reliable clas
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% use section* for acknowledgment
-%\section*{Acknowledgments}
+\section*{Acknowledgments}
 
 % \addcontentsline{toc}{chapter}{Bibliography}
 %\bibliographystyle{apalike}
-\bibliographystyle{IEEEtran}
+% \bibliographystyle{IEEEtran}
+\bibliographystyle{acl_natbib_nourl}
 \bibliography{simpson}
 
 \end{document}
