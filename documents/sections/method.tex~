@@ -103,7 +103,7 @@ The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the l
   & \log \lambda_{i,T_i,j} = 1 & \nonumber\\
   & \log \lambda_{i,\tau,j} = \mathbb{E}_q  \! \left[ \log p(\bs c_{i,\tau+1:T_i}^{(1)},...,\bs c_{i,\tau+1:T_i}^{(K)} | t_{i,\tau}=j) \right]
   & \!\!\!\!\nonumber\\
-  & = \log \lambda_{i,\tau+1,j} + \sum_{j'=1}^L \! \left\{ \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
+  & = \sum_{j'=1}^L \exp \! \left\{ \log \lambda_{i,\tau+1,j'} + \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
 \end{flalign}
 By taking the exponents and applying Bayes' rule we arrive at the terms $r_{i,\tau,j}$ and $s_{i,\tau,j,j'}$:
 \begin{flalign}
@@ -203,4 +203,3 @@ Cluster the annotations, e.g. using a mixture model with annotation centre and s
 The level of disagreement in annotations for a particular piece of text can be used to determine whether an annotation is of a insufficient quality to keep (e.g. \cite{sayeed2011crowdsourcing,hsueh2009data}. This can be achieved using the majority voting method, but adjusting the threshold for classifying a token as I/B from 50\% to something higher. 
 
 \emph{Human resolution}: an additional worker selects the correct answer from the annotations provided by the initial set of workers, e.g. \cite{dagan2016specifying}. To reduce costs, the human resolution step could be applied only to text with large amounts of disagreement.
-
