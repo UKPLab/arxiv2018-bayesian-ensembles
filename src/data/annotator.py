@@ -26,12 +26,12 @@ class Annotator(object):
     def annotate_document(self, document):
         
         # initialise annotation vector
-        annotation = np.ones(document.shape) * -1
+        annotation = -np.ones(document.shape)
         
         while True:
         
             # set first label of document
-            annotation[0] = self.annotate_word(3, document[0])
+            annotation[0] = self.annotate_word(-1, document[0])
         
             for i in xrange(document.shape[0]):
                 annotation[i] = self.annotate_word(annotation[i-1], document[i])
@@ -41,9 +41,24 @@ class Annotator(object):
     
         return annotation
     
-    def annotate(self, ground_truth):
+    def annotate(self, ground_truth, doc_start):
         
-        data = np.ones((ground_truth.shape[0],))
+        # initialise annotation vector
+        annotation = -np.ones((ground_truth.shape[0],))
+        
+        while True:
+            for i in xrange(ground_truth.shape[0]):
+                if doc_start[i]:
+                    annotation[i] = self.annotate_word(-1, ground_truth[0])
+                else:
+                    annotation[i] = self.annotate_word(annotation[i-1], ground_truth[i])
+                
+            if data_utils.check_document_syntax(annotation):
+                break
+    
+        return annotation
+        
+        data = np.ones((ground_truth.shape[0],1))
             
         # iterate through documents
         for doc_id in xrange(int(ground_truth[-1,0]) + 1):

@@ -19,27 +19,40 @@ class DataGenerator(object):
     crowd_model = None
     
     num_labels = None
+    group_sizes = None
     
     config_file = None
     
     output_dir = 'output/data/'
     
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, seed=None):
         '''
         Constructor
         '''
         self.config_file = config_file 
         self.read_config_file()
+        if not seed==None:
+            np.random.seed(seed)
+            
+    
+    def read_data_file(self, path):
+        data = np.genfromtxt(path, delimiter=',')
+        doc_start = data[:,0]
+        gt = data[:,1]
+        annos = data[:,2:]
         
+        return doc_start[:,None], gt[:,None], annos
         
     def read_config_file(self):
         parser = ConfigParser.ConfigParser()
         parser.read(self.config_file)
-    
+        
         # set up crowd model
         parameters = dict(parser.items('crowd_model'))
-        self.init_crowd_model(float(parameters['acc_bias']),float(parameters['miss_bias']),float(parameters['short_bias']))
+        group_sizes = np.array(eval(parameters['group_sizes'].split('#')[0].strip()))
+        self.init_crowd_models(np.array(eval(parameters['acc_bias'])),np.array(eval(parameters['miss_bias'])),np.array(eval(parameters['short_bias'])), group_sizes)
+        #self.group_sizes = np.array(eval(parameters['group_sizes']))
         
         # set up ground truth model
         parameters = dict(parser.items('ground_truth'))
@@ -53,21 +66,25 @@ class DataGenerator(object):
         self.num_labels = self.gt_model.shape[1]
     
     
-    def init_crowd_model(self, acc=None, miss=None, short=None):
+    def init_crowd_models(self, acc=None, miss=None, short=None, group_sizes=None):
         
-        self.crowd_model = np.ones((4,3,3)) 
+        self.crowd_model = np.ones((4,3,3,len(group_sizes))) 
+        acc = np.array(acc)
+        miss = np.array(miss)
+        short = np.array(short)
     
-        # add accuracy
-        self.crowd_model += (np.identity(3)*acc)[None,:,:]
+        for i in xrange(len(acc)):
+            # add accuracy
+            self.crowd_model[:,:,:,i] += (np.eye(3)*acc[i])[None,:,:]
         
-        # add miss bias
-        self.crowd_model[:,:,1] += np.array([miss,0,miss])
+            # add miss bias
+            self.crowd_model[:,:,1,i] += np.array([miss[i],0,miss[i]])
     
-        # add short bias
-        self.crowd_model[:,0,2] += short
+            # add short bias
+            self.crowd_model[:,0,2,i] += short[i]
     
         # set 'zero' values
-        self.crowd_model[[1,3],:,0] = np.nextafter(0,1)
+        self.crowd_model[[1,3],:,0,:] = np.nextafter(0,1)
         
         
     def generate_ground_truth(self, num_docs, doc_length):
@@ -76,61 +93,69 @@ class DataGenerator(object):
         columns: column one contains the document indices and column two the label of a word. 
         '''
         
-        data = np.ones((num_docs*doc_length, 2))*-1
+        doc_length = int(doc_length)
+        
+        data = -np.ones((num_docs*doc_length, 1))
         
         # generate documents
         for i in xrange(num_docs):
             # filling document index column
-            data[i*doc_length:(i+1)*doc_length,0] = i
+            #data[i*doc_length:(i+1)*doc_length,0] = i
             
             # repeat creating documents...
             while True:
-                data[i*doc_length, 1] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[-1,:])
+                data[i*doc_length] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[-1,:])
             
                 # generate document content
                 for j in xrange(i*doc_length + 1,(i+1)*doc_length):
-                    data[j, 1] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[int(data[j-1,1]), :])
+                    data[j] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[int(data[j-1]), :])
                 
                 # ...break if document has valid syntax
-                if data_utils.check_document_syntax(data[i*doc_length:(i+1)*doc_length,1]):
+                if data_utils.check_document_syntax(data[i*doc_length:(i+1)*doc_length]):
                     break
 
         return data
     
     
-    def build_crowd(self, crowd_size):
+    def build_crowd(self, group_sizes):
         crowd = []
+        group_sizes = np.array(group_sizes)
         
         # initialise annotators   
-        while len(crowd) < crowd_size:    
-            model = np.zeros(self.crowd_model.shape)
+        for i in xrange(len(group_sizes)):    
+            for j in xrange(group_sizes[i]):
+                model = np.zeros(self.crowd_model[:,:,:,0].shape)
     
-            for prev_label in xrange(self.num_labels+1):
-                for true_label in xrange(self.num_labels):
-                    model[prev_label,true_label,:] = dirichlet(self.crowd_model[prev_label][true_label]).rvs()
+                for prev_label in xrange(self.num_labels+1):
+                    for true_label in xrange(self.num_labels):
+                        model[prev_label,true_label,:] = dirichlet(self.crowd_model[prev_label,true_label,:,i]).rvs()
             
-            crowd.append(Annotator(model))
+                crowd.append(Annotator(model))
             
         return crowd
     
     
-    def generate_annotations(self, ground_truth, crowd):
+    def generate_annotations(self, doc_start, ground_truth, crowd):
         
         data = np.ones((ground_truth.shape[0], len(crowd)))
         
         # iterate through crowd
         for i in xrange(len(crowd)):    
-            data[:,i] = crowd[i].annotate(ground_truth)
+            data[:,i] = crowd[i].annotate(ground_truth, doc_start)
             
         return data
 
     
-    def generate_dataset(self, num_docs=5, doc_length=10, crowd_size=10, save_to_file=False, output_dir=None):
+    def generate_dataset(self, num_docs=5, doc_length=10, group_sizes=10, save_to_file=False, output_dir=None):
         
         ground_truth = self.generate_ground_truth(num_docs, doc_length)
-        crowd = self.build_crowd(crowd_size)
         
-        annotations = self.generate_annotations(ground_truth, crowd)
+        doc_start = np.zeros_like(ground_truth)
+        doc_start[np.arange(num_docs)*doc_length] = 1
+        
+        crowd = self.build_crowd(group_sizes)
+        
+        annotations = self.generate_annotations(doc_start, ground_truth, crowd)
         
         if save_to_file:
             if output_dir==None:
@@ -139,11 +164,16 @@ class DataGenerator(object):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
                 
-            np.savetxt(output_dir + 'full_data.csv', np.concatenate((ground_truth, annotations), 1), fmt='%s', delimiter=',')
+            np.savetxt(output_dir + 'full_data.csv', np.concatenate((doc_start,ground_truth, annotations),1), fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'annotations.csv', annotations, fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
+            
+        doc_start = np.zeros((num_docs*int(doc_length),1))
+        doc_start[range(0,num_docs*doc_length,doc_length)] = 1
         
-        return ground_truth, annotations, crowd
+        np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
+        
+        return ground_truth, annotations, doc_start
 
 
 if __name__ == '__main__':

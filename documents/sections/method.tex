@@ -136,7 +136,7 @@ The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the l
   & \log \lambda_{i,T_i,j} = 0 & \nonumber\\
   & \log \lambda_{i,\tau,j} = \mathbb{E}_q  \! \left[ \log p(\bs c_{i,\tau+1:T_i}^{(1)},...,\bs c_{i,\tau+1:T_i}^{(K)} | t_{i,\tau}=j) \right]
   & \!\!\!\!\nonumber\\
-  & = \log \lambda_{i,\tau+1,j} + \sum_{j'=1}^L \! \left\{ \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\}, \!\!\!\!\! &
+  & = \sum_{j'=1}^L \exp \! \left\{ \log \lambda_{i,\tau+1,j'} + \mathbb{E}[\log A_{j,j'}] + \sum_{k=1}^K \log \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
 \end{flalign}
 $\forall\tau<T_i$.
 By taking the exponents and applying Bayes' rule we arrive at the terms $r_{i,\tau,j}$ and $s_{i,\tau,j,j'}$:

@@ -6,6 +6,17 @@ Created on Oct 23, 2016
 
 import numpy as np
 
+def postprocess(data, doc_start):
+    
+    for i in xrange(data.shape[0]-1):
+        if doc_start[i] and data[i]==0:
+            data[i] = 2
+        
+        if data[i]==1 and data[i+1]==0:
+            data[i+1] = 2
+    
+    return data
+
 def check_document_syntax(document):
     for i in xrange(len(document)-1):
         
@@ -34,9 +45,9 @@ def extract_spans(iob_document, doc_id=0):
     return np.column_stack((indices, np.array(positions), np.array(lengths)))
 
 
-def iob_to_span(iob_data, num_docs):
+def iob_to_span(iob_data, doc_start):
     spans = np.zeros((0,3))
-    docs = np.split(iob_data, num_docs)
+    docs = np.split(iob_data, np.where(doc_start==1)[0])
     for j in xrange(len(docs)):
         for i in xrange(iob_data.shape[1]):
             spans = np.append(spans, extract_spans(docs[j][:,i], doc_id=j), 0)
@@ -65,6 +76,4 @@ def remove_span_overlaps(span_data):
             spanwords += words        
             
     return span_data[span_ids, :]
-            
-    
     

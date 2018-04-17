@@ -38,6 +38,7 @@ b) How do they integrate the automated classifiers? Is our VB method really diff
 a) Take a gold-labelled dataset and crowdsource it
 b) Reuse the dataset from ACL 2017
 
+
 2. New classifier combination dataset. We could achieve by finding a hard shared task where the classifications are already available.
 
 3. Write the methodology section on integrating base classifiers. Needs to show how any classifier could approximate a q() distribution in the model as in WWW15. 
@@ -56,6 +57,7 @@ a) Devise a suitable batch processing AL method. Block certain workers (how to c
 b) Either vary batch size to show how much a smaller batch size would help or (future work?) find a way to set batch size as a trade-off against requester input, speed, budget.
 c) Run on AMT? Probably not required given the contributions so far. 
 
+<<<<<<< HEAD
 *** Experiments from Nguyen et. al, ACL 2017, Aggregating and Predicting Sequence Labels from Crowd Annotations
 
 Two tasks:
@@ -77,7 +79,7 @@ Two datasets:
   - for task 2: training on the 5000 - 200 non-gold-labelled abstracts
 
 HMMCrowd -> LSTM: did they train on soft or hard labels?
-  - 
+
 
 ***Additional Ideas
 
@@ -90,3 +92,4 @@ HMMCrowd -> LSTM: did they train on soft or hard labels?
   - For task 2 training the LSTM on soft labels would also be new if this is possible, as the previous method (I think!) uses the discrete predictions
   - LSTM-Crowd doesn’t seem to work as well as HMMCrowd-then-LSTM -- can skip it from our experiments
   - Only need to replicate their LSTM here because it was better than the CRF
+

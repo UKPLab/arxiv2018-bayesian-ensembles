@@ -31,10 +31,11 @@ class MajorityVoting(object):
         self.num_words, self.num_annotators = annotations.shape
         self.num_labels = num_labels
         self.accuracies = np.ones(self.num_annotators)
+        self.probabilities = np.zeros((self.num_words, self.num_labels))
         
     def vote(self, weighted=False, threshold=0.5): 
         
-        self.majority = -1 * np.ones((self.num_words, 1))  
+        self.majority = -np.ones((self.num_words, 1))  
         votes = np.zeros((self.num_words, self.num_labels))     
         
         # iterate through words
@@ -42,24 +43,55 @@ class MajorityVoting(object):
         
             # count all votes
             for j in xrange(self.num_annotators):
-                votes[i, int(self.annotations[i,j])] += self.accuracies[j]
+                if int(self.annotations[i,j]) >= 0:
+                    votes[i, int(self.annotations[i,j])] += self.accuracies[j]
         
             # determine all labels with most votes
             winners = [(j,votes[i,j]) for j in xrange(self.num_labels) if votes[i,j] == votes[i,:].max()]
         
             # choose label
-            if len(winners)==1:
-                if winners[0][1] >= threshold:
-                    self.majority[i] = winners[0][0]
+            if self.num_labels == 3:
+                if len(winners)==1:
+                    if winners[0][1] >= threshold:
+                        self.majority[i] = winners[0][0]
+                    else:
+                        self.majority[i] = 1
                 else:
+                    if (not (1 in zip(*winners)[0])) and (winners[0][1] >= threshold):
+                        self.majority[i] = 2
+                    else:
+                        self.majority[i] = 1
+                        
+            if self.num_labels == 7:
+                # decide if 'O'
+                if votes[i,1] >= np.sum(votes[i,[0,2,3,4,5,6]]):
                     self.majority[i] = 1
-            else:
-                if (not (1 in winners)) and (winners[0][1] >= threshold):
-                    self.majority[i] = 2
                 else:
-                    self.majority[i] = 1
-                    
-        return self.majority, votes
+                    # decide between 'I' or 'B'
+                    if np.sum(votes[i,[0,3,5]]) > np.sum(votes[i,[2,4,6]]):
+                        # decide between classes
+                        class_votes = np.array([np.sum(votes[i,[0,2]]),np.sum(votes[i,[3,4]]),np.sum(votes[i,[5,6]])])
+                        if np.all(class_votes[0] >= class_votes):
+                            self.majority[i] = 0
+                        elif np.all(class_votes[1] >= class_votes):
+                            self.majority[i] = 3
+                        else:
+                            self.majority[i] = 5
+                    else:
+                        # decide between classes
+                        class_votes = np.array([np.sum(votes[i,[0,2]]),np.sum(votes[i,[3,4]]),np.sum(votes[i,[5,6]])])
+                        if np.all(class_votes[0] >= class_votes):
+                            self.majority[i] = 2
+                        elif np.all(class_votes[1] >= class_votes):
+                            self.majority[i] = 4
+                        else:
+                            self.majority[i] = 6
+                
+        
+        if np.all(np.sum(votes, axis=1)[:,None]) != 0:
+            self.probabilities = votes/np.sum(votes, axis=1)[:,None].astype(float)  
+
+        return self.majority, self.probabilities
                     
                     
     def update_accuracies(self):
@@ -83,4 +115,4 @@ class MajorityVoting(object):
             accuracies_old = self.accuracies
             self.update_accuracies()
         
-        return self.majority
+        return self.majority, self.probabilities
