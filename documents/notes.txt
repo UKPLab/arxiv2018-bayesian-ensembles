@@ -1,0 +1,92 @@
+--- Combination of ideas for the BAC paper. ---
+
+*** Current status:
+-- appears to work on our test datasets with very small improvement over other methods
+-- limitation: argmin dataset already has high performance with majority voting, so differences between methods are small
+-- limitation: crowdsourcing dataset needs to generate gold labels using all workers, then test on subsets. However, some data points never get a consensus, so we have just ignored them. This could be disadvantaging some methods that are better at resolving difficult cases. 
+
+*** Contributions -- the work for these is incomplete:
+
+Bayesian method:
+-- We show how the Bayesian variant of the model can outperform others
+-- Analysis of priors and how to choose them
+-- Show that Bayesian method helps do active learning.
+
+MACE vs. IBCC comparion:
+-- Show when/why the full confusion matrix is needed -- guidelines for NLP crowdsourcing users
+
+How best to do classifier combination:
+-- Suitability of the method for classifier combination
+-- Show how we can integrate any classifier into the VB loop
+-- Comparisons between using the automated classifier as 
+(1) an additional base classifier (retrained on soft/hard labels after crowdsourced labels have been combined; predictions then made as a combination of crowd+newly trained classifier)
+(2) an additional base classifier (iteratively retrained on soft labels inside the VB loop)
+(3) using the probabilities output by the classifier as a q() distribution inside the graphical model (as in WWW 16 paper) (retraining inside the VB loop until convergence). 
+(4) Other approach taken in EMNLP 2017 paper?
+The distinction is important because intuitively many people use a pipeline: first, get gold or soft-gold labels by applying MACE to the crowdsourced labels, then train a classifier. We show how iterative training improves things. 
+
+Overlapping sequential annotations of different types.
+-- Show that this can be modelled simply by treating the combined predictions from other labelling types as additional base classifiers, setting very weak (uncorrelated) priors! No new methodology is required. Instead, we can do the same thing we do when integrating classifiers into the loop, i.e. alternate between updating the models.  
+
+*** What we need to do:
+
+0. Check the EMNLP 2017 paper and make sure our contributions are distinctive:
+a) Is their data available?
+b) How do they integrate the automated classifiers? Is our VB method really different? A key difference may be in the use of soft labels; also in showing that a generic simple classifier could work well to guide the active learning process; also, the use of the confusion matrix to Bayesianize the output of the automated classifier vs. integrating it directly. 
+
+1. New crowdsourcing dataset with reliable gold standard; preferably multiple datasets for different tasks. Options for this:
+a) Take a gold-labelled dataset and crowdsource it
+b) Reuse the dataset from ACL 2017
+
+2. New classifier combination dataset. We could achieve by finding a hard shared task where the classifications are already available.
+
+3. Write the methodology section on integrating base classifiers. Needs to show how any classifier could approximate a q() distribution in the model as in WWW15. 
+
+4. Run the experiments on the new datasets in different forms:
+a) without training further automated classifiers
+b) training automated classifier on the combined output of the crowd
+c) training as part of the VB loop. 
+
+5. Overlapping annotations dataset, e.g. evidence span and conclusion spans. Ask Claudia Schulz. 
+
+6. Experiments on overlapping annotations. Baseline: we use an independent model for each type, but sometimes the types are correlated.
+
+7. Active learning simulation to show benefits of Bayesian approach. 
+a) Devise a suitable batch processing AL method. Block certain workers (how to choose the threshold? Look at entropy reduction on a hypothetical data point given their confusion matrix. If the entropy reduction is close to zero, then block. E.g. set the threshold to the level you would need if five workers label each item to give you 90% confidence); choose documents (uncertainty sampling + random exploration?)
+b) Either vary batch size to show how much a smaller batch size would help or (future work?) find a way to set batch size as a trade-off against requester input, speed, budget.
+c) Run on AMT? Probably not required given the contributions so far. 
+
+*** Experiments from Nguyen et. al, ACL 2017, Aggregating and Predicting Sequence Labels from Crowd Annotations
+
+Two tasks:
+- Predict the ground truth for items labelled by the crowd
+- Predict the ground truth for items not labelled by the crowd
+
+Two datasets:
+- NER
+  - 21000 sentences, 1393 articles
+  - 400 articles with crowd labels
+  - for task 1: train on the 400 crowd labelled articles; validate and test on 50% of these
+  - for task 2: use train, validation and test splits provided by the original dataset
+  - validation used to train hyperparameters
+-- Biomedical IE (relevant spans that identify the population in clinical trial; binary I/O labels as one span per abstract)
+  - 5000 abstracts
+  - ~5 crowd labels per abstract
+  - 200 gold labels split into validation/test
+  - for task 1: training always on all 5000 abstracts
+  - for task 2: training on the 5000 - 200 non-gold-labelled abstracts
+
+HMMCrowd -> LSTM: did they train on soft or hard labels?
+  - 
+
+***Additional Ideas
+
+  - note that we can tune our model without validation set using MLII == should test this out because it would be a significant practical benefit
+  - we test on varying numbers of crowdsourced labels -- avoid the arbitrary point in the previous works. 
+  - Task 2 is not well represented in our experiments as we vary number of labels per item; introduce new expt with fixed test set size for task 2 testing, again vary no. labels per item AND no. items in training set
+  - Nguyen et al do not test the use of features in task 1
+  - For task 1 expts we can include the classifier into the crowd -- this gives us something new
+  - For task 2 including the classifier back into the crowd is also new
+  - For task 2 training the LSTM on soft labels would also be new if this is possible, as the previous method (I think!) uses the discrete predictions
+  - LSTM-Crowd doesn’t seem to work as well as HMMCrowd-then-LSTM -- can skip it from our experiments
+  - Only need to replicate their LSTM here because it was better than the CRF

@@ -242,3 +242,11 @@ Cluster the annotations, e.g. using a mixture model with annotation centre and s
 The level of disagreement in annotations for a particular piece of text can be used to determine whether an annotation is of a insufficient quality to keep (e.g. \cite{sayeed2011crowdsourcing,hsueh2009data}. This can be achieved using the majority voting method, but adjusting the threshold for classifying a token as I/B from 50\% to something higher. 
 
 \emph{Human resolution}: an additional worker selects the correct answer from the annotations provided by the initial set of workers, e.g. \cite{dagan2016specifying}. To reduce costs, the human resolution step could be applied only to text with large amounts of disagreement.
+
+\subsection{How to Include Text Features into the Crowdsourcing Model}
+
+Modelling the text features as part of the aggregation method has been shown to improve classification performance, particularly when few labels are available, allows classification of unlabelled items without training a separate classifier, and provides a basis for active selection of documents for further labelling \cite{many many things}.
+
+The difficulty of modelling text features is that it requires a suitable classifier for the task at hand, and so it may not be effective to design a generic crowdsourcing model that describes the relationship between text features and class labels. Instead, we propose a solution that allows us to include task-specific classifiers, e.g. if the task at hand is NER, we show how to integrate a neural network designed specifically for NER.
+
+The modular nature of variational Bayesian inference allows us to reusing the existing inference steps when extending the graphical model. This means that we can add additional components to the model to model the relationship between text features and classifications. This section shows how we can treat task-specific classifiers as black-box extensions to the graphical model, and integrate them into the VB inference procedure. 
