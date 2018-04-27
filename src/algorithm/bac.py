@@ -518,8 +518,6 @@ def _calc_q_A(E_t, nu0):
     
     return q_A, nu
 
-# TODO: where/how is lnPi actually used here?
-
 # Worker model: interface ----------------------------------------------------------------------------------------------
 
 _init_lnPi = None
