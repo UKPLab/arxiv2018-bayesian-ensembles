@@ -169,7 +169,7 @@ class IBCC(object):
             row = np.zeros((1, self.nclasses))
             row[0, j] = 1
             jidxs = self.goldlabels == j
-            uncert_trainidxs = uncert_trainidxs - jidxs
+            uncert_trainidxs = uncert_trainidxs & np.invert(jidxs)
             self.E_t[jidxs, :] = row
         # deal with uncertain training idxs
         for j in range(self.nclasses):
@@ -518,15 +518,19 @@ class IBCC(object):
         return L
 # Hyperparameter Optimisation ------------------------------------------------------------------------------------------
     def set_hyperparams(self,hyperparams):
-        n_alpha_elements = len(hyperparams) - self.nclasses
+        n_alpha_elements = len(hyperparams) - 1 #self.nclasses -- no longer optimising nu0, only its scale factor
         alpha_shape = (self.nclasses, self.nscores, self.alpha0_length)
         
         if self.optimise_alpha0_diagonals:
-            alpha0 = np.zeros(alpha_shape) + hyperparams[1]
-            alpha0[np.arange(self.nclasses), np.arange(self.nscores)] = hyperparams[0]
+            alpha0 = np.ones((self.nclasses, self.nscores)) * hyperparams[self.nclasses:self.nclasses*2][:, None]
+            alpha0[np.arange(self.nclasses), np.arange(self.nclasses)] += hyperparams[:self.nclasses] # add to the diagonals
+
         else:
             alpha0 = hyperparams[0:n_alpha_elements].reshape(alpha_shape)
-        nu0 = np.array(hyperparams[-self.nclasses:]).reshape(self.nclasses, 1)
+
+        # nu0 = np.array(hyperparams[-self.nclasses:]).reshape(self.nclasses, 1)
+        nu0 = np.ones(self.nclasses) * hyperparams[-1]
+
         if self.clusteridxs_alpha0 != []:
             self.alpha0_cluster = alpha0
         else:
@@ -537,12 +541,19 @@ class IBCC(object):
     def get_hyperparams(self):
         if self.clusteridxs_alpha0 != []:
             alpha0 = self.alpha0_cluster
+
         elif self.optimise_alpha0_diagonals:
-            alpha0 = [np.mean(np.diag(alpha0)), np.sum(alpha0)-np.sum(np.diag(alpha0)) / (self.alpha0.shape[0]**2 - self.alpha0.shape[0])]           
+            alpha0 = self.alpha0
+            alpha0_diags = alpha0[range(self.nclasses), range(self.nclasses)]
+            off_diag_idxs = np.mod(np.arange(self.nclasses) + 1, self.nclasses)
+            alpha0_scale = alpha0[range(self.nclasses), off_diag_idxs]
+            alpha0 = np.append(alpha0_diags, alpha0_scale)
+
         else:
             alpha0 = self.alpha0
 
-        return np.concatenate((alpha0.flatten(), self.nu0.flatten()))
+        # only the scaling of nu0 is optimised to prevent overfitting
+        return np.concatenate((alpha0.flatten(), self.nu0[0]))
     
     def post_lnjoint_ct(self):
         # If we have not already calculated lnpCT for the lower bound, then make sure we recalculate using all data
@@ -608,7 +619,7 @@ class IBCC(object):
         #Evaluate the first guess using the current value of the hyper-parameters
         initialguess = self.get_hyperparams()
         initial_nlml = self.neg_marginal_likelihood(initialguess, use_MAP)
-        ftol = np.abs(initial_nlml / 1e3)
+        ftol = 1.0 #1e-3 #np.abs(initial_nlml / 1e3)
         #ftol = np.abs(np.log(self.heatGP[1].ls[0]) * 1e-4) 
         self.conv_threshold = ftol / 10.0
         
@@ -619,7 +630,11 @@ class IBCC(object):
         opt_hyperparams = self.set_hyperparams(opt_hyperparams)
         msg = "Optimal hyper-parameters: "
         for param in opt_hyperparams:
-            msg += str(param)
+            if not np.isscalar(param):
+                for val in param:
+                    msg += str(val) + ', '
+            else:
+                msg += str(param) + ', '
         logging.debug(msg)
         
         return self.E_t
@@ -654,7 +669,7 @@ def expec_t_trans(E_t):
     E_t_trans = np.zeros((n,k,k))
     E_t_trans[0,:,:] = np.array([E_t[0,:]])
     
-    for i in xrange(1,n):
+    for i in range(1,n):
         E_t_trans[i,:,:] = np.outer(E_t[i,:], E_t[i-1,:])
         
     return E_t_trans

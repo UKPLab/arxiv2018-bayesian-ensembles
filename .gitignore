@@ -70,3 +70,4 @@ output/short_bias_exp_25
 output/short_bias_exp_full
 output/crowdsourcing_2/
 *.out
+env

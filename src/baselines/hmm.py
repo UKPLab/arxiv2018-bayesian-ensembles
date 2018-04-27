@@ -1,5 +1,5 @@
 import numpy as np
-import util
+from baselines import util
 import os
 import copy
 import nltk
@@ -841,7 +841,7 @@ def run_test(test, h):
             if i == j:
                 correct += 1
 
-    print correct * 1.0 / cnt
+    print(correct * 1.0 / cnt)
 
 
 def run(smooth, filename=data_atis):
@@ -933,7 +933,7 @@ def eval_ner(gold, sen, labels):
     """
 
     if len(gold) != len(sen):
-        print len(gold), len(sen)
+        print(len(gold), len(sen))
         raise "lenghts not equal"
 
     tp = 0
@@ -984,9 +984,9 @@ def eval_hc_train(hc, labels, print_err = False):
         pre = tp * 1.0 / (tp + fp)
         rec = tp * 1.0 / (tp + fn)
         f = 2.0 * pre * rec / (pre + rec)
-        print pre, rec, f
+        print(pre, rec, f)
     except ZeroDivisionError:
-        print "DIV BY 0 ", tp, fp, fn
+        print("DIV BY 0 ", tp, fp, fn)
 
 
 def has_oov(sen):
@@ -1007,7 +1007,7 @@ def get_tag_t(tagger, sen, features):
     x = nltk.pos_tag(words)
     x = [crf.word2features(x, i) for i in range(len(x))]
     tags = tagger.tag(x)
-    return map(int, tags)
+    return list(map(int, tags))
 
 
 def get_tag(f, sen, features, decoder):
@@ -1052,17 +1052,17 @@ def eval_hc_test(hc, features, labels, print_err=False, decoder='hc'):
             fn += z
             if print_err:
                 if y + z > 0:
-                    print "sen: ",  util.get_words(sen, features) + " OOV = " + str(has_oov(sen))
-                    print "true labels: ", util.get_lab_name(util.get_lab(sen), labels)
-                    print "predicted: ", util.get_lab_name(predicted, labels)
+                    print("sen: ",  util.get_words(sen, features) + " OOV = " + str(has_oov(sen)))
+                    print("true labels: ", util.get_lab_name(util.get_lab(sen), labels))
+                    print("predicted: ", util.get_lab_name(predicted, labels))
 
     try:
         pre = tp * 1.0 / (tp + fp)
         rec = tp * 1.0 / (tp + fn)
         f = 2.0 * pre * rec / (pre + rec)
-        print pre, rec, f
+        print(pre, rec, f)
     except ZeroDivisionError:
-        print "DIV BY 0 ", tp, fp, fn
+        print("DIV BY 0 ", tp, fp, fn)
 
 
 def eval_seq_train(gold, pre, labels, hc = None, features = None):
@@ -1082,17 +1082,17 @@ def eval_seq_train(gold, pre, labels, hc = None, features = None):
         if hc != None:
             if y + z > 0:
                 sen = hc.sentences[i]
-                print "sen: ",  util.get_words(sen, features) + " OOV = " + str(has_oov(sen))
-                print "true labels: ", util.get_lab_name(gold[i], labels)
-                print "predicted: ", util.get_lab_name(pre[i], labels)
+                print("sen: ",  util.get_words(sen, features) + " OOV = " + str(has_oov(sen)))
+                print("true labels: ", util.get_lab_name(gold[i], labels))
+                print("predicted: ", util.get_lab_name(pre[i], labels))
 
     try:
         pre = tp * 1.0 / (tp + fp)
         rec = tp * 1.0 / (tp + fn)
         f = 2.0 * pre * rec / (pre + rec)
-        print pre, rec, f
+        print(pre, rec, f)
     except ZeroDivisionError:
-        print "DIV BY 0 ", tp, fp, fn
+        print("DIV BY 0 ", tp, fp, fn)
     
     return (pre, rec, f)
 
@@ -1127,8 +1127,8 @@ def eval_pico_word_bs(gold, res, n = 100, l = 0, r = 950, seed = 33):
         f = 2 * p * r / (p + r)
         list_p.append(p); list_r.append(r); list_f.append(f)
 
-    print np.mean(list_p), np.mean(list_r), np.mean(list_f) 
-    print np.std(list_p),  np.std(list_r),  np.std(list_f)
+    print(np.mean(list_p), np.mean(list_r), np.mean(list_f)) 
+    print(np.std(list_p),  np.std(list_r),  np.std(list_f))
     return list_f
 
 
@@ -1148,7 +1148,7 @@ def eval_pico_word(gold, res, l = 0, r = 950, seed = 33):
     p = cm[1][1] * 1.0 / (cm[1][1] + cm[0][1])
     r = cm[1][1] * 1.0 / (cm[1][1] + cm[1][0])
     f = 2 * p * r / (p + r)
-    print p, r, f
+    print(p, r, f)
     return cm
 
 def eval_pico_entity(gold, res, l = 0, r = 950, seed = 33):
@@ -1178,7 +1178,7 @@ def eval_pico_entity(gold, res, l = 0, r = 950, seed = 33):
     pre = tp * 1.0 / (tp + fp)
     rec = tp * 1.0 / (tp + fn)
     f = 2.0 * pre * rec / (pre + rec)
-    print pre, rec, f
+    print(pre, rec, f)
 
 
 def longest_x(a, x=0):
@@ -1222,7 +1222,7 @@ def eval_pico_new(gold, res, l=0, r=950, dic_res = False):
 
     if len(list_pre) == 0: list_pre.append(0)
     res = eval_pico_summary(list_pre, list_rec, list_spe)
-    print res
+    print(res)
     return res[3]
 
 def eval_pico_sen(gold, res):
@@ -1283,7 +1283,7 @@ def eval_pico_test(gold, f, sentences, features, l = 0, r = 950):
     :param f: prediction model
     :return:
     """
-    inv_f = {v: k for (k, v) in features.items()}
+    inv_f = {v: k for (k, v) in list(features.items())}
     list_pre = []
     list_rec = []
     list_spe = []
@@ -1303,7 +1303,7 @@ def eval_pico_test(gold, f, sentences, features, l = 0, r = 950):
 
     if len(list_pre) == 0: list_pre.append(0)
     res = eval_pico_summary(list_pre, list_rec, list_spe)
-    print res
+    print(res)
     return res[3]
 
 
@@ -1324,8 +1324,8 @@ def main2():
 
 def output_to_file(data, res, features, labels, output_file):
     f = open(output_file, 'w')
-    inv_l = {v: k for k, v in labels.items()}
-    inv_f = {v: k for k, v in features.items()}
+    inv_l = {v: k for k, v in list(labels.items())}
+    inv_f = {v: k for k, v in list(features.items())}
     
     for sen, lab in zip(data.sentences, res):
         wl = util.get_word_list2(sen, inv_f)
@@ -1350,7 +1350,7 @@ def main_em(opts):
     
     output_to_file(hc.data, hc.res, features, labels, opts.output)
     
-    print eval_seq_train(gold, hc.res, labels)
+    print(eval_seq_train(gold, hc.res, labels))
 
 
 import sys

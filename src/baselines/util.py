@@ -1,12 +1,10 @@
 import numpy as np
 import os
-import hmm
 #import re
 import matplotlib.pyplot as plt
 import pickle
 import csv
 #import shutil
-hmm
 
 class instance:
     """
@@ -226,7 +224,7 @@ def get_ff(sentence):
     return res
 
 def get_word_list(sentence, features):
-    inv_f = {v: k for k, v in features.items()}
+    inv_f = {v: k for k, v in list(features.items())}
     res = []
     for i in sentence:
         if len(i.features) > 0:
@@ -267,7 +265,7 @@ def get_lab_name(sen, labels):
     """
     sen = list of numerical labels
     """
-    inv_l = {v: k for k, v in labels.items()}
+    inv_l = {v: k for k, v in list(labels.items())}
     res = ""
     for i in sen:
         if i in inv_l:
@@ -280,7 +278,7 @@ def get_lab_name_list(sen, labels):
     """
     sen = list of numerical labels
     """
-    inv_l = {v: k for k, v in labels.items()}
+    inv_l = {v: k for k, v in list(labels.items())}
     res = []
     for i in sen:
         if i in inv_l:
@@ -312,7 +310,7 @@ def get_all_lab(sentences):
 
 
 def get_words(sen, features):
-    inv_f = {v: k for k, v in features.items()}
+    inv_f = {v: k for k, v in list(features.items())}
     res = ""
     for i in sen:
         if len(i.features) > 0:
@@ -327,8 +325,8 @@ def get_words(sen, features):
 
 def print_sentence_labels(sentence):
     for ins in sentence:
-        print ins.label,
-    print ""
+        print(ins.label, end=' ')
+    print("")
 
 
 class crowdlab:
@@ -402,7 +400,7 @@ class simulator:
         if self.rs.rand() < prob:
             return true_lab
         else:
-            return self.rs.choice(self.labels.values())
+            return self.rs.choice(list(self.labels.values()))
 
     def sim_labels(self, sentence, wid):
         sen = []
@@ -566,9 +564,9 @@ def read_workers_rod(all, features, labels, docs, dirname='mturk_train_data'):
 
                         pos += 1
 
-    print cnt, id_err, c2
+    print(cnt, id_err, c2)
     cd = crowd_data(all, cls)
-    print "num features = ", len(features)
+    print("num features = ", len(features))
     for i in range(len(all)):
         sen = all[i]
         cl = cls[i]
@@ -654,7 +652,7 @@ def mv_cd(cd, labels, n_workers=100, smooth=0.001, print_star = False):
             count.append([])
         if len(clab) == 0:
             if print_star:
-                print "*",
+                print("*", end=' ')
             sentences.append([])
             continue
         for c in clab:  # c = labels for the sentence of a worker
@@ -768,7 +766,7 @@ def plot_e(list_d, ymax = 0.1):
 
 
 def compare_t(t1, t2, labels, thresh = 0.1):
-    inv_l = {v:k for (k,v) in labels.items()}
+    inv_l = {v:k for (k,v) in list(labels.items())}
     n, m = t1.shape
     res = []
     for i in range(n):
@@ -776,8 +774,8 @@ def compare_t(t1, t2, labels, thresh = 0.1):
             res.append(abs(t1[i][j] - t2[i][j]))
             if abs(t1[i][j] - t2[i][j]) > thresh:
                 if i > 0 and j > 0:
-                    print inv_l[i], inv_l[j],
-                print i, j, t1[i][j], t2[i][j], (t1[i][j] > t2[i][j])
+                    print(inv_l[i], inv_l[j], end=' ')
+                print(i, j, t1[i][j], t2[i][j], (t1[i][j] > t2[i][j]))
 
     return res
 
@@ -787,8 +785,8 @@ def output_sens(out_file, sens, features, labels):
     """
     output the word and label in CoNLL format to run Lample
     """
-    inv_f = {v:k for (k,v) in features.items()}
-    inv_l = {v:k for (k,v) in labels.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
+    inv_l = {v:k for (k,v) in list(labels.items())}
 
     f = open(out_file, 'w')
     for sen in sens:
@@ -804,8 +802,8 @@ def output_sens2(out_file, sens, res, features, labels):
     output the word and label in CoNLL format to run Lample
     use res for labels
     """
-    inv_f = {v:k for (k,v) in features.items()}
-    inv_l = {v:k for (k,v) in labels.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
+    inv_l = {v:k for (k,v) in list(labels.items())}
 
     f = open(out_file, 'w')
     f.write('@ O\n\n')
@@ -821,8 +819,8 @@ def output_sens_pico(out_file, sens, res, features, labels):
     output the word and label in CoNLL format to run Lample
     use res for labels
     """
-    inv_f = {v:k for (k,v) in features.items()}
-    inv_l = {v:k for (k,v) in labels.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
+    inv_l = {v:k for (k,v) in list(labels.items())}
 
     f = open(out_file, 'w')
     #f.write('@ O\n\n')
@@ -839,10 +837,10 @@ def to_lample(cd, features, labels):
     convert to Lample format
     to run directly
     """
-    inv_f = {v:k for (k,v) in features.items()}
-    inv_l = {v:k for (k,v) in labels.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
+    inv_l = {v:k for (k,v) in list(labels.items())}
 
-    res = [[[u'@', u'O']]]
+    res = [[['@', 'O']]]
     wids = [0]
     for sen, clabs in zip(cd.sentences, cd.crowdlabs):
         #text_sen = get_word_list(sen, features) VERY SLOW
@@ -854,7 +852,7 @@ def to_lample(cd, features, labels):
             crowd_lab = []
             for ins in cl.sen:
                 crowd_lab.append(inv_l[ins])
-            res.append( map(list, zip(text_sen, crowd_lab) ) )
+            res.append( list(map(list, list(zip(text_sen, crowd_lab)) )) )
             wids.append(cl.wid)
             #if len(res) > 100:
             #    return (res, wids)
@@ -867,8 +865,8 @@ def to_lample_pico(cd, features, labels):
     convert to Lample format
     to run directly
     """
-    inv_f = {v:k for (k,v) in features.items()}
-    inv_l = {v:k for (k,v) in labels.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
+    inv_l = {v:k for (k,v) in list(labels.items())}
 
     res = []
     wids = []
@@ -876,13 +874,13 @@ def to_lample_pico(cd, features, labels):
         #text_sen = get_word_list(sen, features) VERY SLOW
         text_sen = []
         for ins in sen:
-            text_sen.append(unicode(inv_f[ins.features[0]], 'utf-8'))
+            text_sen.append(str(inv_f[ins.features[0]], 'utf-8'))
         if text_sen == []: continue
         for cl in clabs:
             crowd_lab = []
             for ins in cl.sen:
-                crowd_lab.append(unicode(ins))
-            res.append( map(list, zip(text_sen, crowd_lab) ) )
+                crowd_lab.append(str(ins))
+            res.append( list(map(list, list(zip(text_sen, crowd_lab)) )) )
             wids.append(cl.wid)
             #if len(res) > 100:
             #    return (res, wids)
@@ -984,9 +982,9 @@ def list_eq(l1, l2):
     return np.allclose(l1, l2)
 
 def find_res_diff(r1, r2):
-    for i, x, y in zip(range(len(r1)), r1, r2):
+    for i, x, y in zip(list(range(len(r1))), r1, r2):
         if not list_eq(x, y):
-            print i,
+            print(i, end=' ')
             
             
 def write_pico_rod(sid, wid, text_sen, lab):
@@ -996,9 +994,9 @@ def write_pico_rod(sid, wid, text_sen, lab):
     f.close()
 
 def output_pico_rod(cd, features):
-    inv_f = {v:k for (k,v) in features.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
 
-    for sid, sen, clabs in zip(range(len(cd.sentences)), cd.sentences, cd.crowdlabs):
+    for sid, sen, clabs in zip(list(range(len(cd.sentences))), cd.sentences, cd.crowdlabs):
         text_sen = []
         for ins in sen:
             text_sen.append(inv_f[ins.features[0]])
@@ -1007,7 +1005,7 @@ def output_pico_rod(cd, features):
             write_pico_rod(sid, cl.wid, text_sen, cl.sen)
         
 def output_gold_pico(gold, l, r, cd, features):
-    inv_f = {v:k for (k,v) in features.items()}
+    inv_f = {v:k for (k,v) in list(features.items())}
     
     for i in range(l, r, 1):
         sid = gold[i][0]
@@ -1059,7 +1057,7 @@ def read_mace_output(in_file = 'prediction', cd = None, n_workers = 47):
     
 def get_pid(ins, inv_label):
     s = inv_label[ins.label]
-    a = map(int,s.split('_'))
+    a = list(map(int,s.split('_')))
     return a[0]
     
 def to_huang(out_file, cd, n_workers = 319, max_line = 1000, indices = None, inv_label = None):

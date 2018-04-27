@@ -7,15 +7,15 @@ dataset and tracking the performance metrics of each method:
 \begin{enumerate}
   \item When do other methods outperform simple majority voting? Show performance against worker accuracy.
   Similar experiments were carried out with a different set of baselines in \cite{Simpson2014Thesis}, Section 2.5.2, with all workers having similar accuracies, and Section 2.5.4, where some workers are noisy and others are highly accurate. Here, we vary the average accuracy of workers, with lower average accuracy leading to more diversity between workers. Analyse whether the full IBCC confusion matrix offers benefits over MACE due to worker accuracy varying between classes when accuracy is lower. 
-  \item How well do MACE, IBCC, and BAC handle worker bias? Show performance against worker bias toward one class. This is a comparable experiment to \cite{Simpson2014Thesis}, Section 2.5.3, which notably does not include MACE.
-  \item How well does each method handle data sparsity? (a) Vary the amount of observations per worker. Expect MACE to perform well, BAC may suffer from the larger confusion matrix. (b) Vary the number of observations per data point. 
+  \item How well do MACE, IBCC, and Seq-BCC handle worker bias? Show performance against worker bias toward one class. This is a comparable experiment to \cite{Simpson2014Thesis}, Section 2.5.3, which notably does not include MACE.
+  \item How well does each method handle data sparsity? (a) Vary the amount of observations per worker. Expect MACE to perform well, Seq-BCC may suffer from the larger confusion matrix. (b) Vary the number of observations per data point. 
   \item Do MACE and IBCC still work with unbalanced datasets? Test with unbalanced class distributions, i.e. starting from $p(B) = p(I) = p(O) = 0.3$, decrease
   $p(B)$ and $p(I)$ until $p(O) = 0.99$.
 \end{enumerate}
 In each case, we use a set of default values for the variables that are not currently being tested. These are
  chosen so that all methods perform well (e.g. 90\% accuracy) under the best conditions of the test. E.g. for the test where we vary worker accuracy, we set bias and sparsity to be low so that the performance of all methods is good when workers are 80\% accurate.
 
-For all methods except BAC, we compute performance metrics both before and after the valid annotation post-processing step, which is required to ensure that I tokens do not follow O tokens.
+For all methods except Seq-BCC, we compute performance metrics both before and after the valid annotation post-processing step, which is required to ensure that I tokens do not follow O tokens.
 
 Performance metrics:
 \begin{enumerate}
@@ -28,14 +28,14 @@ Performance metrics:
 
 We also evaluate the competence scores estimated by each method. First, we compute the ground truth from the 
 synthetic confusion matrices. We use a weighted average over classes (weighted by class frequency) to produce the 
-overall worker accuracy. Then, we compute accuracy from BAC, MACE and IBCC using similar methods. 
+overall worker accuracy. Then, we compute accuracy from Seq-BCC, MACE and IBCC using similar methods. 
 For each method, we can compute the mean and STD of cross entropy error between the estimated and the ground truth
  confusion matrices. We then reproduce the plots described above, but showing the cross entropy error for the 
  competence estimates. 
 
 \subsection{Real-world Data}
 
-We investigate the performance on some real datasets to show how well the methods work when combining real workers. Besides the performance metrics mentioned above, we also quantitatively analyse examples of where BAC outperforms other methods to show where they may have trouble forming valid or grammatically correct annotations, e.g. where the starting token is incorrect. 
+We investigate the performance on some real datasets to show how well the methods work when combining real workers. Besides the performance metrics mentioned above, we also quantitatively analyse examples of where Seq-BCC outperforms other methods to show where they may have trouble forming valid or grammatically correct annotations, e.g. where the starting token is incorrect. 
 Ideally, we would also analyse whether the annotations produced are grammatically sensible, e.g. if there is conflict between workers about where an annotation should start, the method should choose one valid start point, not an invalid start point that lies in between. These points can be evaluated by computing:
 \begin{enumerate}
 \item The percentage of "sensible" annotations, as judged by an expert for the task. For tasks where this data is not available, we can use the following metrics to gauge annotation quality.

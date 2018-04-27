@@ -46,7 +46,7 @@ class Clustering(object):
         
         self.start_idxs = np.r_[np.where(self.doc_start==1)[0],len(self.doc_start)]
         self.doc_length = self.start_idxs[0]
-        for doc in xrange(self.num_docs):
+        for doc in range(self.num_docs):
             
             self.curent_doc = doc
             

@@ -6,9 +6,9 @@ Created on Oct 18, 2016
 
 import numpy as np
 import os
-import ConfigParser
-import data_utils
-from annotator import Annotator
+import configparser
+import data.data_utils as data_utils
+from data.annotator import Annotator
 from scipy.stats import dirichlet
 
 class DataGenerator(object):
@@ -45,7 +45,7 @@ class DataGenerator(object):
         return doc_start[:,None], gt[:,None], annos
         
     def read_config_file(self):
-        parser = ConfigParser.ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_file)
         
         # set up crowd model
@@ -73,7 +73,7 @@ class DataGenerator(object):
         miss = np.array(miss)
         short = np.array(short)
     
-        for i in xrange(len(acc)):
+        for i in range(len(acc)):
             # add accuracy
             self.crowd_model[:,:,:,i] += (np.eye(3)*acc[i])[None,:,:]
         
@@ -98,17 +98,17 @@ class DataGenerator(object):
         data = -np.ones((num_docs*doc_length, 1))
         
         # generate documents
-        for i in xrange(num_docs):
+        for i in range(num_docs):
             # filling document index column
             #data[i*doc_length:(i+1)*doc_length,0] = i
             
             # repeat creating documents...
             while True:
-                data[i*doc_length] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[-1,:])
+                data[i*doc_length] = np.random.choice(list(range(self.num_labels)), 1, p=self.gt_model[-1,:])
             
                 # generate document content
-                for j in xrange(i*doc_length + 1,(i+1)*doc_length):
-                    data[j] = np.random.choice(range(self.num_labels), 1, p=self.gt_model[int(data[j-1]), :])
+                for j in range(i*doc_length + 1,(i+1)*doc_length):
+                    data[j] = np.random.choice(list(range(self.num_labels)), 1, p=self.gt_model[int(data[j-1]), :])
                 
                 # ...break if document has valid syntax
                 if data_utils.check_document_syntax(data[i*doc_length:(i+1)*doc_length]):
@@ -122,12 +122,12 @@ class DataGenerator(object):
         group_sizes = np.array(group_sizes)
         
         # initialise annotators   
-        for i in xrange(len(group_sizes)):    
-            for j in xrange(group_sizes[i]):
+        for i in range(len(group_sizes)):    
+            for j in range(group_sizes[i]):
                 model = np.zeros(self.crowd_model[:,:,:,0].shape)
     
-                for prev_label in xrange(self.num_labels+1):
-                    for true_label in xrange(self.num_labels):
+                for prev_label in range(self.num_labels+1):
+                    for true_label in range(self.num_labels):
                         model[prev_label,true_label,:] = dirichlet(self.crowd_model[prev_label,true_label,:,i]).rvs()
             
                 crowd.append(Annotator(model))
@@ -140,7 +140,7 @@ class DataGenerator(object):
         data = np.ones((ground_truth.shape[0], len(crowd)))
         
         # iterate through crowd
-        for i in xrange(len(crowd)):    
+        for i in range(len(crowd)):    
             data[:,i] = crowd[i].annotate(ground_truth, doc_start)
             
         return data
@@ -169,7 +169,7 @@ class DataGenerator(object):
             np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
             
         doc_start = np.zeros((num_docs*int(doc_length),1))
-        doc_start[range(0,num_docs*doc_length,doc_length)] = 1
+        doc_start[list(range(0,num_docs*doc_length,doc_length))] = 1
         
         np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
         

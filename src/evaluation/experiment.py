@@ -3,16 +3,20 @@ Created on Nov 1, 2016
 
 @author: Melvin Laux
 '''
+from scipy.optimize import minimize
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 from baselines import ibcc, clustering, majority_voting
 from algorithm import bac
 from data import data_utils
-import ConfigParser
+import configparser
 import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
 import matplotlib.pyplot as plt
-import metrics
+import evaluation.metrics as metrics
 import glob
 from baselines.hmm import HMM_crowd
 from baselines.util import crowd_data, crowdlab, instance
@@ -41,9 +45,13 @@ class Experiment(object):
     generate_data= False
     
     methods = None
-        
-    bac_alpha0 = None
-    bac_nu0 = None
+
+    alpha0_factor = 16.0
+    alpha0_diags = 1.0
+    nu0_factor = 100.0
+
+    alpha0 = None
+    nu0 = None
     
     exclusions = {}
 
@@ -61,11 +69,13 @@ class Experiment(object):
     show_plots = False
     
     postprocess = True
+
+    opt_hyper = False
     
     '''
     Constructor
     '''
-    def __init__(self, generator, config=None):
+    def __init__(self, generator, nclasses, nannotators, config=None):
         '''
         Constructor
         '''
@@ -74,13 +84,40 @@ class Experiment(object):
         if not (config == None):
             self.config_file = config
             self.read_config_file()
+
+        print('setting initial priors for Bayesian methods...')
+
+        self.num_classes = nclasses
+        self.nannotators = nannotators
+
+        self.ibcc_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) + self.alpha0_diags * np.eye(nclasses)
+
+        self.bac_worker_model = 'mace'
+
+        # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
+        if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
+            self.bac_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) +\
+                              self.alpha0_diags * np.eye(nclasses)
+
+        elif self.bac_worker_model == 'mace':
+            self.bac_alpha0 = self.alpha0_factor * np.ones((2 + nclasses))
+            self.bac_alpha0[1] += self.alpha0_diags # diags are bias toward correct answer
+
+        elif self.bac_worker_model == 'acc':
+            self.bac_alpha0 = self.alpha0_factor * np.ones((2))
+            self.bac_alpha0[1] += self.alpha0_diags # diags are bias toward correct answer
+
+
+        # TODO check whether constraints on transitions are correctly encoded
+        self.bac_nu0 = np.ones((nclasses + 1, nclasses)) * self.nu0_factor
+        self.ibcc_nu0 = np.ones(nclasses) * self.nu0_factor
             
             
     def read_config_file(self):
         
-        print 'Reading experiment config file...'
+        print('Reading experiment config file...')
         
-        parser = ConfigParser.ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_file)
     
         # set up parameters
@@ -97,7 +134,7 @@ class Experiment(object):
         
         self.postprocess = eval(parameters['postprocess'].split('#')[0].strip())
         
-        print self.methods
+        print(self.methods)
                 
         self.num_runs = int(parameters['num_runs'].split('#')[0].strip())
         self.doc_length = int(parameters['doc_length'].split('#')[0].strip())
@@ -112,20 +149,44 @@ class Experiment(object):
         self.save_results = eval(parameters['save_results'].split('#')[0].strip())
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
-        
-    
+
     def run_methods(self, annotations, ground_truth, doc_start, param_idx, anno_path, return_model=False):
-        
+
+        print('Running experiment, Optimisation=%s' % (self.opt_hyper))
+
         scores = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
         predictions = -np.ones((annotations.shape[0], len(self.methods)))
         probabilities = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
         
         model = None # pass out to other functions if required
         
-        for method_idx in xrange(len(self.methods)): 
+        for method_idx in range(len(self.methods)): 
             
-            print 'running method: {0}'.format(self.methods[method_idx]), 
-            
+            print('running method: {0}'.format(self.methods[method_idx]), end=' ') 
+
+
+            if self.methods[method_idx] == 'best':
+                # choose the best classifier by f1-score
+                f1scores = []
+                for w in range(annotations.shape[1]):
+                    f1scores.append(skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro'))
+                best_idx = np.argmax(f1scores)
+                agg = annotations[:, best_idx]
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                for k in range(ground_truth.shape[0]):
+                    probs[k, int(agg[k])] = 1
+
+            if self.methods[method_idx] == 'worst':
+                # choose the weakest classifier by f1-score
+                f1scores = []
+                for w in range(annotations.shape[1]):
+                    f1scores.append(skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro'))
+                worst_idx = np.argmin(f1scores)
+                agg = annotations[:, worst_idx]
+                probs = np.zeros((ground_truth.shape[0], self.num_classes))
+                for k in range(ground_truth.shape[0]):
+                    probs[k, int(agg[k])] = 1
+
             if self.methods[method_idx] == 'majority':
                     
                 agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
@@ -136,45 +197,56 @@ class Experiment(object):
                 agg = cl.run()
                     
                 probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                for k in xrange(ground_truth.shape[0]):
+                for k in range(ground_truth.shape[0]):
                     probs[k, int(agg[k])] = 1      
                 
             if self.methods[method_idx] == 'mace':
                 
                 #devnull = open(os.devnull, 'w')
-                subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix', './output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
+                subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix', '../../data/bayesian_annotator_combination/output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
                 
-                result = np.genfromtxt('./output/data/mace.prediction')
+                result = np.genfromtxt('../../data/bayesian_annotator_combination/output/data/mace.prediction')
                     
                 agg = result[:, 0]
                     
                 probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                for i in xrange(result.shape[0]):
-                    for j in xrange(0, self.num_classes * 2, 2):
+                for i in range(result.shape[0]):
+                    for j in range(0, self.num_classes * 2, 2):
                         probs[i, int(result[i, j])] = result[i, j + 1]  
                 
             if self.methods[method_idx] == 'ibcc':
-                
-                alpha0 = np.ones((self.num_classes, self.num_classes, 10))
-                alpha0[:, :, 5] = 2.0
-                alpha0 += np.eye(self.num_classes)[:, :, None]
-                nu0 = np.ones(self.num_classes, dtype=float)
-                
-                ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=nu0, alpha0=alpha0)
-                probs = ibc.combine_classifications(annotations, table_format=True) # posterior class probabilities
-                agg = probs.argmax(axis=1) # aggregated class labels
+                ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
+                                alpha0=self.ibcc_alpha0, uselowerbound=True)
+                # ibc.verbose = True
+                # ibc.optimise_alpha0_diagonals = True
+
+                if self.opt_hyper:
+                    probs = ibc.combine_classifications(annotations, table_format=True, optimise_hyperparams=True, maxiter=10000)
+                else:
+                    probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
+                agg = probs.argmax(axis=1)  # aggregated class labels
                 
             if self.methods[method_idx] == 'bac':
                 L = self.num_classes
                 if L == 7:
                     inside_labels = [0, 3, 5]
+                    outside_labels = [-1, 1]
+                    begin_labels = [2, 4, 6]
                 else:
                     inside_labels = [0]
-                    
-                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, alpha0=self.bac_alpha0, 
-                              nu0=self.bac_nu0, exclusions=self.exclusions, before_doc_idx=-1)
+                    outside_labels = [-1, 1]
+                    begin_labels = [2]
+
+                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
+                              beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
+                              exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model)
+                #alg.max_iter = 1
                 alg.verbose = True
-                probs, agg = alg.run(annotations, doc_start)
+                if self.opt_hyper:
+                    probs, agg = alg.optimize(annotations, doc_start, maxfun=1000)
+                else:
+                    probs, agg = alg.run(annotations, doc_start)
+
                 model = alg
                 
             if self.methods[method_idx] == 'HMM_crowd':
@@ -202,7 +274,7 @@ class Experiment(object):
                 hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
                 hc.em(20)
                 hc.mls()
-                agg = np.array(hc.res).flatten() 
+                #agg = np.array(hc.res).flatten()
                 agg = np.concatenate(hc.res)[:,None]
                 probs = []
                 for sentence_post_arr in hc.sen_posterior:
@@ -214,7 +286,7 @@ class Experiment(object):
             predictions[:, method_idx] = agg.flatten()
             probabilities[:,:,method_idx] = probs
             
-            print '...done'
+            print('...done')
             
         if return_model:
             return scores, predictions, probabilities, model
@@ -237,7 +309,7 @@ class Experiment(object):
         
         result[0] = skm.accuracy_score(gt, agg)
         
-        print 'Plotting confusion matrix for errors: '
+        print('Plotting confusion matrix for errors: ')
         
         nclasses = probs.shape[1]
         conf = np.zeros((nclasses, nclasses))
@@ -246,14 +318,14 @@ class Experiment(object):
                 conf[i, j] = np.sum((gt==i).flatten() & (agg==j).flatten())
                 
             #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
-        print conf
+        print(conf)
         
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
         
         auc_score = 0
-        for i in xrange(probs.shape[1]):
+        for i in range(probs.shape[1]):
             auc_i = skm.roc_auc_score(gt==i, probs[:, i]) 
             #print 'AUC for class %i: %f' % (i, auc_i)
             auc_score += auc_i * np.sum(gt==i)
@@ -265,7 +337,7 @@ class Experiment(object):
         return result
         
     def create_experiment_data(self):
-        for param_idx in xrange(self.param_values.shape[0]):
+        for param_idx in range(self.param_values.shape[0]):
             # update tested parameter
             if self.param_idx == 0:
                 self.acc_bias = self.param_values[param_idx]
@@ -280,11 +352,11 @@ class Experiment(object):
             elif self.param_idx == 5:
                 self.group_sizes = self.param_values[param_idx]
             else:
-                print 'Encountered invalid test index!'
+                print('Encountered invalid test index!')
                 
             param_path = self.output_dir + 'data/param' + str(param_idx) + '/'
         
-            for i in xrange(self.num_runs):
+            for i in range(self.num_runs):
                 path = param_path + 'set' + str(i) + '/'
                 self.generator.init_crowd_models(self.acc_bias, self.miss_bias, self.short_bias, self.group_sizes)
                 self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length, group_sizes=self.group_sizes, save_to_file=True, output_dir=path)
@@ -296,16 +368,16 @@ class Experiment(object):
         param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
        
         # iterate through parameter settings
-        for param_idx in xrange(len(param_dirs)):
+        for param_idx in range(len(param_dirs)):
             
-            print 'parameter setting: {0}'.format(param_idx)
+            print('parameter setting: {0}'.format(param_idx))
             
             # read parameter directory 
             path_pattern = self.output_dir + 'data/param{0}/set{1}/'
 
             # iterate through data sets
-            for run_idx in xrange(self.num_runs):
-                print 'data set number: {0}'.format(run_idx)
+            for run_idx in range(self.num_runs):
+                print('data set number: {0}'.format(run_idx))
                 
                 data_path = path_pattern.format(*(param_idx,run_idx))
                 # read data
@@ -315,19 +387,73 @@ class Experiment(object):
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities
-                probabilities.dump(data_path + 'probabilites')
+                probabilities.dump(data_path + 'probabilities')
                 
         if self.save_results:
             if not os.path.exists(self.output_dir):
                 os.makedirs(self.output_dir)
                 
-            print 'Saving results...'
+            print('Saving results...')
             #np.savetxt(self.output_dir + 'results.csv', np.mean(results, 3)[:, :, 0])
             results.dump(self.output_dir + 'results')
 
         if self.show_plots or self.save_plots:
             self.plot_results(results, self.show_plots, self.save_plots, self.output_dir)
         
+        return results
+
+    def replot_results(self):
+        # Reloads predictions and probabilities from file, then computes metrics and plots.
+
+
+        # initialise result array
+        results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES), len(self.methods), self.num_runs))
+        # read experiment directory
+        param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
+
+        # iterate through parameter settings
+        for param_idx in range(len(param_dirs)):
+
+            print('parameter setting: {0}'.format(param_idx))
+
+            # read parameter directory
+            path_pattern = self.output_dir + 'data/param{0}/set{1}/'
+
+            # iterate through data sets
+            for run_idx in range(self.num_runs):
+                print('data set number: {0}'.format(run_idx))
+
+                data_path = path_pattern.format(*(param_idx, run_idx))
+                # read data
+                doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')
+                # run methods
+                preds = np.loadtxt(data_path + 'predictions.csv')
+                if preds.ndim == 1:
+                    preds = preds[:, None]
+
+                probabilities = np.load(data_path + 'probabilities')
+                if probabilities.ndim == 2:
+                    probabilities = probabilities[:, :, None]
+
+                for method_idx in range(len(self.methods)):
+                    print('running method: {0}'.format(self.methods[method_idx]), end=' ')
+
+                    agg = preds[:, method_idx]
+                    probs = probabilities[:, :, method_idx]
+
+                    results[param_idx,:, method_idx, run_idx][:, None] = self.calculate_scores(agg, gt.flatten(), probs, doc_start)
+
+        if self.save_results:
+            if not os.path.exists(self.output_dir):
+                os.makedirs(self.output_dir)
+
+            print('Saving results...')
+            # np.savetxt(self.output_dir + 'results.csv', np.mean(results, 3)[:, :, 0])
+            results.dump(self.output_dir + 'results')
+
+        if self.show_plots or self.save_plots:
+            self.plot_results(results, self.show_plots, self.save_plots, self.output_dir)
+
         return results
     
     def run(self):
@@ -336,7 +462,7 @@ class Experiment(object):
             self.create_experiment_data()
         
         if not glob.glob(os.path.join(self.output_dir, 'data/*')):
-            print 'No data found at specified path! Exiting!'
+            print('No data found at specified path! Exiting!')
             return
         else:
             return self.run_exp()
@@ -347,7 +473,7 @@ class Experiment(object):
         styles = ['-', '--', '-.', ':']
         markers = ['o', 'v', 's', 'p', '*']
         
-        for j in xrange(len(self.methods)):
+        for j in range(len(self.methods)):
             plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=self.methods[j], ls=styles[j%4], marker=markers[j%5])
                   
         plt.legend(loc='best')
@@ -381,13 +507,13 @@ class Experiment(object):
             x_vals = self.param_values
             
         # initialise x-tick labels 
-        x_ticks_labels = map(str, self.param_values)
+        x_ticks_labels = list(map(str, self.param_values))
             
-        for i in xrange(len(score_names)):  
+        for i in range(len(score_names)):  
             self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
         
             if save_plot:
-                print 'Saving plot...'
+                print('Saving plot...')
                 plt.savefig(output_dir + 'plot_' + score_names[i] + '.png') 
                 plt.clf()
         
@@ -399,7 +525,7 @@ class Experiment(object):
                 plt.ylim([0,1])
                 
                 if save_plot:
-                    print 'Saving plot...'
+                    print('Saving plot...')
                     plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.png') 
                     plt.clf()
         

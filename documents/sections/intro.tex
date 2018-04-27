@@ -46,10 +46,68 @@ which was shown to be effective for handling the unreliable classifications prov
   \item Demonstrates how using the proposed Bayesian model enables an active learning approach that improves crowdsourcing efficiency
 \end{itemize}
 
+\subsection{Related Work}
+
+A model for aggregating sequential annotations was recently introduced by \cite{nguyen2017aggregating}. Their approach assumes a simplified worker model that captures only a worker's overall accuracy, rather than modelling their skills separately for different tasks. A Bayesian treatment is not provided, meaning that it is not possible to use background knowledge of worker accuracy, for example, by transferring a worker model from a previous task.
+Furthermore, the method does not have a means of handling workers with few annotations, whose reliability may be estimated poorly, as we show in this paper. 
+
+Nugyen et al. ~\shortcite{nguyen2017aggregating} experimented with two main tasks: 
+\begin{enumerate}
+\item Predicting the ground truth for items labelled by the crowd, i.e. finding the true label given multiple noisy crowdsourced labels
+\item Predicting the ground truth for new items not labelled by the crowd, i.e. they use crowdsourced labels for a training set of items to train a model to predict labels for a test set
+\end{enumerate}
+We show that with our Bayesian approach, a validation set for tuning hyperparameters is not required as they can be tuned in an unsupervised manner to give comparable performance.
+
+The model proposed by Nguyen et al. ~\shortcite{nguyen2017aggregating}, called \emph{HMMcrowd}, 
+estimates the sequential labels for a document given unreliable crowdsourced labels. 
+For their first task, HMM-Crowd gave the best overall performance, closely followed in one dataset by 
+the DS-then-HMM method, 
+a pipeline method that first combines crowdsourced labels using Dawid and Skene's model (DS),
+then uses these to train an HMM to predict the sequence labels given the input text.
+In the second dataset the runner up was another HMM-based method that models the sequential dependencies between
+the annotators' labels as well as the true labels. However, DS without using the textual features also performs well in
+this task, much better than DS-then-HMM. 
+
+For the second task, the authors propose two other methods, both using an LSTM classifier: 
+(1) HMMCrowd is used as a pre-processing step and the most likely sequence of labels predicted by HMMCrowd predictions is used as training labels; 
+(2) the crowdsourced labels are used directly to train the LSTM classifier, using a vector representation for each annotator's labelling noise.
+It is unclear why they do not use the HMM-Crowd model directly to predict the class labels. 
+The first approach performed marginally better in practice, but both methods were substantially better than the alternatives they tested for both datasets. 
+We show that separate approaches are not required for the different tasks, by proposing a Bayesian approach that
+can integrate any classifier (such as the LSTM classifier used by Nguyen et al. ~\shortcite{nguyen2017aggregating}, 
+ into its inference loop and train it using classifier with soft, probabilistic labels, where possible. This results in improved performance for tasks 1 and 2, and enables simple, widely-applicable active learning approaches that can reduce the cost of crowdsourcing.
+We demonstrate this in our experiments by integrating the LSTM into our model for task 1, and by applying the complete model to task 2. We further demonstrate the active learning potential of our method against a pure neural network approach by showing task 2 performance with active learning (F1-score on unlabelled items, corresponding to figure 4 in \cite{nguyen2017aggregating}), and also task 1 performance with active learning (F1-score on all items in task 1 dataset, whether labelled by crowd or not).
+
+We show the ability to incorporate different classifiers by testing our method with the LSTM as well as naive Bayes, a GP classifier, and a multinomial model \cite{simpson2015language}, the state-of-the-art for another task such as argumentation mining?
+
+We demonstrate the diversity of NLP task types to which the approach is applicable by also testing on ...
+\begin{itemize}
+\item Check the Christian Stab argumentation data from his paper again?
+\item Don't we really need a good dataset for classifier combination instead? There won't be space for so many experiments.
+\item Check with Christian briefly if the argumentation sequential dataset is available
+\item Check with Tobias or Avinesh about extractive summarisation? But if it is whole sentences, may not work
+\item Is there any data for SRL or POS tagging? If not, it may be a useful one to crowdsource.
+\end{itemize}
+
 \subsection{Notes on Applications and Datasets}
 
-There are several annotation tasks for NLP that we are interested in:
+There are several annotation tasks for NLP or information retrieval that we are interested in:
 \begin{itemize}
-  \item Argument component labelling -- identifying claims and premises that form an argument. This requires marking individual sentences, clauses, or spans that cross sentence boundaries. Some schemas allow for the component to be split so that it consists of multiple spans with excluded text between the spans.
-  \item Semantic role labelling (SRL).
+  \item Argument component labelling -- identifying claims and premises that form an argument. This requires marking individual sentences, clauses, or spans that cross sentence boundaries. Some schemas allow for the component to be split so that it consists of multiple spans with excluded text between the spans. -- check Steffen's ensemble work again to see if there is anything else we can do with that paper. I think the 7-class problem failed? Ideally, we combine heterogeneous classifiers. See http://www.aclweb.org/anthology/P/P17/P17-1002.pdf. We don't have a comparable metric to the paper implemented? Another option is to introduce some training data for BAC/IBCC/MACE. We can also try the argumentative essays corpus for an additional result with expert annotators.
+  \item Semantic role labelling (SRL) -- e.g. A Joint Sequential and Relational Model for Frame-Semantic Parsing
+  \item Extractive summarisation -- marking the important spans. 
+  \item Named entity recognition -- Ma and Hovy 2016; uses same dataset as Nguyen et al 2017, except with the complete dataset. Could we combine the Nguyen LSTM with the Ma and Hovy one + crowd labels? Could also combine other work such as Empower Sequence Labeling with Task-Aware Neural Language Model and other papers that cite Hovy. Perhaps worth testing whether the complex sequential models are necessary if our model is providing that part, or if IBCC is sufficient if the base classifiers capture sequential patterns? Or we apply the Ma&Hovy and the Lample models & the some feature-engineered baselines (?) in an ensemble to an arbitrary task.
+  \item POS-tagging
+  \item Information extraction -- marking relevant spans given an information requirement
+  \item Sentiment analysis -- e.g. Neural Networks for Open Domain Targeted Sentiment, Meishan Zhang and Yue Zhang and Duy-Tin Vo. The paper presents a sequential classification problem ("targeted sentiment analysis", tokens referring to entities with that are target of particular sentiment) and compares CRF and NN models, but publishes code in C++... Could look whether the results are available as we can just use these as input.
+  \item Unsupervised Aspect Term Extraction with B-LSTM & CRF using Automatically Labelled Datasets -- Semeval task. Code not available but others might be?
+  \item Bidirectional LSTM-CRF for Clinical Concept Extraction (2016) -- code available; 2010 i2b2/VA Natural Language Processing Challenges for Clinical Records concept extraction task; compares 3 versions of their method against 5 other methods with performance around 78 - 85 f score.
+  \item Semantic slots -- End-to-End Task-Completion Neural Dialogue Systems; code available at https://github. com/MiuLab/TC- Bot; 2017; can't clearly find the results of methods compared
+\item Results of the WNUT2017 Shared Task on Novel and Emerging Entity Recognition; 7 systems with low F1 scores around 40. 
+\item Event extraction? NILs?
+\item action sequence extraction
 \end{itemize}
+
+Note that for classifier combination, a good use case is where we the annotations are difficult to model with a single method, hence we combine several specialised models. This may not apply to NER or POS tagging because the sequential classifier gets information from the pattern of types, so a classifier specialised in one type is unlikely to work better. However, for argument claim detection, we could train models on different datasets and combine later, rather than simply dumping all datasets together -- this may work because we know that there are different text types, but putting the data together into one dataset would lose that information. Could debate topics be a good way to split datasets? If the way we identify claims in each topic differs, then yes. However, it could be confused by topic-specific features and not learn a model that generalises at all. Better would be text types, e.g. argumentative essays, reviews, tweets. Imagine that I need to reuse a set of pre-trained models to discover arguments on a new topic. The new topic is slightly different, but could still be the same text type, e.g. Tweets. So perhaps trying either topic-specific models, or even random dataset splits could produce a set of models that we can combine. The combination should be better than a single one of the classifiers, including a classifier trained on everything.     
+
+AUTOML?

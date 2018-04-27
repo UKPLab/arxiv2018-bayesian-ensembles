@@ -50,7 +50,7 @@ class DataHandler(object):
     def create_target_idx_map(self):
         self.max_targetid = np.max(self.targetidxs) # largest original ID value
         blanks = np.zeros(len(self.targetidxs)) # only need 1D so set all to zero
-        idxList = range(len(self.targetidxs)) # new local idxs
+        idxList = list(range(len(self.targetidxs))) # new local idxs
         tIdxMap = coo_matrix(( idxList, (self.targetidxs,blanks)), shape=(self.max_targetid+1,1) )       
         self.N = len(self.targetidxs)
         self.targetidxmap = tIdxMap.tocsr() # maps Original IDs to new local idxs
@@ -77,13 +77,13 @@ class DataHandler(object):
             
         unmappedScores = np.round(crowdLabels[:,2])
         for i,s in enumerate(scores):
-            print np.sum(unmappedScores==s)
+            print(np.sum(unmappedScores==s))
             crowdLabels[(unmappedScores==s),2] = i
         
         self.create_target_idx_map()
         self.crowdlabels = crowdLabels
         self.K = K
-        print crowdLabels.shape
+        print(crowdLabels.shape)
         if not pyFileExists:
             try:
                 with open(self.input_file+'.dat', 'wb') as outFile:
@@ -211,11 +211,11 @@ class DataHandler(object):
         def translate_gold(gold):
             return gold
         
-        outputFile = './output/output_%s.csv'
-        confMatFile = ''#'./output/confMat.csv'
+        outputFile = '../../data/bayesian_annotator_combination/output/output_%s.csv'
+        confMatFile = ''#'../../data/bayesian_annotator_combination/output/confMat.csv'
         hyperparam_file = ''
-        inputFile = './data/input.csv'
-        goldFile = ''#./data/gold.csv'
+        inputFile = '../../data/bayesian_annotator_combination/data/input.csv'
+        goldFile = ''#../../data/bayesian_annotator_combination/data/gold.csv'
         
         nClasses = 2
         nu0 = self.nu0
@@ -227,8 +227,8 @@ class DataHandler(object):
             configuration = conf.read()
             exec(configuration)
 
-        print hyperparam_file
-        print testid
+        print(hyperparam_file)
+        print(testid)
         try:
             self.output_file = outputFile % testid
             self.confmat_file = confMatFile % testid

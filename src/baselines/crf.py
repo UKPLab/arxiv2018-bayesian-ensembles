@@ -2,13 +2,11 @@ from itertools import chain
 import nltk
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import LabelBinarizer
-import sklearn
 import pycrfsuite
-import util
 
 import numpy as np
 
-import hmm
+import baselines.hmm as hmm
 import re
 
 
@@ -182,7 +180,7 @@ def get_data(sentences, features, labels, list_labels = None, flag = None):
 
     a = []
 
-    inv_f = {v: k for k, v in features.items()}
+    inv_f = {v: k for k, v in list(features.items())}
 
     for i, sen in enumerate(sentences):
         if flag != None and flag[i]: continue # skip sentece with flag
@@ -205,7 +203,7 @@ def get_data(sentences, features, labels, list_labels = None, flag = None):
         if list_labels == None:
             a.append((x,y))
         else:
-            a.append((x, map(str, map(int, list_labels[i]) ) ))
+            a.append((x, list(map(str, list(map(int, list_labels[i])) )) ))
     return a
 
 def train(a):
@@ -270,13 +268,13 @@ def get_res(t, a):
 def list_s2i(a):
     res = []
     for x in a:
-        res.append(map(int,x))
+        res.append(list(map(int,x)))
     return res
 
 
 def eval_tagger_train(t, a, labels):
     res = get_res(t, a)
-    b, c = zip(*a)
+    b, c = list(zip(*a))
     hmm.eval_seq_train(list_s2i(c), list_s2i(res), labels)
 
 

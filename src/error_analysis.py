@@ -18,7 +18,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path, output_p
 
     # count errors of baseline predictions 
     num_base_errs = np.zeros_like(gt)
-    for i in xrange(1, preds.shape[1]):
+    for i in range(1, preds.shape[1]):
         num_base_errs[np.where(preds[:,i]!=gt)] += 1
 
     # find all tokens correctly classified by all baselines
@@ -30,8 +30,8 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path, output_p
 
     analysis = np.zeros((0,4+annos.shape[1]))
 
-    for _, g in groupby(enumerate(error_idxs), lambda (i,x):i-x):
-        idxs = map(itemgetter(1), g)
+    for _, g in groupby(enumerate(error_idxs), lambda i_x:i_x[0]-i_x[1]):
+        idxs = list(map(itemgetter(1), g))
         slice_ = np.s_[idxs[0]-10:idxs[-1]+10]
         err = np.stack((np.arange(idxs[0]-10,idxs[-1]+10),preds[slice_,0],gt[slice_],doc_start[slice_])).T
         err = np.concatenate((err,annos[slice_,:]), axis=1)
@@ -42,5 +42,5 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path, output_p
     
 if __name__ == '__main__':
     prior_str = 'prior_3'
-    error_analysis('./data/argmin/gt.csv', './data/argmin/annos.csv', './data/argmin/doc_start.csv', 
-                   './output/argmin/pred_err_%s' % prior_str, './output/argmin/analysis_%s' % prior_str)
+    error_analysis('../../data/bayesian_annotator_combination/data/argmin/gt.csv', '../../data/bayesian_annotator_combination/data/argmin/annos.csv', '../../data/bayesian_annotator_combination/data/argmin/doc_start.csv',
+                   '../../data/bayesian_annotator_combination/output/argmin/pred_err_%s' % prior_str, '../../data/bayesian_annotator_combination/output/argmin/analysis_%s' % prior_str)

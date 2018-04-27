@@ -9,7 +9,7 @@ import os
 import glob
 from evaluation import metrics, experiment
 import sklearn.metrics as skm
-from data import data_utils 
+from data import data_utils
 
 def load_results(config):
     
@@ -18,7 +18,7 @@ def load_results(config):
     all_dirs = glob.glob(os.path.join(exp.output_dir, "data/param*/"))
     all_dirs.sort(key=lambda s: int(s.split('/')[4][5:]))
     
-    print all_dirs
+    print(all_dirs)
     
     results = np.zeros((len(exp.param_values), len(exp.SCORE_NAMES), len(exp.methods), exp.num_runs))
     
@@ -39,10 +39,10 @@ def load_results(config):
                 doc_length = exp.doc_length
             num_docs = exp.num_docs
             doc_start = np.zeros((num_docs * int(doc_length), 1))
-            doc_start[range(0, num_docs * doc_length, doc_length)] = 1
+            doc_start[list(range(0, num_docs * doc_length, doc_length))] = 1
             
             result = -np.ones((9, agg.shape[1]))
-            for i in xrange(agg.shape[1]):
+            for i in range(agg.shape[1]):
                 
         
                 result[7, i] = metrics.num_invalid_labels(agg[:, i], doc_start)
@@ -79,16 +79,16 @@ def plot_crowdsourcing_results():
     
     num_runs = 2
     
-    all_dirs = glob.glob('./output/crowdsourcing/k*')
+    all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/crowdsourcing/k*')
     all_dirs.sort(key=lambda s: int(s.split('/')[3][1:]))
     
     scores = np.zeros((len(exp.param_values), len(exp.SCORE_NAMES), len(exp.methods), num_runs))
     
-    for j in xrange(len(all_dirs)):
-        for i in xrange(num_runs):
+    for j in range(len(all_dirs)):
+        for i in range(num_runs):
             scores[j,:,:,i] = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
     
-    exp.plot_results(scores, False, True, './output/crowdsourcing/plots/')
+    exp.plot_results(scores, False, True, '../../data/bayesian_annotator_combination/output/crowdsourcing/plots/')
 
             
 def plot_hyperparameter_results():
@@ -103,15 +103,15 @@ def plot_hyperparameter_results():
      
     num_runs = 2
      
-    all_dirs = glob.glob('./output/hyperparameters_crowdsourcing/alphafactor*')
+    all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor*')
     all_dirs.sort(key=lambda s: float(s.split('/')[3][11:]))
      
     scores = np.zeros((len(all_dirs),len(exp.SCORE_NAMES),len(exp.methods),num_runs))
     lb = np.zeros((len(all_dirs), len(exp.methods), num_runs))
      
-    for j in xrange(len(all_dirs)):
-        print all_dirs[j]
-        for i in xrange(num_runs):
+    for j in range(len(all_dirs)):
+        print(all_dirs[j])
+        for i in range(num_runs):
             scores_ji = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
             if scores_ji.ndim == 1:
                 scores_ji = scores_ji[:, None]
@@ -119,8 +119,8 @@ def plot_hyperparameter_results():
             if scores_ji.shape[0] > len(exp.SCORE_NAMES):
                 lb[j, :, i] = scores_ji[len(exp.SCORE_NAMES), :] # the lower bound values 
                  
-    exp.plot_results(scores, False, True, './output/hyperparameters_crowdsourcing/plots/')
-    exp.plot_results(lb[:, None, :, :], False, True, './output/hyperparameters_crowdsourcing/plots/', ['ELBO'])
+    exp.plot_results(scores, False, True, '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/plots/')
+    exp.plot_results(lb[:, None, :, :], False, True, '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/plots/', ['ELBO'])
             
 if __name__ == '__main__':
     plot_hyperparameter_results()

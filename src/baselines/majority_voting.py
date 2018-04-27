@@ -39,15 +39,15 @@ class MajorityVoting(object):
         votes = np.zeros((self.num_words, self.num_labels))     
         
         # iterate through words
-        for i in xrange(self.num_words):
+        for i in range(self.num_words):
         
             # count all votes
-            for j in xrange(self.num_annotators):
+            for j in range(self.num_annotators):
                 if int(self.annotations[i,j]) >= 0:
                     votes[i, int(self.annotations[i,j])] += self.accuracies[j]
         
             # determine all labels with most votes
-            winners = [(j,votes[i,j]) for j in xrange(self.num_labels) if votes[i,j] == votes[i,:].max()]
+            winners = [(j,votes[i,j]) for j in range(self.num_labels) if votes[i,j] == votes[i,:].max()]
         
             # choose label
             if self.num_labels == 3:
@@ -57,7 +57,7 @@ class MajorityVoting(object):
                     else:
                         self.majority[i] = 1
                 else:
-                    if (not (1 in zip(*winners)[0])) and (winners[0][1] >= threshold):
+                    if (not (1 in list(zip(*winners))[0])) and (winners[0][1] >= threshold):
                         self.majority[i] = 2
                     else:
                         self.majority[i] = 1
@@ -95,7 +95,7 @@ class MajorityVoting(object):
                     
                     
     def update_accuracies(self):
-        for i in xrange(self.num_annotators):
+        for i in range(self.num_annotators):
             self.accuracies[i] = metrics.accuracy_score(self.majority, self.annotations[:,i])
         
         return self.accuracies

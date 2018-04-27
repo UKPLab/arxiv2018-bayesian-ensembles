@@ -19,7 +19,7 @@ Calculates the number of invalid labels in the given prediction, i.e. the number
 def num_invalid_labels(pred, doc_start):  
     docs = np.split(pred, np.where(doc_start==1)[0])[1:]  
     count_invalid = lambda doc: len(np.where(doc[np.r_[0, np.where(doc[:-1] == 1)[0] + 1]] == 0)[0])
-    return np.sum(map(count_invalid, docs))/float(len(pred))
+    return np.sum(list(map(count_invalid, docs)))/float(len(pred))
 
 '''
 Calculates the difference of the mean length of annotations between prediction and target sequences.
@@ -32,10 +32,10 @@ def mean_length_error(pred, target, doc_start):
     
     not_empty = lambda x: np.size(x) > 0
     
-    mean_pred = np.mean(np.array([len(x) for x in filter(not_empty, map(del_o, get_annos(pred)))]))
+    mean_pred = np.mean(np.array([len(x) for x in filter(not_empty, list(map(del_o, get_annos(pred))))]))
     if mean_pred == np.nan:
         mean_pred = 0
-    mean_target = np.mean(np.array([len(x) for x in filter(not_empty, map(del_o, get_annos(target)))]))
+    mean_target = np.mean(np.array([len(x) for x in filter(not_empty, list(map(del_o, get_annos(target))))]))
 
     return np.abs(mean_pred-mean_target)
 
