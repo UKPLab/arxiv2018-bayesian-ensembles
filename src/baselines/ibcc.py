@@ -308,7 +308,7 @@ class IBCC(object):
         for l in range(self.nscores):
             self.Ctest[l] = C[l][self.testidxs, :]
         # Reset the pre-calculated data for the training set in case goldlabels has changed
-        self.alpha_tr = []
+        self.alpha_tr = None
         
     def resparsify_t(self):
         '''
@@ -404,7 +404,7 @@ class IBCC(object):
 # Posterior Updates to Hyperparameters --------------------------------------------------------------------------------
     def _post_alpha(self):  # Posterior Hyperparams
         # Save the counts from the training data so we only recalculate the test data on every iteration
-        if self.alpha_tr == []:
+        if self.alpha_tr is None:
             self.alpha_tr = np.zeros(self.alpha.shape)
             if self.Ntrain:
                 for j in range(self.nclasses):
@@ -454,23 +454,23 @@ class IBCC(object):
         '''
         if self.uselowerbound or alldata:
             for j in range(self.nclasses):
-                data = []
+                data = None
                 for l in range(self.nscores):
                     if self.table_format_flag:
                         data_l = self.C[l] * self.lnPi[j, l, :][np.newaxis,:]
                     else:
                         data_l = self.C[l].multiply(self.lnPi[j, l, :][np.newaxis,:])                        
-                    data = data_l if data==[] else data+data_l
+                    data = data_l if data is None else data+data_l
                 self.lnpCT[:, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
         else:  # no need to calculate in full
             for j in range(self.nclasses):
-                data = []
+                data = None
                 for l in range(self.nscores):
                     if self.table_format_flag:
                         data_l = self.Ctest[l] * self.lnPi[j, l, :][np.newaxis,:]
                     else:
                         data_l = self.Ctest[l].multiply(self.lnPi[j, l, :][np.newaxis,:])
-                    data = data_l if data==[] else data+data_l
+                    data = data_l if data is None else data+data_l
                 self.lnpCT[self.testidxs, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
         
     def post_lnkappa(self):

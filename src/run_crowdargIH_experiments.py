@@ -61,11 +61,11 @@ for k in range(1, 9):
     np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
     exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
     exp.nu0 = np.ones((L + 1, L)) * nu0_factor
-    results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
-    np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
-               delimiter=',', header=str(exp.methods).strip('[]'))
+    results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], output_dir)
+    # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
+    #            delimiter=',', header=str(exp.methods).strip('[]'))
     
     output_dir = '../../data/bayesian_annotator_combination/output/crowdsourcing/k' + str(k) + '/run1/'
     subannos = dataB
@@ -78,11 +78,11 @@ for k in range(1, 9):
     np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
     exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
     exp.nu0 = np.ones((L + 1, L)) * nu0_factor
-    results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv')
-    np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
-               delimiter=',', header=str(exp.methods).strip('[]'))
+    results, preds, probs = exp.run_methods(subannos, gold, doc_start[:, None], output_dir)
+    # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
+    #            delimiter=',', header=str(exp.methods).strip('[]'))
 
 if __name__ == '__main__':
     pass

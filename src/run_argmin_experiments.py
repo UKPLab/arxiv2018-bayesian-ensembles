@@ -11,7 +11,7 @@ import numpy as np
 gt, annos, doc_start = load_data.load_argmin_data()
 
 exp = Experiment(None, 3, annos.shape[1], None)
-exp.methods = ['bac', 'ibcc', 'best', 'worst', 'majority']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
+exp.methods = ['ibcc_then_LSTM', 'ibcc', 'best', 'worst', 'majority']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
 
 exp.save_results = True
 exp.opt_hyper = True
@@ -37,20 +37,11 @@ exp.opt_hyper = True
 # exp.bac_alpha0 = np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1,
 #                            annos.shape[1])) +  5.0 * np.eye(exp.num_classes)[:,:,None,None]
 #
-# TODO: check out the NANs?
-# priorstr = 'prior_5_try2' 
+# priorstr = 'prior_5_try2'
 # exp.bac_alpha0 = 0.1 * np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
 #                            annos.shape[1])) +  0.1 * np.eye(exp.num_classes)[:,:,None,None]
 
-results, preds, _ = exp.run_methods(annos, gt, doc_start, -666, '../../data/bayesian_annotator_combination/data/argmin/annos.csv')
-
-np.savetxt('../../data/bayesian_annotator_combination/output/argmin/result_bacopt.csv', results, fmt='%s',
-           delimiter=',', header=str(exp.methods).strip('[]'))
-np.savetxt('../../data/bayesian_annotator_combination/output/argmin/pred_bacopt.csv', preds, fmt='%s',
-           delimiter=',', header=str(exp.methods).strip('[]'))
-
-#results.dump('../../data/bayesian_annotator_combination/output/argmin/results')
-#preds.dump('../../data/bayesian_annotator_combination/output/argmin/preds')
+results, preds, _ = exp.run_methods(annos, gt, doc_start, output_dir)
 
 if __name__ == '__main__':
     pass

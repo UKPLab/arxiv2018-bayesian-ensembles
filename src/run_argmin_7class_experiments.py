@@ -22,14 +22,7 @@ exp.save_results = True
 exp.exclusions = None # should not be needed now as dealt with through the inside/outside/beginning logic {0:[3,5], 2:[3,5], 3:[0,5], 4:[0,5], 5:[0,3], 6:[0,3]}
 exp.opt_hyper = True
 
-results, preds, _ = exp.run_methods(annos, gt, doc_start, -666, '../../data/bayesian_annotator_combination/data/argmin7/annos.csv')
-
-np.savetxt(output_dir + 'result_7class_ibccopt.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-np.savetxt(output_dir + 'pred_7class_ibccopt.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-
-
-#results.dump('../../data/bayesian_annotator_combination/output/argmin/results')
-#preds.dump('../../data/bayesian_annotator_combination/output/argmin/preds')
+results, preds, _ = exp.run_methods(annos, gt, doc_start, output_dir)
 
 if __name__ == '__main__':
     pass

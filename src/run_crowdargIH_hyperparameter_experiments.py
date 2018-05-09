@@ -86,16 +86,16 @@ np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
 for alpha0_factor in alpha0_factors:
     exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
     exp.nu0 = np.ones((L + 1, L)) * nu0_factor
-    results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv', return_model=True)
+    results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], output_dir, return_model=True)
 
     output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor' + str(alpha0_factor) + '/run0/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     results = np.append(results, [[model.lowerbound()]], axis=0)
-    np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
-               delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
+    #            delimiter=',', header=str(exp.methods).strip('[]'))
 
 output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/k' + str(k) + '/run1/'
 subannos = dataB
@@ -110,16 +110,16 @@ np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
 for alpha0_factor in alpha0_factors:
     exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
     exp.nu0 = np.ones((L + 1, L)) * nu0_factor
-    results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], -666, output_dir + 'annos2.csv', return_model=True)
+    results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], output_dir, return_model=True)
     
     output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor' + str(alpha0_factor) + '/run1/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)    
     results = np.append(results, [[model.lowerbound()]], axis=0)
-    np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
-               delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+    # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
+    #            delimiter=',', header=str(exp.methods).strip('[]'))
 
 if __name__ == '__main__':
     pass

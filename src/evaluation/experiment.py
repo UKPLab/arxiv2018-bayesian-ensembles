@@ -3,11 +3,15 @@ Created on Nov 1, 2016
 
 @author: Melvin Laux
 '''
-from scipy.optimize import minimize
+import time
+
+#from scipy.optimize import minimize
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+import pickle
+import datetime
 from baselines import ibcc, clustering, majority_voting
 from algorithm import bac
 from data import data_utils
@@ -20,6 +24,9 @@ import evaluation.metrics as metrics
 import glob
 from baselines.hmm import HMM_crowd
 from baselines.util import crowd_data, crowdlab, instance
+
+# things needed for the LSTM
+import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 
 class Experiment(object):
     '''
@@ -92,22 +99,6 @@ class Experiment(object):
 
         self.ibcc_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) + self.alpha0_diags * np.eye(nclasses)
 
-        self.bac_worker_model = 'mace'
-
-        # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
-        if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
-            self.bac_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) +\
-                              self.alpha0_diags * np.eye(nclasses)
-
-        elif self.bac_worker_model == 'mace':
-            self.bac_alpha0 = self.alpha0_factor * np.ones((2 + nclasses))
-            self.bac_alpha0[1] += self.alpha0_diags # diags are bias toward correct answer
-
-        elif self.bac_worker_model == 'acc':
-            self.bac_alpha0 = self.alpha0_factor * np.ones((2))
-            self.bac_alpha0[1] += self.alpha0_diags # diags are bias toward correct answer
-
-
         # TODO check whether constraints on transitions are correctly encoded
         self.bac_nu0 = np.ones((nclasses + 1, nclasses)) * self.nu0_factor
         self.ibcc_nu0 = np.ones(nclasses) * self.nu0_factor
@@ -150,22 +141,81 @@ class Experiment(object):
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
 
-    def run_methods(self, annotations, ground_truth, doc_start, param_idx, anno_path, return_model=False):
+    def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None,
+                    ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
+                    ground_truth_val=None, doc_start_val=None, text_val=None,
+                    return_model=False):
+        '''
+
+        :param annotations:
+        :param ground_truth: class labels for computing the performance metrics. Missing values should be set to -1.
+        :param doc_start:
+        :param text: feature vectors.
+        :param param_idx:
+        :param return_model:
+        :param ground_truth_nocrowd: for evaluating on a second set of data points where crowd labels are not available
+        :param text_nocrowd: the features for testing the model trained on crowdsourced data to classify data with no labels at all
+        :param ground_truth_val: for tuning methods that predict on features only with no crowd labels, e.g. LSTM
+        :return:
+        '''
+
 
         print('Running experiment, Optimisation=%s' % (self.opt_hyper))
 
-        scores = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
-        predictions = -np.ones((annotations.shape[0], len(self.methods)))
-        probabilities = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
-        
+        scores_allmethods = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
+        preds_allmethods = -np.ones((annotations.shape[0], len(self.methods)))
+        probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
+
+        # a second test set with no crowd labels was supplied directly
+        if ground_truth_nocrowd is not None and text_nocrowd is not None and doc_start_nocrowd:
+            test_no_crowd = True
+
+        else:
+            crowd_labels_present = np.any(annotations != -1, axis=1)
+            N_withcrowd = np.sum(crowd_labels_present)
+
+            no_crowd_labels = np.invert(crowd_labels_present)
+            N_nocrowd = np.sum(no_crowd_labels)
+
+            # check whether the additional test set needs to be split from the main dataset
+            if N_nocrowd == 0:
+                test_no_crowd = False
+            else:
+                test_no_crowd = True
+
+                annotations = annotations[crowd_labels_present, :]
+                ground_truth_nocrowd = ground_truth[no_crowd_labels]
+                ground_truth = ground_truth[crowd_labels_present]
+
+                text_nocrowd = text[no_crowd_labels]
+                text = text[crowd_labels_present]
+
+                doc_start_nocrowd = doc_start[no_crowd_labels]
+                doc_start = doc_start[crowd_labels_present]
+
+
+        # for the additional test set with no crowd labels
+        scores_nocrowd = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
+        preds_allmethods_nocrowd = -np.ones((annotations.shape[0], len(self.methods)))
+        probs_allmethods_nocrowd = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
+
+        # timestamp for when we started a run. Can be compared to file versions to check what was run.
+        timestamp = 'started-%Y-%m-%d-%H-%M-%S'.format(datetime.datetime.now())
+
         model = None # pass out to other functions if required
-        
+
         for method_idx in range(len(self.methods)): 
             
             print('running method: {0}'.format(self.methods[method_idx]), end=' ') 
 
+            method = self.methods[method_idx]
 
-            if self.methods[method_idx] == 'best':
+            # Initialise the results because not all methods will fill these in
+            if test_no_crowd:
+                agg_nocrowd = np.zeros(N_nocrowd)
+                probs_nocrowd = np.ones((N_nocrowd, self.num_classes))
+
+            if method == 'best':
                 # choose the best classifier by f1-score
                 f1scores = []
                 for w in range(annotations.shape[1]):
@@ -176,7 +226,7 @@ class Experiment(object):
                 for k in range(ground_truth.shape[0]):
                     probs[k, int(agg[k])] = 1
 
-            if self.methods[method_idx] == 'worst':
+            elif method == 'worst':
                 # choose the weakest classifier by f1-score
                 f1scores = []
                 for w in range(annotations.shape[1]):
@@ -187,11 +237,11 @@ class Experiment(object):
                 for k in range(ground_truth.shape[0]):
                     probs[k, int(agg[k])] = 1
 
-            if self.methods[method_idx] == 'majority':
+            elif method == 'majority':
                     
                 agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
             
-            if self.methods[method_idx] == 'clustering':
+            elif method == 'clustering':
                     
                 cl = clustering.Clustering(ground_truth, annotations, doc_start)
                 agg = cl.run()
@@ -200,7 +250,7 @@ class Experiment(object):
                 for k in range(ground_truth.shape[0]):
                     probs[k, int(agg[k])] = 1      
                 
-            if self.methods[method_idx] == 'mace':
+            elif method == 'mace':
                 
                 #devnull = open(os.devnull, 'w')
                 subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix', '../../data/bayesian_annotator_combination/output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
@@ -214,7 +264,7 @@ class Experiment(object):
                     for j in range(0, self.num_classes * 2, 2):
                         probs[i, int(result[i, j])] = result[i, j + 1]  
                 
-            if self.methods[method_idx] == 'ibcc':
+            elif method == 'ibcc':
                 ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
                                 alpha0=self.ibcc_alpha0, uselowerbound=True)
                 # ibc.verbose = True
@@ -226,8 +276,24 @@ class Experiment(object):
                     probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
                 agg = probs.argmax(axis=1)  # aggregated class labels
                 
-            if self.methods[method_idx] == 'bac':
+            elif method.split('_')[0] == 'bac':
+
+                self.bac_worker_model = method.split('_')[1]
                 L = self.num_classes
+
+                # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
+                if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
+                    self.bac_alpha0 = self.alpha0_factor * np.ones((L, L)) + \
+                                      self.alpha0_diags * np.eye(L)
+
+                elif self.bac_worker_model == 'mace':
+                    self.bac_alpha0 = self.alpha0_factor * np.ones((2 + L))
+                    self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+
+                elif self.bac_worker_model == 'acc':
+                    self.bac_alpha0 = self.alpha0_factor * np.ones((2))
+                    self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+
                 if L == 7:
                     inside_labels = [0, 3, 5]
                     outside_labels = [-1, 1]
@@ -243,34 +309,17 @@ class Experiment(object):
                 #alg.max_iter = 1
                 alg.verbose = True
                 if self.opt_hyper:
-                    probs, agg = alg.optimize(annotations, doc_start, maxfun=1000)
+                    probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000)
                 else:
-                    probs, agg = alg.run(annotations, doc_start)
+                    probs, agg = alg.run(annotations, doc_start, text)
 
                 model = alg
                 
-            if self.methods[method_idx] == 'HMM_crowd':
-                sentences = []
-                crowd_labels = []
-                for i in range(annotations.shape[0]):
-                    if doc_start[i]:
-                        sentence = []
-                        sentence.append(instance([], 0))
-                        sentences.append(sentence)
-                        crowd_labs = []
-                        for worker in range(annotations.shape[1]):
-                            worker_labs = crowdlab(worker, len(sentences) - 1, [int(annotations[i, worker])])
-                
-                            crowd_labs.append(worker_labs)
-                        crowd_labels.append(crowd_labs)
-                        
-                    else:
-                        sentence.append(instance([], 0))
-                        for worker in range(annotations.shape[1]):
-                            crowd_labs[worker].sen.append(int(annotations[i,worker]))
+            elif 'HMM_crowd' in method:
+                sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start)
                 
                 data = crowd_data(sentences, crowd_labels)
-                hc = HMM_crowd(self.num_classes, 1, data, None, None, vb=[0.1, 0.1], ne=1)
+                hc = HMM_crowd(self.num_classes, nfeats, data, None, None, vb=[0.1, 0.1], ne=1)
                 hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
                 hc.em(20)
                 hc.mls()
@@ -281,24 +330,128 @@ class Experiment(object):
                     for tok_post_arr in sentence_post_arr:
                         probs.append(tok_post_arr)
                 probs = np.array(probs)
-            
-            scores[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth.flatten(), probs, doc_start)
-            predictions[:, method_idx] = agg.flatten()
-            probabilities[:,:,method_idx] = probs
-            
+
+            if '_then_LSTM' in method:
+                '''
+                Reasons why we need the LSTM integration:
+                - Could use a simpler model like hmm_crowd for task 1
+                - Performance may be better with LSTM
+                - Active learning possible with simpler model, but how novel?
+                - Integrating LSTM shows a generalisation -- step forward over models that fix the data
+                representation
+                - Can do task 2 better than a simple model like Hmm_crowd
+                - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
+                '''
+                labelled_sentences, IOB_map = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
+                                                                               agg.flatten())
+
+                if ground_truth_val is None or doc_start_val is None or text_val is None:
+                    # If validation set is unavailable, select a random subset of combined data to use for validation
+                    # Simulates a scenario where all we have available are crowd labels.
+                    train_sentences, dev_sentences = lstm_wrapper.split_train_to_dev(labelled_sentences)
+                else:
+                    train_sentences = labelled_sentences
+                    dev_sentences, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
+                                                                        doc_start_val, ground_truth_val)
+
+                lstm, f_eval = lstm_wrapper.train_LSTM(train_sentences, dev_sentences)
+
+                # now make predictions for all sentences
+                agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map, self.num_classes)
+
+                if test_no_crowd:
+                    labelled_sentences, IOB_map = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
+                                                                           doc_start_nocrowd, np.zeros(N_nocrowd)-1)
+
+                    agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map,
+                                                                         self.num_classes)
+
+
+            if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
+                scores_allmethods[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth.flatten(), probs,
+                                                                                doc_start)
+                preds_allmethods[:, method_idx] = agg.flatten()
+                probs_allmethods[:,:,method_idx] = probs
+
+            if test_no_crowd:
+                scores_nocrowd[:,method_idx][:,None] = self.calculate_scores(agg_nocrowd,
+                                                    ground_truth_nocrowd.flatten(), probs_nocrowd, doc_start_nocrowd)
+                preds_allmethods_nocrowd[:, method_idx] = agg_nocrowd.flatten()
+                probs_allmethods_nocrowd[:,:,method_idx] = probs_nocrowd
+
             print('...done')
-            
-        if return_model:
-            return scores, predictions, probabilities, model
+
+            # Save the results so far after each method has completed.
+            if outputdir is not None:
+                if not os.path.exists(outputdir):
+                    os.mkdir(outputdir)
+
+                np.savetxt(outputdir + 'result_%s.csv' % timestamp, scores_allmethods, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+                np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+                pickle.dump(probs_allmethods, outputdir + 'probs_%s.pkl' % timestamp)
+
+                np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+                np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % timestamp, preds_allmethods_nocrowd, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+                pickle.dump(probs_allmethods_nocrowd, outputdir + 'probs_nocrowd_%s.pkl' % timestamp)
+
+        if test_no_crowd:
+            if return_model:
+                return scores_allmethods, preds_allmethods, probs_allmethods, model, scores_nocrowd, \
+                       preds_allmethods_nocrowd, probs_allmethods_nocrowd
+            else:
+                return scores_allmethods, preds_allmethods, probs_allmethods, scores_nocrowd, \
+                       preds_allmethods_nocrowd, probs_allmethods_nocrowd
         else:
-            return scores, predictions, probabilities
-    
-    
+            if return_model:
+                return scores_allmethods, preds_allmethods, probs_allmethods, model
+            else:
+                return scores_allmethods, preds_allmethods, probs_allmethods
+
+    def data_to_hmm_crowd_format(self, annotations, text, doc_start):
+        if text is not None:
+            ufeats, features = np.unique(text, return_inverse=True)
+        else:
+            features = []
+            ufeats = []
+
+        sentences_inst = []
+        crowd_labels = []
+
+        for i in range(annotations.shape[0]):
+
+            token_feature_vector = [features[i]]
+            label = 0
+
+            if doc_start[i]:
+                sentence_inst = []
+                sentence_inst.append(instance(token_feature_vector, label + 1))
+                sentences_inst.append(sentence_inst)
+
+                crowd_labs = []
+                for worker in range(annotations.shape[1]):
+                    worker_labs = crowdlab(worker, len(sentences_inst) - 1, [int(annotations[i, worker])])
+
+                    crowd_labs.append(worker_labs)
+                crowd_labels.append(crowd_labs)
+
+            else:
+                sentence_inst.append(instance(token_feature_vector, label + 1))
+
+                for worker in range(annotations.shape[1]):
+                    crowd_labs[worker].sen.append(int(annotations[i, worker]))
+
+        return sentences_inst, crowd_labels, len(ufeats)
+
     def calculate_scores(self, agg, gt, probs, doc_start):
         
         result = -np.ones((9,1))        
         result[7] = metrics.num_invalid_labels(agg, doc_start)        
-        
+
+        # exclude data points with missing ground truth
         agg = agg[gt!=-1]
         probs = probs[gt!=-1]
         doc_start = doc_start[gt!=-1]
