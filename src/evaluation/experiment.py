@@ -390,13 +390,15 @@ class Experiment(object):
                            header=str(self.methods).strip('[]'))
                 np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
-                pickle.dump(probs_allmethods, outputdir + 'probs_%s.pkl' % timestamp)
+                with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fg:
+                    pickle.dump(probs_allmethods, fh)
 
                 np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
                 np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % timestamp, preds_allmethods_nocrowd, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
-                pickle.dump(probs_allmethods_nocrowd, outputdir + 'probs_nocrowd_%s.pkl' % timestamp)
+                with open(outputdir + 'probs_nocrowd_%s.pkl' % timestamp, 'wb') as fh:
+                    pickle.dump(probs_allmethods_nocrowd, fh)
 
         if test_no_crowd:
             if return_model:
