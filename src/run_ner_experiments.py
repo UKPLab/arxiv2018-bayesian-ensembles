@@ -12,7 +12,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val,
     load_data.load_ner_data(False)
 
 exp = Experiment(None, 9, annos.shape[1], None)
-exp.methods = ['majority', 'best', 'worst', 'HMM_crowd_then_LSTM', 'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq', 'ibcc']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
+exp.methods = ['majority', 'best', 'worst', 'ibcc', 'HMM_crowd_then_LSTM', 'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
 
 exp.save_results = True
 exp.opt_hyper = False#True

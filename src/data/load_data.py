@@ -329,19 +329,19 @@ def load_biomedical_data(regen_data_files):
             all_data.to_csv(savepath + '/text.csv', columns=['text'], header=False, index=False)
 
     print('loading annos...')
-    annos = pd.read_csv(savepath + '/annos.csv')
+    annos = pd.read_csv(savepath + '/annos.csv', header=None)
     annos = annos.fillna(-1)
     annos = annos.values
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
     print('loading text data...')
-    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False).values
+    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None).values
 
     print('loading doc starts...')
-    doc_start = pd.read_csv(savepath + '/doc_start.csv').values #np.genfromtxt(savepath + '/doc_start.csv')
+    doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None).values #np.genfromtxt(savepath + '/doc_start.csv')
 
     print('loading ground truth labels...')
-    gt = pd.read_csv(savepath + '/gt.csv').values # np.genfromtxt(savepath + '/gt.csv')
+    gt = pd.read_csv(savepath + '/gt.csv', header=None).values # np.genfromtxt(savepath + '/gt.csv')
 
     if len(text) == len(annos) - 1:
         # sometimes the last line of text is blank and doesn't get loaded into text, but doc_start and gt contain labels

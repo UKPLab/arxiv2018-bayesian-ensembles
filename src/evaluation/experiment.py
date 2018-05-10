@@ -158,11 +158,16 @@ class Experiment(object):
         :param ground_truth_val: for tuning methods that predict on features only with no crowd labels, e.g. LSTM
         :return:
         '''
-
+        # goldidxs = (ground_truth != -1).flatten()
+        # annotations = annotations[goldidxs, :]
+        # ground_truth = ground_truth[goldidxs]
+        # doc_start = doc_start[goldidxs]
 
         print('Running experiment, Optimisation=%s' % (self.opt_hyper))
 
         scores_allmethods = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
+        score_std_allmethods = np.zeros((len(self.SCORE_NAMES)-3, len(self.methods)))
+
         preds_allmethods = -np.ones((annotations.shape[0], len(self.methods)))
         probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
 
@@ -196,6 +201,8 @@ class Experiment(object):
 
         # for the additional test set with no crowd labels
         scores_nocrowd = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
+        score_std_nocrowd = np.zeros((len(self.SCORE_NAMES)-3, len(self.methods)))
+
         preds_allmethods_nocrowd = -np.ones((annotations.shape[0], len(self.methods)))
         probs_allmethods_nocrowd = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
 
@@ -217,22 +224,33 @@ class Experiment(object):
 
             if method == 'best':
                 # choose the best classifier by f1-score
-                f1scores = []
+                f1scores = np.zeros(annotations.shape[1])
                 for w in range(annotations.shape[1]):
-                    f1scores.append(skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro'))
-                best_idx = np.argmax(f1scores)
-                agg = annotations[:, best_idx]
+                    f1scores[w] = skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro')
+                f1scores = f1scores[None, :]
+                f1scores = np.tile(f1scores, (annotations.shape[0], 1))
+
+                f1scores[annotations==-1] = -1 # remove the workers that did not label those particular annotations
+
+                best_idxs = np.argmax(f1scores, axis=1)
+                agg = annotations[np.arange(annotations.shape[0]), best_idxs]
                 probs = np.zeros((ground_truth.shape[0], self.num_classes))
                 for k in range(ground_truth.shape[0]):
                     probs[k, int(agg[k])] = 1
 
             elif method == 'worst':
                 # choose the weakest classifier by f1-score
-                f1scores = []
+                f1scores = np.zeros(annotations.shape[1])
                 for w in range(annotations.shape[1]):
-                    f1scores.append(skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro'))
-                worst_idx = np.argmin(f1scores)
-                agg = annotations[:, worst_idx]
+                    f1scores[w] = skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro')
+                f1scores = f1scores[None, :]
+                f1scores = np.tile(f1scores, (annotations.shape[0], 1))
+
+                f1scores[annotations==-1] = np.inf # remove the workers that did not label those particular annotations
+
+                worst_idxs = np.argmin(f1scores, axis=1)
+                agg = annotations[np.arange(annotations.shape[0]), worst_idxs]
+
                 probs = np.zeros((ground_truth.shape[0], self.num_classes))
                 for k in range(ground_truth.shape[0]):
                     probs[k, int(agg[k])] = 1
@@ -316,7 +334,7 @@ class Experiment(object):
                 model = alg
                 
             elif 'HMM_crowd' in method:
-                sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start)
+                sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
                 
                 data = crowd_data(sentences, crowd_labels)
                 hc = HMM_crowd(self.num_classes, nfeats, data, None, None, vb=[0.1, 0.1], ne=1)
@@ -368,13 +386,15 @@ class Experiment(object):
 
 
             if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
-                scores_allmethods[:,method_idx][:,None] = self.calculate_scores(agg, ground_truth.flatten(), probs,
+                scores_allmethods[:,method_idx][:,None], \
+                score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
                                                                                 doc_start)
                 preds_allmethods[:, method_idx] = agg.flatten()
                 probs_allmethods[:,:,method_idx] = probs
 
             if test_no_crowd:
-                scores_nocrowd[:,method_idx][:,None] = self.calculate_scores(agg_nocrowd,
+                scores_nocrowd[:,method_idx][:,None], \
+                score_std_nocrowd[:, method_idx] = self.calculate_scores(agg_nocrowd,
                                                     ground_truth_nocrowd.flatten(), probs_nocrowd, doc_start_nocrowd)
                 preds_allmethods_nocrowd[:, method_idx] = agg_nocrowd.flatten()
                 probs_allmethods_nocrowd[:,:,method_idx] = probs_nocrowd
@@ -413,40 +433,86 @@ class Experiment(object):
             else:
                 return scores_allmethods, preds_allmethods, probs_allmethods
 
-    def data_to_hmm_crowd_format(self, annotations, text, doc_start):
-        if text is not None:
-            ufeats, features = np.unique(text, return_inverse=True)
-        else:
-            features = []
-            ufeats = []
+    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir):
 
-        sentences_inst = []
-        crowd_labels = []
+        filename = outputdir + '/hmm_crowd_text_data.pkl'
 
-        for i in range(annotations.shape[0]):
+        if not os.path.exists(filename):
+            if text is not None:
 
-            token_feature_vector = [features[i]]
-            label = 0
+                ufeats = []
+                features = np.zeros(len(text))
+                for t, tok in enumerate(text):
 
-            if doc_start[i]:
-                sentence_inst = []
-                sentence_inst.append(instance(token_feature_vector, label + 1))
-                sentences_inst.append(sentence_inst)
+                    print('converting data to hmm format: token %i / %i' % (t, len(text)))
 
-                crowd_labs = []
-                for worker in range(annotations.shape[1]):
-                    worker_labs = crowdlab(worker, len(sentences_inst) - 1, [int(annotations[i, worker])])
+                    if tok not in ufeats:
+                        features = len(ufeats)
 
-                    crowd_labs.append(worker_labs)
-                crowd_labels.append(crowd_labs)
-
+                        ufeats.append(tok)
+                    else:
+                        features = np.where(ufeats == tok)[0]
             else:
-                sentence_inst.append(instance(token_feature_vector, label + 1))
+                features = []
+                ufeats = []
 
-                for worker in range(annotations.shape[1]):
-                    crowd_labs[worker].sen.append(int(annotations[i, worker]))
+            sentences_inst = []
+            crowd_labels = []
 
-        return sentences_inst, crowd_labels, len(ufeats)
+            for i in range(annotations.shape[0]):
+
+                token_feature_vector = [features[i]]
+                label = 0
+
+                if doc_start[i]:
+                    sentence_inst = []
+                    sentence_inst.append(instance(token_feature_vector, label + 1))
+                    sentences_inst.append(sentence_inst)
+
+                    crowd_labs = []
+                    for worker in range(annotations.shape[1]):
+                        worker_labs = crowdlab(worker, len(sentences_inst) - 1, [int(annotations[i, worker])])
+
+                        crowd_labs.append(worker_labs)
+                    crowd_labels.append(crowd_labs)
+
+                else:
+                    sentence_inst.append(instance(token_feature_vector, label + 1))
+
+                    for worker in range(annotations.shape[1]):
+                        crowd_labs[worker].sen.append(int(annotations[i, worker]))
+
+            nfeats = len(ufeats)
+
+            with open(filename, 'wb') as fh:
+                pickle.dump([sentences_inst, crowd_labels, nfeats], fh)
+        else:
+            with open(filename, 'rb') as fh:
+                data = pickle.load(fh)
+            sentences_inst = data[0]
+            crowd_labels = data[1]
+            nfeats = data[2]
+
+        return sentences_inst, crowd_labels, nfeats
+
+    def calculate_sample_metrics(self, agg, gt, probs):
+
+        result = -np.ones(6)
+
+        result[0] = skm.accuracy_score(gt, agg)
+        result[1] = skm.precision_score(gt, agg, average='macro')
+        result[2] = skm.recall_score(gt, agg, average='macro')
+        result[3] = skm.f1_score(gt, agg, average='macro')
+
+        auc_score = 0
+        for i in range(probs.shape[1]):
+            auc_i = skm.roc_auc_score(gt == i, probs[:, i])
+            # print 'AUC for class %i: %f' % (i, auc_i)
+            auc_score += auc_i * np.sum(gt == i)
+        result[4] = auc_score / float(gt.shape[0])
+        result[5] = skm.log_loss(gt, probs, eps=1e-100)
+
+        return result
 
     def calculate_scores(self, agg, gt, probs, doc_start):
         
@@ -458,12 +524,16 @@ class Experiment(object):
         probs = probs[gt!=-1]
         doc_start = doc_start[gt!=-1]
         gt = gt[gt!=-1]
+
+        print('unique ground truth values: ')
+        print(np.unique(gt))
+        print('unique prediction values: ')
+        print(np.unique(agg))
                         
         if self.postprocess:
             agg = data_utils.postprocess(agg, doc_start)
         
-        result[0] = skm.accuracy_score(gt, agg)
-        
+
         print('Plotting confusion matrix for errors: ')
         
         nclasses = probs.shape[1]
@@ -474,22 +544,33 @@ class Experiment(object):
                 
             #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
         print(conf)
-        
-        result[1] = skm.precision_score(gt, agg, average='macro')
-        result[2] = skm.recall_score(gt, agg, average='macro')
-        result[3] = skm.f1_score(gt, agg, average='macro')
-        
-        auc_score = 0
-        for i in range(probs.shape[1]):
-            auc_i = skm.roc_auc_score(gt==i, probs[:, i]) 
-            #print 'AUC for class %i: %f' % (i, auc_i)
-            auc_score += auc_i * np.sum(gt==i)
-        result[4] = auc_score / float(gt.shape[0])
-        result[5] = skm.log_loss(gt, probs, eps=1e-100)
-        result[6] = metrics.abs_count_error(agg, gt)
-        result[8] = metrics.mean_length_error(agg, gt, doc_start)
-        
-        return result
+
+        N = len(agg)
+        if N < 50000:
+            # use bootstrap resampling with small datasets
+            nbootstraps = 100
+            nmetrics = 6
+            resample_results = np.zeros((nmetrics, nbootstraps))
+
+            for i in range(nbootstraps):
+
+                sampleidxs = np.random.choice(N, N, replace=True)
+
+                resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],
+                                                                       gt[sampleidxs],
+                                                                       probs[sampleidxs])
+
+            result[:6, 0] = np.mean(resample_results, axis=1)
+            std_result = np.std(resample_results, axis=1)
+
+        else:
+            result[:6, 0] = self.calculate_sample_metrics(agg, gt, probs)
+            result[6] = metrics.abs_count_error(agg, gt)
+            result[8] = metrics.mean_length_error(agg, gt, doc_start)
+
+            std_result = None
+
+        return result, std_result
         
     def create_experiment_data(self):
         for param_idx in range(self.param_values.shape[0]):
@@ -563,6 +644,7 @@ class Experiment(object):
 
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES), len(self.methods), self.num_runs))
+        std_results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES)-3, len(self.methods), self.num_runs))
         # read experiment directory
         param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
 
@@ -596,7 +678,9 @@ class Experiment(object):
                     agg = preds[:, method_idx]
                     probs = probabilities[:, :, method_idx]
 
-                    results[param_idx,:, method_idx, run_idx][:, None] = self.calculate_scores(agg, gt.flatten(), probs, doc_start)
+                    results[param_idx, :, method_idx, run_idx][:, None], \
+                    std_results[param_idx, :, method_idx, run_idx] = self.calculate_scores(
+                        agg, gt.flatten(), probs, doc_start)
 
         if self.save_results:
             if not os.path.exists(self.output_dir):
