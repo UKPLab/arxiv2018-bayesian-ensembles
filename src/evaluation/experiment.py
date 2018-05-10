@@ -390,7 +390,7 @@ class Experiment(object):
                            header=str(self.methods).strip('[]'))
                 np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
-                with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fg:
+                with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fh:
                     pickle.dump(probs_allmethods, fh)
 
                 np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
