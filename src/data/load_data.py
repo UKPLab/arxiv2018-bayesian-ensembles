@@ -502,7 +502,7 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
 
         print('Processing dir for worker %s (%i of %i)' % (worker_str, widx, len(worker_dirs)))
 
-        worker_data = _load_rodrigues_annotations(dir, worker_str, gold_char_idxs)
+        worker_data = _load_rodrigues_annotations(dir, worker_str, char_idx_word_starts)
 
         # now need to join this to other workers' data
         if data is None:
