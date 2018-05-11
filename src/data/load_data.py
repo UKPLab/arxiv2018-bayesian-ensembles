@@ -600,7 +600,7 @@ def load_ner_data(regen_data_files):
     doc_start = pd.concat((doc_start, doc_start_v), axis=0).values
 
     print('not loading ground truth for task1 val, as we have done all hyperparameter tuning before...')
-    gt_v = np.zeros(annos_v.shape[0]) - 1
+    gt_v = pd.DataFrame(np.zeros(annos_v.shape[0]) - 1)
     gt = pd.concat((gt, gt_v), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
 
