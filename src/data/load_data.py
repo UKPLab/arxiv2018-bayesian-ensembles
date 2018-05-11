@@ -498,7 +498,7 @@ def load_ner_data(regen_data_files):
         gold_data = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
 
         # merge with the worker data
-        data = data.merge(gold_data, on=['doc_id', 'tok_idx'])
+        data = data.merge(gold_data, how='left')
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
@@ -527,7 +527,7 @@ def load_ner_data(regen_data_files):
         gold_data = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
 
         # merge with the worker data
-        data = data.merge(gold_data, on=['doc_id', 'tok_idx'])
+        data = data.merge(gold_data, how='left')
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)

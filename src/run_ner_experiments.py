@@ -9,7 +9,7 @@ import data.load_data as load_data
 output_dir = '../../data/bayesian_annotator_combination/output/ner/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, doc_start_val, text_val = \
-    load_data.load_ner_data(False)
+    load_data.load_ner_data(True)
 
 exp = Experiment(None, 9, annos.shape[1], None)
 exp.methods = ['majority', 'best', 'worst', 'ibcc', 'HMM_crowd_then_LSTM', 'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
