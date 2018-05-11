@@ -573,55 +573,55 @@ def load_ner_data(regen_data_files):
 
     # 7. Reload the data for the current run...
     print('loading annos for task1 test...')
-    annos = pd.read_csv(savepath + '/task1_test_annos.csv', header=None)
+    annos = pd.read_csv(savepath + '/task1_test_annos.csv', skip_blank_lines=False, header=None)
 
     print('loading text data for task1 test...')
-    text = np.genfromtxt(savepath + '/task1_test_text.csv')
+    text = pd.read_csv(savepath + '/task1_test_text.csv', skip_blank_lines=False, header=None)
 
     print('loading doc_starts for task1 test...')
-    doc_start = np.genfromtxt(savepath + '/task1_test_doc_start.csv')
+    doc_start = pd.read_csv(savepath + '/task1_test_doc_start.csv', skip_blank_lines=False, header=None)
 
     print('loading ground truth for task1 test...')
-    gt = np.genfromtxt(savepath + '/task1_test_gt.csv')
+    gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
 
     print('loading annos for task1 val...')
-    annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None)
+    annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None, skip_blank_lines=False)
     annos = pd.concat((annos, annos_v), axis=0)
     annos = annos.fillna(-1)
     annos = annos.values
     print('loaded annotations for %i tokens' % annos.shape[0])
 
     print('loading text data for task1 val...')
-    text_v = np.genfromtxt(savepath + '/task1_test_text.csv')
-    text = np.concatenate((text, text_v), axis=0)
+    text_v = pd.read_csv(savepath + '/task1_test_text.csv', skip_blank_lines=False, header=None)
+    text = pd.concat((text, text_v), axis=0).values
 
     print('loading doc_starts for task1 val...')
-    doc_start_v = np.genfromtxt(savepath + '/task1_val_doc_start.csv')
-    doc_start = np.concatenate((doc_start, doc_start_v), axis=0)
+    doc_start_v = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_lines=False, header=None)
+    doc_start = pd.concat((doc_start, doc_start_v), axis=0).values
 
     print('not loading ground truth for task1 val, as we have done all hyperparameter tuning before...')
     gt_v = np.zeros(annos_v.shape[0]) - 1
-    gt = np.concatenate((gt, gt_v), axis=0)
+    gt = pd.concat((gt, gt_v), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
 
     print('loading text data for task 2 test')
-    text_task2 = np.genfromtxt(savepath + '/task2_test_text.csv')
+    text_task2 = pd.read_csv(savepath + '/task2_test_text.csv', skip_blank_lines=False, header=None).values
 
     print('loading doc_starts for task 2 test')
-    doc_start_task2 = np.genfromtxt(savepath + '/task2_test_doc_start.csv')
+    doc_start_task2 = pd.read_csv(savepath + '/task2_test_doc_start.csv', skip_blank_lines=False, header=None).values
 
     print('loading ground truth for task 2 test')
-    gt_task2 = np.genfromtxt(savepath + '/task2_test_gt.csv')
+    gt_task2 = pd.read_csv(savepath + '/task2_test_gt.csv', skip_blank_lines=False, header=None).values
 
     # validation sets for methods that predict on features only
     print('loading text data for task 2 val')
-    text_val = np.genfromtxt(savepath + '/task2_val_text.csv')
+    text_val = pd.read_csv(savepath + '/task2_val_text.csv', skip_blank_lines=False, header=None).values
 
     print('loading doc_starts for task 2 val')
-    doc_start_val = np.genfromtxt(savepath + '/task2_val_doc_start.csv')
+    doc_start_val = pd.read_csv(savepath + '/task2_val_doc_start.csv', skip_blank_lines=False, header=None).values
 
     print('loading ground truth for task 2 val')
-    gt_val = np.genfromtxt(savepath + '/task2_val_gt.csv')
+    gt_val = pd.read_csv(savepath + '/task2_val_gt.csv', skip_blank_lines=False, header=None).values
 
     return gt, annos, doc_start, text, gt_task2, doc_start_task2, text_task2, gt_val, doc_start_val, text_val
 
