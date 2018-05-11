@@ -573,7 +573,7 @@ def load_ner_data(regen_data_files):
 
     # 7. Reload the data for the current run...
     print('loading annos for task1 test...')
-    annos = np.genfromtxt(savepath + '/task1_test_annos.csv', delimiter=',')
+    annos = pd.read_csv(savepath + '/task1_test_annos.csv', header=None)
 
     print('loading text data for task1 test...')
     text = np.genfromtxt(savepath + '/task1_test_text.csv')
@@ -585,8 +585,10 @@ def load_ner_data(regen_data_files):
     gt = np.genfromtxt(savepath + '/task1_test_gt.csv')
 
     print('loading annos for task1 val...')
-    annos_v = np.genfromtxt(savepath + '/task1_val_annos.csv', delimiter=',')
-    annos = np.concatenate((annos, annos_v), axis=0)
+    annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None)
+    annos = pd.concat((annos, annos_v), axis=0)
+    annos = annos.fillna(-1)
+    annos = annos.values
 
     print('loading text data for task1 val...')
     text_v = np.genfromtxt(savepath + '/task1_test_text.csv')
