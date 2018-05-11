@@ -141,7 +141,126 @@ class Experiment(object):
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
 
-    def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None,
+    def _run_best_worker(self, annos, gt, doc_start):
+        # choose the best classifier by f1-score
+        f1scores = np.zeros(annos.shape[1])
+        for w in range(annos.shape[1]):
+            f1scores[w] = skm.f1_score(gt.flatten(), annos[:, w], average='macro')
+        f1scores = f1scores[None, :]
+        f1scores = np.tile(f1scores, (annos.shape[0], 1))
+
+        f1scores[annos == -1] = -1  # remove the workers that did not label those particular annotations
+
+        best_idxs = np.argmax(f1scores, axis=1)
+        agg = annos[np.arange(annos.shape[0]), best_idxs]
+        probs = np.zeros((gt.shape[0], self.num_classes))
+        for k in range(gt.shape[0]):
+            probs[k, int(agg[k])] = 1
+
+        return agg, probs
+
+    def _run_worst_worker(self, annos, gt, doc_start):
+        # choose the weakest classifier by f1-score
+        f1scores = np.zeros(annos.shape[1])
+        for w in range(annos.shape[1]):
+            f1scores[w] = skm.f1_score(gt.flatten(), annos[:, w], average='macro')
+        f1scores = f1scores[None, :]
+        f1scores = np.tile(f1scores, (annos.shape[0], 1))
+
+        f1scores[annos == -1] = np.inf  # remove the workers that did not label those particular annotations
+
+        worst_idxs = np.argmin(f1scores, axis=1)
+        agg = annos[np.arange(annos.shape[0]), worst_idxs]
+
+        probs = np.zeros((gt.shape[0], self.num_classes))
+        for k in range(gt.shape[0]):
+            probs[k, int(agg[k])] = 1
+
+        return agg, probs
+
+    def _run_clustering(self, annotations, doc_start, ground_truth):
+        cl = clustering.Clustering(ground_truth, annotations, doc_start)
+        agg = cl.run()
+
+        probs = np.zeros((ground_truth.shape[0], self.num_classes))
+        for k in range(ground_truth.shape[0]):
+            probs[k, int(agg[k])] = 1
+
+        return agg, probs
+
+    def _run_mace(self, anno_path, ground_truth):
+        # devnull = open(os.devnull, 'w')
+        subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
+                         '../../data/bayesian_annotator_combination/output/data/mace',
+                         anno_path])  # , stdout = devnull, stderr = devnull)
+
+        result = np.genfromtxt('../../data/bayesian_annotator_combination/output/data/mace.prediction')
+
+        agg = result[:, 0]
+
+        probs = np.zeros((ground_truth.shape[0], self.num_classes))
+        for i in range(result.shape[0]):
+            for j in range(0, self.num_classes * 2, 2):
+                probs[i, int(result[i, j])] = result[i, j + 1]
+
+        return agg, probs
+
+    def _run_ibcc(self, annotations):
+        ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
+                        alpha0=self.ibcc_alpha0, uselowerbound=True)
+        # ibc.verbose = True
+        # ibc.optimise_alpha0_diagonals = True
+
+        if self.opt_hyper:
+            probs = ibc.combine_classifications(annotations, table_format=True, optimise_hyperparams=True,
+                                                maxiter=10000)
+        else:
+            probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
+        agg = probs.argmax(axis=1)  # aggregated class labels
+
+        return agg, probs
+
+    def _run_bac(self, annotations, doc_start, text, method):
+        self.bac_worker_model = method.split('_')[1]
+        L = self.num_classes
+
+        # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
+        if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
+            self.bac_alpha0 = self.alpha0_factor * np.ones((L, L)) + \
+                              self.alpha0_diags * np.eye(L)
+
+        elif self.bac_worker_model == 'mace':
+            self.bac_alpha0 = self.alpha0_factor * np.ones((2 + L))
+            self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+
+        elif self.bac_worker_model == 'acc':
+            self.bac_alpha0 = self.alpha0_factor * np.ones((2))
+            self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+
+        if L == 7:
+            inside_labels = [0, 3, 5]
+            outside_labels = [-1, 1]
+            begin_labels = [2, 4, 6]
+        else:
+            inside_labels = [0]
+            outside_labels = [-1, 1]
+            begin_labels = [2]
+
+        alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
+                      beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
+                      exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model)
+        # alg.max_iter = 1
+        alg.verbose = True
+        if self.opt_hyper:
+            probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000)
+        else:
+            probs, agg = alg.run(annotations, doc_start, text)
+
+        model = alg
+
+        return agg, probs, model
+
+    def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None, anno_path=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False):
@@ -151,7 +270,7 @@ class Experiment(object):
         :param ground_truth: class labels for computing the performance metrics. Missing values should be set to -1.
         :param doc_start:
         :param text: feature vectors.
-        :param param_idx:
+        :param anno_path: filename containing the annotations, used by MACE only
         :param return_model:
         :param ground_truth_nocrowd: for evaluating on a second set of data points where crowd labels are not available
         :param text_nocrowd: the features for testing the model trained on crowdsourced data to classify data with no labels at all
@@ -213,7 +332,7 @@ class Experiment(object):
 
         for method_idx in range(len(self.methods)): 
             
-            print('running method: {0}'.format(self.methods[method_idx]), end=' ') 
+            print('running method: %s' % self.methods[method_idx])
 
             method = self.methods[method_idx]
 
@@ -223,115 +342,25 @@ class Experiment(object):
                 probs_nocrowd = np.ones((N_nocrowd, self.num_classes))
 
             if method == 'best':
-                # choose the best classifier by f1-score
-                f1scores = np.zeros(annotations.shape[1])
-                for w in range(annotations.shape[1]):
-                    f1scores[w] = skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro')
-                f1scores = f1scores[None, :]
-                f1scores = np.tile(f1scores, (annotations.shape[0], 1))
-
-                f1scores[annotations==-1] = -1 # remove the workers that did not label those particular annotations
-
-                best_idxs = np.argmax(f1scores, axis=1)
-                agg = annotations[np.arange(annotations.shape[0]), best_idxs]
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                for k in range(ground_truth.shape[0]):
-                    probs[k, int(agg[k])] = 1
+                agg, probs = self._run_best_worker(annotations, ground_truth, doc_start)
 
             elif method == 'worst':
-                # choose the weakest classifier by f1-score
-                f1scores = np.zeros(annotations.shape[1])
-                for w in range(annotations.shape[1]):
-                    f1scores[w] = skm.f1_score(ground_truth.flatten(), annotations[:, w], average='macro')
-                f1scores = f1scores[None, :]
-                f1scores = np.tile(f1scores, (annotations.shape[0], 1))
-
-                f1scores[annotations==-1] = np.inf # remove the workers that did not label those particular annotations
-
-                worst_idxs = np.argmin(f1scores, axis=1)
-                agg = annotations[np.arange(annotations.shape[0]), worst_idxs]
-
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                for k in range(ground_truth.shape[0]):
-                    probs[k, int(agg[k])] = 1
+                agg, probs = self._run_worst_worker(annotations, ground_truth, doc_start)
 
             elif method == 'majority':
-                    
                 agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
             
             elif method == 'clustering':
-                    
-                cl = clustering.Clustering(ground_truth, annotations, doc_start)
-                agg = cl.run()
-                    
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                for k in range(ground_truth.shape[0]):
-                    probs[k, int(agg[k])] = 1      
+                agg, probs = self._run_clustering(annotations, doc_start, ground_truth)
                 
             elif method == 'mace':
-                
-                #devnull = open(os.devnull, 'w')
-                subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix', '../../data/bayesian_annotator_combination/output/data/mace', anno_path])#, stdout = devnull, stderr = devnull)
-                
-                result = np.genfromtxt('../../data/bayesian_annotator_combination/output/data/mace.prediction')
-                    
-                agg = result[:, 0]
-                    
-                probs = np.zeros((ground_truth.shape[0], self.num_classes))
-                for i in range(result.shape[0]):
-                    for j in range(0, self.num_classes * 2, 2):
-                        probs[i, int(result[i, j])] = result[i, j + 1]  
+                agg, probs = self._run_mace(anno_path, ground_truth)
                 
             elif method == 'ibcc':
-                ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
-                                alpha0=self.ibcc_alpha0, uselowerbound=True)
-                # ibc.verbose = True
-                # ibc.optimise_alpha0_diagonals = True
-
-                if self.opt_hyper:
-                    probs = ibc.combine_classifications(annotations, table_format=True, optimise_hyperparams=True, maxiter=10000)
-                else:
-                    probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
-                agg = probs.argmax(axis=1)  # aggregated class labels
+                agg, probs = self._run_ibcc(annotations)
                 
             elif method.split('_')[0] == 'bac':
-
-                self.bac_worker_model = method.split('_')[1]
-                L = self.num_classes
-
-                # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
-                if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
-                    self.bac_alpha0 = self.alpha0_factor * np.ones((L, L)) + \
-                                      self.alpha0_diags * np.eye(L)
-
-                elif self.bac_worker_model == 'mace':
-                    self.bac_alpha0 = self.alpha0_factor * np.ones((2 + L))
-                    self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
-
-                elif self.bac_worker_model == 'acc':
-                    self.bac_alpha0 = self.alpha0_factor * np.ones((2))
-                    self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
-
-                if L == 7:
-                    inside_labels = [0, 3, 5]
-                    outside_labels = [-1, 1]
-                    begin_labels = [2, 4, 6]
-                else:
-                    inside_labels = [0]
-                    outside_labels = [-1, 1]
-                    begin_labels = [2]
-
-                alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
-                              beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
-                              exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model)
-                #alg.max_iter = 1
-                alg.verbose = True
-                if self.opt_hyper:
-                    probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000)
-                else:
-                    probs, agg = alg.run(annotations, doc_start, text)
-
-                model = alg
+                agg, probs, model = self._run_bac(annotations, doc_start, text, method)
                 
             elif 'HMM_crowd' in method:
                 sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
@@ -360,7 +389,7 @@ class Experiment(object):
                 - Can do task 2 better than a simple model like Hmm_crowd
                 - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
                 '''
-                labelled_sentences, IOB_map = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
+                labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
                                                                                agg.flatten())
 
                 if ground_truth_val is None or doc_start_val is None or text_val is None:
@@ -369,16 +398,16 @@ class Experiment(object):
                     train_sentences, dev_sentences = lstm_wrapper.split_train_to_dev(labelled_sentences)
                 else:
                     train_sentences = labelled_sentences
-                    dev_sentences, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
+                    dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
                                                                         doc_start_val, ground_truth_val)
 
-                lstm, f_eval = lstm_wrapper.train_LSTM(train_sentences, dev_sentences)
+                lstm, f_eval, _ = lstm_wrapper.train_LSTM(train_sentences, dev_sentences)
 
                 # now make predictions for all sentences
                 agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map, self.num_classes)
 
                 if test_no_crowd:
-                    labelled_sentences, IOB_map = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
+                    labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
                                                                            doc_start_nocrowd, np.zeros(N_nocrowd)-1)
 
                     agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map,

@@ -390,7 +390,7 @@ def _map_ner_str_to_labels(arr):
     return arr_ints
 
 
-def _load_rodrigues_annotations(dir, worker_str):
+def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
     worker_data = None
 
     for f in os.listdir(dir):
@@ -406,11 +406,60 @@ def _load_rodrigues_annotations(dir, worker_str):
         new_data = pd.read_csv(f, delimiter=' ', names=['text', worker_str], skip_blank_lines=True,
                                dtype={'text':str, worker_str:str}, na_filter=False, sep=' ')
 
+        new_data = new_data.loc[new_data['text'] != '']
+
+        for t, tok in enumerate(new_data['text']):
+
+            if '/LOC' in tok:
+                # we need to remove this piece of tagging that shouldn't be here
+                tok = tok[:tok.find('/LOC')]
+                new_data['text'].iloc[t] = tok
+            if '/B' in tok:
+                # we need to remove this piece of tagging that shouldn't be here
+                tok = tok[:tok.find('/B')]
+                new_data['text'].iloc[t] = tok
+            if '/I' in tok:
+                # we need to remove this piece of tagging that shouldn't be here
+                tok = tok[:tok.find('/I')]
+                new_data['text'].iloc[t] = tok
+            if tok.endswith('/'):
+                # we need to remove this piece of tagging that shouldn't be here
+                tok = tok[:-1]
+                new_data['text'].iloc[t] = tok
+
+        if gold_char_idxs is not None:
+            # compare the tokens in the worker annotations to the gold labels. They are misaligned in the dataset. We will
+            # skip labels in the worker annotations that are assigned to only a part of a token in the gold dataset.
+            char_counter = 0
+            annos_to_keep = np.ones(new_data.shape[0], dtype=bool)
+            gold_tok_idx = 0
+
+            for t, tok in enumerate(new_data['text']):
+                gold_char_idx = gold_char_idxs[doc_str][gold_tok_idx]
+                #print('Token char idxs -- gold = %s, worker = %s, token = %s' % (gold_char_idx, char_counter, tok))
+
+                if char_counter < gold_char_idx:
+                    annos_to_keep[t] = False
+
+                    if new_data[worker_str].iloc[t-1] == 'O' and new_data[worker_str].iloc[t] != 'O':
+                        new_data[worker_str].iloc[t-1] = new_data[worker_str].iloc[t]
+                else:
+                    gold_tok_idx += 1
+
+                    if char_counter > gold_char_idx:
+                        print('error in text alignment between worker and gold!')
+
+                char_counter += len(tok)
+
+            new_data = new_data.loc[annos_to_keep]
+
+
         new_data[worker_str] = _map_ner_str_to_labels(new_data[worker_str])
 
         new_data['doc_id'] = doc_str
 
-        new_data['tok_idx'] = new_data.index
+        new_data['tok_idx'] = np.arange(new_data.shape[0]) # new_data.index -- don't use index because we remove
+        # invalid extra rows from some files in the iloc line above.
 
         new_data['doc_start'] = (new_data.index == 0).astype(int)
 
@@ -422,12 +471,25 @@ def _load_rodrigues_annotations(dir, worker_str):
 
     return worker_data
 
-def _load_rodrigues_annotations_all_workers(annotation_data_path):
+def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
 
     worker_dirs = os.listdir(annotation_data_path)
 
     data = None
     annotator_cols = np.array([], dtype=str)
+
+    char_idx_word_starts = {}  # np.zeros(gold_data.shape[0], dtype=int)
+
+    char_counter = 0
+    for t, tok in enumerate(gold_data['text']):
+        if gold_data['doc_id'].iloc[t] not in char_idx_word_starts:
+            char_counter = 0
+            starts = []
+            char_idx_word_starts[gold_data['doc_id'].iloc[t]] = starts
+
+        starts.append(char_counter)
+
+        char_counter += len(tok)
 
     for widx, dir in enumerate(worker_dirs):
 
@@ -440,13 +502,13 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path):
 
         print('Processing dir for worker %s (%i of %i)' % (worker_str, widx, len(worker_dirs)))
 
-        worker_data = _load_rodrigues_annotations(dir, worker_str)
+        worker_data = _load_rodrigues_annotations(dir, worker_str, gold_char_idxs)
 
         # now need to join this to other workers' data
         if data is None:
             data = worker_data
         else:
-            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer')
+            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True)
 
     return data, annotator_cols
 
@@ -476,8 +538,12 @@ def load_ner_data(regen_data_files):
     if regen_data_files:
         # Steps to load data (all steps need to map annotations to consecutive integer labels).
         # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
+
+        # load the gold data in the same way as the worker data
+        gold_data = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
+
         # load the validation data
-        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/')
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/', gold_data)
 
         # convert the text to feature vectors
         #data['text'], _ = build_feature_vectors(data['text'].values)
@@ -494,22 +560,22 @@ def load_ner_data(regen_data_files):
 
 
         # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
-        # load the gold data in the same way as the worker data
-        gold_data = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
-
-        # merge with the worker data
-        data = data.merge(gold_data, how='left')
+        # merge gold with the worker data
+        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
 
 
         # 3. Load worker annotations for test set.
+        # load the gold data in the same way as the worker data
+        gold_data = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
+
         # load the test data
-        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/')
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/', gold_data)
 
         # convert the text to feature vectors
-        data['text'], _ = build_feature_vectors(data['text'].values)
+        #data['text'], _ = build_feature_vectors(data['text'].values)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
@@ -521,13 +587,9 @@ def load_ner_data(regen_data_files):
         # save the doc starts
         data.to_csv(savepath + '/task1_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
-
         # 4. Create ground truth CSV for task1_test_path
-        # load the gold data in the same way as the worker data
-        gold_data = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
-
         # merge with the worker data
-        data = data.merge(gold_data, how='left')
+        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)
@@ -548,8 +610,8 @@ def load_ner_data(regen_data_files):
         eng_val['tok_idx'] = eng_val.index
         eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
 
-        eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['gold'], header=False, index=False)
-        eng_val.to_csv(savepath + '/task2_val_gt.csv', columns=['text'], header=False, index=False)
+        eng_val.to_csv(savepath + '/task2_val_gt.csv', columns=['gold'], header=False, index=False)
+        eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['text'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
 
@@ -566,8 +628,8 @@ def load_ner_data(regen_data_files):
         eng_val['tok_idx'] = eng_val.index
         eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
 
-        eng_val.to_csv(savepath + '/task2_test_text.csv', columns=['gold'], header=False, index=False)
-        eng_val.to_csv(savepath + '/task2_test_gt.csv', columns=['text'], header=False, index=False)
+        eng_val.to_csv(savepath + '/task2_test_gt.csv', columns=['gold'], header=False, index=False)
+        eng_val.to_csv(savepath + '/task2_test_text.csv', columns=['text'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
 
@@ -592,7 +654,7 @@ def load_ner_data(regen_data_files):
     print('loaded annotations for %i tokens' % annos.shape[0])
 
     print('loading text data for task1 val...')
-    text_v = pd.read_csv(savepath + '/task1_test_text.csv', skip_blank_lines=False, header=None)
+    text_v = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
     text = pd.concat((text, text_v), axis=0).values
 
     print('loading doc_starts for task1 val...')

@@ -1266,39 +1266,53 @@ class ignore_features:
 
 class LSTM:
 
-    # TODO: turn the data to correct format *only once* and save to a field in the object
-    # TODO: avoid re-building the model each iteration. Can we retrain without building?
-    # TODO: what is the features object?
+    # TODO: fix the parameters passed into the functions below
 
-    def init(self, alpha0_data):
+    def init(self, alpha0_data, N, text, doc_start):
+
+        self.N = N
+
+        labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
+
+        self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels)
+
+        self.Ndocs = self.sentences.shape[0]
+
+        self.train_data_objs = None
+
         return alpha0_data, alpha0_data
 
-    def predict(self, Et, text):
-
-        N = Et.shape[0]
-
+    def predict(self, Et):
         labels = np.argmax(Et, axis=1)
 
-        sentences, IOB_map = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels)
-
-        sentences = np.array(sentences)
+        l = 0
+        for s, sen in enumerate(self.sentences):
+            for t, tok in enumerate(sen):
+                self.sentences[s][t][1] = self.IOB_label[labels[l]]
+                l += 1
 
         # select a random subset of data to use for validation
-        ndocs = sentences.shape[0]
-        devidxs = np.random.randint(0, ndocs, int(np.round(ndocs * 0.2)))
-        trainidxs = np.ones(len(sentences), dtype=bool)
+
+        devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)))
+        trainidxs = np.ones(self.N, dtype=bool)
         trainidxs[devidxs] = 0
-        train_sentences = sentences[trainidxs]
+        train_sentences = self.sentences[trainidxs]
 
         if len(devidxs) == 0:
-            dev_sentences = sentences
+            dev_sentences = self.sentences
         else:
-            dev_sentences = sentences[devidxs]
+            dev_sentences = self.sentences[devidxs]
 
-        lstm, f_eval = lstm_wrapper.train_LSTM(train_sentences, dev_sentences)
+        if self.train_data_objs is None:
+            self.lstm, f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(train_sentences, dev_sentences, n_epochs=1)
+        else:
+            lstm_wrapper.run_epoch(0, 0, 2, self.train_data_objs[0], self.train_data_objs[1],
+                                   self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4], 0, 1,
+                                   self.train_data_objs[5], self.train_data_objs[6],
+                                   self.train_data_objs[7], self.train_data_objs[8], self.lstm)
 
         # now make predictions for all sentences
-        _, probs = lstm_wrapper.predict_LSTM(lstm, sentences, f_eval, IOB_map, Et.shape[1])
+        _, probs = lstm_wrapper.predict_LSTM(lstm, self.sentences, f_eval, self.IOB_map, Et.shape[1])
 
         return probs
 

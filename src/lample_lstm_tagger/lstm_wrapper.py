@@ -39,7 +39,7 @@ def data_to_lstm_format(nannotations, text, doc_start, labels):
 
     sentences_list = np.array(sentences_list)
 
-    return sentences_list, IOB_map
+    return sentences_list, IOB_map, IOB_label
 
 def split_train_to_dev(gold_sentences):
     ndocs = gold_sentences.shape[0]
@@ -56,7 +56,7 @@ def split_train_to_dev(gold_sentences):
     return train_sentences, dev_sentences
 
 
-def train_LSTM(train_sentences, dev_sentences):
+def train_LSTM(train_sentences, dev_sentences, n_epochs=100):
 
     # parameters
     parameters = OrderedDict()
@@ -79,6 +79,9 @@ def train_LSTM(train_sentences, dev_sentences):
     parameters['dropout'] = 0.5
     parameters['lr_method'] = "sgd-lr_.005"
 
+    max_niter_no_imprv = 3
+    #lr_decay = 0.9 # not currently used
+
     if not os.path.exists(models_path):
         os.makedirs(models_path)
 
@@ -88,7 +91,7 @@ def train_LSTM(train_sentences, dev_sentences):
 
     # Data parameters
     lower = parameters['lower']
-    tag_scheme = parameters['tag_scheme']
+    #tag_scheme = parameters['tag_scheme']
 
     # Use selected tagging scheme (IOB / IOBES)
     # update_tag_scheme(train_sentences, tag_scheme)
@@ -131,39 +134,57 @@ def train_LSTM(train_sentences, dev_sentences):
     # Train network
     #
     singletons = set([word_to_id[k] for k, v in list(dico_words_train.items()) if v == 1])
-    n_epochs = 100  # number of epochs over the training set
+
     freq_eval = 1000  # evaluate on dev every freq_eval steps
     best_dev = -np.inf
     count = 0
+
+    niter_no_imprv = 0 # for early stopping
+
+    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_data, id_to_tag,
+                                          dico_tags]
+
     for epoch in range(n_epochs):
-        epoch_costs = []
-        print("Starting epoch %i..." % epoch)
+        count, niter_no_imprv = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
+                                          niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_data, id_to_tag,
+                                          dico_tags, model)
+        #lr *= lr_decay # can't find an easy way to taper the learning rate
 
-        for i, index in enumerate(np.random.permutation(len(train_data))):
-            # loop over random permutations of the training data
-            count += 1
+    return model, f_eval, train_data_objs
 
-            input = create_input(train_data[index], parameters, True, singletons)
-            new_cost = f_train(*input)
-            epoch_costs.append(new_cost)
+def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
+              max_niter_no_imprv, dev_sentences, dev_data, id_to_tag, dico_tags, model):
+    epoch_costs = []
+    print("Starting epoch %i..." % epoch)
 
-            if i % 50 == 0 and i > 0 == 0:
-                print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
-            if count % freq_eval == 0:
-                dev_score = evaluate(parameters, f_eval, dev_sentences,
-                                     dev_data, id_to_tag, dico_tags)
-                print("Score on dev: %.5f" % dev_score)
-                if dev_score > best_dev:
-                    best_dev = dev_score
-                    print("New best score on dev.")
-                    print("Saving model to disk...")
-                    model.save()
+    for i, index in enumerate(np.random.permutation(len(train_data))):
+        # loop over random permutations of the training data
+        count += 1
 
-            # TODO: add early stopping and learning rate decay?
-        print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
+        input = create_input(train_data[index], parameters, True, singletons)
+        new_cost = f_train(*input)
+        epoch_costs.append(new_cost)
 
-    return model, f_eval
+        if i % 50 == 0 and i > 0 == 0:
+            print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
+        if count % freq_eval == 0:
+            dev_score = evaluate(parameters, f_eval, dev_sentences,
+                                 dev_data, id_to_tag, dico_tags)
+            print("Score on dev: %.5f" % dev_score)
+            if dev_score > best_dev:
+                best_dev = dev_score
+                print("New best score on dev.")
+                print("Saving model to disk...")
+                model.save()
+            else:
+                niter_no_imprv += 1
+                if niter_no_imprv >= max_niter_no_imprv:
+                    print("- early stopping %i epochs without improvement" % niter_no_imprv)
+                    break
 
+    print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
+
+    return count, niter_no_imprv
 
 def predict_LSTM(model, test_sentences, f_eval, IOB_map, num_classes):
     # Load existing model
