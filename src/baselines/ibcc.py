@@ -251,8 +251,12 @@ class IBCC(object):
         else:  # If the test indexes are not specified explicitly, assume that all data points with a NaN or a -1 in the
             # training data must be test indexes.
             self.testidxs = np.bitwise_or(np.isnan(self.goldlabels), self.goldlabels < 0)
-        self.testidxs = self.testidxs>0            
-        self.Ntest = np.sum(self.testidxs)      
+        self.testidxs = self.testidxs > 0
+        self.Ntest = np.sum(self.testidxs)
+
+        if self.Ntest == self.N:
+            # we test on all indexes, so avoid using testidxs
+            self.testidxs = None
             
     def preprocess_crowdlabels(self, crowdlabels):
         # Initialise all objects relating to the crowd labels.
@@ -305,8 +309,13 @@ class IBCC(object):
         # repeat for test labels only
         
         self.Ctest = {}
+
         for l in range(self.nscores):
-            self.Ctest[l] = C[l][self.testidxs, :]
+            if self.testidxs is not None:
+                self.Ctest[l] = C[l][self.testidxs, :]
+            else:
+                self.Ctest[l] = C[l]
+
         # Reset the pre-calculated data for the training set in case goldlabels has changed
         self.alpha_tr = None
         
@@ -371,7 +380,12 @@ class IBCC(object):
             #update targets
             #self._expec_t()
             self.lnjoint()
-            self.E_t[self.testidxs, :] = _expec_t(self.lnpCT, self.testidxs)
+
+            if self.testidxs is not None:
+                self.E_t[self.testidxs, :] = _expec_t(self.lnpCT, self.testidxs)
+            else:
+                self.E_t = _expec_t(self.lnpCT, self.testidxs)
+
             #update params
             #self._calc_q_A()
             self.lnkappa, self.nu = _calc_q_A(self.E_t, self.nu0)
@@ -415,7 +429,12 @@ class IBCC(object):
         # Add the counts from the test data
         for j in range(self.nclasses):
             for l in range(self.nscores):
-                Tj = self.E_t[self.testidxs, j].reshape((self.Ntest, 1))
+
+                if self.testidxs is not None:
+                    Tj = self.E_t[self.testidxs, j].reshape((self.Ntest, 1))
+                else:
+                    Tj = self.E_t[:, j].reshape((self.Ntest, 1))
+
                 counts = self.Ctest[l].T.dot(Tj).reshape(-1)
                 self.alpha[j, l, :] = self.alpha_tr[j, l, :] + counts
 
@@ -438,7 +457,9 @@ class IBCC(object):
     def _expec_t(self):
         self.lnjoint()
         joint = self.lnpCT
-        joint = joint[self.testidxs, :]
+        if self.testidxs is not None:
+            joint = joint[self.testidxs, :]
+
         # ensure that the values are not too small
         largest = np.max(joint, 1)[:, np.newaxis]
         joint = joint - largest
@@ -471,7 +492,11 @@ class IBCC(object):
                     else:
                         data_l = self.Ctest[l].multiply(self.lnPi[j, l, :][np.newaxis,:])
                     data = data_l if data is None else data+data_l
-                self.lnpCT[self.testidxs, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
+
+                if self.testidxs is not None:
+                    self.lnpCT[self.testidxs, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
+                else:
+                    self.lnpCT[:, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
         
     def post_lnkappa(self):
         lnpKappa = gammaln(np.sum(self.nu0)) - np.sum(gammaln(self.nu0)) + sum((self.nu0 - 1) * self.lnkappa)
@@ -654,7 +679,11 @@ def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True):
 
 def _expec_t(lnpCT, testidxs):
     # self.lnjoint()
-    joint = lnpCT[testidxs, :]
+    if testidxs is not None:
+        joint = lnpCT[testidxs, :]
+    else:
+        joint = lnpCT
+
     # ensure that the values are not too small 
     joint -= np.max(joint, 1)[:, np.newaxis]
     joint = np.exp(joint)
