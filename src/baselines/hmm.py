@@ -105,7 +105,7 @@ class HMM:
                     if prev != -1:
                         self.t[prev][state] += 1
                     for f in i.features:
-                        self.e[state][f] += 1
+                        self.e[state][int(f)] += 1
                     prev = state
 
         # save count for e

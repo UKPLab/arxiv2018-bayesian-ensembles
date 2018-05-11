@@ -326,7 +326,7 @@ class Experiment(object):
         probs_allmethods_nocrowd = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
 
         # timestamp for when we started a run. Can be compared to file versions to check what was run.
-        timestamp = 'started-%Y-%m-%d-%H-%M-%S'.format(datetime.datetime.now())
+        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
         model = None # pass out to other functions if required
 
@@ -366,7 +366,8 @@ class Experiment(object):
                 sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
                 
                 data = crowd_data(sentences, crowd_labels)
-                hc = HMM_crowd(self.num_classes, nfeats, data, None, None, vb=[0.1, 0.1], ne=1)
+                hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
+                               vb=[0.1, 0.1], ne=1)
                 hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
                 hc.em(20)
                 hc.mls()
