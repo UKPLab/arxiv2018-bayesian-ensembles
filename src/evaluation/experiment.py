@@ -466,6 +466,10 @@ class Experiment(object):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
+        annotations = annotations[:10000]
+        text = text[:10000]
+        doc_start = doc_start[:10000]
+
         if not os.path.exists(filename):
             if text is not None:
 
@@ -476,11 +480,11 @@ class Experiment(object):
                     print('converting data to hmm format: token %i / %i' % (t, len(text)))
 
                     if tok not in ufeats:
-                        features = len(ufeats)
+                        features[t] = len(ufeats)
 
                         ufeats.append(tok)
                     else:
-                        features = np.where(ufeats == tok)[0]
+                        features[t] = np.argwhere(ufeats == tok)[0][0]
             else:
                 features = []
                 ufeats = []
