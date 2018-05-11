@@ -480,9 +480,13 @@ class IBCC(object):
                     if self.table_format_flag:
                         data_l = self.C[l] * self.lnPi[j, l, :][np.newaxis,:]
                     else:
-                        data_l = self.C[l].multiply(self.lnPi[j, l, :][np.newaxis,:])                        
+                        data_l = self.C[l].multiply(self.lnPi[j, l, :][np.newaxis,:])
+
+                    data_l = np.array(data_l.sum(axis=1)).reshape(-1)
+
                     data = data_l if data is None else data+data_l
-                self.lnpCT[:, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
+
+                self.lnpCT[:, j] = data + self.lnkappa[j]
         else:  # no need to calculate in full
             for j in range(self.nclasses):
                 data = None
@@ -491,10 +495,13 @@ class IBCC(object):
                         data_l = self.Ctest[l] * self.lnPi[j, l, :][np.newaxis,:]
                     else:
                         data_l = self.Ctest[l].multiply(self.lnPi[j, l, :][np.newaxis,:])
+
+                    data_l = np.array(data_l.sum(axis=1)).reshape(-1)
+
                     data = data_l if data is None else data+data_l
 
                 if self.testidxs is not None:
-                    self.lnpCT[self.testidxs, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
+                    self.lnpCT[self.testidxs, j] = data + self.lnkappa[j]
                 else:
                     self.lnpCT[:, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
         

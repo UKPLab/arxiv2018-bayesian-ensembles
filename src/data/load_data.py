@@ -589,6 +589,7 @@ def load_ner_data(regen_data_files):
     annos = pd.concat((annos, annos_v), axis=0)
     annos = annos.fillna(-1)
     annos = annos.values
+    print('loaded annotations for %i tokens' % annos.shape[0])
 
     print('loading text data for task1 val...')
     text_v = np.genfromtxt(savepath + '/task1_test_text.csv')
@@ -601,6 +602,7 @@ def load_ner_data(regen_data_files):
     print('not loading ground truth for task1 val, as we have done all hyperparameter tuning before...')
     gt_v = np.zeros(annos_v.shape[0]) - 1
     gt = np.concatenate((gt, gt_v), axis=0)
+    print('loaded ground truth for %i tokens' % gt.shape[0])
 
     print('loading text data for task 2 test')
     text_task2 = np.genfromtxt(savepath + '/task2_test_text.csv')
