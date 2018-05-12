@@ -490,6 +490,8 @@ class Experiment(object):
                 features = []
                 ufeats = []
 
+            features = features.astype(int)
+
             sentences_inst = []
             crowd_labels = []
 
@@ -526,6 +528,15 @@ class Experiment(object):
             sentences_inst = data[0]
             crowd_labels = data[1]
             nfeats = data[2]
+
+        if isinstance(sentences_inst[0][0].features[0], float):
+            # the features need to be ints not floats!
+            for s, sen in enumerate(sentences_inst):
+                for t, tok in enumerate(sen):
+                    feat_vec = []
+                    for f in range(len(tok.features)):
+                        feat_vec.append(int(sentences_inst[s][t] .features[f]))
+                    sentences_inst[s][t] = instance(feat_vec, sentences_inst[s][t].label)
 
         return sentences_inst, crowd_labels, nfeats
 

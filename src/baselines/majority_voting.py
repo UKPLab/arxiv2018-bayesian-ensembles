@@ -33,61 +33,61 @@ class MajorityVoting(object):
         self.accuracies = np.ones(self.num_annotators)
         self.probabilities = np.zeros((self.num_words, self.num_labels))
         
-    def vote(self, weighted=False, threshold=0.5): 
-        
-        self.majority = -np.ones((self.num_words, 1))  
-        votes = np.zeros((self.num_words, self.num_labels))     
-        
-        # iterate through words
-        for i in range(self.num_words):
-        
-            # count all votes
-            for j in range(self.num_annotators):
-                if int(self.annotations[i,j]) >= 0:
-                    votes[i, int(self.annotations[i,j])] += self.accuracies[j]
-        
-            # determine all labels with most votes
-            winners = [(j,votes[i,j]) for j in range(self.num_labels) if votes[i,j] == votes[i,:].max()]
-        
-            # choose label
-            if self.num_labels == 3:
-                if len(winners)==1:
-                    if winners[0][1] >= threshold:
-                        self.majority[i] = winners[0][0]
-                    else:
-                        self.majority[i] = 1
+    def vote(self, weighted=False, threshold=0.5, simple=True):
+        '''
+        If simple is True, we ignore the structure of the labels and just take the most popular
+        :param weighted:
+        :param threshold:
+        :param simple:
+        :return:
+        '''
+        votes = np.zeros((self.num_words, self.num_labels))
+
+        for l in range(self.num_labels):
+            votes[:, l] = np.sum((self.annotations==l).astype(int), axis=1)
+
+        if simple:
+            self.majority = np.argmax(votes, axis=1)
+
+        else:
+            self.majority = -np.ones((self.num_words, 1))
+
+            I_labels = np.arange((self.num_labels - 1)/2) * 2 + 1
+            I_labels[0] = 0
+            I_labels = I_labels.astype(int)
+
+            B_labels = np.arange((self.num_labels - 1)/2) * 2 + 2
+            B_labels = B_labels.astype(int)
+
+            # iterate through words
+            for i in range(self.num_words):
+
+                # count all votes
+                # for j in range(self.num_annotators):
+                #     if int(self.annotations[i,j]) >= 0:
+                #         votes[i, int(self.annotations[i,j])] += self.accuracies[j]
+                #
+                # # determine all labels with most votes
+                threshold_i = threshold * np.sum(votes[i, :])
+
+                # choose label
+                if votes[i, 1] > threshold_i:
+                    self.majority[i] = 1 # decide if O or not
                 else:
-                    if (not (1 in list(zip(*winners))[0])) and (winners[0][1] >= threshold):
-                        self.majority[i] = 2
-                    else:
-                        self.majority[i] = 1
-                        
-            if self.num_labels == 7:
-                # decide if 'O'
-                if votes[i,1] >= np.sum(votes[i,[0,2,3,4,5,6]]):
-                    self.majority[i] = 1
-                else:
-                    # decide between 'I' or 'B'
-                    if np.sum(votes[i,[0,3,5]]) > np.sum(votes[i,[2,4,6]]):
-                        # decide between classes
-                        class_votes = np.array([np.sum(votes[i,[0,2]]),np.sum(votes[i,[3,4]]),np.sum(votes[i,[5,6]])])
-                        if np.all(class_votes[0] >= class_votes):
-                            self.majority[i] = 0
-                        elif np.all(class_votes[1] >= class_votes):
-                            self.majority[i] = 3
-                        else:
-                            self.majority[i] = 5
-                    else:
-                        # decide between classes
-                        class_votes = np.array([np.sum(votes[i,[0,2]]),np.sum(votes[i,[3,4]]),np.sum(votes[i,[5,6]])])
-                        if np.all(class_votes[0] >= class_votes):
-                            self.majority[i] = 2
-                        elif np.all(class_votes[1] >= class_votes):
-                            self.majority[i] = 4
-                        else:
-                            self.majority[i] = 6
-                
-        
+                    # choose between I or B. When tied, I is selected first.
+                    I_or_B = np.argmax([np.sum(votes[i, I_labels]), np.sum(votes[i, B_labels])])
+
+                    if I_or_B == 0: # I
+                        # choose the class
+                        vote_by_class = votes[I_labels, 0] + votes[B_labels, 0]
+                        chosen_class = np.argmax(vote_by_class)
+                        self.majority[i] = I_labels[chosen_class]
+                    else: # B
+                        # choose the class
+                        vote_by_class = votes[I_labels, 0] + votes[B_labels, 0]
+                        chosen_class = np.argmax(vote_by_class)
+                        self.majority[i] = B_labels[chosen_class]
+
         if np.all(np.sum(votes, axis=1)[:,None]) != 0:
             self.probabilities = votes/np.sum(votes, axis=1)[:,None].astype(float)  
 

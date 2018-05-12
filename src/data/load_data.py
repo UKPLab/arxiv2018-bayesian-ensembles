@@ -228,8 +228,6 @@ def _load_bio_folder(anno_path_root, folder_name):
 
                 if doc_data is None:
                     doc_data = pd.DataFrame(doc_data_w, columns=[workerid])
-                else:
-                    doc_data[workerid] = doc_data_w
             else:
                 doc_data_w = doc_data[workerid]
 
@@ -239,6 +237,8 @@ def _load_bio_folder(anno_path_root, folder_name):
 
                 doc_data_w[start] = 2
                 doc_data_w[start + 1:fin] = 0
+
+            doc_data[workerid] = doc_data_w
 
         if os.path.exists(gt_fn):
 
@@ -268,7 +268,7 @@ def _load_bio_folder(anno_path_root, folder_name):
         if all_data is None:
             all_data = doc_data
         else:
-            all_data = pd.concat([all_data, doc_data])
+            all_data = pd.concat([all_data, doc_data], axis=0)
 
         # print('breaking for fast debugging')
         # break
@@ -352,10 +352,13 @@ def load_biomedical_data(regen_data_files):
 
     print('Creating dev/test split...')
     # since there is no separate validation set, we split the test set
-    ndocs = len(gt)
-    testidxs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+    ndocs = np.sum(doc_start)
+    testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
 
-    devidxs = np.ones(ndocs, dtype=bool)
+    docidxs = np.cumsum(doc_start) # gets us the doc ids
+    testidxs = np.in1d(docidxs, testdocs)
+
+    devidxs = np.ones(len(gt), dtype=bool)
     devidxs[testidxs] = False
 
     gt_test = np.copy(gt)
