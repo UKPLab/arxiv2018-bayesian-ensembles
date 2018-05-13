@@ -9,10 +9,18 @@ import data.load_data as load_data
 output_dir = '../../data/bayesian_annotator_combination/output/ner/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, doc_start_val, text_val = \
-    load_data.load_ner_data(True)
+    load_data.load_ner_data(False)
+
+# debug with subset -------
+s = 1000
+gt = gt[:s]
+annos = annos[:s]
+doc_start = doc_start[:s]
+text = text[:s]
+# -------------------------
 
 exp = Experiment(None, 9, annos.shape[1], None)
-exp.methods = ['majority', 'best', 'worst', 'ibcc', 'HMM_crowd_then_LSTM', 'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
+exp.methods = ['bac_mace_then_LSTM', 'bac_acc', 'bac_ibcc', 'bac_seq', 'HMM_crowd_then_LSTM', 'majority', 'best', 'worst', 'ibcc']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
 
 exp.save_results = True
 exp.opt_hyper = False#True

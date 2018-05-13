@@ -61,35 +61,41 @@ class BAC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def _set_transition_constraints_seqalpha(self):
+
+        if self.tagging_scheme == 'IOB':
+            restricted_labels = self.beginning_labels
+        elif self.tagg_scheme == 'IOB2':
+            restricted_labels = self.inside_labels
+
         # set priors for invalid transitions (to low values)
-        for i, inside_label in enumerate(self.inside_labels):
+        for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             for outside_label in self.outside_labels:
-                disallowed_count = self.alpha0[:, inside_label, outside_label, :]
+                disallowed_count = self.alpha0[:, restricted_label, outside_label, :]
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
                 self.alpha0[:, self.beginning_labels[i], outside_label, :] += disallowed_count
 
-                disallowed_count = self.alpha0_data[:, inside_label, outside_label, :]
+                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :]
                 self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
             # set the disallowed transition to as close to zero as possible
-            self.alpha0[:, inside_label, self.outside_labels, :] = np.nextafter(0, 1)
-            self.alpha0_data[:, inside_label, self.outside_labels, :] = np.nextafter(0, 1)
-            self.nu0[self.outside_labels, inside_label] = np.nextafter(0, 1)
+            self.alpha0[:, restricted_label, self.outside_labels, :] = np.nextafter(0, 1)
+            self.alpha0_data[:, restricted_label, self.outside_labels, :] = np.nextafter(0, 1)
+            self.nu0[self.outside_labels, restricted_label] = np.nextafter(0, 1)
 
-            for other_inside_label in self.inside_labels:
-                if other_inside_label == inside_label:
+            for other_restricted_label in restricted_labels:
+                if other_restricted_label == restricted_label:
                     continue
 
-                disallowed_count = self.alpha0[:, inside_label, other_inside_label, :]
+                disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :]
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, other_inside_label, other_inside_label, :] += disallowed_count
+                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
 
-                disallowed_count = self.alpha0_data[:, inside_label, other_inside_label, :]
-                self.alpha0_data[:, other_inside_label, other_inside_label, :] += disallowed_count
+                disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :]
+                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count
                 # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, inside_label, other_inside_label, :] = np.nextafter(0, 1)
-                self.alpha0_data[:, inside_label, other_inside_label, :] = np.nextafter(0, 1)
-                self.nu0[other_inside_label, inside_label] = np.nextafter(0, 1)
+                self.alpha0[:, restricted_label, other_restricted_label, :] = np.nextafter(0, 1)
+                self.alpha0_data[:, restricted_label, other_restricted_label, :] = np.nextafter(0, 1)
+                self.nu0[other_restricted_label, restricted_label] = np.nextafter(0, 1)
         # self.nu0[1, 1] += 1.0
 
         if self.exclusions is not None:
@@ -100,29 +106,44 @@ class BAC(object):
 
     def _set_transition_constraints_nuonly(self):
         # set priors for invalid transitions (to low values)
-        for i, inside_label in enumerate(self.inside_labels):
-            # pseudo-counts for the transitions that are not allowed from outside to inside
-            self.nu0[self.outside_labels, inside_label] = np.nextafter(0, 1)
+        if self.tagging_scheme == 'IOB2':
+            for i, inside_label in enumerate(self.inside_labels):
+                # pseudo-counts for the transitions that are not allowed from outside to inside
+                self.nu0[self.outside_labels, inside_label] = np.nextafter(0, 1)
 
-            for other_inside_label in self.inside_labels:
-                if other_inside_label == inside_label:
-                    continue
-                self.nu0[other_inside_label, inside_label] = np.nextafter(0, 1)
+                # can't switch types mid annotation
+                for other_inside_label in self.inside_labels:
+                    if other_inside_label == inside_label:
+                        continue
+                    self.nu0[other_inside_label, inside_label] = np.nextafter(0, 1)
+
+        elif self.tagging_scheme == 'IOB':
+            for i, begin_label in enumerate(self.beginning_labels):
+                # pseudo-counts for the transitions that are not allowed from outside to inside
+                self.nu0[self.outside_labels, begin_label] = np.nextafter(0, 1)
+
+                # if switching types, a B is not used
+                for other_b_label in self.beginning_labels:
+                    if other_b_label == begin_label:
+                        continue
+                    self.nu0[other_b_label, begin_label] = np.nextafter(0, 1)
 
         if self.exclusions is not None:
-            for label, excluded in dict(self.exclusions).items():
-                self.nu0[label, excluded] = np.nextafter(0, 1)
+                for label, excluded in dict(self.exclusions).items():
+                    self.nu0[label, excluded] = np.nextafter(0, 1)
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=-1,   exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
-                 data_model=None, alpha0_data=None):
+                 data_model=None, alpha0_data=None, tagging_scheme='IOB2'):
         '''
         Constructor
 
         beginning_labels should correspond in order to inside labels.
 
         '''
-        # initialise variables
+        self.tagging_scheme = tagging_scheme # may be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
+        # that follow another start with B).
+
         self.L = L
         self.nscores = L
         self.K = K

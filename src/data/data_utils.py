@@ -7,7 +7,9 @@ Created on Oct 23, 2016
 import numpy as np
 
 def postprocess(data, doc_start):
-    
+
+    # only works on IOB2 with no tag types
+
     for i in range(data.shape[0]-1):
         if doc_start[i] and data[i]==0:
             data[i] = 2

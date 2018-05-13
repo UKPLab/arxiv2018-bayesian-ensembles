@@ -10,7 +10,7 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 
-gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(True)
+gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 exp = Experiment(None, 3, annos.shape[1], None)
 exp.methods = ['majority', 'HMM_crowd_then_LSTM', 'best', 'worst', 'ibcc', 'bac_mace', 'bac_acc', 'bac_seq', 'bac_ibcc']#, 'majority']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',

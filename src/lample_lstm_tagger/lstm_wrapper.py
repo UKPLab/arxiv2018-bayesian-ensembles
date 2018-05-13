@@ -15,6 +15,8 @@ import numpy as np
 def data_to_lstm_format(nannotations, text, doc_start, labels):
     sentences_list = []
 
+    labels = labels.flatten()
+
     IOB_label = {1: 'O', 0: 'I-0', -1: 0}
     IOB_map = {'O': 1, 'I-0': 0}
     for val in np.unique(labels):
@@ -32,10 +34,10 @@ def data_to_lstm_format(nannotations, text, doc_start, labels):
 
         if doc_start[i]:
             sentence_list = []
-            sentence_list.append([text[i], IOB_label[label]])
+            sentence_list.append([text[i][0], IOB_label[label]])
             sentences_list.append(sentence_list)
         else:
-            sentence_list.append([text[i], IOB_label[label]])
+            sentence_list.append([text[i][0], IOB_label[label]])
 
     sentences_list = np.array(sentences_list)
 
@@ -56,7 +58,7 @@ def split_train_to_dev(gold_sentences):
     return train_sentences, dev_sentences
 
 
-def train_LSTM(train_sentences, dev_sentences, n_epochs=100):
+def train_LSTM(train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
 
     # parameters
     parameters = OrderedDict()
@@ -86,7 +88,7 @@ def train_LSTM(train_sentences, dev_sentences, n_epochs=100):
         os.makedirs(models_path)
 
     # Initialize model
-    model = Model(parameters=parameters, models_path=models_path)
+    model = Model(parameters=parameters, model_path=models_path + '/' + model_name)
     print("Model location: %s" % model.model_path)
 
     # Data parameters

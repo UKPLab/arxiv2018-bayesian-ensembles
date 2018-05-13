@@ -640,7 +640,10 @@ class HMM_crowd(HMM):
     def em(self, num=4):
         # run EM
         for it in range(num):
+            print('HMM-crowd running e-step %i of %i' % (it, num))
             self.e_step()
+
+            print('HMM-crowd running m-step %i of %i' % (it, num))
             self.m_step()
 
     def mls(self):

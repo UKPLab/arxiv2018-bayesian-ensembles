@@ -75,7 +75,8 @@ class Experiment(object):
     save_plots = False
     show_plots = False
     
-    postprocess = True
+    postprocess = False # previous papers did not use this so we leave out to make results comparable.
+    # Only simple IOB2 is implemented so far.
 
     opt_hyper = False
     
@@ -237,18 +238,16 @@ class Experiment(object):
             self.bac_alpha0 = self.alpha0_factor * np.ones((2))
             self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
 
-        if L == 7:
-            inside_labels = [0, 3, 5]
-            outside_labels = [-1, 1]
-            begin_labels = [2, 4, 6]
-        else:
-            inside_labels = [0]
-            outside_labels = [-1, 1]
-            begin_labels = [2]
+        num_types = (self.num_classes - 1) / 2
+        outside_labels = [-1, 1]
+        inside_labels = (np.arange(num_types) * 2 + 1).astype(int)
+        inside_labels[0] = 0
+        begin_labels = (np.arange(num_types) * 2 + 2).astype(int)
 
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
-                      exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model)
+                      exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
+                      tagging_scheme='IOB')
         # alg.max_iter = 1
         alg.verbose = True
         if self.opt_hyper:
@@ -369,8 +368,14 @@ class Experiment(object):
                 hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
                                vb=[0.1, 0.1], ne=1)
                 hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
-                hc.em(20)
+
+                print('Running HMM-crowd inference...')
+                hc.em(1)#20)
+
+                print('Computing most likely sequence...')
                 hc.mls()
+
+                print('HMM-crowd complete.')
                 #agg = np.array(hc.res).flatten()
                 agg = np.concatenate(hc.res)[:,None]
                 probs = []
@@ -402,7 +407,7 @@ class Experiment(object):
                     dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
                                                                         doc_start_val, ground_truth_val)
 
-                lstm, f_eval, _ = lstm_wrapper.train_LSTM(train_sentences, dev_sentences)
+                lstm, f_eval, _ = lstm_wrapper.train_LSTM(train_sentences, dev_sentences, model_name=outputdir + '_lstm')
 
                 # now make predictions for all sentences
                 agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map, self.num_classes)
@@ -467,10 +472,6 @@ class Experiment(object):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
-        annotations = annotations[:10000]
-        text = text[:10000]
-        doc_start = doc_start[:10000]
-
         if not os.path.exists(filename):
             if text is not None:
 
@@ -478,7 +479,8 @@ class Experiment(object):
                 features = np.zeros(len(text))
                 for t, tok in enumerate(text):
 
-                    print('converting data to hmm format: token %i / %i' % (t, len(text)))
+                    if np.mod(t, 10000) == 0:
+                        print('converting data to hmm format: token %i / %i' % (t, len(text)))
 
                     if tok not in ufeats:
                         features[t] = len(ufeats)
@@ -520,6 +522,7 @@ class Experiment(object):
 
             nfeats = len(ufeats)
 
+            print('writing HMM pickle file...')
             with open(filename, 'wb') as fh:
                 pickle.dump([sentences_inst, crowd_labels, nfeats], fh)
         else:
@@ -590,8 +593,8 @@ class Experiment(object):
             #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
         print(conf)
 
-        N = len(agg)
-        if N < 50000:
+        Ndocs = np.sum(doc_start)
+        if Ndocs < 200:
             # use bootstrap resampling with small datasets
             nbootstraps = 100
             nmetrics = 6
@@ -599,11 +602,26 @@ class Experiment(object):
 
             for i in range(nbootstraps):
 
-                sampleidxs = np.random.choice(N, N, replace=True)
+                not_sampled = True
+                nsample_attempts = 0
+                while not_sampled:
+                    sampleidxs = np.random.choice(Ndocs, Ndocs, replace=True)
+                    sampleidxs = np.in1d(np.cumsum(doc_start), sampleidxs)
 
-                resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],
+                    if len(np.unique(gt[sampleidxs])) >= 2:
+                        not_sampled = False
+                        # if we have at least two class labels in the sample ground truth, we can use this sample
+
+                    if nsample_attempts > Ndocs and not_sampled:
+                        not_sampled = False
+
+                if nsample_attempts <= Ndocs:
+                    resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],
                                                                        gt[sampleidxs],
                                                                        probs[sampleidxs])
+                else: # can't find enough valid samples for the bootstrap, let's just use what we got so far.
+                    resample_results = resample_results[:, :i]
+                    nbootstraps = i
 
             result[:6, 0] = np.mean(resample_results, axis=1)
             std_result = np.std(resample_results, axis=1)

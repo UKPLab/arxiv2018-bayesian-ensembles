@@ -314,6 +314,7 @@ def load_biomedical_data(regen_data_files):
         all_workerids = None
 
         for folder in folders_to_load:
+            print('Loading folder %s' % folder)
             folder_data, workerids = _load_bio_folder(anno_path_root, folder)
 
             if all_data is None:
@@ -388,7 +389,11 @@ def _map_ner_str_to_labels(arr):
         arr_ints = arr.astype(int)
     except:
         print("Could not map all annotations to integers. The annotations we found were:")
-        print(np.unique(arr))
+        uannos = []
+        for anno in arr:
+            if anno not in uannos:
+                uannos.append(anno)
+        print(uannos)
 
     return arr_ints
 
@@ -582,7 +587,7 @@ def load_ner_data(regen_data_files):
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
-                    float_format='%.f', na_rep=0)
+                    float_format='%.f', na_rep=-1)
 
         # save the text in same order
         data.to_csv(savepath + '/task1_test_text.csv', columns=['text'], header=False, index=False)
@@ -602,7 +607,9 @@ def load_ner_data(regen_data_files):
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_val_path but blank out the task_1 labels
         # (for tuning the LSTM for task 2)
 
-        eng_val = pd.read_csv(task2_val_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'], skip_blank_lines=True)
+        import csv
+        eng_val = pd.read_csv(task2_val_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'],
+                              skip_blank_lines=True, quoting=csv.QUOTE_NONE)
 
         doc_starts = np.zeros(eng_val.shape[0])
         docstart_token = eng_val['text'][0]
@@ -613,6 +620,7 @@ def load_ner_data(regen_data_files):
         eng_val['tok_idx'] = eng_val.index
         eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
 
+        eng_val['gold'] = _map_ner_str_to_labels(eng_val['gold'])
         eng_val.to_csv(savepath + '/task2_val_gt.csv', columns=['gold'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['text'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
@@ -620,20 +628,22 @@ def load_ner_data(regen_data_files):
 
         # 6. Create a file containing only the words for the task 2 test set, i.e. like annos.csv with no annotations.
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_test_path but blank out the task_1 labels/
-        eng_val = pd.read_csv(task2_test_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'], skip_blank_lines=True)
+        eng_test = pd.read_csv(task2_test_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'],
+                               skip_blank_lines=True, quoting=csv.QUOTE_NONE)
 
-        doc_starts = np.zeros(eng_val.shape[0])
-        docstart_token = eng_val['text'][0]
+        doc_starts = np.zeros(eng_test.shape[0])
+        docstart_token = eng_test['text'][0]
 
-        doc_starts[1:] = (eng_val['text'] == docstart_token)[:-1]
-        eng_val['doc_start'] = doc_starts
+        doc_starts[1:] = (eng_test['text'] == docstart_token)[:-1]
+        eng_test['doc_start'] = doc_starts
 
-        eng_val['tok_idx'] = eng_val.index
-        eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
+        eng_test['tok_idx'] = eng_test.index
+        eng_test = eng_test[eng_test['text'] != docstart_token] # remove all the docstart labels
 
-        eng_val.to_csv(savepath + '/task2_test_gt.csv', columns=['gold'], header=False, index=False)
-        eng_val.to_csv(savepath + '/task2_test_text.csv', columns=['text'], header=False, index=False)
-        eng_val.to_csv(savepath + '/task2_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
+        eng_test['gold'] = _map_ner_str_to_labels(eng_test['gold'])
+        eng_test.to_csv(savepath + '/task2_test_gt.csv', columns=['gold'], header=False, index=False)
+        eng_test.to_csv(savepath + '/task2_test_text.csv', columns=['text'], header=False, index=False)
+        eng_test.to_csv(savepath + '/task2_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
 
     # 7. Reload the data for the current run...
