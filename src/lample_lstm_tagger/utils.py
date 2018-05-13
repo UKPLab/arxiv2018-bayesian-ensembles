@@ -267,6 +267,12 @@ def evaluate(parameters, f_eval, raw_sentences, parsed_sentences,
 
     # Write predictions to disk and run CoNLL script externally
     eval_id = np.random.randint(1000000, 2000000)
+
+    if not os.path.exists(eval_path):
+        os.mkdir(eval_path)
+    if not os.path.exists(eval_temp):
+        os.mkdir(eval_temp)
+
     output_path = os.path.join(eval_temp, "eval.%i.output" % eval_id)
     scores_path = os.path.join(eval_temp, "eval.%i.scores" % eval_id)
     with codecs.open(output_path, 'w', 'utf8') as f:

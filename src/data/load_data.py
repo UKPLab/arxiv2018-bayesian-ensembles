@@ -336,7 +336,8 @@ def load_biomedical_data(regen_data_files):
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
     print('loading text data...')
-    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None).values
+    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None)
+    text = text.fillna(' ').values
 
     print('loading doc starts...')
     doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None).values #np.genfromtxt(savepath + '/doc_start.csv')
@@ -680,7 +681,8 @@ def load_ner_data(regen_data_files):
     print('loaded ground truth for %i tokens' % gt.shape[0])
 
     print('loading text data for task 2 test')
-    text_task2 = pd.read_csv(savepath + '/task2_test_text.csv', skip_blank_lines=False, header=None).values
+    text_task2 = pd.read_csv(savepath + '/task2_test_text.csv', skip_blank_lines=False, header=None)
+    text_task2 = text_task2.fillna(' ').values
 
     print('loading doc_starts for task 2 test')
     doc_start_task2 = pd.read_csv(savepath + '/task2_test_doc_start.csv', skip_blank_lines=False, header=None).values
@@ -690,7 +692,8 @@ def load_ner_data(regen_data_files):
 
     # validation sets for methods that predict on features only
     print('loading text data for task 2 val')
-    text_val = pd.read_csv(savepath + '/task2_val_text.csv', skip_blank_lines=False, header=None).values
+    text_val = pd.read_csv(savepath + '/task2_val_text.csv', skip_blank_lines=False, header=None)
+    text_val = text_val.fillna(' ').values
 
     print('loading doc_starts for task 2 val')
     doc_start_val = pd.read_csv(savepath + '/task2_val_doc_start.csv', skip_blank_lines=False, header=None).values

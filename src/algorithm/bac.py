@@ -165,7 +165,7 @@ class BAC(object):
         if data_model is None:
             self.data_model = ignore_features()
         else:
-            self.data_model = data_model
+            self.data_model = data_model()
 
         # choose type of worker model
         if worker_model == 'acc':
@@ -230,7 +230,7 @@ class BAC(object):
         Compute the variational lower bound on the log marginal likelihood. 
         '''
 
-        lnp_features_and_Cdata = self.data_model.log_likelihood(self.C_data)
+        lnp_features_and_Cdata = self.data_model.log_likelihood(self.C_data, self.q_t)
         lnq_Cdata = self.C_data * np.log(self.C_data)
         lnq_Cdata[self.C_data == 0] = 0
         lnq_Cdata = np.sum(lnq_Cdata)
@@ -347,7 +347,7 @@ class BAC(object):
         self._initA()
         self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
 
-        self.alpha_data, self.lnPi_data = self.data_model.init(self.alpha0_data)
+        self.alpha_data, self.lnPi_data = self.data_model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L)
 
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
@@ -397,7 +397,7 @@ class BAC(object):
 
 
                 # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                self.C_data = self.data_model.predict(self.q_t, features)
+                self.C_data = self.data_model.predict(self.q_t)
 
                 self.alpha_data = self.worker_model._post_alpha_data(self.q_t, self.C_data, self.alpha0_data,
                                     self.alpha_data, doc_start, self.nscores, self.before_doc_idx)
@@ -1272,30 +1272,30 @@ def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start
 
 class ignore_features:
 
-    def init(self, alpha0_data):
+    def init(self, alpha0_data, N, text, doc_start, nclasses):
         return alpha0_data, alpha0_data
 
-    def predict(self, Et, features):
+    def predict(self, Et):
         '''
         '''
         return np.ones(Et.shape) / np.float(Et.shape[1])
 
-    def log_likelihood(self, C_data):
+    def log_likelihood(self, C_data, E_t):
         '''
         '''
-        return np.sum(C_data * np.log(C_data))
+        lnp_Cdata = C_data * np.log(E_t)
+        lnp_Cdata[E_t == 0] = 0
+        return np.sum(lnp_Cdata)
 
 class LSTM:
 
-    # TODO: fix the parameters passed into the functions below
-
-    def init(self, alpha0_data, N, text, doc_start):
+    def init(self, alpha0_data, N, text, doc_start, nclasses):
 
         self.N = N
 
         labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
 
-        self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels)
+        self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels, nclasses)
 
         self.Ndocs = self.sentences.shape[0]
 
@@ -1315,7 +1315,7 @@ class LSTM:
         # select a random subset of data to use for validation
 
         devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)))
-        trainidxs = np.ones(self.N, dtype=bool)
+        trainidxs = np.ones(self.Ndocs, dtype=bool)
         trainidxs[devidxs] = 0
         train_sentences = self.sentences[trainidxs]
 
@@ -1325,19 +1325,22 @@ class LSTM:
             dev_sentences = self.sentences[devidxs]
 
         if self.train_data_objs is None:
-            self.lstm, f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(train_sentences, dev_sentences, n_epochs=1)
+            self.lstm, f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.sentences, train_sentences, dev_sentences, n_epochs=1)
         else:
-            lstm_wrapper.run_epoch(0, 0, 2, self.train_data_objs[0], self.train_data_objs[1],
+            freq_eval = np.inf # len(self.train_data_objs[0]) # don't think we really ever need to do this!
+            lstm_wrapper.run_epoch(0, 0, freq_eval, self.train_data_objs[0], self.train_data_objs[1],
                                    self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4], 0, 1,
                                    self.train_data_objs[5], self.train_data_objs[6],
-                                   self.train_data_objs[7], self.train_data_objs[8], self.lstm)
+                                   self.train_data_objs[7], self.train_data_objs[8], self.lstm, -np.inf)
 
         # now make predictions for all sentences
-        _, probs = lstm_wrapper.predict_LSTM(lstm, self.sentences, f_eval, self.IOB_map, Et.shape[1])
+        _, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, f_eval, self.IOB_map, Et.shape[1])
 
         return probs
 
-    def log_likelihood(self, C_data):
+    def log_likelihood(self, C_data, E_t):
         '''
         '''
-        return np.sum(C_data * np.log(C_data))
+        lnp_Cdata = C_data * np.log(E_t)
+        lnp_Cdata[E_t == 0] = 0
+        return np.sum(lnp_Cdata)

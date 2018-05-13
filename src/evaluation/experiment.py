@@ -100,7 +100,6 @@ class Experiment(object):
 
         self.ibcc_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) + self.alpha0_diags * np.eye(nclasses)
 
-        # TODO check whether constraints on transitions are correctly encoded
         self.bac_nu0 = np.ones((nclasses + 1, nclasses)) * self.nu0_factor
         self.ibcc_nu0 = np.ones(nclasses) * self.nu0_factor
             
@@ -221,7 +220,7 @@ class Experiment(object):
 
         return agg, probs
 
-    def _run_bac(self, annotations, doc_start, text, method):
+    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False):
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
 
@@ -247,10 +246,11 @@ class Experiment(object):
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
-                      tagging_scheme='IOB')
+                      tagging_scheme='IOB',
+                      data_model=bac.LSTM if use_LSTM else None)
 
-        print('Debugging hack!!!!! BAC Only one iteration')
-        alg.max_iter = 1
+        # print('Debugging hack!!!!! BAC Only one iteration')
+        # alg.max_iter = 1
         alg.verbose = True
         if self.opt_hyper:
             probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000)
@@ -261,10 +261,94 @@ class Experiment(object):
 
         return agg, probs, model
 
+    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir):
+        sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
+
+        data = crowd_data(sentences, crowd_labels)
+        hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
+                       vb=[0.1, 0.1], ne=1)
+        hc.init(init_type='dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
+
+        print('Running HMM-crowd inference...')
+        hc.em(1)  # 20)
+
+        print('Computing most likely sequence...')
+        hc.mls()
+
+        print('HMM-crowd complete.')
+        # agg = np.array(hc.res).flatten()
+        agg = np.concatenate(hc.res)[:, None]
+        probs = []
+        for sentence_post_arr in hc.sen_posterior:
+            for tok_post_arr in sentence_post_arr:
+                probs.append(tok_post_arr)
+        probs = np.array(probs)
+
+        return agg, probs
+
+    def _get_nocrowd_test_data(self, annotations, doc_start, ground_truth, text):
+
+        crowd_labels_present = np.any(annotations != -1, axis=1)
+        N_withcrowd = np.sum(crowd_labels_present)
+
+        no_crowd_labels = np.invert(crowd_labels_present)
+        N_nocrowd = np.sum(no_crowd_labels)
+
+        # check whether the additional test set needs to be split from the main dataset
+        if N_nocrowd == 0:
+            test_no_crowd = False
+
+            doc_start_nocrowd = None
+            ground_truth_nocrowd = None
+            text_nocrowd = None
+        else:
+            test_no_crowd = True
+
+            annotations = annotations[crowd_labels_present, :]
+            ground_truth_nocrowd = ground_truth[no_crowd_labels]
+            ground_truth = ground_truth[crowd_labels_present]
+
+            text_nocrowd = text[no_crowd_labels]
+            text = text[crowd_labels_present]
+
+            doc_start_nocrowd = doc_start[no_crowd_labels]
+            doc_start = doc_start[crowd_labels_present]
+
+        return doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, \
+               doc_start, ground_truth, text, N_withcrowd
+
+    def _uncertainty_sampling(self, annotations_all, doc_start_all, text_all, batch_size, probs, selected_docs, Ndocs):
+
+        unseen_docs = np.ones(Ndocs, dtype=bool)
+        unseen_docs[selected_docs] = False
+        unseen_docs = np.argwhere(unseen_docs).flatten()
+
+        # random selection
+        #new_selection = np.random.choice(unseen_docs, batch_size, replace=False)
+
+        probs = probs[unseen_docs, :]
+        negentropy = np.log(probs) * probs
+        negentropy[probs == 0] = 0
+        negentropy = np.sum(negentropy, axis=1)
+
+        most_uncertain = np.argsort(negentropy)[:batch_size]
+        new_selection = unseen_docs[most_uncertain]
+
+        selected_docs = np.concatenate((selected_docs, new_selection))
+
+        selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
+
+        annotations = annotations_all[selected_toks, :]
+        doc_start = doc_start_all[selected_toks]
+        text = text_all[selected_toks]
+
+        return annotations, doc_start, text, selected_docs
+
     def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None, anno_path=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
-                    return_model=False):
+                    return_model=False,
+                    active_learning=False, AL_batch_fraction=0.1):
         '''
 
         :param annotations:
@@ -294,30 +378,11 @@ class Experiment(object):
         # a second test set with no crowd labels was supplied directly
         if ground_truth_nocrowd is not None and text_nocrowd is not None and doc_start_nocrowd:
             test_no_crowd = True
-
+            N_withcrowd = annotations.shape[0]
+            N_nocrowd = ground_truth_nocrowd.shape[0]
         else:
-            crowd_labels_present = np.any(annotations != -1, axis=1)
-            N_withcrowd = np.sum(crowd_labels_present)
-
-            no_crowd_labels = np.invert(crowd_labels_present)
-            N_nocrowd = np.sum(no_crowd_labels)
-
-            # check whether the additional test set needs to be split from the main dataset
-            if N_nocrowd == 0:
-                test_no_crowd = False
-            else:
-                test_no_crowd = True
-
-                annotations = annotations[crowd_labels_present, :]
-                ground_truth_nocrowd = ground_truth[no_crowd_labels]
-                ground_truth = ground_truth[crowd_labels_present]
-
-                text_nocrowd = text[no_crowd_labels]
-                text = text[crowd_labels_present]
-
-                doc_start_nocrowd = doc_start[no_crowd_labels]
-                doc_start = doc_start[crowd_labels_present]
-
+            doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, doc_start, \
+            ground_truth, text, N_withcrowd = self._get_nocrowd_test_data(annotations, doc_start, ground_truth, text)
 
         # for the additional test set with no crowd labels
         scores_nocrowd = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
@@ -331,137 +396,153 @@ class Experiment(object):
 
         model = None # pass out to other functions if required
 
+        Ndocs = np.sum(doc_start)
+        Nseen = 0
+
+        if active_learning:
+
+            batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
+
+            annotations_all = annotations
+            doc_start_all = doc_start
+            text_all = text
+
+            selected_docs = np.random.choice(Ndocs, batch_size, replace=False)
+            selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
+
+            annotations = annotations_all[selected_toks, :]
+            doc_start = doc_start_all[selected_toks]
+            text = text_all[selected_toks]
+
         for method_idx in range(len(self.methods)): 
             
             print('running method: %s' % self.methods[method_idx])
 
             method = self.methods[method_idx]
 
-            # Initialise the results because not all methods will fill these in
-            if test_no_crowd:
-                agg_nocrowd = np.zeros(N_nocrowd)
-                probs_nocrowd = np.ones((N_nocrowd, self.num_classes))
+            while Nseen < Ndocs:
+                # the active learning loop -- loop until no more labels
+                # Initialise the results because not all methods will fill these in
+                if test_no_crowd:
+                    agg_nocrowd = np.zeros(N_nocrowd)
+                    probs_nocrowd = np.ones((N_nocrowd, self.num_classes))
 
-            if method == 'best':
-                agg, probs = self._run_best_worker(annotations, ground_truth, doc_start)
+                if  method.split('_')[0] == 'best':
+                    agg, probs = self._run_best_worker(annotations, ground_truth, doc_start)
 
-            elif method == 'worst':
-                agg, probs = self._run_worst_worker(annotations, ground_truth, doc_start)
+                elif  method.split('_')[0] == 'worst':
+                    agg, probs = self._run_worst_worker(annotations, ground_truth, doc_start)
 
-            elif method == 'majority':
-                agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
-            
-            elif method == 'clustering':
-                agg, probs = self._run_clustering(annotations, doc_start, ground_truth)
-                
-            elif method == 'mace':
-                agg, probs = self._run_mace(anno_path, ground_truth)
-                
-            elif method == 'ibcc':
-                agg, probs = self._run_ibcc(annotations)
-                
-            elif method.split('_')[0] == 'bac':
-                agg, probs, model = self._run_bac(annotations, doc_start, text, method)
-                
-            elif 'HMM_crowd' in method:
-                sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
-                
-                data = crowd_data(sentences, crowd_labels)
-                hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
-                               vb=[0.1, 0.1], ne=1)
-                hc.init(init_type = 'dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
+                elif  method.split('_')[0] == 'majority':
+                    agg, probs = majority_voting.MajorityVoting(annotations, self.num_classes).vote()
 
-                print('Running HMM-crowd inference...')
-                hc.em(1)#20)
+                elif  method.split('_')[0] == 'clustering':
+                    agg, probs = self._run_clustering(annotations, doc_start, ground_truth)
 
-                print('Computing most likely sequence...')
-                hc.mls()
+                elif  method.split('_')[0] == 'mace':
+                    agg, probs = self._run_mace(anno_path, ground_truth)
 
-                print('HMM-crowd complete.')
-                #agg = np.array(hc.res).flatten()
-                agg = np.concatenate(hc.res)[:,None]
-                probs = []
-                for sentence_post_arr in hc.sen_posterior:
-                    for tok_post_arr in sentence_post_arr:
-                        probs.append(tok_post_arr)
-                probs = np.array(probs)
+                elif  method.split('_')[0] == 'ibcc':
+                    agg, probs = self._run_ibcc(annotations)
 
-            if '_then_LSTM' in method:
-                '''
-                Reasons why we need the LSTM integration:
-                - Could use a simpler model like hmm_crowd for task 1
-                - Performance may be better with LSTM
-                - Active learning possible with simpler model, but how novel?
-                - Integrating LSTM shows a generalisation -- step forward over models that fix the data
-                representation
-                - Can do task 2 better than a simple model like Hmm_crowd
-                - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
-                '''
-                labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
-                                                                               agg.flatten())
+                elif method.split('_')[0] == 'bac':
+                    if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
+                        agg, probs, model = self._run_bac(annotations, doc_start, text, method, use_LSTM=True)
+                    else:
+                        agg, probs, model = self._run_bac(annotations, doc_start, text, method)
 
-                if ground_truth_val is None or doc_start_val is None or text_val is None:
-                    # If validation set is unavailable, select a random subset of combined data to use for validation
-                    # Simulates a scenario where all we have available are crowd labels.
-                    train_sentences, dev_sentences = lstm_wrapper.split_train_to_dev(labelled_sentences)
-                else:
-                    train_sentences = labelled_sentences
-                    dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
-                                                                        doc_start_val, ground_truth_val)
+                elif 'HMM_crowd' in method:
+                    agg, probs = self._run_hmmcrowd(annotations, text, doc_start, outputdir)
 
-                lstm, f_eval, _ = lstm_wrapper.train_LSTM(train_sentences, dev_sentences, model_name=outputdir + '_lstm')
+                if '_then_LSTM' in method:
+                    '''
+                    Reasons why we need the LSTM integration:
+                    - Could use a simpler model like hmm_crowd for task 1
+                    - Performance may be better with LSTM
+                    - Active learning possible with simpler model, but how novel?
+                    - Integrating LSTM shows a generalisation -- step forward over models that fix the data
+                    representation
+                    - Can do task 2 better than a simple model like Hmm_crowd
+                    - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
+                    '''
+                    labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
+                                                                                   agg.flatten())
 
-                # now make predictions for all sentences
-                agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map, self.num_classes)
+                    if ground_truth_val is None or doc_start_val is None or text_val is None:
+                        # If validation set is unavailable, select a random subset of combined data to use for validation
+                        # Simulates a scenario where all we have available are crowd labels.
+                        train_sentences, dev_sentences = lstm_wrapper.split_train_to_dev(labelled_sentences)
+                        all_sentences = labelled_sentences
+                    else:
+                        train_sentences = labelled_sentences
+                        dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
+                                                                            doc_start_val, ground_truth_val)
+                        all_sentences = np.concatenate((train_sentences, dev_sentences))
+
+                    lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences, model_name=outputdir + '_lstm')
+
+                    # now make predictions for all sentences
+                    agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map, self.num_classes)
+
+                    if test_no_crowd:
+                        labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
+                                                                               doc_start_nocrowd, np.zeros(N_nocrowd)-1)
+
+                        agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map,
+                                                                             self.num_classes)
+
+
+                if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
+                    scores_allmethods[:,method_idx][:,None], \
+                    score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
+                                                                                    doc_start)
+                    preds_allmethods[:, method_idx] = agg.flatten()
+                    probs_allmethods[:,:,method_idx] = probs
 
                 if test_no_crowd:
-                    labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
-                                                                           doc_start_nocrowd, np.zeros(N_nocrowd)-1)
+                    scores_nocrowd[:,method_idx][:,None], \
+                    score_std_nocrowd[:, method_idx] = self.calculate_scores(agg_nocrowd,
+                                                        ground_truth_nocrowd.flatten(), probs_nocrowd, doc_start_nocrowd)
+                    preds_allmethods_nocrowd[:, method_idx] = agg_nocrowd.flatten()
+                    probs_allmethods_nocrowd[:,:,method_idx] = probs_nocrowd
 
-                    agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map,
-                                                                         self.num_classes)
+                print('...done')
 
+                # Save the results so far after each method has completed.
 
-            if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
-                scores_allmethods[:,method_idx][:,None], \
-                score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
-                                                                                doc_start)
-                preds_allmethods[:, method_idx] = agg.flatten()
-                probs_allmethods[:,:,method_idx] = probs
+                # change the timestamps to include AL loop numbers
+                timestamp = timestamp + ('-Nseen%i' % Nseen)
 
-            if test_no_crowd:
-                scores_nocrowd[:,method_idx][:,None], \
-                score_std_nocrowd[:, method_idx] = self.calculate_scores(agg_nocrowd,
-                                                    ground_truth_nocrowd.flatten(), probs_nocrowd, doc_start_nocrowd)
-                preds_allmethods_nocrowd[:, method_idx] = agg_nocrowd.flatten()
-                probs_allmethods_nocrowd[:,:,method_idx] = probs_nocrowd
+                if outputdir is not None:
+                    if not os.path.exists(outputdir):
+                        os.mkdir(outputdir)
 
-            print('...done')
+                    np.savetxt(outputdir + 'result_%s.csv' % timestamp, scores_allmethods, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+                    np.savetxt(outputdir + 'result_std_%s.csv' % timestamp, score_std_allmethods, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
 
-            # Save the results so far after each method has completed.
-            if outputdir is not None:
-                if not os.path.exists(outputdir):
-                    os.mkdir(outputdir)
+                    np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+                    with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fh:
+                        pickle.dump(probs_allmethods, fh)
 
-                np.savetxt(outputdir + 'result_%s.csv' % timestamp, scores_allmethods, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
-                np.savetxt(outputdir + 'result_std_%s.csv' % timestamp, score_std_allmethods, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
+                    np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+                    np.savetxt(outputdir + 'result_std_nocrowd_%s.csv' % timestamp, score_std_nocrowd, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
 
-                np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
-                with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fh:
-                    pickle.dump(probs_allmethods, fh)
+                    np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % timestamp, preds_allmethods_nocrowd, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+                    with open(outputdir + 'probs_nocrowd_%s.pkl' % timestamp, 'wb') as fh:
+                        pickle.dump(probs_allmethods_nocrowd, fh)
 
-                np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
-                np.savetxt(outputdir + 'result_std_nocrowd_%s.csv' % timestamp, score_std_nocrowd, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
+                # TODO select more annotations according to batch size for AL here.
+                Nseen = np.sum(doc_start) # update the number of documents processed so far
+                if active_learning:
+                    annotations, doc_start, text = self._uncertainty_sampling(annotations_all, doc_start_all,
+                                                                  text_all, batch_size, probs, selected_docs, Ndocs)
 
-                np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % timestamp, preds_allmethods_nocrowd, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
-                with open(outputdir + 'probs_nocrowd_%s.pkl' % timestamp, 'wb') as fh:
-                    pickle.dump(probs_allmethods_nocrowd, fh)
 
         if test_no_crowd:
             if return_model:
@@ -561,11 +642,20 @@ class Experiment(object):
         result[3] = skm.f1_score(gt, agg, average='macro')
 
         auc_score = 0
+        valid_class_count = 0
         for i in range(probs.shape[1]):
+
+            if not np.any(gt == i) or np.all(gt == i):
+                print('Could not evaluate AUC for class %i -- all data points have same value.' % i)
+                continue
+            else:
+                valid_class_count += 1
+
             auc_i = skm.roc_auc_score(gt == i, probs[:, i])
             # print 'AUC for class %i: %f' % (i, auc_i)
             auc_score += auc_i * np.sum(gt == i)
-        result[4] = auc_score / float(gt.shape[0])
+        result[4] = auc_score / float(valid_class_count)
+
         result[5] = skm.log_loss(gt, probs, eps=1e-100)
 
         return result

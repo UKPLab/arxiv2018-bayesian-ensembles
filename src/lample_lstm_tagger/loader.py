@@ -139,15 +139,25 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
     """
     def f(x): return x.lower() if lower else x
     data = []
-    for s in sentences:
+    for i, s in enumerate(sentences):
+
+        # print('sentences %i' % i)
         str_words = [w[0] for w in s]
         words = [word_to_id[f(w) if f(w) in word_to_id else '<UNK>']
                  for w in str_words]
+        # print('done words')
+
         # Skip characters that are not in the training set
         chars = [[char_to_id[c] for c in w if c in char_to_id]
                  for w in str_words]
+        # print('done chars')
+
         caps = [cap_feature(w) for w in str_words]
+        # print('done caps')
+
         tags = [tag_to_id[w[-1]] for w in s]
+        # print('done tags')
+
         data.append({
             'str_words': str_words,
             'words': words,

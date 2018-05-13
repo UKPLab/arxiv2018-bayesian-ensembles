@@ -12,14 +12,17 @@ from lample_lstm_tagger.model import Model
 import numpy as np
 
 
-def data_to_lstm_format(nannotations, text, doc_start, labels):
+def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
     sentences_list = []
 
     labels = labels.flatten()
 
     IOB_label = {1: 'O', 0: 'I-0', -1: 0}
     IOB_map = {'O': 1, 'I-0': 0}
-    for val in np.unique(labels):
+
+    label_values = np.unique(labels) if nclasses==0 else np.arange(nclasses, dtype=int)
+
+    for val in label_values:
         if val <= 1:
             continue
 
@@ -58,7 +61,7 @@ def split_train_to_dev(gold_sentences):
     return train_sentences, dev_sentences
 
 
-def train_LSTM(train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
+def train_LSTM(all_sentences, train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
 
     # parameters
     parameters = OrderedDict()
@@ -88,7 +91,7 @@ def train_LSTM(train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
         os.makedirs(models_path)
 
     # Initialize model
-    model = Model(parameters=parameters, model_path=models_path + '/' + model_name)
+    model = Model(parameters=parameters, models_path=models_path)# + '/' + model_name)
     print("Model location: %s" % model.model_path)
 
     # Data parameters
@@ -110,12 +113,12 @@ def train_LSTM(train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
     # )
 
     # Following LSTM-CROWD, we don't load any pre-trained word embeddings.
-    dico_words, word_to_id, id_to_word = word_mapping(train_sentences, lower)
+    dico_words, word_to_id, id_to_word = word_mapping(all_sentences, lower)
     dico_words_train = dico_words
 
     # Create a dictionary and a mapping for words / POS tags / tags
-    dico_chars, char_to_id, id_to_char = char_mapping(train_sentences)
-    dico_tags, tag_to_id, id_to_tag = tag_mapping(train_sentences)
+    dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
+    dico_tags, tag_to_id, id_to_tag = tag_mapping(all_sentences)
 
     # Index data
     train_data = prepare_dataset(
@@ -147,15 +150,15 @@ def train_LSTM(train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
                                           dico_tags]
 
     for epoch in range(n_epochs):
-        count, niter_no_imprv = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
+        count, niter_no_imprv, best_dev = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
                                           niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_data, id_to_tag,
-                                          dico_tags, model)
+                                          dico_tags, model, best_dev)
         #lr *= lr_decay # can't find an easy way to taper the learning rate
 
     return model, f_eval, train_data_objs
 
 def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              max_niter_no_imprv, dev_sentences, dev_data, id_to_tag, dico_tags, model):
+              max_niter_no_imprv, dev_sentences, dev_data, id_to_tag, dico_tags, model, best_dev):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
@@ -186,7 +189,7 @@ def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_tra
 
     print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
 
-    return count, niter_no_imprv
+    return count, niter_no_imprv, best_dev
 
 def predict_LSTM(model, test_sentences, f_eval, IOB_map, num_classes):
     # Load existing model
@@ -221,6 +224,7 @@ def predict_LSTM(model, test_sentences, f_eval, IOB_map, num_classes):
         else:
             y_preds = f_eval(*input).argmax(axis=1)
 
+        # TODO replace id_to_tag map by our own map from the experiment data loader stuff... then we can skip all this
         y_preds = [model.id_to_tag[y_pred] for y_pred in y_preds]
 
         probs_sen = np.zeros((len(y_preds), num_classes))
