@@ -248,7 +248,9 @@ class Experiment(object):
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB')
-        # alg.max_iter = 1
+
+        print('Debugging hack!!!!! BAC Only one iteration')
+        alg.max_iter = 1
         alg.verbose = True
         if self.opt_hyper:
             probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000)
@@ -443,6 +445,9 @@ class Experiment(object):
 
                 np.savetxt(outputdir + 'result_%s.csv' % timestamp, scores_allmethods, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
+                np.savetxt(outputdir + 'result_std_%s.csv' % timestamp, score_std_allmethods, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+
                 np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
                 with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fh:
@@ -450,6 +455,9 @@ class Experiment(object):
 
                 np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
+                np.savetxt(outputdir + 'result_std_nocrowd_%s.csv' % timestamp, score_std_nocrowd, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+
                 np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % timestamp, preds_allmethods_nocrowd, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
                 with open(outputdir + 'probs_nocrowd_%s.pkl' % timestamp, 'wb') as fh:
@@ -595,6 +603,9 @@ class Experiment(object):
 
         Ndocs = np.sum(doc_start)
         if Ndocs < 200:
+
+            print('Using bootstrapping with small test set size')
+
             # use bootstrap resampling with small datasets
             nbootstraps = 100
             nmetrics = 6
