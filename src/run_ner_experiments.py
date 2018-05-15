@@ -9,20 +9,21 @@ import data.load_data as load_data
 output_dir = '../../data/bayesian_annotator_combination/output/ner/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, doc_start_val, text_val = \
-    load_data.load_ner_data(False)
+    load_data.load_ner_data(True)
 
 # debug with subset -------
-# s = 1000
+# s = 10000
 # gt = gt[:s]
 # annos = annos[:s]
 # doc_start = doc_start[:s]
 # text = text[:s]
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None)
-exp.methods = ['majority', 'best', 'worst', 'ibcc',
-               'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq', 'HMM_crowd_then_LSTM',
-               'bac_acc_integrateLSTM']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1)
+exp.methods = ['majority', 'bac_ibcc', 'best', 'worst', 'ibcc',
+                'bac_acc', 'bac_seq', 'bac_mace',
+               'HMM_crowd_then_LSTM', 'bac_acc_integrateLSTM',
+               ]#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
 
 exp.save_results = True
 exp.opt_hyper = False#True

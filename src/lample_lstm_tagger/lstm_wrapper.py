@@ -2,6 +2,9 @@ import os
 import time
 from collections import OrderedDict
 import itertools
+
+from sklearn.metrics import log_loss
+
 from lample_lstm_tagger.utils import create_input
 from lample_lstm_tagger.utils import models_path, evaluate, eval_script, eval_temp
 from lample_lstm_tagger.loader import word_mapping, char_mapping, tag_mapping
@@ -61,7 +64,7 @@ def split_train_to_dev(gold_sentences):
     return train_sentences, dev_sentences
 
 
-def train_LSTM(all_sentences, train_sentences, dev_sentences, n_epochs=100, model_name='lstm'):
+def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses, n_epochs=100):
 
     # parameters
     parameters = OrderedDict()
@@ -152,13 +155,17 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, n_epochs=100, mode
     for epoch in range(n_epochs):
         count, niter_no_imprv, best_dev = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
                                           niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_data, id_to_tag,
-                                          dico_tags, model, best_dev)
+                                          dico_tags, model, best_dev, IOB_map, nclasses)
         #lr *= lr_decay # can't find an easy way to taper the learning rate
+
+    # reload the best model as saved in run_epoch
+    model.reload()
 
     return model, f_eval, train_data_objs
 
 def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              max_niter_no_imprv, dev_sentences, dev_data, id_to_tag, dico_tags, model, best_dev):
+              max_niter_no_imprv, dev_sentences, dev_data, id_to_tag, dico_tags, model, best_dev,
+              IOB_map, num_classes):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
@@ -173,8 +180,13 @@ def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_tra
         if i % 50 == 0 and i > 0 == 0:
             print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
         if count % freq_eval == 0:
-            dev_score = evaluate(parameters, f_eval, dev_sentences,
-                                 dev_data, id_to_tag, dico_tags)
+            # dev_score = evaluate(parameters, f_eval, dev_sentences,
+            #                      dev_data, id_to_tag, dico_tags)
+
+            # maximise log likelihood of dev data
+            agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
+            dev_score = - log_loss(dev_data['tags'], probs)
+
             print("Score on dev: %.5f" % dev_score)
             if dev_score > best_dev:
                 best_dev = dev_score
@@ -191,7 +203,7 @@ def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_tra
 
     return count, niter_no_imprv, best_dev
 
-def predict_LSTM(model, test_sentences, f_eval, IOB_map, num_classes):
+def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
     # Load existing model
     parameters = model.parameters
     lower = parameters['lower']
@@ -229,8 +241,13 @@ def predict_LSTM(model, test_sentences, f_eval, IOB_map, num_classes):
 
         probs_sen = np.zeros((len(y_preds), num_classes))
         for i, val in enumerate(y_preds):
-            probs_sen[i, IOB_map[val]] = 1
-            agg.append(IOB_map[val])
+
+            if IOB_map is not None:
+                val = IOB_map[val]
+
+            probs_sen[i, val] = 1
+            agg.append(val)
+
         probs = np.concatenate((probs, probs_sen), axis=0)
 
         count += 1

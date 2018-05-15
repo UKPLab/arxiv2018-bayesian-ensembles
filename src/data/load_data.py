@@ -353,6 +353,7 @@ def load_biomedical_data(regen_data_files):
         gt = gt[:-1]
 
     print('Creating dev/test split...')
+    np.random.seed(2348945)
     # since there is no separate validation set, we split the test set
     ndocs = np.sum(doc_start)
     testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
@@ -395,6 +396,19 @@ def _map_ner_str_to_labels(arr):
             if anno not in uannos:
                 uannos.append(anno)
         print(uannos)
+
+    # # Don't correc the training data like this as it can introduce more errors, e.g. some errors in the data are where
+    # there is a mis-placed O in the middle of a tag. Correcting the subsequent I to a B is wrong...
+    # I_labels = [0, 3, 5, 7]
+    # B_labels = [2, 4, 6, 8]
+    # for i, I in enumerate(I_labels):
+    #     arr_prev = np.zeros(arr_ints.shape)
+    #     arr_prev[1:] = arr_ints[:-1]
+    #     to_correct = (arr_ints == I) & (arr_prev != B_labels[i]) & (arr_prev != I)
+    #
+    #     if np.sum(to_correct):
+    #         print('Correction at tokens: %s' % np.argwhere(to_correct).flatten())
+    #         arr_ints[to_correct] = B_labels[i]
 
     return arr_ints
 
@@ -521,6 +535,20 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
 
     return data, annotator_cols
 
+def IOB_to_IOB2(seq):
+
+    I_labels = [0, 3, 5, 7]
+
+    for i, label in enumerate(seq):
+        if label in I_labels and (i == 0 or seq[i-1] == 1):
+            # we have I preceded by O. This needs to be changed to a B.
+            seq[i] = label + 1
+
+            if seq[i] == 1:
+                seq[i] = 2
+
+    return seq
+
 def load_ner_data(regen_data_files):
     # In Nguyen et al 2017, the original data has been separated out for task 1, aggregation of crowd labels. In this
     # task, the original training data is further split into val and test -- to make our results comparable with Nguyen
@@ -622,6 +650,8 @@ def load_ner_data(regen_data_files):
         eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
 
         eng_val['gold'] = _map_ner_str_to_labels(eng_val['gold'])
+        eng_val['gold'] = IOB_to_IOB2(eng_val['gold'])
+
         eng_val.to_csv(savepath + '/task2_val_gt.csv', columns=['gold'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['text'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
@@ -642,6 +672,8 @@ def load_ner_data(regen_data_files):
         eng_test = eng_test[eng_test['text'] != docstart_token] # remove all the docstart labels
 
         eng_test['gold'] = _map_ner_str_to_labels(eng_test['gold'])
+        eng_test['gold'] = IOB_to_IOB2(eng_test['gold'])
+
         eng_test.to_csv(savepath + '/task2_test_gt.csv', columns=['gold'], header=False, index=False)
         eng_test.to_csv(savepath + '/task2_test_text.csv', columns=['text'], header=False, index=False)
         eng_test.to_csv(savepath + '/task2_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
@@ -669,7 +701,8 @@ def load_ner_data(regen_data_files):
 
     print('loading text data for task1 val...')
     text_v = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
-    text = pd.concat((text, text_v), axis=0).values
+    text = pd.concat((text, text_v), axis=0)
+    text = text.fillna(' ').values
 
     print('loading doc_starts for task1 val...')
     doc_start_v = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_lines=False, header=None)

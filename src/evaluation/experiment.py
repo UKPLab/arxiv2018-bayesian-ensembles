@@ -3,10 +3,8 @@ Created on Nov 1, 2016
 
 @author: Melvin Laux
 '''
-import time
 
-#from scipy.optimize import minimize
-
+import matplotlib.pyplot as plt
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -19,7 +17,6 @@ import configparser
 import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
-import matplotlib.pyplot as plt
 import evaluation.metrics as metrics
 import glob
 from baselines.hmm import HMM_crowd
@@ -53,10 +50,6 @@ class Experiment(object):
     
     methods = None
 
-    alpha0_factor = 16.0
-    alpha0_diags = 1.0
-    nu0_factor = 100.0
-
     alpha0 = None
     nu0 = None
     
@@ -83,7 +76,8 @@ class Experiment(object):
     '''
     Constructor
     '''
-    def __init__(self, generator, nclasses, nannotators, config=None):
+    def __init__(self, generator, nclasses, nannotators, config=None,
+                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0):
         '''
         Constructor
         '''
@@ -97,6 +91,10 @@ class Experiment(object):
 
         self.num_classes = nclasses
         self.nannotators = nannotators
+
+        self.alpha0_factor = alpha0_factor
+        self.alpha0_diags = alpha0_diags
+        self.nu0_factor = nu0_factor
 
         self.ibcc_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) + self.alpha0_diags * np.eye(nclasses)
 
@@ -220,21 +218,32 @@ class Experiment(object):
 
         return agg, probs
 
-    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False):
+    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False,
+                 ground_truth_val=None, doc_start_val=None, text_val=None):
+
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
 
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
         if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
-            self.bac_alpha0 = self.alpha0_factor * np.ones((L, L)) + \
-                              self.alpha0_diags * np.eye(L)
+
+            alpha0_factor = self.alpha0_factor / ((L-1)/2)
+            alpha0_diags = self.alpha0_diags + self.alpha0_factor - alpha0_factor
+
+            self.bac_alpha0 = alpha0_factor * np.ones((L, L)) + \
+                              alpha0_diags * np.eye(L)
 
         elif self.bac_worker_model == 'mace':
-            self.bac_alpha0 = self.alpha0_factor * np.ones((2 + L))
-            self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+            alpha0_factor = self.alpha0_factor / ((L-1)/2)
+            self.bac_alpha0 = alpha0_factor * np.ones((2 + L))
+
+            self.bac_alpha0[0] = self.alpha0_factor * 2
+            self.bac_alpha0[1] = self.alpha0_factor + self.alpha0_diags  # diags are bias toward correct answer
 
         elif self.bac_worker_model == 'acc':
             self.bac_alpha0 = self.alpha0_factor * np.ones((2))
+
+            self.bac_alpha0[0] += self.alpha0_factor
             self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
 
         num_types = (self.num_classes - 1) / 2
@@ -243,19 +252,25 @@ class Experiment(object):
         inside_labels[0] = 0
         begin_labels = (np.arange(num_types) * 2 + 2).astype(int)
 
+        if use_LSTM and ground_truth_val is not None and doc_start_val is not None and text_val is not None:
+            dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
+                                                                   doc_start_val, ground_truth_val)
+        else:
+            dev_sentences = None
+
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
-                      tagging_scheme='IOB',
+                      tagging_scheme='IOB2',
                       data_model=bac.LSTM if use_LSTM else None)
 
-        # print('Debugging hack!!!!! BAC Only one iteration')
-        # alg.max_iter = 1
+        print('Debugging hack!!!!! BAC limited iterations')
+        alg.max_iter = 4
         alg.verbose = True
         if self.opt_hyper:
-            probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000)
+            probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences)
         else:
-            probs, agg = alg.run(annotations, doc_start, text)
+            probs, agg = alg.run(annotations, doc_start, text, dev_data=dev_sentences)
 
         model = alg
 
@@ -397,7 +412,6 @@ class Experiment(object):
         model = None # pass out to other functions if required
 
         Ndocs = np.sum(doc_start)
-        Nseen = 0
 
         if active_learning:
 
@@ -410,16 +424,22 @@ class Experiment(object):
             selected_docs = np.random.choice(Ndocs, batch_size, replace=False)
             selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
 
-            annotations = annotations_all[selected_toks, :]
-            doc_start = doc_start_all[selected_toks]
-            text = text_all[selected_toks]
+            seed_docs = selected_docs
+            seed_toks = selected_toks
+
 
         for method_idx in range(len(self.methods)): 
             
             print('running method: %s' % self.methods[method_idx])
-
             method = self.methods[method_idx]
 
+            if active_learning:
+                # reset to the same original sample for the next method to be tested
+                annotations = annotations_all[seed_toks, :]
+                doc_start = doc_start_all[seed_toks]
+                text = text_all[seed_toks]
+
+            Nseen = 0
             while Nseen < Ndocs:
                 # the active learning loop -- loop until no more labels
                 # Initialise the results because not all methods will fill these in
@@ -479,17 +499,18 @@ class Experiment(object):
                                                                             doc_start_val, ground_truth_val)
                         all_sentences = np.concatenate((train_sentences, dev_sentences))
 
-                    lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences, model_name=outputdir + '_lstm')
+                    lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
+                                                              IOB_map, self.num_classes)
 
                     # now make predictions for all sentences
-                    agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map, self.num_classes)
+                    agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
 
                     if test_no_crowd:
                         labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
                                                                                doc_start_nocrowd, np.zeros(N_nocrowd)-1)
 
-                        agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, IOB_map,
-                                                                             self.num_classes)
+                        agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval,
+                                                                             self.num_classes, IOB_map)
 
 
                 if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
@@ -511,30 +532,35 @@ class Experiment(object):
                 # Save the results so far after each method has completed.
 
                 # change the timestamps to include AL loop numbers
-                timestamp = timestamp + ('-Nseen%i' % Nseen)
+                file_identifier = timestamp + ('-Nseen%i' % Nseen)
 
                 if outputdir is not None:
                     if not os.path.exists(outputdir):
                         os.mkdir(outputdir)
 
-                    np.savetxt(outputdir + 'result_%s.csv' % timestamp, scores_allmethods, fmt='%s', delimiter=',',
+                    np.savetxt(outputdir + 'result_%s.csv' % file_identifier, scores_allmethods, fmt='%s', delimiter=',',
                                header=str(self.methods).strip('[]'))
-                    np.savetxt(outputdir + 'result_std_%s.csv' % timestamp, score_std_allmethods, fmt='%s', delimiter=',',
+                    np.savetxt(outputdir + 'result_std_%s.csv' % file_identifier, score_std_allmethods, fmt='%s',
+                               delimiter=',',
                                header=str(self.methods).strip('[]'))
 
-                    np.savetxt(outputdir + 'pred_%s.csv' % timestamp, preds_allmethods, fmt='%s', delimiter=',',
+                    np.savetxt(outputdir + 'pred_%s.csv' % file_identifier, preds_allmethods, fmt='%s',
+                               delimiter=',',
                                header=str(self.methods).strip('[]'))
-                    with open(outputdir + 'probs_%s.pkl' % timestamp, 'wb') as fh:
+                    with open(outputdir + 'probs_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods, fh)
 
-                    np.savetxt(outputdir + 'result_nocrowd_%s.csv' % timestamp, scores_nocrowd, fmt='%s', delimiter=',',
+                    np.savetxt(outputdir + 'result_nocrowd_%s.csv' % file_identifier, scores_nocrowd, fmt='%s',
+                               delimiter=',',
                                header=str(self.methods).strip('[]'))
-                    np.savetxt(outputdir + 'result_std_nocrowd_%s.csv' % timestamp, score_std_nocrowd, fmt='%s', delimiter=',',
+                    np.savetxt(outputdir + 'result_std_nocrowd_%s.csv' % file_identifier, score_std_nocrowd, fmt='%s',
+                               delimiter=',',
                                header=str(self.methods).strip('[]'))
 
-                    np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % timestamp, preds_allmethods_nocrowd, fmt='%s', delimiter=',',
+                    np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % file_identifier, preds_allmethods_nocrowd, fmt='%s',
+                               delimiter=',',
                                header=str(self.methods).strip('[]'))
-                    with open(outputdir + 'probs_nocrowd_%s.pkl' % timestamp, 'wb') as fh:
+                    with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
                 # TODO select more annotations according to batch size for AL here.
@@ -733,6 +759,8 @@ class Experiment(object):
             result[8] = metrics.mean_length_error(agg, gt, doc_start)
 
             std_result = None
+
+        print('F1 score = %f' % result[3])
 
         return result, std_result
         

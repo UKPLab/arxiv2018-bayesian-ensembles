@@ -41,7 +41,7 @@ class BAC(object):
     '''
     classdocs
     '''
-    
+
     K = None  # number of annotators
     L = None  # number of class labels
     
@@ -63,24 +63,34 @@ class BAC(object):
     def _set_transition_constraints_seqalpha(self):
 
         if self.tagging_scheme == 'IOB':
-            restricted_labels = self.beginning_labels
-        elif self.tagg_scheme == 'IOB2':
+            restricted_labels = self.beginning_labels # labels that cannot follow an outside label
+            unrestricted_labels = self.inside_labels # labels that can follow any label
+        elif self.tagging_scheme == 'IOB2':
             restricted_labels = self.inside_labels
+            unrestricted_labels = self.beginning_labels
 
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             for outside_label in self.outside_labels:
+
+                # remove transition from outside to restricted label.
+                # Move pseudo count to unrestricted label of same type.
                 disallowed_count = self.alpha0[:, restricted_label, outside_label, :]
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, self.beginning_labels[i], outside_label, :] += disallowed_count
+                self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :]
                 self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
-            # set the disallowed transition to as close to zero as possible
-            self.alpha0[:, restricted_label, self.outside_labels, :] = np.nextafter(0, 1)
-            self.alpha0_data[:, restricted_label, self.outside_labels, :] = np.nextafter(0, 1)
-            self.nu0[self.outside_labels, restricted_label] = np.nextafter(0, 1)
+
+
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
+
+            #disallowed_count = self.nu0[self.outside_labels, restricted_label]
+            #self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+            self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             for other_restricted_label in restricted_labels:
                 if other_restricted_label == restricted_label:
@@ -92,48 +102,86 @@ class BAC(object):
 
                 disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :]
                 self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+
                 # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, restricted_label, other_restricted_label, :] = np.nextafter(0, 1)
-                self.alpha0_data[:, restricted_label, other_restricted_label, :] = np.nextafter(0, 1)
-                self.nu0[other_restricted_label, restricted_label] = np.nextafter(0, 1)
-        # self.nu0[1, 1] += 1.0
+                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
+
+            for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
+                # prevent transitions from unrestricted to restricted if they don't have the same types
+                if typeid == i: # same type is allowed
+                    continue
+
+                disallowed_count = self.alpha0[:, other_unrestricted_label, restricted_label, :]
+                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                self.alpha0[:, other_unrestricted_label, restricted_label, :] += disallowed_count
+
+                disallowed_count = self.alpha0_data[:, other_unrestricted_label, restricted_label, :]
+                self.alpha0_data[:, other_unrestricted_label, other_unrestricted_label, :] += disallowed_count
+
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
+
+                self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
+
 
         if self.exclusions is not None:
             for label, excluded in dict(self.exclusions).items():
-                self.alpha0[:, excluded, label, :] = np.nextafter(0, 1)
-                self.alpha0_data[:, excluded, label, :] = np.nextafter(0, 1)
-                self.nu0[label, excluded] = np.nextafter(0, 1)
+                self.alpha0[:, excluded, label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, excluded, label, :] = self.rare_transition_pseudocount
+                self.nu0[label, excluded] = self.rare_transition_pseudocount
 
     def _set_transition_constraints_nuonly(self):
         # set priors for invalid transitions (to low values)
         if self.tagging_scheme == 'IOB2':
             for i, inside_label in enumerate(self.inside_labels):
                 # pseudo-counts for the transitions that are not allowed from outside to inside
-                self.nu0[self.outside_labels, inside_label] = np.nextafter(0, 1)
+                #disallowed_counts = self.nu0[self.outside_labels, inside_label]
+                #self.nu0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+
+                self.nu0[self.outside_labels, inside_label] = self.rare_transition_pseudocount
+
+                # cannot jump from one type to another
+                for b, begin_label in enumerate(self.beginning_labels):
+                    if i == b:
+                        continue # this transitiion is allowed
+                    self.nu0[begin_label, inside_label] = self.rare_transition_pseudocount
 
                 # can't switch types mid annotation
                 for other_inside_label in self.inside_labels:
                     if other_inside_label == inside_label:
                         continue
-                    self.nu0[other_inside_label, inside_label] = np.nextafter(0, 1)
+                    self.nu0[other_inside_label, inside_label] = self.rare_transition_pseudocount
 
         elif self.tagging_scheme == 'IOB':
             for i, begin_label in enumerate(self.beginning_labels):
                 # pseudo-counts for the transitions that are not allowed from outside to inside
-                self.nu0[self.outside_labels, begin_label] = np.nextafter(0, 1)
+                #disallowed_counts = self.nu0[self.outside_labels, begin_label]
+                #self.nu0[self.outside_labels, self.inside_labels[i]] += disallowed_counts
+
+                self.nu0[self.outside_labels, begin_label] = self.rare_transition_pseudocount
+
+                # cannot jump from one type to another
+                for j, inside_label in enumerate(self.inside_labels):
+                    if i == j:
+                        continue # this transitiion is allowed
+
+                    self.nu0[inside_label, begin_label] = self.rare_transition_pseudocount
 
                 # if switching types, a B is not used
                 for other_b_label in self.beginning_labels:
                     if other_b_label == begin_label:
                         continue
-                    self.nu0[other_b_label, begin_label] = np.nextafter(0, 1)
+                    self.nu0[other_b_label, begin_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
                 for label, excluded in dict(self.exclusions).items():
-                    self.nu0[label, excluded] = np.nextafter(0, 1)
+                    self.nu0[label, excluded] = self.rare_transition_pseudocount
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=-1,   exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
+                 before_doc_idx=1,   exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
                  data_model=None, alpha0_data=None, tagging_scheme='IOB2'):
         '''
         Constructor
@@ -141,6 +189,10 @@ class BAC(object):
         beginning_labels should correspond in order to inside labels.
 
         '''
+        self.rare_transition_pseudocount = np.min(alpha0) / 10.0 # this makes the rare transition much less likely than
+        # any other, but still allows for cases where the data itself may contain errors.
+        # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
+
         self.tagging_scheme = tagging_scheme # may be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
         # that follow another start with B).
 
@@ -215,7 +267,7 @@ class BAC(object):
     def _lowerbound_pi_terms(self):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
         if self.alpha.ndim == 2:
-            sum_dim = 0 # in the case that we have only one Dirichlet per worker, e.g. MACE, accuracy model
+            sum_dim = 0 # in the case that we have only one Dirichlet per worker, e.g. accuracy model
         else:
             sum_dim = 1 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
 
@@ -295,7 +347,7 @@ class BAC(object):
         lb = lnpCt - lnqt + lnp_features_and_Cdata - lnq_Cdata + lnpPi - lnqPi + lnpA - lnqA
         return lb
         
-    def optimize(self, C, doc_start, features=None, maxfun=50):
+    def optimize(self, C, doc_start, features=None, maxfun=50, dev_data=None):
         ''' 
         Run with MLII optimisation over the lower bound on the log-marginal likelihood.
         Optimizes the confusion matrix prior to the same values for all previous labels, and the scaling of the transition matrix
@@ -312,7 +364,7 @@ class BAC(object):
             self.nu0 = np.ones((self.L + 1, self.L)) * np.exp(hyperparams[-1])
 
             # run the method
-            self.run(C, doc_start, features)
+            self.run(C, doc_start, features, dev_data)
             
             # compute lower bound
             lb = self.lowerbound()
@@ -333,7 +385,7 @@ class BAC(object):
 
         return self.q_t, self._most_probable_sequence(C, doc_start)[1]
             
-    def run(self, C, doc_start, features=None):
+    def run(self, C, doc_start, features=None, dev_data=None):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
         '''
@@ -347,7 +399,9 @@ class BAC(object):
         self._initA()
         self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
 
-        self.alpha_data, self.lnPi_data = self.data_model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L)
+        self.alpha_data = self.data_model.init(self.alpha0_data, C.shape[0], features, doc_start,
+                                                               self.L, dev_data)
+        self.lnPi_data  = self.worker_model._calc_q_pi(self.alpha_data)
 
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
@@ -409,6 +463,8 @@ class BAC(object):
                                                            self.nscores, self.before_doc_idx)
                 self.lnPi = self.worker_model._calc_q_pi(self.alpha)
 
+                # Note: we are not using this to check convergence -- it's only here to check correctness of algorithm
+                # Can be commented out to save computational costs.
                 lb = self.lowerbound()
                 print('Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb))
                 oldlb = lb
@@ -457,8 +513,12 @@ class BAC(object):
 
                     lnPi_data_terms = 0
                     for m in range(self.L):
-                        lnPi_data_terms += self.C_data[t, m] * self.worker_model._read_lnPi(lnEPi_data, l, m,
-                                                            self.before_doc_idx, 0, self.nscores)
+                        terms_startm = self.C_data[t, m] * self.worker_model._read_lnPi(lnEPi_data, l, m,
+                                                                         self.before_doc_idx, 0, self.nscores)
+                        if self.C_data[t, m] == 0:
+                            terms_startm = 0
+
+                        lnPi_data_terms += terms_startm
 
                     likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
 
@@ -469,8 +529,10 @@ class BAC(object):
                     lnPi_data_terms = 0
                     for m in range(self.L):
                         for n in range(self.L):
-                            lnPi_data_terms += self.C_data[t, m] * self.C_data[t-1, n] * self.worker_model._read_lnPi(
+                            terms_mn = self.C_data[t, m] * self.C_data[t-1, n] * self.worker_model._read_lnPi(
                                 lnEPi_data, l, m, n, 0, self.nscores)
+                            terms_mn[:, (self.C_data[t, m] * self.C_data[t-1, n]) == 0] = 0
+                            lnPi_data_terms += terms_mn
 
                     likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
 
@@ -607,23 +669,36 @@ class AccuracyWorker():
             for l in range(nscores):
 
                 if np.isscalar(C) and l == C:
-                    idx = 1
+                    result[l, :, :] = lnPi[1, Krange]
+
                 elif np.isscalar(C) and l != C:
-                    idx = 0
+                    result[l, :, :] = lnPi[0, Krange]
+                    # incorrect answers: split mass across classes evenly
+                    result[l, :, :] = np.log(np.exp(result[l, :, :]) / float(nscores))
+
                 else:
                     idx = (l==C).astype(int)
+                    result[l, :, :] = lnPi[idx, Krange]
+                    # incorrect answers: split mass across classes evenly
+                    result[l, idx == 0] = np.log(np.exp(result[l, idx == 0]) / float(nscores))
 
-                result[l, :, :] = lnPi[idx, Krange]
             return result
 
         if np.isscalar(C) and l == C:
-            idx = 1
+            result = lnPi[1, Krange]
+
         elif np.isscalar(C) and l != C:
-            idx = 0
+            result = lnPi[0, Krange]
+            # incorrect answers: split mass across classes evenly
+            result = np.log(np.exp(result) / float(nscores))
+
         else:
             idx = (l==C).astype(int)
+            result = lnPi[idx, Krange]
+            # incorrect answers: split mass across classes evenly
+            result[idx == 0] = np.log(np.exp(result[idx==0]) / float(nscores))
 
-        return lnPi[idx, Krange]
+        return result
 
     def _expand_alpha0(alpha0, alpha0_data, K, nscores):
         '''
@@ -1124,7 +1199,7 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
     return np.exp(lnS)
 
 
-def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=-1, skip=True):
+def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
     '''
     Perform the forward pass of the Forward-Backward algorithm (for a single document).
     '''
@@ -1177,7 +1252,7 @@ def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worke
     return lnR_
 
 def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
-                           before_doc_idx=-1, skip=True):
+                           before_doc_idx=1, skip=True):
     '''
     Perform the forward pass of the Forward-Backward algorithm (for multiple documents in parallel).
     '''
@@ -1196,7 +1271,7 @@ def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, 
     
     return lnR_
     
-def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=-1, skip=True):
+def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for a single document).
     '''
@@ -1224,11 +1299,14 @@ def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, b
 
     lnPi_terms =  worker_model._read_lnPi(lnPi, None, Cnext, Ccurr, Krange[None, :], nscores)
     lnPi_data_terms = 0
+
     for m in range(nscores):
         for n in range(nscores):
-            lnPi_data_terms += worker_model._read_lnPi(lnPi_data, None, m, n, 0, nscores)[:, :, 0] \
+            terms_mn = worker_model._read_lnPi(lnPi_data, None, m, n, 0, nscores)[:, :, 0] \
                                * C_data_next[:, m][None, :] \
                                * C_data_curr[:, n][None, :]
+            terms_mn[:, (C_data_next[:, m] * C_data_curr[:, n]) == 0] = 0
+            lnPi_data_terms += terms_mn
 
     likelihood = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms
 
@@ -1250,7 +1328,8 @@ def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, b
     return lnLambda
 
 
-def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start, nscores, worker_model, before_doc_idx=-1, skip=True):
+def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start, nscores, worker_model,
+                            before_doc_idx=1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for multiple documents in parallel).
     '''
@@ -1272,8 +1351,8 @@ def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start
 
 class ignore_features:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses):
-        return alpha0_data, alpha0_data
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
+        return np.ones(alpha0_data.shape)
 
     def predict(self, Et):
         '''
@@ -1283,13 +1362,13 @@ class ignore_features:
     def log_likelihood(self, C_data, E_t):
         '''
         '''
-        lnp_Cdata = C_data * np.log(E_t)
-        lnp_Cdata[E_t == 0] = 0
+        lnp_Cdata = C_data * np.log(C_data)
+        lnp_Cdata[C_data == 0] = 0
         return np.sum(lnp_Cdata)
 
 class LSTM:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
 
         self.N = N
 
@@ -1301,7 +1380,11 @@ class LSTM:
 
         self.train_data_objs = None
 
-        return alpha0_data, alpha0_data
+        self.nclasses = nclasses
+
+        self.dev_sentences = dev_data
+
+        return alpha0_data
 
     def predict(self, Et):
         labels = np.argmax(Et, axis=1)
@@ -1313,28 +1396,36 @@ class LSTM:
                 l += 1
 
         # select a random subset of data to use for validation
+        if self.dev_sentences is None:
+            devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)))
+            trainidxs = np.ones(self.Ndocs, dtype=bool)
+            trainidxs[devidxs] = 0
+            train_sentences = self.sentences[trainidxs]
 
-        devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)))
-        trainidxs = np.ones(self.Ndocs, dtype=bool)
-        trainidxs[devidxs] = 0
-        train_sentences = self.sentences[trainidxs]
+            if len(devidxs) == 0:
+                dev_sentences = self.sentences
+            else:
+                dev_sentences = self.sentences[devidxs]
 
-        if len(devidxs) == 0:
-            dev_sentences = self.sentences
+            all_sentences = self.sentences
         else:
-            dev_sentences = self.sentences[devidxs]
+            dev_sentences = self.dev_sentences
+            train_sentences = self.sentences
+            all_sentences = np.concatenate((train_sentences, dev_sentences))
 
         if self.train_data_objs is None:
-            self.lstm, f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.sentences, train_sentences, dev_sentences, n_epochs=1)
+            self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(all_sentences, train_sentences,
+                                                           dev_sentences, self.IOB_map, self.nclasses, n_epochs=1)
         else:
             freq_eval = np.inf # len(self.train_data_objs[0]) # don't think we really ever need to do this!
             lstm_wrapper.run_epoch(0, 0, freq_eval, self.train_data_objs[0], self.train_data_objs[1],
                                    self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4], 0, 1,
                                    self.train_data_objs[5], self.train_data_objs[6],
-                                   self.train_data_objs[7], self.train_data_objs[8], self.lstm, -np.inf)
+                                   self.train_data_objs[7], self.train_data_objs[8], self.lstm, -np.inf,
+                                   self.IOB_map, self.nclasses)
 
         # now make predictions for all sentences
-        _, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, f_eval, self.IOB_map, Et.shape[1])
+        _, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.IOB_map, self.nclasses)
 
         return probs
 

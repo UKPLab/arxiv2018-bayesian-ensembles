@@ -11,7 +11,7 @@ import numpy as np
 gt, annos, doc_start = load_data.load_argmin_data()
 
 exp = Experiment(None, 3, annos.shape[1], None)
-exp.methods = ['ibcc_then_LSTM', 'ibcc', 'best', 'worst', 'majority']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
+exp.methods = ['bac_acc']#['mace', 'best', 'worst', 'majority']#'bac', 'ibcc', 'mace', 'majority'] # 'bac', 'clustering', 'ibcc', 'mace',
 
 exp.save_results = True
 exp.opt_hyper = True
@@ -40,6 +40,8 @@ exp.opt_hyper = True
 # priorstr = 'prior_5_try2'
 # exp.bac_alpha0 = 0.1 * np.ones((exp.num_classes, exp.num_classes, exp.num_classes+1, 
 #                            annos.shape[1])) +  0.1 * np.eye(exp.num_classes)[:,:,None,None]
+
+output_dir = '../../data/bayesian_annotator_combination/output/argmin/'
 
 results, preds, _ = exp.run_methods(annos, gt, doc_start, output_dir)
 
