@@ -47,7 +47,15 @@ class MajorityVoting(object):
             votes[:, l] = np.sum((self.annotations==l).astype(int), axis=1)
 
         if simple:
-            self.majority = np.argmax(votes, axis=1)
+            # avoid choosing class 1 if there's a tie
+            maxvotes = np.max(votes, axis=1)
+
+            # remove the 1 scores temporarily if there is a tie. Keep the original votes for computing prob estimates.
+            ties_to_fix = (np.sum((votes == maxvotes[:, None]), axis=1) >= 2) & (votes[:, 1] == maxvotes)
+            votes_tmp = np.copy(votes)
+            votes_tmp[ties_to_fix, 1] = 0
+
+            self.majority = np.argmax(votes_tmp, axis=1)
 
         else:
             self.majority = -np.ones((self.num_words, 1))

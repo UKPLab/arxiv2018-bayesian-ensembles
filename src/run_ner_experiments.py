@@ -9,7 +9,7 @@ import data.load_data as load_data
 output_dir = '../../data/bayesian_annotator_combination/output/ner/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, doc_start_val, text_val = \
-    load_data.load_ner_data(True)
+    load_data.load_ner_data(False)
 
 # debug with subset -------
 # s = 10000

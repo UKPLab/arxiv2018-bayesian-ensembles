@@ -353,7 +353,9 @@ def load_biomedical_data(regen_data_files):
         gt = gt[:-1]
 
     print('Creating dev/test split...')
+
     np.random.seed(2348945)
+
     # since there is no separate validation set, we split the test set
     ndocs = np.sum(doc_start)
     testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
@@ -650,7 +652,7 @@ def load_ner_data(regen_data_files):
         eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
 
         eng_val['gold'] = _map_ner_str_to_labels(eng_val['gold'])
-        eng_val['gold'] = IOB_to_IOB2(eng_val['gold'])
+        eng_val['gold'] = IOB_to_IOB2(eng_val['gold'].values)
 
         eng_val.to_csv(savepath + '/task2_val_gt.csv', columns=['gold'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['text'], header=False, index=False)
@@ -672,7 +674,7 @@ def load_ner_data(regen_data_files):
         eng_test = eng_test[eng_test['text'] != docstart_token] # remove all the docstart labels
 
         eng_test['gold'] = _map_ner_str_to_labels(eng_test['gold'])
-        eng_test['gold'] = IOB_to_IOB2(eng_test['gold'])
+        eng_test['gold'] = IOB_to_IOB2(eng_test['gold'].values)
 
         eng_test.to_csv(savepath + '/task2_test_gt.csv', columns=['gold'], header=False, index=False)
         eng_test.to_csv(savepath + '/task2_test_text.csv', columns=['text'], header=False, index=False)
