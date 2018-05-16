@@ -33,93 +33,132 @@ L = 3
 # label entropy, i.e. avoiding strong classifications?
 
 # load data
-gold = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/gold2.csv', delimiter=',')
-annos = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/annos.csv', delimiter=',')
-doc_start = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/doc_start.csv', delimiter=',')
+# gold = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/gold2.csv', delimiter=',')
+# annos = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/annos.csv', delimiter=',')
+# doc_start = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/doc_start.csv', delimiter=',')
+
+import data.load_data as load_data
+gold, annos, doc_start = load_data.load_argmin_data()
+subannos = annos
+
 
 # setup
 num_tokens = annos.shape[0]
 num_annos = annos.shape[1]
 
-exp = Experiment(None, None)
-exp.methods = ['bac']
+exp = Experiment(None, 3, 3)
+exp.methods = ['bac_seq']
 exp.num_classes = 3
 
-annosA = annos[:, :24]
-annosB = annos[:, 24:]
-
-# create list of doc start idxs
-
-doc_start_idxs = np.where(doc_start == 1)[0]
-doc_end_idxs = np.append(doc_start_idxs[1:], len(doc_start))
-np.append(doc_start_idxs, annosA.shape[0])
-
-dataA = -np.ones_like(annosA)
-dataB = -np.ones_like(annosB)
+# annosA = annos[:, :24]
+# annosB = annos[:, 24:]
+#
+# # create list of doc start idxs
+#
+# doc_start_idxs = np.where(doc_start == 1)[0]
+# doc_end_idxs = np.append(doc_start_idxs[1:], len(doc_start))
+# np.append(doc_start_idxs, annosA.shape[0])
+#
+# dataA = -np.ones_like(annosA)
+# dataB = -np.ones_like(annosB)
 
 # test different hyperparameter settings
 alpha0_factors = np.arange(1, 20) ** 2 # 100.0 --> the working value
 
 alpha0_diags = 1.0
-nu0_factor = 100.0    
+nu0_factor = 100.0
 
-kmax = 3 # number of annotators
-for k in range(1, kmax):    
-    for i in range(len(doc_start_idxs)):
-    
-        col = np.where(np.cumsum(annosA[doc_start_idxs[i], :] != -1) == k)[0][0]
-        dataA[doc_start_idxs[i]:doc_end_idxs[i], col] = annosA[doc_start_idxs[i]:doc_end_idxs[i], col]
+alpha0_fac = 16.0 # default
+nu0_factors = np.arange(1, 20) ** 2
 
-        col = np.where(np.cumsum(annosB[doc_start_idxs[i], :] != -1) == k)[0][0]
-        dataB[doc_start_idxs[i]:doc_end_idxs[i], col] = annosB[doc_start_idxs[i]:doc_end_idxs[i], col]
+# kmax = 3 # number of annotators
+# for k in range(1, kmax):
+#     for i in range(len(doc_start_idxs)):
+#
+#         col = np.where(np.cumsum(annosA[doc_start_idxs[i], :] != -1) == k)[0][0]
+#         dataA[doc_start_idxs[i]:doc_end_idxs[i], col] = annosA[doc_start_idxs[i]:doc_end_idxs[i], col]
+#
+#         col = np.where(np.cumsum(annosB[doc_start_idxs[i], :] != -1) == k)[0][0]
+#         dataB[doc_start_idxs[i]:doc_end_idxs[i], col] = annosB[doc_start_idxs[i]:doc_end_idxs[i], col]
+#
+# output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/k' + str(k) + '/run0/'
+# subannos = dataA
+# subannos_str = subannos.astype(str)
+# subannos_str[subannos_str == '-1.0'] = ''
+#
+# if not os.path.exists(output_dir):
+#         os.makedirs(output_dir)
+#
+# np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
 
-output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/k' + str(k) + '/run0/'
-subannos = dataA
-subannos_str = subannos.astype(str)
-subannos_str[subannos_str == '-1.0'] = ''
+# for alpha0_factor in alpha0_factors:
+#     exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
+#     exp.nu0 = np.ones((L + 1, L)) * nu0_factor
+#     results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], output_dir, return_model=True)
+#
+#     output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor' + str(alpha0_factor) + '/run0/'
+#     if not os.path.exists(output_dir):
+#         os.makedirs(output_dir)
+#     results = np.append(results, [[model.lowerbound()]], axis=0)
 
-if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+for nu0_fac in nu0_factors:
+    exp.bac_alpha0 = alpha0_fac * (
+                np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
+    exp.nu0 = np.ones((L + 1, L)) * nu0_fac
 
-np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
+    output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_argmin/nu0factor' + str(
+        nu0_fac) + '_' + exp.methods[0] + '/run0/'
+    results, preds, probs, model, _, _, _ = exp.run_methods(subannos, gold, doc_start[:, None], output_dir,
+                                                   return_model=True, rerun_all=True)
 
-for alpha0_factor in alpha0_factors:
-    exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
-    exp.nu0 = np.ones((L + 1, L)) * nu0_factor
-    results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], output_dir, return_model=True)
-
-    output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor' + str(alpha0_factor) + '/run0/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     results = np.append(results, [[model.lowerbound()]], axis=0)
+
     # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
     # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
     # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
     #            delimiter=',', header=str(exp.methods).strip('[]'))
 
-output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/k' + str(k) + '/run1/'
-subannos = dataB
-subannos_str = subannos.astype(str)
-subannos_str[subannos_str == '-1.0'] = ''
 
-if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
-
-for alpha0_factor in alpha0_factors:
-    exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
-    exp.nu0 = np.ones((L + 1, L)) * nu0_factor
-    results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], output_dir, return_model=True)
-    
-    output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor' + str(alpha0_factor) + '/run1/'
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)    
-    results = np.append(results, [[model.lowerbound()]], axis=0)
-    # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
-    # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
-    #            delimiter=',', header=str(exp.methods).strip('[]'))
-
-if __name__ == '__main__':
-    pass
+# run with the other data
+#
+# output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/k' + str(k) + '/run1/'
+# subannos = dataB
+# subannos_str = subannos.astype(str)
+# subannos_str[subannos_str == '-1.0'] = ''
+#
+# if not os.path.exists(output_dir):
+#         os.makedirs(output_dir)
+#
+# np.savetxt(output_dir + 'annos2.csv', subannos_str, fmt='%s', delimiter=',')
+#
+# # for alpha0_factor in alpha0_factors:
+# #     exp.bac_alpha0 = alpha0_factor * (np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
+# #     exp.nu0 = np.ones((L + 1, L)) * nu0_factor
+# #     results, preds, probs, model = exp.run_methods(subannos, gold, doc_start[:, None], output_dir, return_model=True)
+# #
+# #     output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor' + str(alpha0_factor) + '/run1/'
+# #     if not os.path.exists(output_dir):
+# #         os.makedirs(output_dir)
+# #     results = np.append(results, [[model.lowerbound()]], axis=0)
+#
+# for nu0_fac in nu0_factors:
+#     exp.bac_alpha0 = alpha0_fac * (
+#                 np.ones((3, 3, 4, subannos.shape[1])) + alpha0_diags * np.eye(3)[:, :, None, None])
+#     exp.nu0 = np.ones((L + 1, L)) * nu0_fac
+#     results, preds, probs, model, _, _, _ = exp.run_methods(subannos, gold, doc_start[:, None], output_dir,
+#                                                             return_model=True, rerun_all=True)
+#
+#     output_dir = '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/nu0factor' + str(
+#         nu0_fac) + '_' + exp.methods[0] + '/run1/'
+#     if not os.path.exists(output_dir):
+#         os.makedirs(output_dir)
+#     results = np.append(results, [[model.lowerbound()]], axis=0)
+#     # np.savetxt(output_dir + 'results2.csv', results, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+#     # np.savetxt(output_dir + 'preds2.csv', preds, fmt='%s', delimiter=',', header=str(exp.methods).strip('[]'))
+#     # np.savetxt(output_dir + 'probs2.csv', probs.reshape(probs.shape[0], probs.shape[1] * probs.shape[2]), fmt='%s',
+#     #            delimiter=',', header=str(exp.methods).strip('[]'))
+#
+# if __name__ == '__main__':
+#     pass

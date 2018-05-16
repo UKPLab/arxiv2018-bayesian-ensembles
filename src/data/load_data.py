@@ -369,7 +369,9 @@ def load_biomedical_data(regen_data_files):
     gt_test = np.copy(gt)
     gt_test[devidxs] = -1
 
-    gt_dev = gt[devidxs]
+    gt_dev = np.zeros_like(gt) - 1#gt[devidxs]
+    gt_dev[devidxs] = gt[devidxs]
+
     doc_start_dev = doc_start[devidxs]
     text_dev = text[devidxs]
 
@@ -710,7 +712,12 @@ def load_ner_data(regen_data_files):
     doc_start_v = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_lines=False, header=None)
     doc_start = pd.concat((doc_start, doc_start_v), axis=0).values
 
-    print('not loading ground truth for task1 val, as we have done all hyperparameter tuning before...')
+    print('Loading a gold valdation set for task 1')
+    gt_blanks = pd.DataFrame(np.zeros(gt.shape[0]) - 1)
+    gt_val_task1 = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None)
+    gt_val_task1 = pd.concat((gt_blanks, gt_val_task1), axis=0).values
+
+    print('not concatenating ground truth for task1 val')
     gt_v = pd.DataFrame(np.zeros(annos_v.shape[0]) - 1)
     gt = pd.concat((gt, gt_v), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
@@ -727,16 +734,17 @@ def load_ner_data(regen_data_files):
 
     # validation sets for methods that predict on features only
     print('loading text data for task 2 val')
-    text_val = pd.read_csv(savepath + '/task2_val_text.csv', skip_blank_lines=False, header=None)
-    text_val = text_val.fillna(' ').values
+    text_val_task2 = pd.read_csv(savepath + '/task2_val_text.csv', skip_blank_lines=False, header=None)
+    text_val_task2 = text_val_task2.fillna(' ').values
 
     print('loading doc_starts for task 2 val')
-    doc_start_val = pd.read_csv(savepath + '/task2_val_doc_start.csv', skip_blank_lines=False, header=None).values
+    doc_start_val_task2 = pd.read_csv(savepath + '/task2_val_doc_start.csv', skip_blank_lines=False, header=None).values
 
     print('loading ground truth for task 2 val')
-    gt_val = pd.read_csv(savepath + '/task2_val_gt.csv', skip_blank_lines=False, header=None).values
+    gt_val_task2 = pd.read_csv(savepath + '/task2_val_gt.csv', skip_blank_lines=False, header=None).values
 
-    return gt, annos, doc_start, text, gt_task2, doc_start_task2, text_task2, gt_val, doc_start_val, text_val
+    return gt, annos, doc_start, text, gt_task2, doc_start_task2, text_task2, \
+           gt_val_task1, gt_val_task2, doc_start_val_task2, text_val_task2
 
 if __name__ == '__main__':
     pass

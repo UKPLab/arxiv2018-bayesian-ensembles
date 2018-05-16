@@ -186,6 +186,9 @@ class WorkerModel:
         elif self.rep == 'cv':
             self.cv = np.zeros((self.n_workers, self.n))
             for w in range(self.n_workers):
+
+                print('M-step, processing worker counts %i of %i' % (w, self.n_workers))
+
                 for i in range(self.n):
                     self.cv[w][i] = count[w][i][i] * 1.0 / np.sum(count[w][i]) # accuracy for ne class
 
@@ -420,6 +423,9 @@ class HMM_crowd(HMM):
         self.trans_posterior = []
         sum_ll = 0
         for i, sentence in enumerate(self.data.sentences):
+
+            print('E-step, processing sentence %i of %i' % (i, len(self.data.sentences)))
+
             if len(sentence) > 0:
                 sen_pos, trans_pos, ll = self.inference(sentence, self.data.crowdlabs[i])
                 sum_ll += ll
@@ -441,6 +447,7 @@ class HMM_crowd(HMM):
         #self.prior = self.count_prior * 1.0 / np.sum(self.count_prior)
 
         for i in range(self.n):
+            print('M-step, processing class counts %i of %i' % (i, self.n))
             self.t[i] = self.count_t[i] * 1.0 / np.sum(self.count_t[i])
             self.e[i] = self.count_e[i] * 1.0 / np.sum(self.count_e[i])
 
@@ -472,6 +479,8 @@ class HMM_crowd(HMM):
         f = lambda x: np.exp( scipy.special.digamma(x))
 
         for i in range(self.n):
+            print('VB M-step, processing class counts %i of %i' % (i, self.n))
+
             self.count_t[i] = self.count_t[i] - self.smooth + self.vb[0]
             self.count_e[i] = self.count_e[i] - self.smooth + self.vb[1]
 
@@ -779,6 +788,7 @@ class dw(HMM_crowd):
 
     def e_step(self):
         for i, sentence in enumerate(self.data.sentences):
+            print('dw e-step, sentence %i of %i' % (i, len(self.data.sentences)))
             self.pos[i] = np.ones( (len(sentence), self.n) )
             for j in range(len(sentence)):
                 self.pos[i][j] = self.prior.copy()
@@ -791,12 +801,18 @@ class dw(HMM_crowd):
         count = self.smooth * np.ones ( (self.n_workers, self.n, self.n) )
         count_prior = self.smooth * np.ones_like(self.prior)
         #get-another-label heuristic: 0.9 to diagonal, uniform to elsewhere
+
+        print('dw m-step')
         for w in range(self.n_workers):
+            #print('dw m-step, worker %i of %i' % (w, self.n_workers))
+
             for i in range(self.n):
                 for j in range(self.n):
                     count[w][i][j] = 0.9 if i == j else 0.1 / (self.n-1)
 
-        for i, sentence in enumerate(self.data.sentences):            
+        for i, sentence in enumerate(self.data.sentences):
+            #print('dw w-step, sentence %i of %i' % (i, len(self.data.sentences)))
+
             for j in range(len(sentence)):
                 count_prior += self.pos[i][j]
                 for l, w in self.data.get_lw(i,j):
@@ -807,6 +823,8 @@ class dw(HMM_crowd):
 
         self.wa = np.zeros( (self.n_workers, self.n, self.n) )
         for w in range(self.n_workers):
+            #print('dw m-step part 3, worker %i of %i' % (w, self.n_workers))
+
             for k in range(self.n):
                 self.wa[w][k] = count[w][k] * 1.0 / np.sum(count[w][k])
 

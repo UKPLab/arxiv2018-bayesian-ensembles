@@ -92,19 +92,21 @@ def plot_crowdsourcing_results():
 
             
 def plot_hyperparameter_results():
-    exp = experiment.Experiment(None, None)
+    exp = experiment.Experiment(None, 3, 3)
     
     alpha0_factors = np.arange(1, 20) ** 2 # 100.0 --> the working value
-    exp.param_values = alpha0_factors
+    exp.param_values = alpha0_factors[:-1]
     
     exp.PARAM_NAMES = ['alpha0 factor']
     exp.param_idx = 0
-    exp.methods = np.array(['bac'])#, 'majority'])#'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
+    exp.methods = np.array(['bac_seq'])#, 'majority'])#'clustering', 'HMM_crowd', 'ibcc', 'mace', 'majority'])
      
     num_runs = 2
      
-    all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor*')
-    all_dirs.sort(key=lambda s: float(s.split('/')[3][11:]))
+    #all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor*')
+    all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_argmin/nu0factor*_'
+                         + exp.methods[0])
+    all_dirs.sort(key=lambda s: float(s.split('/')[6][9:].split('_')[0]))
      
     scores = np.zeros((len(all_dirs),len(exp.SCORE_NAMES),len(exp.methods),num_runs))
     lb = np.zeros((len(all_dirs), len(exp.methods), num_runs))
@@ -112,7 +114,8 @@ def plot_hyperparameter_results():
     for j in range(len(all_dirs)):
         print(all_dirs[j])
         for i in range(num_runs):
-            scores_ji = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
+            result_file = glob.glob(all_dirs[j] + '/run' + str(i) + '/result_started*')[-1]
+            scores_ji = np.genfromtxt(result_file, delimiter=',')
             if scores_ji.ndim == 1:
                 scores_ji = scores_ji[:, None]
             scores[j,:,:,i] = scores_ji[:len(exp.SCORE_NAMES), :]

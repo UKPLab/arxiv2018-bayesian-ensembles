@@ -36,6 +36,8 @@ from joblib import Parallel, delayed
 import warnings
 
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
+from lample_lstm_tagger.loader import tag_mapping
+
 
 class BAC(object):
     '''
@@ -465,16 +467,18 @@ class BAC(object):
 
                 # Note: we are not using this to check convergence -- it's only here to check correctness of algorithm
                 # Can be commented out to save computational costs.
-                lb = self.lowerbound()
-                print('Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb))
-                oldlb = lb
+                #lb = self.lowerbound()
+                #print('Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb))
+                #oldlb = lb
 
                 # increase iteration number
                 self.iter += 1
 
-        return self.q_t, self._most_probable_sequence(C, doc_start)[1]
-    
-    def _most_probable_sequence(self, C, doc_start):
+            seq = self._most_probable_sequence(C, doc_start, parallel)[1]
+
+        return self.q_t, seq
+
+    def _most_probable_sequence(self, C, doc_start, parallel):
         '''
         Use Viterbi decoding to ensure we make a valid prediction. There
         are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
@@ -482,17 +486,12 @@ class BAC(object):
         Taking the most probable labels results in an illegal sequence of [0, 1]. 
         Using most probable sequence would result in [0, 0].
         '''
-        
-        lnV = np.zeros((C.shape[0], self.L))
-        prev = np.zeros((C.shape[0], self.L), dtype=int)  # most likely previous states
-                
-        mask = C != 0
-        
+
         EA = self.nu / np.sum(self.nu, axis=1)[:, None]
         lnEA = np.zeros_like(EA)
         lnEA[EA != 0] = np.log(EA[EA != 0])
         lnEA[EA == 0] = -np.inf
-        
+
         EPi = self.worker_model._calc_EPi(self.alpha)
         lnEPi = np.zeros_like(EPi)
         lnEPi[EPi != 0] = np.log(EPi[EPi != 0])
@@ -502,58 +501,19 @@ class BAC(object):
         lnEPi_data = np.zeros_like(EPi_data)
         lnEPi_data[EPi_data != 0] = np.log(EPi_data[EPi_data != 0])
         lnEPi_data[EPi_data == 0] = -np.inf
-        #lnEPi_data = lnEPi_data[:, None]
 
-        for t in range(0, C.shape[0]):
-            for l in range(self.L):
-                if doc_start[t]:
+        # split into documents
+        docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+        C_data_by_doc = np.split(self.C_data, np.where(doc_start == 1)[0][1:], axis=0)
 
-                    lnPi_terms = self.worker_model._read_lnPi(lnEPi, l, C[t, :] - 1,
-                                            self.before_doc_idx, np.arange(self.K), self.nscores)
+        # docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+        # run forward pass for each doc concurrently
+        res = parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEA, lnEPi, lnEPi_data, self.L,
+                        self.nscores, self.K, self.worker_model, self.before_doc_idx) for d, doc in enumerate(docs))
+        # reformat results
+        pseq = np.concatenate(list(zip(*res))[0], axis=0)
+        seq = np.concatenate(list(zip(*res))[1], axis=0)
 
-                    lnPi_data_terms = 0
-                    for m in range(self.L):
-                        terms_startm = self.C_data[t, m] * self.worker_model._read_lnPi(lnEPi_data, l, m,
-                                                                         self.before_doc_idx, 0, self.nscores)
-                        if self.C_data[t, m] == 0:
-                            terms_startm = 0
-
-                        lnPi_data_terms += terms_startm
-
-                    likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
-
-                    lnV[t, l] = lnEA[self.before_doc_idx, l] + likelihood_current
-                else:
-                    lnPi_terms = self.worker_model._read_lnPi(lnEPi, l, C[t, :] - 1,
-                                            C[t - 1, :] - 1, np.arange(self.K), self.nscores)
-                    lnPi_data_terms = 0
-                    for m in range(self.L):
-                        for n in range(self.L):
-                            terms_mn = self.C_data[t, m] * self.C_data[t-1, n] * self.worker_model._read_lnPi(
-                                lnEPi_data, l, m, n, 0, self.nscores)
-                            terms_mn[:, (self.C_data[t, m] * self.C_data[t-1, n]) == 0] = 0
-                            lnPi_data_terms += terms_mn
-
-                    likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
-
-                    p_current = lnV[t - 1, :] + lnEA[:self.L, l] + likelihood_current
-                    lnV[t, l] = np.max(p_current)
-                    prev[t, l] = np.argmax(p_current, axis=0)
-            
-        # decode
-        seq = np.zeros(C.shape[0], dtype=int)
-        pseq = np.zeros((C.shape[0], self.L), dtype=float)
-        
-        for t in range(C.shape[0] - 1, -1, -1):
-            if t + 1 == C.shape[0] or doc_start[t + 1]:
-                seq[t] = np.argmax(lnV[t, :])
-                pseq[t, :] = lnV[t, :]
-            else:
-                seq[t] = prev[t + 1, seq[t + 1]]
-                pseq[t, :] = lnV[t, :] + np.max((pseq[t+1, :] - lnV[t, prev[t+1, :]] - lnEA[prev[t+1, :],
-                                np.arange(lnEA.shape[1])])[None, :] + lnEA[:lnV.shape[1]], axis=1)
-            pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
-        
         return pseq, seq
 
     def _converged(self):
@@ -743,6 +703,7 @@ class MACEWorker():
         psi_alpha_sum = np.zeros_like(alpha0)
         psi_alpha_sum[0, :] = psi(alpha0[0,:] + alpha0[1, :])
         psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
+
         psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 1))[:, None]
 
         lnPi = psi(alpha0) - psi_alpha_sum
@@ -873,8 +834,11 @@ class MACEWorker():
 
         if np.isscalar(C):
             N = 1
+            if C == -1:
+                ll_incorrect = 0
         else:
             N = C.shape[0]
+            ll_incorrect[C == -1] = 0
 
         if np.isscalar(Krange):
             K = 1
@@ -886,24 +850,29 @@ class MACEWorker():
             for m in range(nscores):
 
                 if np.isscalar(C) and C == m:
-                    idx = 1
+                    ll_correct[m] = lnPi[1, Krange]
+
                 elif np.isscalar(C) and C != m:
-                    idx = 0
+                    ll_correct[m] = - np.inf
+
                 else:
                     idx = (C == m).astype(int)
 
-                ll_correct[m] = lnPi[1, Krange] * idx
+                    ll_correct[m] = lnPi[1, Krange] * idx
+                    ll_correct[m, idx==0] = -np.inf
 
             ll_incorrect = np.tile(ll_incorrect, (nscores, 1, 1))
         else:
             if np.isscalar(C) and C == l:
-                idx = 1
+                ll_correct = lnPi[1, Krange]
+
             elif np.isscalar(C) and C != l:
-                idx = 0
+                ll_correct = - np.inf
+
             else:
                 idx = (C == l).astype(int)
-
-            ll_correct = lnPi[1, Krange] * idx
+                ll_correct = lnPi[1, Krange] * idx
+                ll_correct[idx == 0] = - np.inf
 
         p_correct = np.exp(ll_correct) / (np.exp(ll_correct) + np.exp(ll_incorrect))
         p_incorrect = np.exp(ll_incorrect) / (np.exp(ll_correct) + np.exp(ll_incorrect))
@@ -1003,9 +972,17 @@ class ConfusionMatrixWorker():
             if np.isscalar(C):
                 C = np.array([C])[:, None]
 
-            return lnPi[:, C, Krange]
+            result = lnPi[:, C, Krange]
+            result[:, C == -1] = 0
+        else:
+            result = lnPi[l, C, Krange]
+            if np.isscalar(C):
+                if C == -1:
+                    result = 0
+            else:
+                result[C == -1] = 0
 
-        return lnPi[l, C, Krange]
+        return result
 
     def _expand_alpha0(alpha0, alpha0_data, K, nscores):
         '''
@@ -1054,16 +1031,15 @@ class SequentialWorker():
         Update alpha.
         '''
         dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        prev_missing = np.concatenate((np.zeros((1, alpha0.shape[-1])), C[:-1, :] == 0), axis=0)
-        doc_start = doc_start[:, None] + prev_missing
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
                 counts = ((C == l + 1) * doc_start).T.dot(Tj).reshape(-1)
+                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0)).T.dot(Tj[1:]).reshape(-1) # add counts of where
+                # previous tokens are missing.
+
                 alpha[j, l, before_doc_idx, :] += counts
 
                 for m in range(dims[1]):
@@ -1085,11 +1061,11 @@ class SequentialWorker():
             for l in range(dims[1]):
 
 
-                counts = ((C[:,l]) * doc_start).T.dot(Tj).reshape(-1)
+                counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
                 alpha[j, l, before_doc_idx, :] += counts
 
                 for m in range(dims[1]):
-                    counts = (C[:, l][1:] * (1 - doc_start[1:]) * C[:, m][:-1]).T.dot(Tj[1:]).reshape(-1)
+                    counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
                     alpha[j, l, m, :] += counts
 
         return alpha
@@ -1102,8 +1078,19 @@ class SequentialWorker():
             if np.isscalar(C):
                 C = np.array([C])[:, None]
 
-            return lnPi[:, C, Cprev, Krange]
-        return lnPi[l, C, Cprev, Krange]
+            result = lnPi[:, C, Cprev, Krange]
+            result[:, C == -1] = 0
+
+        else:
+            result = lnPi[l, C, Cprev, Krange]
+
+            if np.isscalar(C):
+                if C == -1:
+                    result = 0
+            else:
+                result[C == -1] = 0
+
+        return result
 
     def _expand_alpha0(alpha0, alpha0_data, K, nscores):
         '''
@@ -1154,6 +1141,8 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
     flags[np.where(doc_start == 0)[0], before_doc_idx, :] = -np.inf
 
     Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, C[:-1, :], axis=0)
+    Cprev[Cprev == 0] = before_doc_idx
+
     C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[:-1, :], axis=0)
     lnR_prev = np.append(np.zeros((1, L)), lnR_[:-1, :], axis=0)
 
@@ -1346,6 +1335,67 @@ def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start
 
     return lnLambda
 
+def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, K, worker_model, before_doc_idx):
+    lnV = np.zeros((C.shape[0], L))
+    prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
+
+    mask = C != 0
+
+    t = 0
+    for l in range(L):
+        lnPi_terms = worker_model._read_lnPi(lnEPi, l, C[t, :] - 1, before_doc_idx, np.arange(K), nscores)
+
+        lnPi_data_terms = 0
+        for m in range(L):
+            terms_startm = C_data[t, m] * worker_model._read_lnPi(lnEPi_data, l, m, before_doc_idx, 0, nscores)
+            if C_data[t, m] == 0:
+                terms_startm = 0
+
+            lnPi_data_terms += terms_startm
+
+        likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
+
+        lnV[t, l] = lnEA[before_doc_idx, l] + likelihood_current
+
+    Cprev = np.copy(C)
+    Cprev[C == 0] = before_doc_idx
+
+    for t in range(1, C.shape[0]):
+        for l in range(L):
+            lnPi_terms = worker_model._read_lnPi(lnEPi, l, C[t, :] - 1, Cprev[t - 1, :] - 1, np.arange(K), nscores)
+            lnPi_data_terms = 0
+            for m in range(L):
+                for n in range(L):
+                    terms_mn = C_data[t, m] * C_data[t - 1, n] * worker_model._read_lnPi(lnEPi_data, l, m, n, 0, nscores)
+
+                    if C_data[t, m] * C_data[t - 1, n] == 0:
+                        terms_mn = 0
+
+                    lnPi_data_terms += terms_mn
+
+            likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
+
+            p_current = lnV[t - 1, :] + lnEA[:L, l] + likelihood_current
+            lnV[t, l] = np.max(p_current)
+            prev[t, l] = np.argmax(p_current, axis=0)
+
+    # decode
+    seq = np.zeros(C.shape[0], dtype=int)
+    pseq = np.zeros((C.shape[0], L), dtype=float)
+
+    t = C.shape[0] - 1
+
+    seq[t] = np.argmax(lnV[t, :])
+    pseq[t, :] = lnV[t, :]
+
+    for t in range(C.shape[0] - 2, -1, -1):
+        seq[t] = prev[t + 1, seq[t + 1]]
+        pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]] - lnEA[prev[t + 1, :],
+                                            np.arange(lnEA.shape[1])])[None, :] + lnEA[:lnV.shape[1]], axis=1)
+        pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
+
+    return pseq, seq
+
 # DATA MODEL -----------------------------------------------------------------------------------------------------------
 # Models the likelihood of the features given the class.
 
@@ -1383,6 +1433,13 @@ class LSTM:
         self.nclasses = nclasses
 
         self.dev_sentences = dev_data
+        if dev_data is not None:
+            self.all_sentences = np.concatenate((self.sentences, self.dev_sentences))
+        else:
+            self.all_sentences = self.sentences
+
+        self.tag_to_id = self.IOB_map
+        self.id_to_tag = self.IOB_label
 
         return alpha0_data
 
@@ -1407,25 +1464,22 @@ class LSTM:
             else:
                 dev_sentences = self.sentences[devidxs]
 
-            all_sentences = self.sentences
         else:
             dev_sentences = self.dev_sentences
             train_sentences = self.sentences
-            all_sentences = np.concatenate((train_sentences, dev_sentences))
 
         if self.train_data_objs is None:
-            self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(all_sentences, train_sentences,
-                                                           dev_sentences, self.IOB_map, self.nclasses, n_epochs=1)
+            self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.all_sentences, train_sentences,
+                                                           dev_sentences, self.IOB_map, self.nclasses, 1,
+                                                           self.tag_to_id, self.id_to_tag)
         else:
             freq_eval = np.inf # len(self.train_data_objs[0]) # don't think we really ever need to do this!
             lstm_wrapper.run_epoch(0, 0, freq_eval, self.train_data_objs[0], self.train_data_objs[1],
                                    self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4], 0, 1,
-                                   self.train_data_objs[5], self.train_data_objs[6],
-                                   self.train_data_objs[7], self.train_data_objs[8], self.lstm, -np.inf,
-                                   self.IOB_map, self.nclasses)
+                                   self.train_data_objs[5], self.train_data_objs[6], self.lstm, -np.inf, self.nclasses)
 
         # now make predictions for all sentences
-        _, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.IOB_map, self.nclasses)
+        _, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.nclasses, self.IOB_map)
 
         return probs
 

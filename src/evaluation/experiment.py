@@ -100,7 +100,12 @@ class Experiment(object):
 
         self.bac_nu0 = np.ones((nclasses + 1, nclasses)) * self.nu0_factor
         self.ibcc_nu0 = np.ones(nclasses) * self.nu0_factor
-            
+
+
+        # save results from methods here. If we use compound methods, we can reuse these results in different
+        # combinations of methods.
+        self.aggs = {}
+        self.probs = {}
             
     def read_config_file(self):
         
@@ -138,6 +143,45 @@ class Experiment(object):
         self.save_results = eval(parameters['save_results'].split('#')[0].strip())
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
+
+    def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, methods, annotations, ground_truth, doc_start,
+                    outputdir, text, anno_path=None):
+
+        self.methods = methods
+
+        scores = np.zeros((len(alpha0diag_propsals), len(alpha0factor_proposals), len(methods)))
+
+        best_scores = np.zeros((len(methods), 3))
+
+        for i, alpha0diag in enumerate(alpha0diag_propsals):
+
+            self.alpha0_diags = alpha0diag
+
+            for j, alpha0factor in enumerate(alpha0factor_proposals):
+
+                # reset saved data so that models are run again.
+                self.aggs = {}
+                self.probs = {}
+
+                outputdir_ij = outputdir + ('_%i_%i_' % (i, j)) + methods[0]
+
+                self.alpha0_factor = alpha0factor
+
+                all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
+                                                             anno_path)
+                scores[i, j, :] = all_scores[3, :] # 3 is F1score
+                print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
+
+                improved_scores = scores[i, j, :] > best_scores[:, 0]
+                best_scores[improved_scores, 0] = scores[i, j, improved_scores]
+                best_scores[improved_scores, 1] = i
+                best_scores[improved_scores, 2] = j
+
+                print('Saving scores for this setting to %s' % outputdir_ij + '/scores.csv')
+                np.savetxt(outputdir_ij + '/scores.csv', best_scores, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+
+        return best_scores
 
     def _run_best_worker(self, annos, gt, doc_start):
         # choose the best classifier by f1-score
@@ -236,14 +280,10 @@ class Experiment(object):
         elif self.bac_worker_model == 'mace':
             alpha0_factor = self.alpha0_factor / ((L-1)/2)
             self.bac_alpha0 = alpha0_factor * np.ones((2 + L))
-
-            self.bac_alpha0[0] = self.alpha0_factor * 2
-            self.bac_alpha0[1] = self.alpha0_factor + self.alpha0_diags  # diags are bias toward correct answer
+            self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
 
         elif self.bac_worker_model == 'acc':
             self.bac_alpha0 = self.alpha0_factor * np.ones((2))
-
-            self.bac_alpha0[0] += self.alpha0_factor
             self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
 
         num_types = (self.num_classes - 1) / 2
@@ -266,6 +306,7 @@ class Experiment(object):
 
         print('Debugging hack!!!!! BAC limited iterations')
         alg.max_iter = 4
+
         alg.verbose = True
         if self.opt_hyper:
             probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences)
@@ -362,7 +403,7 @@ class Experiment(object):
     def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None, anno_path=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
-                    return_model=False,
+                    return_model=False, rerun_all=False,
                     active_learning=False, AL_batch_fraction=0.1):
         '''
 
@@ -381,6 +422,10 @@ class Experiment(object):
         # annotations = annotations[goldidxs, :]
         # ground_truth = ground_truth[goldidxs]
         # doc_start = doc_start[goldidxs]
+
+        if outputdir is not None:
+            if not os.path.exists(outputdir):
+                os.mkdir(outputdir)
 
         print('Running experiment, Optimisation=%s' % (self.opt_hyper))
 
@@ -467,12 +512,26 @@ class Experiment(object):
 
                 elif method.split('_')[0] == 'bac':
                     if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
-                        agg, probs, model = self._run_bac(annotations, doc_start, text, method, use_LSTM=True)
+                        agg, probs, model = self._run_bac(annotations, doc_start, text, method, use_LSTM=True,
+                                      ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val)
                     else:
-                        agg, probs, model = self._run_bac(annotations, doc_start, text, method)
+                        methodlabel = method.split('_')[0] + '_' + method.split('_')[1]
+                        if methodlabel not in self.aggs or rerun_all:
+                            agg, probs, model = self._run_bac(annotations, doc_start, text, method)
+                            self.aggs[methodlabel] = agg
+                            self.probs[methodlabel] = probs
+                        else:
+                            agg = self.aggs[methodlabel]
+                            probs = self.probs[methodlabel]
 
                 elif 'HMM_crowd' in method:
-                    agg, probs = self._run_hmmcrowd(annotations, text, doc_start, outputdir)
+                    if 'HMM_crowd' not in self.aggs or rerun_all:
+                        agg, probs = self._run_hmmcrowd(annotations, text, doc_start, outputdir)
+                        self.aggs['HMM_crowd'] = agg
+                        self.probs['HMM_crowd'] = probs
+                    else:
+                        agg = self.aggs['HMM_crowd']
+                        probs = self.probs['HMM_crowd']
 
                 if '_then_LSTM' in method:
                     '''
@@ -494,10 +553,16 @@ class Experiment(object):
                         train_sentences, dev_sentences = lstm_wrapper.split_train_to_dev(labelled_sentences)
                         all_sentences = labelled_sentences
                     else:
+                        print(ground_truth_val.shape)
+                        ground_truth_val = ground_truth_val[ground_truth_val != -1]
+                        print(ground_truth_val.shape)
+
                         train_sentences = labelled_sentences
                         dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
                                                                             doc_start_val, ground_truth_val)
-                        all_sentences = np.concatenate((train_sentences, dev_sentences))
+                        print(train_sentences.ndim)
+                        print(dev_sentences.ndim)
+                        all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
                     lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
                                                               IOB_map, self.num_classes)
@@ -535,9 +600,6 @@ class Experiment(object):
                 file_identifier = timestamp + ('-Nseen%i' % Nseen)
 
                 if outputdir is not None:
-                    if not os.path.exists(outputdir):
-                        os.mkdir(outputdir)
-
                     np.savetxt(outputdir + 'result_%s.csv' % file_identifier, scores_allmethods, fmt='%s', delimiter=',',
                                header=str(self.methods).strip('[]'))
                     np.savetxt(outputdir + 'result_std_%s.csv' % file_identifier, score_std_allmethods, fmt='%s',
@@ -579,9 +641,9 @@ class Experiment(object):
                        preds_allmethods_nocrowd, probs_allmethods_nocrowd
         else:
             if return_model:
-                return scores_allmethods, preds_allmethods, probs_allmethods, model
+                return scores_allmethods, preds_allmethods, probs_allmethods, model, None, None, None
             else:
-                return scores_allmethods, preds_allmethods, probs_allmethods
+                return scores_allmethods, preds_allmethods, probs_allmethods, None, None, None
 
     def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir):
 
@@ -717,7 +779,7 @@ class Experiment(object):
             #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
         print(conf)
 
-        Ndocs = np.sum(doc_start)
+        Ndocs = int(np.sum(doc_start))
         if Ndocs < 200:
 
             print('Using bootstrapping with small test set size')
@@ -741,6 +803,7 @@ class Experiment(object):
 
                     if nsample_attempts > Ndocs and not_sampled:
                         not_sampled = False
+                    nsample_attempts += 1
 
                 if nsample_attempts <= Ndocs:
                     resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],
@@ -748,7 +811,7 @@ class Experiment(object):
                                                                        probs[sampleidxs])
                 else: # can't find enough valid samples for the bootstrap, let's just use what we got so far.
                     resample_results = resample_results[:, :i]
-                    nbootstraps = i
+                    break
 
             result[:6, 0] = np.mean(resample_results, axis=1)
             std_result = np.std(resample_results, axis=1)

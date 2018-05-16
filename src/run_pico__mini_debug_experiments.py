@@ -8,52 +8,30 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
+output_dir = '../../data/bayesian_annotator_combination/output/bio_task1_mini/'
 
 gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
+
+# debug with subset -------
+s = 1000
+gt = gt[:s]
+annos = annos[:s]
+doc_start = doc_start[:s]
+text = text[:s]
+gt_dev = gt_dev[:s]
+doc_start_dev = doc_start_dev[:s]
+text_dev = text_dev[:s]
+# -------------------------
 
 exp = Experiment(None, 3, annos.shape[1], None)
 
 exp.save_results = True
 exp.opt_hyper = False #True
 
-diags = [1, 5, 10, 50]
-factors = [1, 4, 9, 16, 25]
-methods_to_tune = ['ibcc', 'bac_acc', 'bac_mace', 'bac_ibcc', 'bac_seq']
-
-best_bac_wm = 'unknown' # choose model with best score for the different BAC worker models
-best_bac_wm_score = -np.inf
-
-for m, method in enumerate(methods_to_tune):
-    print('TUNING %s' % method)
-
-    best_scores = exp.tune_alpha0(diags, factors, [method], annos, gt_dev, doc_start, output_dir, text)
-    best_idxs = np.unravel_index(np.argmax(best_scores), best_scores.shape)
-    exp.alpha0_diags = diags[best_idxs[0]]
-    exp.alpha0_factor = factors[best_idxs[1]]
-
-    print('Best values: %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
-
-    # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-    exp.methods = [method]
-    exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
-
-    best_score = np.max(best_scores)
-    if 'bac' in method and best_score > best_bac_wm_score:
-        best_bac_wm = method
-        best_bac_wm_score = best_score
-        best_diags = exp.alpha0_diags
-        best_factor = exp.alpha0_factor
-
-print('best BAC method = %s' % best_bac_wm)
-
 # run all the methods that don't require tuning here
-exp.methods =  ['majority', 'best', 'worst', 'HMM_crowd', 'HMM_crowd_then_LSTM',
-                best_bac_wm + '_then_LSTM', best_bac_wm + '_integrateLSTM']
-
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
+exp.methods =  [#'majority', 'best', 'worst', 'ibcc', 'bac_acc', 'bac_mace', 'bac_ibcc', 'bac_seq',
+                #'HMM_crowd', 'HMM_crowd_then_LSTM', 'bac_ibcc_then_LSTM',
+                'bac_ibcc_integrateLSTM']
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,

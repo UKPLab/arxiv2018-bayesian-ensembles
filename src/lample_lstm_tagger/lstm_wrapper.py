@@ -3,7 +3,7 @@ import time
 from collections import OrderedDict
 import itertools
 
-from sklearn.metrics import log_loss
+import sklearn.metrics as skm
 
 from lample_lstm_tagger.utils import create_input
 from lample_lstm_tagger.utils import models_path, evaluate, eval_script, eval_temp
@@ -21,7 +21,7 @@ def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
     labels = labels.flatten()
 
     IOB_label = {1: 'O', 0: 'I-0', -1: 0}
-    IOB_map = {'O': 1, 'I-0': 0}
+    IOB_map = {'O': 1, 'I-0': 0, 0:-1}
 
     label_values = np.unique(labels) if nclasses==0 else np.arange(nclasses, dtype=int)
 
@@ -29,7 +29,7 @@ def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
         if val <= 1:
             continue
 
-        IOB_label[val] = 'I-' if np.mod(val, 2) == 1 else 'B-'
+        IOB_label[val] = 'I' if np.mod(val, 2) == 1 else 'B'
         IOB_label[val] = IOB_label[val] + '-%i' % ((val - 3) / 2)
 
         IOB_map[IOB_label[val]] = val
@@ -45,7 +45,7 @@ def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
         else:
             sentence_list.append([text[i][0], IOB_label[label]])
 
-    sentences_list = np.array(sentences_list)
+    sentences_list = np.array(sentences_list).flatten()
 
     return sentences_list, IOB_map, IOB_label
 
@@ -64,7 +64,8 @@ def split_train_to_dev(gold_sentences):
     return train_sentences, dev_sentences
 
 
-def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses, n_epochs=100):
+def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses, n_epochs=100,
+               tag_to_id=None, id_to_tag=None):
 
     # parameters
     parameters = OrderedDict()
@@ -121,7 +122,12 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
 
     # Create a dictionary and a mapping for words / POS tags / tags
     dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
-    dico_tags, tag_to_id, id_to_tag = tag_mapping(all_sentences)
+
+    if tag_to_id is None:
+        _, tag_to_id, id_to_tag = tag_mapping(all_sentences)
+
+    print(tag_to_id.keys())
+    print(id_to_tag.keys())
 
     # Index data
     train_data = prepare_dataset(
@@ -149,23 +155,20 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
 
     niter_no_imprv = 0 # for early stopping
 
-    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_data, id_to_tag,
-                                          dico_tags]
+    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_data, id_to_tag]
 
     for epoch in range(n_epochs):
         count, niter_no_imprv, best_dev = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
-                                          niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_data, id_to_tag,
-                                          dico_tags, model, best_dev, IOB_map, nclasses)
+                                          niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_data, model, best_dev, nclasses)
         #lr *= lr_decay # can't find an easy way to taper the learning rate
 
     # reload the best model as saved in run_epoch
-    model.reload()
+    # model.reload()
 
     return model, f_eval, train_data_objs
 
 def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              max_niter_no_imprv, dev_sentences, dev_data, id_to_tag, dico_tags, model, best_dev,
-              IOB_map, num_classes):
+              max_niter_no_imprv, dev_sentences, dev_data, model, best_dev, num_classes):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
@@ -185,7 +188,7 @@ def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_tra
 
             # maximise log likelihood of dev data
             agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
-            dev_score = - log_loss(dev_data['tags'], probs)
+            dev_score = skm.f1_score(dev_data['tags'], agg, average='macro')
 
             print("Score on dev: %.5f" % dev_score)
             if dev_score > best_dev:
@@ -244,6 +247,8 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
 
             if IOB_map is not None:
                 val = IOB_map[val]
+            else:
+                val = tag_to_id[val]
 
             probs_sen[i, val] = 1
             agg.append(val)
