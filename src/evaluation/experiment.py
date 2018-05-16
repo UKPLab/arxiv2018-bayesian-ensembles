@@ -303,9 +303,7 @@ class Experiment(object):
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=bac.LSTM if use_LSTM else None)
-
-        print('Debugging hack!!!!! BAC limited iterations')
-        alg.max_iter = 4
+        alg.max_iter = 20
 
         alg.verbose = True
         if self.opt_hyper:
