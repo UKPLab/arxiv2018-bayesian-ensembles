@@ -17,12 +17,24 @@ exp = Experiment(None, 3, annos.shape[1], None)
 exp.save_results = True
 exp.opt_hyper = False #True
 
+
+exp.alpha0_diags = 100
+exp.alpha0_factor = 1
+
+# run all the methods that don't require tuning here
+exp.methods =  ['ibcc']
+
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(annos, gt, doc_start, output_dir, text,
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+
+
 # diags = [1, 10, 100]
 # factors = [1, 16, 36]
 diags = [1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [1, 4, 9, 36]
 
-methods_to_tune = ['bac_acc', 'bac_ibcc', 'bac_seq', 'bac_mace'] # 'ibcc',
+methods_to_tune = ['bac_ibcc', 'bac_seq', 'bac_mace'] # 'ibcc', 'bac_acc',
 
 best_bac_wm = 'bac_ibcc' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
