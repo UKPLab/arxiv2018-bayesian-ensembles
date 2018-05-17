@@ -651,7 +651,7 @@ class Experiment(object):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
-        overwrite = False
+        overwrite = True#False
 
         if not os.path.exists(filename) or overwrite:
             if text is not None:

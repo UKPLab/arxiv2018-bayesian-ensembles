@@ -722,7 +722,7 @@ class MACEWorker():
         psi_alpha_sum[0, :] = psi(alpha0[0,:] + alpha0[1, :])
         psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
 
-        psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 0))[:, None]
+        psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 0))[None, :]
 
         lnPi = psi(alpha0) - psi_alpha_sum
         return alpha0, lnPi
