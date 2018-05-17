@@ -722,7 +722,7 @@ class MACEWorker():
         psi_alpha_sum[0, :] = psi(alpha0[0,:] + alpha0[1, :])
         psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
 
-        psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 1))[:, None]
+        psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 0))[:, None]
 
         lnPi = psi(alpha0) - psi_alpha_sum
         return alpha0, lnPi
@@ -931,7 +931,14 @@ class MACEWorker():
         return alpha0, alpha0_data
 
     def _calc_EPi(alpha):
-        return alpha / np.sum(alpha, axis=0)[None, :]
+
+        pi = np.zeros_like(alpha)
+
+        pi[0] = alpha[0] / (alpha[0] + alpha[1])
+        pi[1] = alpha[1] / (alpha[0] + alpha[1])
+        pi[2:] = alpha[2:] / np.sum(alpha[2:], axis=0)[None, :]
+
+        return pi
 
 # Worker model: Bayesianized Dawid and Skene confusion matrix ----------------------------------------------------------
 
@@ -1465,6 +1472,11 @@ class LSTM:
         self.dev_sentences = dev_data
         if dev_data is not None:
             self.all_sentences = np.concatenate((self.sentences, self.dev_sentences))
+            dev_gold = []
+            for sen in self.dev_sentences:
+                for tok in sen:
+                    dev_gold.append(tok[1])
+            self.dev_labels = dev_gold
         else:
             self.all_sentences = self.sentences
 
@@ -1477,9 +1489,13 @@ class LSTM:
         labels = np.argmax(Et, axis=1)
 
         l = 0
+        labels_by_sen = []
         for s, sen in enumerate(self.sentences):
+            sen_labels = []
+            labels_by_sen.append(sen_labels)
             for t, tok in enumerate(sen):
                 self.sentences[s][t][1] = self.IOB_label[labels[l]]
+                sen_labels.append(self.IOB_label[labels[l]])
                 l += 1
 
         # select a random subset of data to use for validation
@@ -1494,13 +1510,17 @@ class LSTM:
             else:
                 dev_sentences = self.sentences[devidxs]
 
+            dev_labels = np.array(labels_by_sen[devidxs]).flatten()
+
         else:
             dev_sentences = self.dev_sentences
             train_sentences = self.sentences
 
+            dev_labels = self.dev_labels
+
         if self.train_data_objs is None:
             self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.all_sentences, train_sentences,
-                                                           dev_sentences, self.IOB_map, self.nclasses, 1,
+                                                           dev_sentences, dev_labels, self.IOB_map, self.nclasses, 1,
                                                            self.tag_to_id, self.id_to_tag)
         else:
             freq_eval = np.inf # len(self.train_data_objs[0]) # don't think we really ever need to do this!

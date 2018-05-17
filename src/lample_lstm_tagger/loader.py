@@ -130,7 +130,7 @@ def prepare_sentence(str_words, word_to_id, char_to_id, lower=False):
     }
 
 
-def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
+def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False, include_tags=True):
     """
     Prepare the dataset. Return a list of lists of dictionaries containing:
         - word indexes
@@ -156,18 +156,27 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
         caps = [cap_feature(w) for w in str_words]
         # print('done caps')
 
-        tags = [tag_to_id[w[-1]] for w in s]
+        if include_tags:
+            tags = [tag_to_id[w[-1]] for w in s]
         # print('done tags')
 
-        data.append({
-            'str_words': str_words,
-            'words': words,
-            'chars': chars,
-            'caps': caps,
-            'tags': tags,
-        })
+            data.append({
+                'str_words': str_words,
+                'words': words,
+                'chars': chars,
+                'caps': caps,
+                'tags': tags,
+            })
 
-        tag_data.append(tags)
+            tag_data.append(tags)
+        else:
+            data.append({
+                'str_words': str_words,
+                'words': words,
+                'chars': chars,
+                'caps': caps,
+            })
+
     return data, tag_data
 
 

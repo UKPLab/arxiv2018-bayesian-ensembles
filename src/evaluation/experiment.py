@@ -552,7 +552,7 @@ class Experiment(object):
                     if ground_truth_val is None or doc_start_val is None or text_val is None:
                         # If validation set is unavailable, select a random subset of combined data to use for validation
                         # Simulates a scenario where all we have available are crowd labels.
-                        train_sentences, dev_sentences = lstm_wrapper.split_train_to_dev(labelled_sentences)
+                        train_sentences, dev_sentences, ground_truth_val = lstm_wrapper.split_train_to_dev(labelled_sentences)
                         all_sentences = labelled_sentences
                     else:
                         print(ground_truth_val.shape)
@@ -567,7 +567,7 @@ class Experiment(object):
                         all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
                     lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                                              IOB_map, self.num_classes)
+                                                              ground_truth_val, IOB_map, self.num_classes)
 
                     # now make predictions for all sentences
                     agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
@@ -651,7 +651,7 @@ class Experiment(object):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
-        overwrite = True
+        overwrite = False
 
         if not os.path.exists(filename) or overwrite:
             if text is not None:

@@ -57,6 +57,7 @@ class HMM:
 
         for t in range(1, l, 1):  # time
             ob = a[t]
+
             for i in range(self.n):  # current state
                 for j in range(self.n):  # previous state
                     # todo: change to log scale
@@ -67,6 +68,14 @@ class HMM:
                     if p > c[t][i]:
                         c[t][i] = p
                         b[t][i] = j
+
+            # normalise otherwise p ends up as zeros with long sequences
+            c_t_total = 0
+            for i in range(self.n):
+                c_t_total += c[t][i]
+
+            for i in range(self.n):
+                c[t][i] /= c_t_total
 
         res = np.zeros((l,))
 

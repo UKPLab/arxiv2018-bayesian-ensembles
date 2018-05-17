@@ -16,7 +16,7 @@ import numpy as np
 
 
 def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
-    sentences_list = []
+    sentences_list = np.empty(int(np.sum(doc_start[:nannotations])), dtype=object)
 
     labels = labels.flatten()
 
@@ -34,18 +34,19 @@ def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
 
         IOB_map[IOB_label[val]] = val
 
+    docidx = -1
     for i in range(nannotations):
 
         label = labels[i]
 
         if doc_start[i]:
+            docidx += 1
+
             sentence_list = []
             sentence_list.append([text[i][0], IOB_label[label]])
-            sentences_list.append(sentence_list)
+            sentences_list[docidx] = sentence_list
         else:
             sentence_list.append([text[i][0], IOB_label[label]])
-
-    sentences_list = np.array(sentences_list).flatten()
 
     return sentences_list, IOB_map, IOB_label
 
@@ -61,10 +62,55 @@ def split_train_to_dev(gold_sentences):
     else:
         dev_sentences = gold_sentences[devidxs]
 
-    return train_sentences, dev_sentences
+    dev_gold = []
+    for sen in dev_sentences:
+        for tok in sen:
+            dev_gold.append(tok[1])
+
+    return train_sentences, dev_sentences, dev_gold
 
 
-def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses, n_epochs=100,
+def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
+              max_niter_no_imprv, dev_sentences, dev_tags, model, best_dev, num_classes):
+    epoch_costs = []
+    print("Starting epoch %i..." % epoch)
+
+    for i, index in enumerate(np.random.permutation(len(train_data))):
+        # loop over random permutations of the training data
+        count += 1
+
+        input = create_input(train_data[index], parameters, True, singletons)
+        new_cost = f_train(*input)
+        epoch_costs.append(new_cost)
+
+        if i % 50 == 0 and i > 0 == 0:
+            print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
+        if count % freq_eval == 0:
+            # dev_score = evaluate(parameters, f_eval, dev_sentences,
+            #                      dev_data, id_to_tag, dico_tags)
+
+            # maximise log likelihood of dev data
+            agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
+
+            dev_score = skm.f1_score(dev_tags, agg, average='macro')
+
+            print("Score on dev: %.5f" % dev_score)
+            if dev_score > best_dev:
+                best_dev = dev_score
+                print("New best score on dev.")
+                print("Saving model to disk...")
+                model.save()
+            else:
+                niter_no_imprv += 1
+                if niter_no_imprv >= max_niter_no_imprv:
+                    print("- early stopping %i epochs without improvement" % niter_no_imprv)
+                    break
+
+    print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
+
+    return count, niter_no_imprv, best_dev
+
+def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, nclasses, n_epochs=100,
                tag_to_id=None, id_to_tag=None):
 
     # parameters
@@ -136,6 +182,10 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
     dev_data, dev_tags = prepare_dataset(
         dev_sentences, word_to_id, char_to_id, tag_to_id, lower
     )
+    if dev_labels is None:
+        dev_tags = np.array(dev_tags).flatten()
+    else:
+        dev_tags = dev_labels
 
     # Save the mappings to disk
     print('Saving the mappings to disk...')
@@ -167,46 +217,6 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
 
     return model, f_eval, train_data_objs
 
-def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              max_niter_no_imprv, dev_sentences, dev_tags, model, best_dev, num_classes):
-    epoch_costs = []
-    print("Starting epoch %i..." % epoch)
-
-    for i, index in enumerate(np.random.permutation(len(train_data))):
-        # loop over random permutations of the training data
-        count += 1
-
-        input = create_input(train_data[index], parameters, True, singletons)
-        new_cost = f_train(*input)
-        epoch_costs.append(new_cost)
-
-        if i % 50 == 0 and i > 0 == 0:
-            print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
-        if count % freq_eval == 0:
-            # dev_score = evaluate(parameters, f_eval, dev_sentences,
-            #                      dev_data, id_to_tag, dico_tags)
-
-            # maximise log likelihood of dev data
-            agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
-
-            dev_score = skm.f1_score(dev_tags, agg, average='macro')
-
-            print("Score on dev: %.5f" % dev_score)
-            if dev_score > best_dev:
-                best_dev = dev_score
-                print("New best score on dev.")
-                print("Saving model to disk...")
-                model.save()
-            else:
-                niter_no_imprv += 1
-                if niter_no_imprv >= max_niter_no_imprv:
-                    print("- early stopping %i epochs without improvement" % niter_no_imprv)
-                    break
-
-    print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
-
-    return count, niter_no_imprv, best_dev
-
 def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
     # Load existing model
     parameters = model.parameters
@@ -219,7 +229,7 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
     ]
 
     test_data, _ = prepare_dataset(
-        test_sentences, word_to_id, char_to_id, tag_to_id, lower
+        test_sentences, word_to_id, char_to_id, tag_to_id, lower, include_tags=False
     )
 
     start = time.time()
@@ -231,7 +241,6 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
     probs = np.empty((0, num_classes))  # np.zeros((agg.shape[0], self.num_classes))
 
     for test_data_sen in test_data:
-
         input = create_input(test_data_sen, parameters, False)
 
         # Decoding
@@ -250,6 +259,8 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
                 val = IOB_map[val]
             else:
                 val = tag_to_id[val]
+
+            val = int(val)
 
             probs_sen[i, val] = 1
             agg.append(val)

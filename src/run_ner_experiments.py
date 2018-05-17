@@ -13,15 +13,15 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
     load_data.load_ner_data(False)
 
 # debug with subset -------
-# s = 100
-# idxs = np.argwhere(gt!=-1)[:s, 0]
-# gt = gt[idxs]
-# annos = annos[idxs]
-# doc_start = doc_start[idxs]
-# text = text[idxs]
-# gt_task1_val = gt_task1_val[idxs]
-
+s = 100
+idxs = np.argwhere(gt!=-1)[:s, 0]
+gt = gt[idxs]
+annos = annos[idxs]
+doc_start = doc_start[idxs]
+text = text[idxs]
+gt_task1_val = gt_task1_val[idxs]
 # -------------------------
+
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1)
 exp.save_results = True
 exp.opt_hyper = False#True
@@ -97,14 +97,15 @@ exp.alpha0_diags = 50 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
-exp.methods =  ['majority', 'best', 'worst',
-                'HMM_crowd', 'HMM_crowd_then_LSTM',
-                best_bac_wm + '_then_LSTM', best_bac_wm + '_integrateLSTM'
+exp.methods =  [#'majority', 'best', 'worst',
+                'HMM_crowd'#, 'HMM_crowd_then_LSTM',
+                #best_bac_wm + '_then_LSTM', best_bac_wm + '_integrateLSTM'
                 #'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
                                        text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
+
 # for now we are just running task 1. Then we choose which version of BAC to run for task 2 with LSTM, change the
 # methods and uncomment the code below.
 #, gt_nocrowd, doc_start_nocrowd, text_nocrowd)
