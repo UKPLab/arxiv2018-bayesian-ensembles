@@ -27,12 +27,10 @@ Created on Jan 28, 2017
 
 @author: Melvin Laux
 '''
-import time
-
 import numpy as np
 from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count, effective_n_jobs
 import warnings
 
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
@@ -423,11 +421,14 @@ class BAC(object):
         self.C = C
 
         self.C_data = np.zeros((self.C.shape[0], self.nscores)) + (1.0 / self.nscores)
-        
+
+        print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
+
         # main inference loop
         with Parallel(n_jobs=-1) as parallel:
+
             while not self._converged():
-            
+
                 # print status if desired
                 if self.verbose:
                     print("BAC iteration %i in progress" % self.iter)
@@ -439,31 +440,44 @@ class BAC(object):
                         self.lnPi_data, self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
                                                    self.worker_model, self.before_doc_idx)
 
+                if self.verbose:
+                    print("BAC iteration %i: completed forward pass" % self.iter)
+
                 lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
                         self.lnPi_data, doc_start, self.nscores, self.worker_model, self.before_doc_idx)
+                if self.verbose:
+                    print("BAC iteration %i: completed backward pass" % self.iter)
 
                 # update q_t and q_t_joint
                 self.q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
                               self.C_data, doc_start, self.nscores, self.worker_model, self.before_doc_idx)
+                if self.verbose:
+                    print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
                 self.q_t = np.sum(self.q_t_joint, axis=1)
 
                 # update E_lnA
                 self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
-
+                if self.verbose:
+                    print("BAC iteration %i: updated transition matrix" % self.iter)
 
                 # Update the data model by retraining the integrated task classifier and obtaining its predictions
                 self.C_data = self.data_model.predict(self.q_t)
+                if self.verbose:
+                    print("BAC iteration %i: updated feature-based predictions" % self.iter)
 
                 self.alpha_data = self.worker_model._post_alpha_data(self.q_t, self.C_data, self.alpha0_data,
                                     self.alpha_data, doc_start, self.nscores, self.before_doc_idx)
-
                 self.lnPi_data = self.worker_model._calc_q_pi(self.alpha_data)
+                if self.verbose:
+                    print("BAC iteration %i: updated model for feature-based predictor" % self.iter)
 
                 # update E_lnpi
                 self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
                                                            self.nscores, self.before_doc_idx)
                 self.lnPi = self.worker_model._calc_q_pi(self.alpha)
+                if self.verbose:
+                    print("BAC iteration %i: updated worker models" % self.iter)
 
                 # Note: we are not using this to check convergence -- it's only here to check correctness of algorithm
                 # Can be commented out to save computational costs.
@@ -474,7 +488,11 @@ class BAC(object):
                 # increase iteration number
                 self.iter += 1
 
+            if self.verbose:
+                print("BAC iteration %i: computing most probable sequence..." % self.iter)
             seq = self._most_probable_sequence(C, doc_start, parallel)[1]
+        if self.verbose:
+            print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
         return self.q_t, seq
 
@@ -1148,6 +1166,8 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
 
     for l in range(L):
 
+        # print('_expec_joint_t_quick: For class %i: adding likelihoods to Lambdas for doc_starts' % l)
+
         # for the document starts
         #lnPi[l, C-1, before_doc_idx, np.arange(K)[None, :]]
 
@@ -1160,20 +1180,27 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
 
         lnS[:, before_doc_idx, l] += np.sum(lnPi_terms * (C!=0), 1) + lnPi_data_terms + lnA[before_doc_idx, l]
 
+        # print('_expec_joint_t_quick: For class %i: adding likelihoods to Lambdas for all data points ' % l)
+        lnPi_terms = worker_model._read_lnPi(lnPi, l, C-1, Cprev-1, np.arange(K)[None, :], nscores)
+        lnPi_data_terms = np.zeros(C_data.shape[0], dtype=float)
+
+        for m in range(L):
+
+            weights = C_data[:, m:m+1] * C_data_prev
+
+            for n in range(L):
+
+                lnPi_data_terms_mn = weights[:, n] * worker_model._read_lnPi(lnPi_data, l, m, n, 0, nscores)
+                lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
+                lnPi_data_terms += lnPi_data_terms_mn
+
+        loglikelihood_l = (np.sum(lnPi_terms * (C != 0), 1) + lnPi_data_terms)[:, None]
+
         # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
-        for l_prev in range(L):
+        # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
+        lnS[:, :L, l] += loglikelihood_l + lnA[:L, l][None, :] + lnR_prev
 
-            lnPi_terms = worker_model._read_lnPi(lnPi, l, C-1, Cprev-1, np.arange(K)[None, :], nscores)
-            lnPi_data_terms = np.zeros(C_data.shape[0], dtype=float)
-            for m in range(L):
-                for n in range(L):
-                    weights = C_data[:, m] * C_data_prev[:, n]
-                    lnPi_data_terms_mn = weights * worker_model._read_lnPi(lnPi_data, l, m, n, 0, nscores)
-                    lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
-                    lnPi_data_terms += lnPi_data_terms_mn
-
-
-            lnS[:, l_prev, l] += np.sum(lnPi_terms * (C!=0), 1) + lnPi_data_terms + lnA[l_prev, l] + lnR_prev[:, l_prev]
+    # print('_expec_joint_t_quick: Normalising...')
 
     # normalise and return
     lnS = lnS + flags
@@ -1251,10 +1278,14 @@ def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, 
 
     # run forward pass for each doc concurrently
     # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
-    #res = parallel(delayed(_doc_forward_pass)(doc, lnA, lnPi, initProbs, nscores, before_doc_idx, skip) for doc in docs)
-    res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnA, lnPi, lnPi_data, initProbs, nscores, worker_model,
-                             before_doc_idx, skip)
-           for d, C_doc in enumerate(C_by_doc)]
+    res = parallel(delayed(_doc_forward_pass)(C_doc, Cdata_by_doc[d], lnA, lnPi, lnPi_data, initProbs,
+                                              nscores, worker_model, before_doc_idx, skip)
+                   for d, C_doc in enumerate(C_by_doc))
+
+    #res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnA, lnPi, lnPi_data, initProbs, nscores, worker_model,
+    #                         before_doc_idx, skip)
+    #       for d, C_doc in enumerate(C_by_doc)]
+
     # reformat results
     lnR_ = np.concatenate(res, axis=0)
     
@@ -1360,22 +1391,21 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
     Cprev = np.copy(C)
     Cprev[C == 0] = before_doc_idx
 
+    lnPi_terms = worker_model._read_lnPi(lnEPi, None, C[1:, :] - 1, Cprev[:-1, :] - 1, np.arange(K), nscores)
+    lnPi_data_terms = 0
+    for m in range(L):
+        for n in range(L):
+            weights = (C_data[1:, m] * C_data[:-1, n])[None, :]
+            terms_mn = weights * worker_model._read_lnPi(lnEPi_data, None, m, n, 0, nscores)[:, :, 0]
+            terms_mn[:, weights[0] == 0] = 0
+
+            lnPi_data_terms += terms_mn
+
+    likelihood_current = np.sum(mask[1:, :][None, :, :] * lnPi_terms, axis=2) + lnPi_data_terms
+
     for t in range(1, C.shape[0]):
         for l in range(L):
-            lnPi_terms = worker_model._read_lnPi(lnEPi, l, C[t, :] - 1, Cprev[t - 1, :] - 1, np.arange(K), nscores)
-            lnPi_data_terms = 0
-            for m in range(L):
-                for n in range(L):
-                    terms_mn = C_data[t, m] * C_data[t - 1, n] * worker_model._read_lnPi(lnEPi_data, l, m, n, 0, nscores)
-
-                    if C_data[t, m] * C_data[t - 1, n] == 0:
-                        terms_mn = 0
-
-                    lnPi_data_terms += terms_mn
-
-            likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
-
-            p_current = lnV[t - 1, :] + lnEA[:L, l] + likelihood_current
+            p_current = lnV[t - 1, :] + lnEA[:L, l] + likelihood_current[l, t-1]
             lnV[t, l] = np.max(p_current)
             prev[t, l] = np.argmax(p_current, axis=0)
 

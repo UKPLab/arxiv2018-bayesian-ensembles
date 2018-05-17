@@ -5,6 +5,7 @@ Created on Sep 7, 2017
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 import glob
 from evaluation import metrics, experiment
@@ -124,9 +125,40 @@ def plot_hyperparameter_results():
                  
     exp.plot_results(scores, False, True, '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/plots/')
     exp.plot_results(lb[:, None, :, :], False, True, '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/plots/', ['ELBO'])
-            
+
+
+def plot_tuning_results():
+
+    diags = [1, 5, 10, 50]
+    factors = [1, 4, 9, 16, 25]
+    methods_to_tune = ['ibcc'] # 'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq',
+    output_dir = '../../data/bayesian_annotator_combination/output/ner/'
+
+    # all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor*')
+
+    for method in methods_to_tune:
+
+        plt.figure()
+        scores = np.zeros((len(diags), len(factors)))
+
+        for i, diag in enumerate(diags):
+            for j, fac in enumerate(factors):
+
+                dirname = output_dir + '_%i_%i_%s' % (i, j, method)
+                scores_ijm = np.genfromtxt(dirname + '/scores.csv', skip_header=1, delimiter=',')
+
+                scores[i, j] = scores_ijm[0]
+
+            plt.plot(factors, scores[i], label='%i' % diag)
+
+        plt.xlabel('factors')
+        plt.ylabel('f1 scores')
+        plt.legend(loc='best')
+        plt.show()
+
 if __name__ == '__main__':
-    plot_hyperparameter_results()
+    plot_tuning_results()
+    #plot_hyperparameter_results()
 #    plot_crowdsourcing_results()    
     #load_results('./config/acc_experiment.ini')
     #load_results('./config/class_bias_experiment.ini')

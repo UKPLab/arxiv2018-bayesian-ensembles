@@ -354,26 +354,27 @@ def load_biomedical_data(regen_data_files):
 
     print('Creating dev/test split...')
 
-    np.random.seed(2348945)
+    #np.random.seed(2348945)
 
     # since there is no separate validation set, we split the test set
-    ndocs = np.sum(doc_start)
-    testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+    ndocs = np.sum(doc_start & (gt != -1))
+    #testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+    ntestdocs = int(np.floor(ndocs * 0.5))
+    docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
+    # testidxs = np.in1d(docidxs, testdocs)
+    ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
 
-    docidxs = np.cumsum(doc_start) # gets us the doc ids
-    testidxs = np.in1d(docidxs, testdocs)
-
-    devidxs = np.ones(len(gt), dtype=bool)
-    devidxs[testidxs] = False
+    # devidxs = np.ones(len(gt), dtype=bool)
+    # devidxs[testidxs] = False
 
     gt_test = np.copy(gt)
-    gt_test[devidxs] = -1
+    gt_test[ntestidxs:] = -1
 
-    gt_dev = np.zeros_like(gt) - 1#gt[devidxs]
-    gt_dev[devidxs] = gt[devidxs]
+    gt_dev = np.copy(gt)
+    gt_dev[:ntestidxs] = -1
 
-    doc_start_dev = doc_start[devidxs]
-    text_dev = text[devidxs]
+    doc_start_dev = doc_start[ntestidxs:]
+    text_dev = text[ntestidxs:]
 
     return gt_test, annos, doc_start, text, gt_dev, doc_start_dev, text_dev
 
@@ -413,6 +414,19 @@ def _map_ner_str_to_labels(arr):
     #     if np.sum(to_correct):
     #         print('Correction at tokens: %s' % np.argwhere(to_correct).flatten())
     #         arr_ints[to_correct] = B_labels[i]
+
+    # # change IOB2 to IOB
+    # I_labels = [0, 3, 5, 7]
+    # B_labels = [2, 4, 6, 8]
+    # for i, I in enumerate(I_labels):
+    #     arr_prev = np.zeros(arr_ints.shape)
+    #     arr_prev[1:] = arr_ints[:-1]
+    #     to_correct = (arr_ints == B_labels[i]) & (arr_prev != I)
+    #
+    #     if np.sum(to_correct):
+    #         print('Correction at tokens: %s' % np.argwhere(to_correct).flatten())
+    #         arr_ints[to_correct] = I
+
 
     return arr_ints
 

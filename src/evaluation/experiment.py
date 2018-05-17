@@ -96,11 +96,8 @@ class Experiment(object):
         self.alpha0_diags = alpha0_diags
         self.nu0_factor = nu0_factor
 
-        self.ibcc_alpha0 = self.alpha0_factor * np.ones((nclasses, nclasses)) + self.alpha0_diags * np.eye(nclasses)
-
         self.bac_nu0 = np.ones((nclasses + 1, nclasses)) * self.nu0_factor
         self.ibcc_nu0 = np.ones(nclasses) * self.nu0_factor
-
 
         # save results from methods here. If we use compound methods, we can reuse these results in different
         # combinations of methods.
@@ -144,14 +141,14 @@ class Experiment(object):
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
 
-    def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, methods, annotations, ground_truth, doc_start,
+    def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, method, annotations, ground_truth, doc_start,
                     outputdir, text, anno_path=None):
 
-        self.methods = methods
+        self.methods = [method]
 
-        scores = np.zeros((len(alpha0diag_propsals), len(alpha0factor_proposals), len(methods)))
+        scores = np.zeros((len(alpha0diag_propsals), len(alpha0factor_proposals) ))
 
-        best_scores = np.zeros((len(methods), 3))
+        best_scores = np.zeros(3)
 
         for i, alpha0diag in enumerate(alpha0diag_propsals):
 
@@ -163,22 +160,25 @@ class Experiment(object):
                 self.aggs = {}
                 self.probs = {}
 
-                outputdir_ij = outputdir + ('_%i_%i_' % (i, j)) + methods[0]
+                outputdir_ij = outputdir + ('_%i_%i_' % (i, j)) + method + '/'
 
                 self.alpha0_factor = alpha0factor
 
                 all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
                                                              anno_path)
-                scores[i, j, :] = all_scores[3, :] # 3 is F1score
+                scores[i, j] = all_scores[3, :] # 3 is F1score
                 print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
 
-                improved_scores = scores[i, j, :] > best_scores[:, 0]
-                best_scores[improved_scores, 0] = scores[i, j, improved_scores]
-                best_scores[improved_scores, 1] = i
-                best_scores[improved_scores, 2] = j
+                if scores[i, j] > best_scores[0]:
+                    best_scores[0] = scores[i, j]
+                    best_scores[1] = i
+                    best_scores[2] = j
 
-                print('Saving scores for this setting to %s' % outputdir_ij + '/scores.csv')
-                np.savetxt(outputdir_ij + '/scores.csv', best_scores, fmt='%s', delimiter=',',
+                print('Saving scores for this setting to %s' % (outputdir + '/%s_scores.csv' % method))
+                np.savetxt(outputdir + '/%s_scores.csv' % method, scores, fmt='%s', delimiter=',',
+                           header=str(self.methods).strip('[]'))
+
+                np.savetxt(outputdir + '/%s_bestscores.csv' % method, best_scores, fmt='%s', delimiter=',',
                            header=str(self.methods).strip('[]'))
 
         return best_scores
@@ -248,9 +248,13 @@ class Experiment(object):
         return agg, probs
 
     def _run_ibcc(self, annotations):
+        self.ibcc_alpha0 = self.alpha0_factor * np.ones((self.num_classes, self.num_classes)) \
+                           + self.alpha0_diags * np.eye(self.num_classes)
+
         ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
                         alpha0=self.ibcc_alpha0, uselowerbound=True)
-        # ibc.verbose = True
+        ibc.verbose = True
+        ibc.max_iterations = 10
         # ibc.optimise_alpha0_diagonals = True
 
         if self.opt_hyper:
@@ -303,9 +307,9 @@ class Experiment(object):
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=bac.LSTM if use_LSTM else None)
-        alg.max_iter = 20
-
+        alg.max_iter = 10
         alg.verbose = True
+
         if self.opt_hyper:
             probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences)
         else:
@@ -742,7 +746,7 @@ class Experiment(object):
             auc_score += auc_i * np.sum(gt == i)
         result[4] = auc_score / float(valid_class_count)
 
-        result[5] = skm.log_loss(gt, probs, eps=1e-100)
+        result[5] = skm.log_loss(gt, probs, eps=1e-100, labels=np.arange(self.num_classes))
 
         return result
 
