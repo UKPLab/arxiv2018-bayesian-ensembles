@@ -94,13 +94,13 @@ dico_chars, char_to_id, id_to_char = char_mapping(train_sentences)
 dico_tags, tag_to_id, id_to_tag = tag_mapping(train_sentences)
 
 # Index data
-train_data = prepare_dataset(
+train_data, _ = prepare_dataset(
     train_sentences, word_to_id, char_to_id, tag_to_id, lower
 )
 # dev_data = prepare_dataset(
 #     dev_sentences, word_to_id, char_to_id, tag_to_id, lower
 # )
-test_data = prepare_dataset(
+test_data, _ = prepare_dataset(
     test_sentences, word_to_id, char_to_id, tag_to_id, lower
 )
 

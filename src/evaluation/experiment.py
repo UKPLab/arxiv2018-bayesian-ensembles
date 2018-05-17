@@ -651,7 +651,9 @@ class Experiment(object):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
-        if not os.path.exists(filename):
+        overwrite = True
+
+        if not os.path.exists(filename) or overwrite:
             if text is not None:
 
                 ufeats = []
@@ -688,6 +690,10 @@ class Experiment(object):
 
                     crowd_labs = []
                     for worker in range(annotations.shape[1]):
+
+                        if annotations[i, worker] == -1: # worker has not seen this doc
+                            continue
+
                         worker_labs = crowdlab(worker, len(sentences_inst) - 1, [int(annotations[i, worker])])
 
                         crowd_labs.append(worker_labs)
@@ -696,8 +702,9 @@ class Experiment(object):
                 else:
                     sentence_inst.append(instance(token_feature_vector, label + 1))
 
-                    for worker in range(annotations.shape[1]):
-                        crowd_labs[worker].sen.append(int(annotations[i, worker]))
+
+                    for widx, worker_labs in enumerate(crowd_labs):
+                        crowd_labs[widx].sen.append(int(annotations[i, worker_labs.wid]))
 
             nfeats = len(ufeats)
 
@@ -732,19 +739,18 @@ class Experiment(object):
         result[3] = skm.f1_score(gt, agg, average='macro')
 
         auc_score = 0
-        valid_class_count = 0
+        total_weights = 0
         for i in range(probs.shape[1]):
 
             if not np.any(gt == i) or np.all(gt == i):
                 print('Could not evaluate AUC for class %i -- all data points have same value.' % i)
                 continue
-            else:
-                valid_class_count += 1
 
             auc_i = skm.roc_auc_score(gt == i, probs[:, i])
             # print 'AUC for class %i: %f' % (i, auc_i)
             auc_score += auc_i * np.sum(gt == i)
-        result[4] = auc_score / float(valid_class_count)
+            total_weights += np.sum(gt == i)
+        result[4] = auc_score / float(total_weights)
 
         result[5] = skm.log_loss(gt, probs, eps=1e-100, labels=np.arange(self.num_classes))
 
@@ -781,7 +787,10 @@ class Experiment(object):
             #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
         print(conf)
 
-        Ndocs = int(np.sum(doc_start))
+        gold_doc_start = np.copy(doc_start)
+        gold_doc_start[gt == -1] = 0
+
+        Ndocs = int(np.sum(gold_doc_start))
         if Ndocs < 200:
 
             print('Using bootstrapping with small test set size')
@@ -797,15 +806,15 @@ class Experiment(object):
                 nsample_attempts = 0
                 while not_sampled:
                     sampleidxs = np.random.choice(Ndocs, Ndocs, replace=True)
-                    sampleidxs = np.in1d(np.cumsum(doc_start), sampleidxs)
+                    sampleidxs = np.in1d(np.cumsum(gold_doc_start) - 1, sampleidxs)
 
                     if len(np.unique(gt[sampleidxs])) >= 2:
                         not_sampled = False
                         # if we have at least two class labels in the sample ground truth, we can use this sample
 
-                    if nsample_attempts > Ndocs and not_sampled:
-                        not_sampled = False
                     nsample_attempts += 1
+                    if nsample_attempts >= Ndocs:
+                        not_sampled = False
 
                 if nsample_attempts <= Ndocs:
                     resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],

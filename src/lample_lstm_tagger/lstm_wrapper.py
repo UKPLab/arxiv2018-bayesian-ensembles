@@ -130,10 +130,10 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
     print(id_to_tag.keys())
 
     # Index data
-    train_data = prepare_dataset(
+    train_data, _ = prepare_dataset(
         train_sentences, word_to_id, char_to_id, tag_to_id, lower
     )
-    dev_data = prepare_dataset(
+    dev_data, dev_tags = prepare_dataset(
         dev_sentences, word_to_id, char_to_id, tag_to_id, lower
     )
 
@@ -155,11 +155,11 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
 
     niter_no_imprv = 0 # for early stopping
 
-    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_data, id_to_tag]
+    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_tags, id_to_tag]
 
     for epoch in range(n_epochs):
         count, niter_no_imprv, best_dev = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
-                                          niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_data, model, best_dev, nclasses)
+                                          niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_tags, model, best_dev, nclasses)
         #lr *= lr_decay # can't find an easy way to taper the learning rate
 
     # reload the best model as saved in run_epoch
@@ -168,7 +168,7 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, IOB_map, nclasses,
     return model, f_eval, train_data_objs
 
 def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              max_niter_no_imprv, dev_sentences, dev_data, model, best_dev, num_classes):
+              max_niter_no_imprv, dev_sentences, dev_tags, model, best_dev, num_classes):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
@@ -188,7 +188,8 @@ def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_tra
 
             # maximise log likelihood of dev data
             agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
-            dev_score = skm.f1_score(dev_data['tags'], agg, average='macro')
+
+            dev_score = skm.f1_score(dev_tags, agg, average='macro')
 
             print("Score on dev: %.5f" % dev_score)
             if dev_score > best_dev:
@@ -217,7 +218,7 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
         for x in [model.id_to_word, model.id_to_char, model.id_to_tag]
     ]
 
-    test_data = prepare_dataset(
+    test_data, _ = prepare_dataset(
         test_sentences, word_to_id, char_to_id, tag_to_id, lower
     )
 

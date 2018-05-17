@@ -139,6 +139,7 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
     """
     def f(x): return x.lower() if lower else x
     data = []
+    tag_data = []
     for i, s in enumerate(sentences):
 
         # print('sentences %i' % i)
@@ -165,7 +166,9 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
             'caps': caps,
             'tags': tags,
         })
-    return data
+
+        tag_data.append(tags)
+    return data, tag_data
 
 
 def augment_with_pretrained(dictionary, ext_emb_path, words):

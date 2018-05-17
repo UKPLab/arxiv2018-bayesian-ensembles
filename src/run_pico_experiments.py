@@ -22,9 +22,9 @@ exp.opt_hyper = False #True
 diags = [1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [1, 4, 9, 36]
 
-methods_to_tune = ['ibcc', 'bac_acc', 'bac_ibcc', 'bac_seq', 'bac_mace']
+methods_to_tune = ['bac_acc', 'bac_ibcc', 'bac_seq', 'bac_mace'] # 'ibcc',
 
-best_bac_wm = 'unknown' # choose model with best score for the different BAC worker models
+best_bac_wm = 'bac_ibcc' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
 
 # tune with small dataset to save time
