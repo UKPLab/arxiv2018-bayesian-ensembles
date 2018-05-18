@@ -523,7 +523,6 @@ class Experiment(object):
             selected_docs = np.random.choice(Ndocs, batch_size, replace=False)
             selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
 
-            seed_docs = selected_docs
             seed_toks = selected_toks
 
 
@@ -653,7 +652,6 @@ class Experiment(object):
                 if active_learning:
                     annotations, doc_start, text = self._uncertainty_sampling(annotations_all, doc_start_all,
                                                                   text_all, batch_size, probs, selected_docs, Ndocs)
-
 
         if test_no_crowd:
             if return_model:

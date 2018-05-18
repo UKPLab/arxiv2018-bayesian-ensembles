@@ -364,7 +364,7 @@ def load_biomedical_data(regen_data_files):
 
     print('Creating dev/test split...')
 
-    np.random.seed(10)
+    seed = 10
 
     gt_test, gt_dev, doc_start_dev, text_dev = split_dataset(
         gt, doc_start, text, annos, seed
@@ -752,6 +752,8 @@ def load_ner_data(regen_data_files):
 
     print('loading ground truth for task1 test...')
     gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
+    print('Unique labels: ')
+    print(np.unique(gt))
 
     print('loading annos for task1 val...')
     annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None, skip_blank_lines=False)
@@ -825,8 +827,9 @@ def split_dataset(gt, doc_start, text, annos, seed):
     gt_test = np.copy(gt)
     gt_test[devidxs] = -1
 
-    gt_dev = np.copy(gt)
-    gt_dev[testidxs] = -1
+    #gt_dev = np.copy(gt)
+    #gt_dev[testidxs] = -1
+    gt_dev = gt[devidxs]
 
     doc_start_dev = doc_start[devidxs]
     text_dev = text[devidxs]
