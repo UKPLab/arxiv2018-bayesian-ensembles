@@ -15,6 +15,9 @@ import glob
 from pandas._libs.parsers import na_values
 from sklearn.feature_extraction.text import CountVectorizer
 
+from evaluation.experiment import Experiment
+
+
 def convert_argmin(x):
     label = x.split('-')[0]
     if label == 'I':
@@ -256,12 +259,19 @@ def _load_bio_folder(anno_path_root, folder_name):
         else:
             doc_data['gold'] = np.zeros(doc_length, dtype=int) - 1  # -1 for missing gold values
 
-        doc_data['doc_start'] = np.zeros(doc_length, dtype=int)
-        doc_data['doc_start'][0] = 1
-
         text_d = [spacytoken.text for spacytoken in text_d]
         doc_data['text'] = text_d
-        doc_data = doc_data.replace(r'\n', ' ', regex=True)
+
+        doc_start = np.zeros(doc_length, dtype=int)
+        doc_start[0] = 1
+
+        doc_gaps = doc_data['text'] == '\n\n' # sentence breaks
+        doc_start[doc_gaps.index[:-1] + 1] = 1
+        doc_data['doc_start'] = doc_start
+
+        # doc_data = doc_data.replace(r'\n', ' ', regex=True)
+
+        doc_data = doc_data[np.invert(doc_gaps)]
 
         doc_data['docid'] = docid
 
@@ -354,27 +364,31 @@ def load_biomedical_data(regen_data_files):
 
     print('Creating dev/test split...')
 
-    #np.random.seed(2348945)
+    np.random.seed(10)
 
-    # since there is no separate validation set, we split the test set
-    ndocs = np.sum(doc_start & (gt != -1))
-    #testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
-    ntestdocs = int(np.floor(ndocs * 0.5))
-    docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
-    # testidxs = np.in1d(docidxs, testdocs)
-    ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
+    gt_test, gt_dev, doc_start_dev, text_dev = split_dataset(
+        gt, doc_start, text, annos, seed
+    )
 
-    # devidxs = np.ones(len(gt), dtype=bool)
-    # devidxs[testidxs] = False
-
-    gt_test = np.copy(gt)
-    gt_test[ntestidxs:] = -1
-
-    gt_dev = np.copy(gt)
-    gt_dev[:ntestidxs] = -1
-
-    doc_start_dev = doc_start[ntestidxs:]
-    text_dev = text[ntestidxs:]
+    # # since there is no separate validation set, we split the test set
+    # ndocs = np.sum(doc_start & (gt != -1))
+    # #testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+    # ntestdocs = int(np.floor(ndocs * 0.5))
+    # docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
+    # # testidxs = np.in1d(docidxs, testdocs)
+    # ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
+    #
+    # # devidxs = np.ones(len(gt), dtype=bool)
+    # # devidxs[testidxs] = False
+    #
+    # gt_test = np.copy(gt)
+    # gt_test[ntestidxs:] = -1
+    #
+    # gt_dev = np.copy(gt)
+    # gt_dev[:ntestidxs] = -1
+    #
+    # doc_start_dev = doc_start[ntestidxs:]
+    # text_dev = text[ntestidxs:]
 
     return gt_test, annos, doc_start, text, gt_dev, doc_start_dev, text_dev
 
@@ -444,38 +458,48 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
 
         print('Processing %s' % f)
 
-        new_data = pd.read_csv(f, delimiter=' ', names=['text', worker_str], skip_blank_lines=True,
+        new_data = pd.read_csv(f, delimiter=' ', names=['text', worker_str], skip_blank_lines=False,
                                dtype={'text':str, worker_str:str}, na_filter=False, sep=' ')
 
-        new_data = new_data.loc[new_data['text'] != '']
+        doc_gaps = new_data['text'] == ''
+        doc_start = np.zeros(doc_gaps.shape[0], dtype=int)
+        doc_start[doc_gaps[doc_gaps].index[:-1] + 1] = 1 # the indexes after the gaps
+        doc_content = new_data['text'] != ''
+
+        new_data['doc_start'] = doc_start
+        new_data = new_data[doc_content]
 
         for t, tok in enumerate(new_data['text']):
 
             if '/LOC' in tok:
                 # we need to remove this piece of tagging that shouldn't be here
                 tok = tok[:tok.find('/LOC')]
-                new_data['text'].iloc[t] = tok
+                new_data['text'].iat[t] = tok
             if '/B' in tok:
                 # we need to remove this piece of tagging that shouldn't be here
                 tok = tok[:tok.find('/B')]
-                new_data['text'].iloc[t] = tok
+                new_data['text'].iat[t] = tok
             if '/I' in tok:
                 # we need to remove this piece of tagging that shouldn't be here
                 tok = tok[:tok.find('/I')]
-                new_data['text'].iloc[t] = tok
+                new_data['text'].iat[t] = tok
             if tok.endswith('/'):
                 # we need to remove this piece of tagging that shouldn't be here
                 tok = tok[:-1]
-                new_data['text'].iloc[t] = tok
+                new_data['text'].iat[t] = tok
+
+        doc_start = []
+
+        # compare the tokens in the worker annotations to the gold labels. They are misaligned in the dataset. We will
+        # skip labels in the worker annotations that are assigned to only a part of a token in the gold dataset.
+        char_counter = 0
+        annos_to_keep = np.ones(new_data.shape[0], dtype=bool)
+        gold_tok_idx = 0
 
         if gold_char_idxs is not None:
-            # compare the tokens in the worker annotations to the gold labels. They are misaligned in the dataset. We will
-            # skip labels in the worker annotations that are assigned to only a part of a token in the gold dataset.
-            char_counter = 0
-            annos_to_keep = np.ones(new_data.shape[0], dtype=bool)
-            gold_tok_idx = 0
 
-            for t, tok in enumerate(new_data['text']):
+            for lineidx, tok in enumerate(new_data['text']):
+
                 gold_char_idx = gold_char_idxs[doc_str][gold_tok_idx]
                 #print('Token char idxs -- gold = %s, worker = %s, token = %s' % (gold_char_idx, char_counter, tok))
 
@@ -492,8 +516,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
 
                 char_counter += len(tok)
 
-            new_data = new_data.loc[annos_to_keep]
-
+        new_data = new_data.loc[annos_to_keep]
 
         new_data[worker_str] = _map_ner_str_to_labels(new_data[worker_str])
 
@@ -501,8 +524,6 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
 
         new_data['tok_idx'] = np.arange(new_data.shape[0]) # new_data.index -- don't use index because we remove
         # invalid extra rows from some files in the iloc line above.
-
-        new_data['doc_start'] = (new_data.index == 0).astype(int)
 
         # add to data from this worker
         if worker_data is None:
@@ -555,15 +576,37 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
 
 def IOB_to_IOB2(seq):
 
+    # test with and without this to see if we can reproduce the MV values from Nguyen et al with NER data.
+    # It seems to make little difference.
+
     I_labels = [0, 3, 5, 7]
+    B_labels = [2, 4, 6, 8]
 
     for i, label in enumerate(seq):
-        if label in I_labels and (i == 0 or seq[i-1] == 1):
-            # we have I preceded by O. This needs to be changed to a B.
-            seq[i] = label + 1
+        if label in I_labels:
 
-            if seq[i] == 1:
-                seq[i] = 2
+            typeidx = np.argwhere(I_labels == label)[0][0]
+
+            if i == 0 or (seq[i-1] != B_labels[typeidx] or seq[i-1] != label):
+                # we have I preceded by O. This needs to be changed to a B.
+                seq[i] = B_labels[typeidx]
+
+    return seq
+
+
+def IOB2_to_IOB(seq):
+
+    I_labels = [0, 3, 5, 7]
+    B_labels = [2, 4, 6, 8]
+
+    for i, label in enumerate(seq):
+        if label in B_labels:
+
+            typeidx = np.argwhere(B_labels == label)[0][0]
+
+            if i == 0 or (seq[i-1] != B_labels[typeidx] or seq[i-1] != I_labels[typeidx]):
+                # we have I preceded by O. This needs to be changed to a B.
+                seq[i] = I_labels[typeidx]
 
     return seq
 
@@ -760,5 +803,104 @@ def load_ner_data(regen_data_files):
     return gt, annos, doc_start, text, gt_task2, doc_start_task2, text_task2, \
            gt_val_task1, gt_val_task2, doc_start_val_task2, text_val_task2
 
+def split_dataset(gt, doc_start, text, annos, seed):
+    print('Creating dev/test split...')
+
+    np.random.seed(seed)
+
+    # since there is no separate validation set, we split the test set
+    ndocs = np.sum(doc_start & (gt != -1))
+
+    testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+
+    docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
+
+    testidxs = np.in1d(docidxs, testdocs)
+
+    ntestidxs = np.sum(testidxs)
+
+    devidxs = np.ones(len(gt), dtype=bool)
+    devidxs[testidxs] = False
+
+    gt_test = np.copy(gt)
+    gt_test[devidxs] = -1
+
+    gt_dev = np.copy(gt)
+    gt_dev[testidxs] = -1
+
+    doc_start_dev = doc_start[devidxs]
+    text_dev = text[devidxs]
+
+    return gt_test, gt_dev, doc_start_dev, text_dev
+
 if __name__ == '__main__':
-    pass
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_task1_mini/'
+    savepath = '../../data/bayesian_annotator_combination/data/bio/'
+
+    print('loading annos...')
+    annos = pd.read_csv(savepath + '/annos.csv', header=None)
+    annos = annos.fillna(-1)
+    annos = annos.values
+    #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
+    #for a in range(annos.shape[1]):
+    #    annos[:, a] = IOB2_to_IOB(annos[:, a])
+
+    print('loading text data...')
+    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None)
+    text = text.fillna(' ').values
+
+    print('loading doc starts...')
+    doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None).values #np.genfromtxt(savepath + '/doc_start.csv')
+
+    print('loading ground truth labels...')
+    gt = pd.read_csv(savepath + '/gt.csv', header=None).values
+    #gt = IOB2_to_IOB(gt)
+
+    # debug with subset -------
+    # s = 1000
+    # gt = gt[:s]
+    # annos = annos[:s]
+    # doc_start = doc_start[:s]
+    # text = text[:s]
+    # gt_dev = gt_dev[:s]
+    # doc_start_dev = doc_start_dev[:s]
+    # text_dev = text_dev[:s]
+    # -------------------------
+
+    exp = Experiment(None, 3, annos.shape[1], None)
+
+    exp.alpha0_factor = 1
+    exp.alpha0_diags = 100
+
+    exp.save_results = True
+    exp.opt_hyper = False  # True
+
+    # run all the methods that don't require tuning here
+    exp.methods = ['ibcc', 'majority',
+                   'best', 'worst',
+                   ]
+
+    seeds = [10]#np.arange(100)
+
+    annos = annos[gt.flatten() != -1]
+    text = text[gt.flatten() != -1]
+    doc_start = doc_start[gt.flatten() != -1]
+    gt = gt[gt.flatten() != -1]
+
+    annos_sample = annos[:, :252]
+
+    print('Mean annotations per token: %f' % np.mean(np.sum(annos_sample != -1, axis=1)) )
+
+    annos = annos_sample
+
+    for seed in seeds:
+
+        gt_test, gt_dev, _, _ = split_dataset(
+            gt, doc_start, text, annos, seed
+        )
+
+        # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+        scores = exp.run_methods(annos, gt_test, doc_start, output_dir, text)[0]
+        f1 = scores[3, 0]
+
+        print('F1 score for MV with seed %i = %f' % (seed, f1))

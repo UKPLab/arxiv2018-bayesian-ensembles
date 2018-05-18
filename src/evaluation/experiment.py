@@ -304,7 +304,7 @@ class Experiment(object):
 
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
-                      exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
+                      exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=bac.LSTM if use_LSTM else None)
         alg.max_iter = 10
@@ -672,7 +672,7 @@ class Experiment(object):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
-        overwrite = True#False
+        overwrite = False
 
         if not os.path.exists(filename) or overwrite:
             if text is not None:

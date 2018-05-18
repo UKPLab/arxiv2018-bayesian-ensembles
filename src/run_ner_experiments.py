@@ -10,7 +10,7 @@ import numpy as np
 output_dir = '../../data/bayesian_annotator_combination/output/ner/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
-    load_data.load_ner_data(False)
+    load_data.load_ner_data(True)
 
 # debug with subset -------
 # s = 200
@@ -102,11 +102,11 @@ exp.alpha0_factor = 1#9 # best_factor
 exp.methods =  [
                 # best_bac_wm
                 'majority', 'best', 'worst',
-                'HMM_crowd',
-                'HMM_crowd_then_LSTM',
-                best_bac_wm + '_then_LSTM',
-                best_bac_wm + '_integrateLSTM'
-                'bac_acc' + '_integrateLSTM'# 'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
+                #'HMM_crowd',
+                #'HMM_crowd_then_LSTM',
+                #best_bac_wm + '_then_LSTM',
+                #best_bac_wm + '_integrateLSTM'
+                #'bac_acc' + '_integrateLSTM'# 'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,

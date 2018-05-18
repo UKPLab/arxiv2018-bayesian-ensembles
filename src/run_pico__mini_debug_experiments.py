@@ -13,14 +13,14 @@ output_dir = '../../data/bayesian_annotator_combination/output/bio_task1_mini/'
 gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 # debug with subset -------
-s = 1000
-gt = gt[:s]
-annos = annos[:s]
-doc_start = doc_start[:s]
-text = text[:s]
-gt_dev = gt_dev[:s]
-doc_start_dev = doc_start_dev[:s]
-text_dev = text_dev[:s]
+# s = 1000
+# gt = gt[:s]
+# annos = annos[:s]
+# doc_start = doc_start[:s]
+# text = text[:s]
+# gt_dev = gt_dev[:s]
+# doc_start_dev = doc_start_dev[:s]
+# text_dev = text_dev[:s]
 # -------------------------
 
 exp = Experiment(None, 3, annos.shape[1], None)
@@ -29,9 +29,12 @@ exp.save_results = True
 exp.opt_hyper = False #True
 
 # run all the methods that don't require tuning here
-exp.methods =  [#'majority', 'best', 'worst', 'ibcc', 'bac_acc', 'bac_mace', 'bac_ibcc', 'bac_seq',
+exp.methods =  ['majority',
+                'best', 'worst',
+                #'ibcc', 'bac_acc', 'bac_mace', 'bac_ibcc', 'bac_seq',
                 #'HMM_crowd', 'HMM_crowd_then_LSTM', 'bac_ibcc_then_LSTM',
-                'bac_ibcc_integrateLSTM']
+                #'bac_ibcc_integrateLSTM'
+               ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,
