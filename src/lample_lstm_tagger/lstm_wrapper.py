@@ -15,13 +15,17 @@ from lample_lstm_tagger.model import Model
 import numpy as np
 
 
-def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
+def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0, include_missing=True):
     sentences_list = np.empty(int(np.sum(doc_start[:nannotations])), dtype=object)
 
     labels = labels.flatten()
 
-    IOB_label = {1: 'O', 0: 'I-0', -1: 0}
-    IOB_map = {'O': 1, 'I-0': 0, 0:-1}
+    if include_missing:
+        IOB_label = {1: 'O', 0: 'I-0', -1: 0}
+        IOB_map = {'O': 1, 'I-0': 0, 0:-1}
+    else:
+        IOB_label = {1: 'O', 0: 'I-0'}
+        IOB_map = {'O': 1, 'I-0': 0}
 
     label_values = np.unique(labels) if nclasses==0 else np.arange(nclasses, dtype=int)
 
@@ -30,7 +34,7 @@ def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0):
             continue
 
         IOB_label[val] = 'I' if np.mod(val, 2) == 1 else 'B'
-        IOB_label[val] = IOB_label[val] + '-%i' % ((val - 3) / 2)
+        IOB_label[val] = IOB_label[val] + '-%i' % ((val - 1) / 2)
 
         IOB_map[IOB_label[val]] = val
 
@@ -70,47 +74,38 @@ def split_train_to_dev(gold_sentences):
     return train_sentences, dev_sentences, dev_gold
 
 
-def run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              max_niter_no_imprv, dev_sentences, dev_tags, model, best_dev, num_classes):
+def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
+              dev_sentences, dev_tags, model, best_dev, num_classes):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
     for i, index in enumerate(np.random.permutation(len(train_data))):
         # loop over random permutations of the training data
-        count += 1
-
         input = create_input(train_data[index], parameters, True, singletons)
         new_cost = f_train(*input)
         epoch_costs.append(new_cost)
 
         if i % 50 == 0 and i > 0 == 0:
             print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
-        if count % freq_eval == 0:
-            # dev_score = evaluate(parameters, f_eval, dev_sentences,
-            #                      dev_data, id_to_tag, dico_tags)
 
-            # maximise log likelihood of dev data
-            agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
+    agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
 
-            dev_score = skm.f1_score(dev_tags, agg, average='macro')
+    dev_score = skm.f1_score(dev_tags, agg, average='macro')
 
-            print("Score on dev: %.5f" % dev_score)
-            if dev_score > best_dev:
-                best_dev = dev_score
-                print("New best score on dev.")
-                print("Saving model to disk...")
-                model.save()
-            else:
-                niter_no_imprv += 1
-                if niter_no_imprv >= max_niter_no_imprv:
-                    print("- early stopping %i epochs without improvement" % niter_no_imprv)
-                    break
+    print("Score on dev: %.5f" % dev_score)
+    if dev_score > best_dev:
+        best_dev = dev_score
+        print("New best score on dev.")
+        print("Saving model to disk...")
+        model.save()
+    else:
+        niter_no_imprv += 1
 
     print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
 
-    return count, niter_no_imprv, best_dev
+    return niter_no_imprv, best_dev
 
-def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, nclasses, n_epochs=100,
+def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, nclasses, n_epochs=20,
                tag_to_id=None, id_to_tag=None):
 
     # parameters
@@ -132,7 +127,7 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     parameters['cap_dim'] = 0
     parameters['crf'] = 1
     parameters['dropout'] = 0.5
-    parameters['lr_method'] = "sgd-lr_.005"
+    parameters['lr_method'] = "adam-lr_.01"#"sgd-lr_.005"
 
     max_niter_no_imprv = 3
     #lr_decay = 0.9 # not currently used
@@ -184,8 +179,9 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     )
     if dev_labels is None:
         dev_tags = np.array(dev_tags).flatten()
+        dev_tags = np.array([tag_to_id[tag] for tag in dev_tags])
     else:
-        dev_tags = dev_labels
+        dev_tags = np.array(dev_labels).flatten()
 
     # Save the mappings to disk
     print('Saving the mappings to disk...')
@@ -201,19 +197,17 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
 
     freq_eval = 1000  # evaluate on dev every freq_eval steps
     best_dev = -np.inf
-    count = 0
-
     niter_no_imprv = 0 # for early stopping
 
     train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_tags, id_to_tag]
 
     for epoch in range(n_epochs):
-        count, niter_no_imprv, best_dev = run_epoch(epoch, count, freq_eval, train_data, singletons, parameters, f_train, f_eval,
-                                          niter_no_imprv, max_niter_no_imprv, dev_sentences, dev_tags, model, best_dev, nclasses)
-        #lr *= lr_decay # can't find an easy way to taper the learning rate
+        niter_no_imprv, best_dev = run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval,
+                                          niter_no_imprv, dev_sentences, dev_tags, model, best_dev, nclasses)
 
-    # reload the best model as saved in run_epoch
-    # model.reload()
+        if niter_no_imprv >= max_niter_no_imprv:
+            print("- early stopping %i epochs without improvement" % niter_no_imprv)
+            break
 
     return model, f_eval, train_data_objs
 

@@ -264,7 +264,7 @@ class Experiment(object):
             probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
         agg = probs.argmax(axis=1)  # aggregated class labels
 
-        return agg, probs
+        return agg, probs, ibc
 
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None):
@@ -282,7 +282,7 @@ class Experiment(object):
                               alpha0_diags * np.eye(L)
 
         elif self.bac_worker_model == 'mace':
-            alpha0_factor = self.alpha0_factor / ((L-1)/2)
+            alpha0_factor = self.alpha0_factor #/ ((L-1)/2)
             self.bac_alpha0 = alpha0_factor * np.ones((2 + L))
             self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
 
@@ -342,7 +342,59 @@ class Experiment(object):
                 probs.append(tok_post_arr)
         probs = np.array(probs)
 
-        return agg, probs
+        return agg, probs, hc
+
+    def _run_LSTM(self, N_withcrowd, text, doc_start, train_labs, test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd,
+                  ground_truth_nocrowd, text_val, doc_start_val, ground_truth_val):
+        '''
+        Reasons why we need the LSTM integration:
+        - Could use a simpler model like hmm_crowd for task 1
+        - Performance may be better with LSTM
+        - Active learning possible with simpler model, but how novel?
+        - Integrating LSTM shows a generalisation -- step forward over models that fix the data
+        representation
+        - Can do task 2 better than a simple model like Hmm_crowd
+        - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
+        '''
+        labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
+                                                                          train_labs.flatten())
+
+        if ground_truth_val is None or doc_start_val is None or text_val is None:
+            # If validation set is unavailable, select a random subset of combined data to use for validation
+            # Simulates a scenario where all we have available are crowd labels.
+            train_sentences, dev_sentences, ground_truth_val = lstm_wrapper.split_train_to_dev(labelled_sentences)
+            all_sentences = labelled_sentences
+        else:
+            print(ground_truth_val.shape)
+            ground_truth_val = ground_truth_val[ground_truth_val != -1]
+            print(ground_truth_val.shape)
+
+            train_sentences = labelled_sentences
+            dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
+                                                                   doc_start_val, ground_truth_val)
+            print(train_sentences.ndim)
+            print(dev_sentences.ndim)
+            all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
+
+        lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
+                                                  ground_truth_val, IOB_map, self.num_classes)
+
+        # now make predictions for all sentences
+        agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
+
+        if test_no_crowd:
+            labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
+                                                                              doc_start_nocrowd,
+                                                                              np.zeros(N_nocrowd) - 1)
+
+            agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval,
+                                                                   self.num_classes, IOB_map)
+
+        else:
+            agg_nocrowd = None
+            probs_nocrowd = None
+
+        return agg, probs, agg_nocrowd, probs_nocrowd
 
     def _get_nocrowd_test_data(self, annotations, doc_start, ground_truth, text):
 
@@ -510,7 +562,7 @@ class Experiment(object):
                     agg, probs = self._run_mace(anno_path, ground_truth)
 
                 elif  method.split('_')[0] == 'ibcc':
-                    agg, probs = self._run_ibcc(annotations)
+                    agg, probs, model = self._run_ibcc(annotations)
 
                 elif method.split('_')[0] == 'bac':
                     if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
@@ -528,57 +580,23 @@ class Experiment(object):
 
                 elif 'HMM_crowd' in method:
                     if 'HMM_crowd' not in self.aggs or rerun_all:
-                        agg, probs = self._run_hmmcrowd(annotations, text, doc_start, outputdir)
+                        agg, probs, model = self._run_hmmcrowd(annotations, text, doc_start, outputdir)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
                         agg = self.aggs['HMM_crowd']
                         probs = self.probs['HMM_crowd']
 
+                elif 'gt' in method:
+                    # for debugging
+                    agg = ground_truth.flatten()
+                    probs = np.zeros((len(ground_truth), self.num_classes))
+                    probs[agg.astype(int)] = 1.0
+
                 if '_then_LSTM' in method:
-                    '''
-                    Reasons why we need the LSTM integration:
-                    - Could use a simpler model like hmm_crowd for task 1
-                    - Performance may be better with LSTM
-                    - Active learning possible with simpler model, but how novel?
-                    - Integrating LSTM shows a generalisation -- step forward over models that fix the data
-                    representation
-                    - Can do task 2 better than a simple model like Hmm_crowd
-                    - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
-                    '''
-                    labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
-                                                                                   agg.flatten())
-
-                    if ground_truth_val is None or doc_start_val is None or text_val is None:
-                        # If validation set is unavailable, select a random subset of combined data to use for validation
-                        # Simulates a scenario where all we have available are crowd labels.
-                        train_sentences, dev_sentences, ground_truth_val = lstm_wrapper.split_train_to_dev(labelled_sentences)
-                        all_sentences = labelled_sentences
-                    else:
-                        print(ground_truth_val.shape)
-                        ground_truth_val = ground_truth_val[ground_truth_val != -1]
-                        print(ground_truth_val.shape)
-
-                        train_sentences = labelled_sentences
-                        dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
-                                                                            doc_start_val, ground_truth_val)
-                        print(train_sentences.ndim)
-                        print(dev_sentences.ndim)
-                        all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
-
-                    lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                                              ground_truth_val, IOB_map, self.num_classes)
-
-                    # now make predictions for all sentences
-                    agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
-
-                    if test_no_crowd:
-                        labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
-                                                                               doc_start_nocrowd, np.zeros(N_nocrowd)-1)
-
-                        agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval,
-                                                                             self.num_classes, IOB_map)
-
+                    agg, probs, agg_nocrowd, probs_nocrowd = self._run_LSTM(N_withcrowd, text, doc_start, agg,
+                                test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd, ground_truth_nocrowd,
+                                text_val, doc_start_val, ground_truth_val)
 
                 if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
                     scores_allmethods[:,method_idx][:,None], \
@@ -627,7 +645,10 @@ class Experiment(object):
                     with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
-                # TODO select more annotations according to batch size for AL here.
+                    if model is not None:
+                        with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
+                            pickle.dump(model, fh)
+
                 Nseen = np.sum(doc_start) # update the number of documents processed so far
                 if active_learning:
                     annotations, doc_start, text = self._uncertainty_sampling(annotations_all, doc_start_all,
@@ -785,7 +806,7 @@ class Experiment(object):
                 conf[i, j] = np.sum((gt==i).flatten() & (agg==j).flatten())
                 
             #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
-        print(conf)
+        print(np.round(conf))
 
         gold_doc_start = np.copy(doc_start)
         gold_doc_start[gt == -1] = 0

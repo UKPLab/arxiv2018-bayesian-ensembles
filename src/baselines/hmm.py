@@ -318,11 +318,20 @@ class HMM_crowd(HMM):
 
         for t in range(1, T, 1):
             ins = sentence[t]
+
+            alpha_t_sum = 0
+
             for i in range(self.n):             # current state
                 alpha[t][i] = 0
                 for j in range(self.n):         # previous state
                     alpha[t][i] += self.pr_obs(i, ins.features) * self.t[j][i] * alpha[t - 1][j] \
                         * self.pr_crowd_labs(t, i, list_cl)
+
+                alpha_t_sum += alpha[t][i]
+
+            # normalise
+            for i in range(self.n):
+                alpha[t][i] /= alpha_t_sum
 
         # beta (backward):
         for i in range(self.n):
@@ -331,12 +340,20 @@ class HMM_crowd(HMM):
 
         for t in range(T - 2, -1, -1):
             ins = sentence[t + 1]
+
+            beta_t_sum = 0
+
             for i in range(self.n):             # current state
                 beta[t][i] = 0
                 for j in range(self.n):         # next state
                     beta[t][i] += self.pr_obs(j, ins.features) * self.t[i][j] * beta[t + 1][j] \
                         * self.pr_crowd_labs(t + 1, j, list_cl)#\
                         #* (self.start[i] if t == 0 else 1)
+
+                beta_t_sum += beta[t][i]
+
+            for i in range(self.n):
+                beta[t][i] /= beta_t_sum
 
         if return_ab:
             return (alpha, beta)

@@ -90,7 +90,7 @@ exp.alpha0_factor = best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  ['majority', 'best', 'worst', 'HMM_crowd', 'HMM_crowd_then_LSTM',
-                best_bac_wm + '_then_LSTM', best_bac_wm + '_integrateLSTM']
+                best_bac_wm + '_then_LSTM', best_bac_wm + '_integrateLSTM', 'bac_acc' + '_integrateLSTM']
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,

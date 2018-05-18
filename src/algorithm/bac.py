@@ -748,8 +748,6 @@ class MACEWorker():
         '''
         Update alpha.
         '''
-        alpha = alpha0.copy()
-
         # Reusing some equations from the Java MACE implementation.,,
         # strategyMarginal[i,k] = <scalar per worker> p(k knows vs k is spamming for item i | pi, C, E_t)? = ...
         # ... = \sum_j{ E_t[i, j] / (pi[0,k]*pi[2+C[i,k],k] + pi[1,k]*[C[i,k]==j] } * pi[0,k] * pi[2+C[i,k],k]
@@ -789,12 +787,16 @@ class MACEWorker():
             pknowing_j = pknowing_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
             pspamming_j = pspamming_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
 
+            # The cases where worker has not given a label are not really spam!
+            pspamming_j[C==0] = 0
+
             pknowing += pknowing_j * Tj
             pspamming += pspamming_j * Tj
 
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
+        alpha = alpha0.copy()
         alpha[1, :] += correct_count
         alpha[0, :] += incorrect_count
 
@@ -1461,7 +1463,8 @@ class LSTM:
 
         labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
 
-        self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels, nclasses)
+        self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels,
+                                                                                    nclasses, include_missing=False)
 
         self.Ndocs = self.sentences.shape[0]
 
@@ -1475,7 +1478,7 @@ class LSTM:
             dev_gold = []
             for sen in self.dev_sentences:
                 for tok in sen:
-                    dev_gold.append(tok[1])
+                    dev_gold.append( self.IOB_map[tok[1]] )
             self.dev_labels = dev_gold
         else:
             self.all_sentences = self.sentences
@@ -1523,13 +1526,26 @@ class LSTM:
                                                            dev_sentences, dev_labels, self.IOB_map, self.nclasses, 1,
                                                            self.tag_to_id, self.id_to_tag)
         else:
-            freq_eval = np.inf # len(self.train_data_objs[0]) # don't think we really ever need to do this!
-            lstm_wrapper.run_epoch(0, 0, freq_eval, self.train_data_objs[0], self.train_data_objs[1],
-                                   self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4], 0, 1,
-                                   self.train_data_objs[5], self.train_data_objs[6], self.lstm, -np.inf, self.nclasses)
+            n_epochs = 3 # for each bac iteration
+
+            best_dev = -np.inf
+            niter_no_imprv = 0
+            max_niter_no_imprv = 1
+
+            for epoch in range(n_epochs):
+                niter_no_imprv, best_dev = lstm_wrapper.run_epoch(0, self.train_data_objs[0], self.train_data_objs[1],
+                                   self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4],
+                                    niter_no_imprv,
+                                   self.train_data_objs[5], self.train_data_objs[6], self.lstm, best_dev, self.nclasses)
+
+                if niter_no_imprv >= max_niter_no_imprv:
+                    print("- early stopping %i epochs without improvement" % niter_no_imprv)
+                    break
 
         # now make predictions for all sentences
-        _, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.nclasses, self.IOB_map)
+        agg, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.nclasses, self.IOB_map)
+
+        print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
         return probs
 
