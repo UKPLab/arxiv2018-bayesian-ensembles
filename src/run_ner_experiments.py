@@ -10,7 +10,7 @@ import numpy as np
 output_dir = '../../data/bayesian_annotator_combination/output/ner/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
-    load_data.load_ner_data(True)
+    load_data.load_ner_data(False)
 
 # debug with subset -------
 # s = 200
@@ -83,7 +83,7 @@ for m, method in enumerate(methods_to_tune):
 
 print('best BAC method tested here = %s' % best_bac_wm)
 #
-# exp.alpha0_diags = 50 # best_diags
+# exp.alpha0_diags = 100 # best_diags
 # exp.alpha0_factor = 1#9 # best_factor
 #
 # # run all the methods that don't require tuning here
