@@ -498,7 +498,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
 
         if gold_char_idxs is not None:
 
-            for lineidx, tok in enumerate(new_data['text']):
+            for t, tok in enumerate(new_data['text']):
 
                 gold_char_idx = gold_char_idxs[doc_str][gold_tok_idx]
                 #print('Token char idxs -- gold = %s, worker = %s, token = %s' % (gold_char_idx, char_counter, tok))
@@ -516,7 +516,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
 
                 char_counter += len(tok)
 
-        new_data = new_data.loc[annos_to_keep]
+        new_data = new_data[annos_to_keep]
 
         new_data[worker_str] = _map_ner_str_to_labels(new_data[worker_str])
 
@@ -752,8 +752,10 @@ def load_ner_data(regen_data_files):
 
     print('loading ground truth for task1 test...')
     gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
+
     print('Unique labels: ')
     print(np.unique(gt))
+    print(gt.shape)
 
     print('loading annos for task1 val...')
     annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None, skip_blank_lines=False)
