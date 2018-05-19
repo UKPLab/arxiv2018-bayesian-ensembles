@@ -30,11 +30,11 @@ exp.opt_hyper = False#True
 
 # best IBCC setting so far is diag=100, factor=36. Let's reuse this for BIO and all BAC_IBCC runs.
 
-# diags = [1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-# factors = [1, 4, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
-# methods_to_tune = ['bac_mace']#, 'bac_seq', 'bac_ibcc', 'bac_acc', 'ibcc']
-#
-# best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the different BAC worker models
+diags = [1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [1, 4, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
+methods_to_tune = ['bac_mace']#, 'bac_seq', 'bac_ibcc', 'bac_acc', 'ibcc']
+
+best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the different BAC worker models
 # best_bac_wm_score = -np.inf
 #
 # # tune with small dataset to save time
