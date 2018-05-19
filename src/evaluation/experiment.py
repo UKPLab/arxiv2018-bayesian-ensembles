@@ -391,8 +391,7 @@ class Experiment(object):
 
         if test_no_crowd:
             labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
-                                                                              doc_start_nocrowd,
-                                                                              np.zeros(N_nocrowd) - 1)
+                                                          doc_start_nocrowd, np.zeros(N_nocrowd) - 1, self.num_classes)
 
             agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval,
                                                                    self.num_classes, IOB_map)
