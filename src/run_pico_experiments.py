@@ -25,54 +25,54 @@ factors = [1, 4, 9, 36]
 
 methods_to_tune = ['ibcc', 'bac_acc', 'bac_ibcc', 'bac_seq', 'bac_mace']
 
-best_bac_wm = 'bac_ibcc' # choose model with best score for the different BAC worker models
-best_bac_wm_score = -np.inf
-
-# tune with small dataset to save time
-s = 250
-idxs = np.argwhere(gt_dev != -1)[:, 0]
-ndocs = np.sum(doc_start[idxs])
-
-if ndocs > s:
-    idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
-elif ndocs < s:  # not enough validation data
-    moreidxs = np.argwhere(gt != -1)[:, 0]
-    deficit = s - ndocs
-    ndocs = np.sum(doc_start[moreidxs])
-    if ndocs > deficit:
-        moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
-    idxs = np.concatenate((idxs, moreidxs))
-
-tune_gt = gt[idxs]
-tune_annos = annos[idxs]
-tune_doc_start = doc_start[idxs]
-tune_text = text[idxs]
-tune_gt_dev = gt_dev[idxs]
-
-for m, method in enumerate(methods_to_tune):
-    print('TUNING %s' % method)
-
-    best_scores = exp.tune_alpha0(diags, factors, method, tune_annos, tune_gt_dev, tune_doc_start,
-                                  output_dir, tune_text)
-    best_idxs = best_scores[1:].astype(int)
-    exp.alpha0_diags = diags[best_idxs[0]]
-    exp.alpha0_factor = factors[best_idxs[1]]
-
-    print('Best values: %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
-
-    # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-    exp.methods = [method]
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
-
-    best_score = np.max(best_scores)
-    if 'bac' in method and best_score > best_bac_wm_score:
-        best_bac_wm = method
-        best_bac_wm_score = best_score
-        best_diags = exp.alpha0_diags
-        best_factor = exp.alpha0_factor
-
-print('best BAC method = %s' % best_bac_wm)
+# best_bac_wm = 'bac_ibcc' # choose model with best score for the different BAC worker models
+# best_bac_wm_score = -np.inf
+#
+# # tune with small dataset to save time
+# s = 250
+# idxs = np.argwhere(gt_dev != -1)[:, 0]
+# ndocs = np.sum(doc_start[idxs])
+#
+# if ndocs > s:
+#     idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
+# elif ndocs < s:  # not enough validation data
+#     moreidxs = np.argwhere(gt != -1)[:, 0]
+#     deficit = s - ndocs
+#     ndocs = np.sum(doc_start[moreidxs])
+#     if ndocs > deficit:
+#         moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
+#     idxs = np.concatenate((idxs, moreidxs))
+#
+# tune_gt = gt[idxs]
+# tune_annos = annos[idxs]
+# tune_doc_start = doc_start[idxs]
+# tune_text = text[idxs]
+# tune_gt_dev = gt_dev[idxs]
+#
+# for m, method in enumerate(methods_to_tune):
+#     print('TUNING %s' % method)
+#
+#     best_scores = exp.tune_alpha0(diags, factors, method, tune_annos, tune_gt_dev, tune_doc_start,
+#                                   output_dir, tune_text)
+#     best_idxs = best_scores[1:].astype(int)
+#     exp.alpha0_diags = diags[best_idxs[0]]
+#     exp.alpha0_factor = factors[best_idxs[1]]
+#
+#     print('Best values: %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
+#
+#     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+#     exp.methods = [method]
+#     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+#
+#     best_score = np.max(best_scores)
+#     if 'bac' in method and best_score > best_bac_wm_score:
+#         best_bac_wm = method
+#         best_bac_wm_score = best_score
+#         best_diags = exp.alpha0_diags
+#         best_factor = exp.alpha0_factor
+#
+# print('best BAC method = %s' % best_bac_wm)
 
 exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
