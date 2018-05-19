@@ -364,7 +364,7 @@ class Experiment(object):
         - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
         '''
         labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
-                                                                          train_labs.flatten())
+                                                                          train_labs.flatten(), self.num_classes)
 
         if ground_truth_val is None or doc_start_val is None or text_val is None:
             # If validation set is unavailable, select a random subset of combined data to use for validation
