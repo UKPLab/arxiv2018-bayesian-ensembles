@@ -453,7 +453,7 @@ class Experiment(object):
 
         selected_docs = np.concatenate((selected_docs, new_selection))
 
-        selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
+        selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
 
         annotations = annotations_all[selected_toks, :]
         doc_start = doc_start_all[selected_toks]
@@ -530,10 +530,9 @@ class Experiment(object):
             batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
 
             selected_docs = np.random.choice(Ndocs, batch_size, replace=False)
-            selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
+            selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
 
             seed_toks = selected_toks
-
 
         for method_idx in range(len(self.methods)): 
             
@@ -676,7 +675,7 @@ class Experiment(object):
                     #         pickle.dump(model, fh)
 
                 if active_learning:
-                    annotations_new, doc_start_new, text_new, selected_docs, selected_toks = self._uncertainty_sampling\
+                    annotations_new, doc_start_new, text_new, new_docs, new_toks = self._uncertainty_sampling\
                         (
                             annotations_all,
                             doc_start_all,
@@ -687,9 +686,6 @@ class Experiment(object):
                             Ndocs
                         )
 
-                    annotations = np.concatenate((annotations, annotations_new), axis=0)
-                    doc_start = np.concatenate((doc_start, doc_start_new))
-                    text = np.concatenate((text, text_new))
                     N_withcrowd = annotations.shape[0]
 
                     print('**** Active learning: No. annotations = %i' % N_withcrowd)

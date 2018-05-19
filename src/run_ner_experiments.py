@@ -13,7 +13,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
     load_data.load_ner_data(False)
 
 # debug with subset -------
-# s = 200
+# s = 10000
 # idxs = np.argwhere(gt!=-1)[:s, 0]
 # gt = gt[idxs]
 # annos = annos[idxs]
@@ -83,29 +83,33 @@ best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the diffe
 #
 # print('best BAC method tested here = %s' % best_bac_wm)
 # #
-# exp.alpha0_diags = 100 # best_diags
-# exp.alpha0_factor = 1#9 # best_factor
-#
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 # best_bac_wm
-#                 'majority', 'best', 'worst',
-#                 'HMM_crowd',
-#                 'HMM_crowd_then_LSTM',
-#                 best_bac_wm + '_then_LSTM',
-#                 best_bac_wm + '_integrateLSTM'
-#                 # 'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
-#                 ]
-#
-# results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
-#                                        text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
-
-exp.alpha0_diags = 50 # best_diags
+exp.alpha0_diags = 100 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
 
-exp.methods = ['bac_acc' + '_integrateLSTM']
+# run all the methods that don't require tuning here
+exp.methods =  [
+                # best_bac_wm
+                'majority', 'best', 'worst',
+                #'HMM_crowd',
+                #'HMM_crowd_then_LSTM',
+                #best_bac_wm + '_then_LSTM',
+                #best_bac_wm + '_integrateLSTM'
+                'ibcc',
+                'bac_ibcc',
+                best_bac_wm + '_integrateLSTM'
+                ]
+
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
                                        text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
+
+# exp.alpha0_diags = 50 # best_diags
+# exp.alpha0_factor = 1#9 # best_factor
+#
+# exp.methods = [
+#     'bac_acc',
+#     'bac_acc' + '_integrateLSTM']
+# results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
+#                                        text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
 
 
 # # for now we are just running task 1. Then we choose which version of BAC to run for task 2 with LSTM, change the

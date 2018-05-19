@@ -836,7 +836,7 @@ def split_dataset(gt, doc_start, text, annos, seed):
 
     testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
 
-    docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
+    docidxs = np.cumsum(doc_start & (gt != -1)) - 1 # gets us the doc ids
 
     testidxs = np.in1d(docidxs, testdocs)
 
