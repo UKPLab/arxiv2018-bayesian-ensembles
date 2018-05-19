@@ -32,7 +32,7 @@ exp.methods =  [
 
 # TASK 2 also needs to reload the optimised hyperparameters.
 
-gold_labelled = gt != -1
+gold_labelled = gt.flatten() != -1
 crowd_labelled = np.invert(gold_labelled)
 
 annos_tr = annos[crowd_labelled, :]
