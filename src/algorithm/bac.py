@@ -424,6 +424,8 @@ class BAC(object):
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 
+        self.data_model_updated = False
+
         # main inference loop
         with Parallel(n_jobs=-1) as parallel:
 
@@ -462,9 +464,12 @@ class BAC(object):
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
                 # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                self.C_data = self.data_model.fit_predict(self.q_t)
-                if self.verbose:
-                    print("BAC iteration %i: updated feature-based predictions" % self.iter)
+                if self.iter > 2:
+                    # hold off training the feature-based classifier for three iterations
+                    self.C_data = self.data_model.fit_predict(self.q_t)
+                    self.data_model_updated = True
+                    if self.verbose:
+                        print("BAC iteration %i: updated feature-based predictions" % self.iter)
 
                 self.alpha_data = self.worker_model._post_alpha_data(self.q_t, self.C_data, self.alpha0_data,
                                     self.alpha_data, doc_start, self.nscores, self.before_doc_idx)
@@ -574,7 +579,7 @@ class BAC(object):
         '''
         if self.verbose:
             print("Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
-        return ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps)
+        return ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) and self.data_model_updated
 
 def _log_dir(alpha, lnPi, sum_dim):
     x = (alpha - 1) * lnPi
