@@ -534,6 +534,39 @@ class BAC(object):
 
         return pseq, seq
 
+    def predict(self, doc_start, text):
+        C = np.zeros((len(doc_start), self.K)) -1 # all blank
+        self.C_data = self.data_model.predict(doc_start, text)
+
+        with Parallel(n_jobs=-1) as parallel:
+
+        self.lnR_ = _parallel_forward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
+                                           self.lnPi_data, self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
+                                           self.worker_model, self.before_doc_idx)
+
+        if self.verbose:
+            print("BAC predict: completed forward pass" % self.iter)
+
+        lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
+                                          self.lnPi_data, doc_start, self.nscores, self.worker_model,
+                                          self.before_doc_idx)
+        if self.verbose:
+            print("BAC predict: completed backward pass" % self.iter)
+
+        # update q_t and q_t_joint
+        q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
+                                              self.C_data, doc_start, self.nscores, self.worker_model,
+                                              self.before_doc_idx)
+        if self.verbose:
+            print("BAC predict: computed label sequence probabilities" % self.iter)
+
+        q_t = np.sum(q_t_joint, axis=1)
+
+
+        seq = self._most_probable_sequence(C, doc_start, parallel)[1]
+
+        return q_t, seq
+
     def _converged(self):
         '''
         Calculates whether the algorithm has _converged or the maximum number of iterations is reached.

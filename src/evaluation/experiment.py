@@ -267,7 +267,8 @@ class Experiment(object):
         return agg, probs, ibc
 
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False,
-                 ground_truth_val=None, doc_start_val=None, text_val=None):
+                 ground_truth_val=None, doc_start_val=None, text_val=None,
+                 ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None):
 
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
@@ -317,7 +318,13 @@ class Experiment(object):
 
         model = alg
 
-        return agg, probs, model
+        if ground_truth_nocrowd is not None:
+            probs_nocrowd, agg_nocrowd = alg.predict(doc_start_nocrowd, text_nocrowd)
+        else:
+            probs_nocrowd = None
+            agg_nocrowd = None
+
+        return agg, probs, model, agg_nocrowd, probs_nocrowd
 
     def _run_hmmcrowd(self, annotations, text, doc_start, outputdir):
         sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
@@ -502,8 +509,8 @@ class Experiment(object):
         scores_nocrowd = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
         score_std_nocrowd = np.zeros((len(self.SCORE_NAMES)-3, len(self.methods)))
 
-        preds_allmethods_nocrowd = -np.ones((doc_start_nocrowd.shape[0], len(self.methods)))
-        probs_allmethods_nocrowd = -np.ones((doc_start_nocrowd.shape[0], self.num_classes, len(self.methods)))
+        preds_allmethods_nocrowd = -np.ones((N_nocrowd, len(self.methods)))
+        probs_allmethods_nocrowd = -np.ones((N_nocrowd, self.num_classes, len(self.methods)))
 
         # timestamp for when we started a run. Can be compared to file versions to check what was run.
         timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
@@ -566,12 +573,16 @@ class Experiment(object):
                 elif method.split('_')[0] == 'bac':
                     # needs to run integrate method for task 2 as well
                     if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
-                        agg, probs, model = self._run_bac(annotations, doc_start, text, method, use_LSTM=True,
-                                      ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val)
+                        agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
+                                    method, use_LSTM=True,
+                                    ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
+                                    ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
+                                    text_nocrowd=text_nocrowd)
                     else:
                         methodlabel = method.split('_')[0] + '_' + method.split('_')[1]
                         if methodlabel not in self.aggs or rerun_all:
-                            agg, probs, model = self._run_bac(annotations, doc_start, text, method)
+                            agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
+                                                                                          method)
                             self.aggs[methodlabel] = agg
                             self.probs[methodlabel] = probs
                         else:
@@ -911,7 +922,7 @@ class Experiment(object):
                 # read data
                 doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
                 # run methods
-                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start, param_idx, data_path + 'annotations.csv')
+                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start, data_path + 'annotations.csv')
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities

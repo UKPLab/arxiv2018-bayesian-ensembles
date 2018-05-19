@@ -54,6 +54,7 @@ exp.methods = ['bac_ibcc_integrateLSTM',
 exp.save_results = True
 exp.opt_hyper = False #True
 
-exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr, gt_test, doc_start_test, text_test,
+exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
+                ground_truth_nocrowd=gt_test, doc_start_nocrowd=doc_start_test, text_nocrowd=text_test,
                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
                 active_learning=True)

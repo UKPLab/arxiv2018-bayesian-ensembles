@@ -262,8 +262,8 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
         probs = np.concatenate((probs, probs_sen), axis=0)
 
         count += 1
-        if count % 100 == 0:
-            print(count)
+        if count % 1000 == 0:
+            print('Tagged %i lines' % count)
 
     print('---- %i lines tagged in %.4fs ----' % (count, time.time() - start))
 
