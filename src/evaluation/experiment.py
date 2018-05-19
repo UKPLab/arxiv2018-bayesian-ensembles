@@ -613,7 +613,7 @@ class Experiment(object):
 
                     if active_learning and len(agg) < len(ground_truth):
                         agg_all = np.ones(len(ground_truth))
-                        agg_all[selected_toks] = agg
+                        agg_all[selected_toks] = agg.flatten()
                         agg = agg_all
 
                         probs_all = np.zeros((len(ground_truth), self.num_classes))
