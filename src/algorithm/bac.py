@@ -1589,7 +1589,7 @@ class LSTM:
     def predict(self, doc_start, text):
         N = len(doc_start)
         test_sentences, _, _ = lstm_wrapper.data_to_lstm_format(N, text, doc_start,
-                                                                np.zeros(N) - 1, self.nclasses, include_missing=False)
+                                                                np.ones(N), self.nclasses, include_missing=False)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(self.lstm, test_sentences, self.f_eval, self.nclasses, self.IOB_map)
