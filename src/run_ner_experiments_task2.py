@@ -35,8 +35,12 @@ exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    'HMM_crowd', 'HMM_crowd_then_LSTM',
-    best_bac_wm + '_then_LSTM', best_bac_wm + '_integrateLSTM'
+    'HMM_crowd',
+    'HMM_crowd_then_LSTM',
+    best_bac_wm + '_then_LSTM',
+    best_bac_wm + '_integrateLSTM',
+    'bac_acc_integrateLSTM',
+    'bac_acc_then_LSTM'
     #'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
                 ]
 
