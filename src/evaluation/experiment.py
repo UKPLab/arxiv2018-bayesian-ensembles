@@ -326,8 +326,9 @@ class Experiment(object):
 
         return agg, probs, model, agg_nocrowd, probs_nocrowd
 
-    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir):
-        sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir)
+    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir, overwrite_data_file=False):
+        sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir,
+                                                                        overwrite=overwrite_data_file)
 
         data = crowd_data(sentences, crowd_labels)
         hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
@@ -591,7 +592,8 @@ class Experiment(object):
 
                 elif 'HMM_crowd' in method:
                     if 'HMM_crowd' not in self.aggs or rerun_all:
-                        agg, probs, model = self._run_hmmcrowd(annotations, text, doc_start, outputdir)
+                        agg, probs, model = self._run_hmmcrowd(annotations, text, doc_start, outputdir,
+                                                               overwrite_data_file=True if active_learning else False)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
@@ -703,11 +705,9 @@ class Experiment(object):
             else:
                 return scores_allmethods, preds_allmethods, probs_allmethods, None, None, None
 
-    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir):
+    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir, overwrite=False):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
-
-        overwrite = False
 
         if not os.path.exists(filename) or overwrite:
             if text is not None:
