@@ -48,7 +48,8 @@ doc_start_test = doc_start[gold_labelled]
 text_test = text[gold_labelled]
 
 exp = Experiment(None, 3, annos.shape[1], None)
-exp.methods = ['bac_ibcc_integrateLSTM', 'HMM_crowd_then_LSTM']
+exp.methods = ['bac_ibcc_integrateLSTM',
+               'HMM_crowd_then_LSTM']
 
 exp.save_results = True
 exp.opt_hyper = False #True

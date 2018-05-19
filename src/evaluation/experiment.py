@@ -564,6 +564,7 @@ class Experiment(object):
                     agg, probs, model = self._run_ibcc(annotations)
 
                 elif method.split('_')[0] == 'bac':
+                    # needs to run integrate method for task 2 as well
                     if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
                         agg, probs, model = self._run_bac(annotations, doc_start, text, method, use_LSTM=True,
                                       ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val)

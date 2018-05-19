@@ -384,8 +384,9 @@ def load_biomedical_data(regen_data_files):
     gt_test = np.copy(gt)
     gt_test[ntestidxs:] = -1
 
-    gt_dev = np.copy(gt)
-    gt_dev[:ntestidxs] = -1
+    # gt_dev = np.copy(gt)
+    # gt_dev[:ntestidxs] = -1
+    gt_dev = gt[ntestidxs:]
 
     doc_start_dev = doc_start[ntestidxs:]
     text_dev = text[ntestidxs:]
