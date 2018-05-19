@@ -458,7 +458,7 @@ class Experiment(object):
         doc_start = doc_start_all[selected_toks]
         text = text_all[selected_toks]
 
-        return annotations, doc_start, text, selected_docs
+        return annotations, doc_start, text, selected_docs, selected_toks
 
     def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None, anno_path=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
@@ -610,6 +610,16 @@ class Experiment(object):
                                 text_val, doc_start_val, ground_truth_val)
 
                 if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
+
+                    if active_learning and len(agg) < len(ground_truth):
+                        agg_all = np.ones(len(ground_truth))
+                        agg_all[selected_toks] = agg
+                        agg = agg_all
+
+                        probs_all = np.zeros((len(ground_truth), self.num_classes))
+                        probs_all[selected_toks, :] = probs
+                        probs = probs_all
+
                     scores_allmethods[:,method_idx][:,None], \
                     score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
                                                                                     doc_start)
@@ -662,8 +672,16 @@ class Experiment(object):
                     #         pickle.dump(model, fh)
 
                 if active_learning:
-                    annotations_new, doc_start_new, text_new = self._uncertainty_sampling(annotations_all, doc_start_all,
-                                                                  text_all, batch_size, probs, selected_docs, Ndocs)
+                    annotations_new, doc_start_new, text_new, selected_docs, selected_toks = self._uncertainty_sampling\
+                        (
+                            annotations_all,
+                            doc_start_all,
+                            text_all,
+                            batch_size,
+                            probs,
+                            selected_docs,
+                            Ndocs
+                        )
 
                     annotations = np.concatenate((annotations, annotations_new), axis=0)
                     doc_start = np.concatenate((doc_start, doc_start_new))
