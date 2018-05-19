@@ -17,8 +17,12 @@ def abs_count_error(pred, target):
 Calculates the number of invalid labels in the given prediction, i.e. the number of 'I' tokens directly following an 'O' token.
 '''        
 def num_invalid_labels(pred, doc_start):  
-    docs = np.split(pred, np.where(doc_start==1)[0])[1:]  
-    count_invalid = lambda doc: len(np.where(doc[np.r_[0, np.where(doc[:-1] == 1)[0] + 1]] == 0)[0])
+    docs = np.split(pred, np.where(doc_start==1)[0])[1:]
+    try:
+        count_invalid = lambda doc: len(np.where(doc[np.r_[0, np.where(doc[:-1] == 1)[0] + 1]] == 0)[0])
+    except:
+        print('Could not count any invalid labels because some classes were not present.')
+        count_invalid = 0
     return np.sum(list(map(count_invalid, docs)))/float(len(pred))
 
 '''
