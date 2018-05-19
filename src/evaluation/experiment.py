@@ -657,9 +657,9 @@ class Experiment(object):
                     with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
-                    if model is not None and not active_learning:
-                        with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
-                            pickle.dump(model, fh)
+                    # if model is not None and not active_learning:
+                    #     with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
+                    #         pickle.dump(model, fh)
 
                 if active_learning:
                     annotations_new, doc_start_new, text_new = self._uncertainty_sampling(annotations_all, doc_start_all,

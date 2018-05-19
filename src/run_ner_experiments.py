@@ -83,22 +83,22 @@ best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the diffe
 #
 # print('best BAC method tested here = %s' % best_bac_wm)
 # #
-exp.alpha0_diags = 100 # best_diags
-exp.alpha0_factor = 1#9 # best_factor
-
-# run all the methods that don't require tuning here
-exp.methods =  [
-                # best_bac_wm
-                'majority', 'best', 'worst',
-                'HMM_crowd',
-                'HMM_crowd_then_LSTM',
-                best_bac_wm + '_then_LSTM',
-                best_bac_wm + '_integrateLSTM'
-                # 'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
-                ]
-
-results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
-                                       text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
+# exp.alpha0_diags = 100 # best_diags
+# exp.alpha0_factor = 1#9 # best_factor
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 # best_bac_wm
+#                 'majority', 'best', 'worst',
+#                 'HMM_crowd',
+#                 'HMM_crowd_then_LSTM',
+#                 best_bac_wm + '_then_LSTM',
+#                 best_bac_wm + '_integrateLSTM'
+#                 # 'bac_mace', 'bac_acc', , 'bac_seq', 'ibcc'
+#                 ]
+#
+# results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
+#                                        text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
 
 exp.alpha0_diags = 50 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
