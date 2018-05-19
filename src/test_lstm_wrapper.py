@@ -38,7 +38,7 @@ lstm.init(None, N, text, doc_start, nclasses, dev_sentences)
 
 n_epochs = 25
 for n in range(n_epochs):
-    prob = lstm.predict(Et)
+    prob = lstm.fit_predict(Et)
     print('training set accuracy = %f' % accuracy_score(gt.flatten(), np.argmax(prob, 1)))
 
 print(prob)

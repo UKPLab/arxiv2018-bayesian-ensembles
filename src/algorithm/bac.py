@@ -462,7 +462,7 @@ class BAC(object):
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
                 # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                self.C_data = self.data_model.predict(self.q_t)
+                self.C_data = self.data_model.fit_predict(self.q_t)
                 if self.verbose:
                     print("BAC iteration %i: updated feature-based predictions" % self.iter)
 
@@ -540,30 +540,29 @@ class BAC(object):
 
         with Parallel(n_jobs=-1) as parallel:
 
-        self.lnR_ = _parallel_forward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
-                                           self.lnPi_data, self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
-                                           self.worker_model, self.before_doc_idx)
+            self.lnR_ = _parallel_forward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
+                                               self.lnPi_data, self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
+                                               self.worker_model, self.before_doc_idx)
 
-        if self.verbose:
-            print("BAC predict: completed forward pass" % self.iter)
+            if self.verbose:
+                print("BAC predict: completed forward pass" % self.iter)
 
-        lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
-                                          self.lnPi_data, doc_start, self.nscores, self.worker_model,
-                                          self.before_doc_idx)
-        if self.verbose:
-            print("BAC predict: completed backward pass" % self.iter)
-
-        # update q_t and q_t_joint
-        q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
-                                              self.C_data, doc_start, self.nscores, self.worker_model,
+            lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
+                                              self.lnPi_data, doc_start, self.nscores, self.worker_model,
                                               self.before_doc_idx)
-        if self.verbose:
-            print("BAC predict: computed label sequence probabilities" % self.iter)
+            if self.verbose:
+                print("BAC predict: completed backward pass" % self.iter)
 
-        q_t = np.sum(q_t_joint, axis=1)
+            # update q_t and q_t_joint
+            q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
+                                                  self.C_data, doc_start, self.nscores, self.worker_model,
+                                                  self.before_doc_idx)
+            if self.verbose:
+                print("BAC predict: computed label sequence probabilities" % self.iter)
 
+            q_t = np.sum(q_t_joint, axis=1)
 
-        seq = self._most_probable_sequence(C, doc_start, parallel)[1]
+            seq = self._most_probable_sequence(C, doc_start, parallel)[1]
 
         return q_t, seq
 
@@ -1476,7 +1475,7 @@ class ignore_features:
     def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
         return np.ones(alpha0_data.shape)
 
-    def predict(self, Et):
+    def fit_predict(self, Et):
         '''
         '''
         return np.ones(Et.shape) / np.float(Et.shape[1])
@@ -1521,7 +1520,7 @@ class LSTM:
 
         return alpha0_data
 
-    def predict(self, Et):
+    def fit_predict(self, Et):
         labels = np.argmax(Et, axis=1)
 
         l = 0
@@ -1579,6 +1578,18 @@ class LSTM:
         agg, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.nclasses, self.IOB_map)
 
         print('LSTM assigned class labels %s' % str(np.unique(agg)) )
+
+        return probs
+
+    def predict(self, doc_start, text):
+        N = len(doc_start)
+        test_sentences, _, _ = lstm_wrapper.data_to_lstm_format(N, text, doc_start,
+                                                                np.zeros(N) - 1, self.nclasses, include_missing=False)
+
+        # now make predictions for all sentences
+        agg, probs = lstm_wrapper.predict_LSTM(self.lstm, test_sentences, self.f_eval, self.nclasses, self.IOB_map)
+
+        print('LSTM assigned class labels %s' % str(np.unique(agg)))
 
         return probs
 
