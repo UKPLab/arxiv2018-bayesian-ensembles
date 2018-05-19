@@ -519,13 +519,13 @@ class Experiment(object):
 
         Ndocs = np.sum(doc_start)
 
+        annotations_all = annotations
+        doc_start_all = doc_start
+        text_all = text
+        
         if active_learning:
 
             batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
-
-            annotations_all = annotations
-            doc_start_all = doc_start
-            text_all = text
 
             selected_docs = np.random.choice(Ndocs, batch_size, replace=False)
             selected_toks = np.in1d(np.cumsum(doc_start_all), selected_docs)
@@ -593,7 +593,7 @@ class Experiment(object):
                 elif 'HMM_crowd' in method:
                     if 'HMM_crowd' not in self.aggs or rerun_all:
                         agg, probs, model = self._run_hmmcrowd(annotations, text, doc_start, outputdir,
-                                                               overwrite_data_file=True if active_learning else False)
+                                                               overwrite_data_file=True)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
@@ -624,7 +624,7 @@ class Experiment(object):
 
                     scores_allmethods[:,method_idx][:,None], \
                     score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
-                                                                                    doc_start)
+                                                                                    doc_start_all)
                     preds_allmethods[:, method_idx] = agg.flatten()
                     probs_allmethods[:,:,method_idx] = probs
 
