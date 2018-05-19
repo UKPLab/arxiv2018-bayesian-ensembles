@@ -24,7 +24,7 @@ exp.alpha0_factor = 1
 # then test on gold-labelled data without using crowd labels
 output_dir = '../../data/bayesian_annotator_combination/output/bio_al/'
 
-gold_labelled = gt != -1
+gold_labelled = gt.flatten() != -1
 crowd_labelled = np.invert(gold_labelled)
 
 # for debugging
