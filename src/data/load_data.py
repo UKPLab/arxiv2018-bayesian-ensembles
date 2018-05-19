@@ -266,7 +266,7 @@ def _load_bio_folder(anno_path_root, folder_name):
         doc_start[0] = 1
 
         doc_gaps = doc_data['text'] == '\n\n' # sentence breaks
-        doc_start[doc_gaps.index[:-1] + 1] = 1
+        #doc_start[doc_gaps.index[:-1] + 1] = 1
         doc_data['doc_start'] = doc_start
 
         # doc_data = doc_data.replace(r'\n', ' ', regex=True)
@@ -364,31 +364,31 @@ def load_biomedical_data(regen_data_files):
 
     print('Creating dev/test split...')
 
-    seed = 10
-
-    gt_test, gt_dev, doc_start_dev, text_dev = split_dataset(
-        gt, doc_start, text, annos, seed
-    )
-
-    # # since there is no separate validation set, we split the test set
-    # ndocs = np.sum(doc_start & (gt != -1))
-    # #testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
-    # ntestdocs = int(np.floor(ndocs * 0.5))
-    # docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
+    # seed = 10
+    #
+    # gt_test, gt_dev, doc_start_dev, text_dev = split_dataset(
+    #     gt, doc_start, text, annos, seed
+    # )
+    #
+    # since there is no separate validation set, we split the test set
+    ndocs = np.sum(doc_start & (gt != -1))
+    #testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+    ntestdocs = int(np.floor(ndocs * 0.5))
+    docidxs = np.cumsum(doc_start & (gt != -1)) # gets us the doc ids
     # # testidxs = np.in1d(docidxs, testdocs)
-    # ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
+    ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
     #
     # # devidxs = np.ones(len(gt), dtype=bool)
     # # devidxs[testidxs] = False
     #
-    # gt_test = np.copy(gt)
-    # gt_test[ntestidxs:] = -1
-    #
-    # gt_dev = np.copy(gt)
-    # gt_dev[:ntestidxs] = -1
-    #
-    # doc_start_dev = doc_start[ntestidxs:]
-    # text_dev = text[ntestidxs:]
+    gt_test = np.copy(gt)
+    gt_test[ntestidxs:] = -1
+
+    gt_dev = np.copy(gt)
+    gt_dev[:ntestidxs] = -1
+
+    doc_start_dev = doc_start[ntestidxs:]
+    text_dev = text[ntestidxs:]
 
     return gt_test, annos, doc_start, text, gt_dev, doc_start_dev, text_dev
 

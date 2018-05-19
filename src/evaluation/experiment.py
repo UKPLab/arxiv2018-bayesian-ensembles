@@ -490,7 +490,7 @@ class Experiment(object):
         probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
 
         # a second test set with no crowd labels was supplied directly
-        if ground_truth_nocrowd is not None and text_nocrowd is not None and doc_start_nocrowd:
+        if ground_truth_nocrowd is not None and text_nocrowd is not None and doc_start_nocrowd is not None:
             test_no_crowd = True
             N_withcrowd = annotations.shape[0]
             N_nocrowd = ground_truth_nocrowd.shape[0]

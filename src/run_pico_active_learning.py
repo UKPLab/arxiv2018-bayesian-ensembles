@@ -8,8 +8,6 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
-
 gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 exp = Experiment(None, 3, annos.shape[1], None)
@@ -17,18 +15,8 @@ exp = Experiment(None, 3, annos.shape[1], None)
 exp.save_results = True
 exp.opt_hyper = False #True
 
-
 exp.alpha0_diags = 100
 exp.alpha0_factor = 1
-
-# run all the methods that don't require tuning here
-exp.methods =  [
-                'HMM_crowd',
-                'HMM_crowd_then_LSTM',
-                # best_bac_wm + '_then_LSTM',
-                # best_bac_wm + '_integrateLSTM',
-                # 'bac_acc' + '_integrateLSTM'
-                ]
 
 # ACITVE LEARNING WITH TASK 2 also needs to reload the optimised hyperparameters.
 
@@ -40,16 +28,15 @@ gold_labelled = gt != -1
 crowd_labelled = np.invert(gold_labelled)
 
 # for debugging
-crowd_labelled[np.random.choice(len(crowd_labelled), int(np.floor(len(crowd_labelled) * 0.99)), replace=False), 0] = False
-crowd_labelled = crowd_labelled[:, 0]
-
-gold_labelled[np.random.choice(len(gold_labelled), int(np.floor(len(gold_labelled) * 0.99)), replace=False), 0] = False
-gold_labelled = gold_labelled[:, 0]
-
-gt_dev = gt_dev[:100]
-doc_start_dev = doc_start_dev[:100]
-text_dev = text_dev[:100]
-
+# crowd_labelled[np.random.choice(len(crowd_labelled), int(np.floor(len(crowd_labelled) * 0.99)), replace=False), 0] = False
+# crowd_labelled = crowd_labelled[:, 0]
+#
+# gold_labelled[np.random.choice(len(gold_labelled), int(np.floor(len(gold_labelled) * 0.99)), replace=False), 0] = False
+# gold_labelled = gold_labelled[:, 0]
+#
+# gt_dev = gt_dev[:100]
+# doc_start_dev = doc_start_dev[:100]
+# text_dev = text_dev[:100]
 
 annos_tr = annos[crowd_labelled, :]
 gt_tr = gt[crowd_labelled] # for evaluating performance on labelled data -- these are all -1 so we can ignore these results
