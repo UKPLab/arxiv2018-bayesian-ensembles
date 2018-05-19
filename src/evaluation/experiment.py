@@ -543,6 +543,7 @@ class Experiment(object):
                 annotations = annotations_all[seed_toks, :]
                 doc_start = doc_start_all[seed_toks]
                 text = text_all[seed_toks]
+                N_withcrowd = annotations.shape[0]
 
             Nseen = 0
             while Nseen < Ndocs:
@@ -668,8 +669,9 @@ class Experiment(object):
                     annotations = np.concatenate((annotations, annotations_new), axis=0)
                     doc_start = np.concatenate((doc_start, doc_start_new))
                     text = np.concatenate((text, text_new))
+                    N_withcrowd = annotations.shape[0]
 
-                    print('**** Active learning: No. annotations = %i' % annotations.shape[0])
+                    print('**** Active learning: No. annotations = %i' % N_withcrowd)
 
         if test_no_crowd:
             if return_model:
