@@ -522,8 +522,10 @@ class Experiment(object):
         annotations_all = annotations
         doc_start_all = doc_start
         text_all = text
-        
+
         if active_learning:
+
+            rerun_all = True
 
             batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
 
