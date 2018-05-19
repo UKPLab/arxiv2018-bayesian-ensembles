@@ -502,8 +502,8 @@ class Experiment(object):
         scores_nocrowd = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
         score_std_nocrowd = np.zeros((len(self.SCORE_NAMES)-3, len(self.methods)))
 
-        preds_allmethods_nocrowd = -np.ones((annotations.shape[0], len(self.methods)))
-        probs_allmethods_nocrowd = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
+        preds_allmethods_nocrowd = -np.ones((doc_start_nocrowd.shape[0], len(self.methods)))
+        probs_allmethods_nocrowd = -np.ones((doc_start_nocrowd.shape[0], self.num_classes, len(self.methods)))
 
         # timestamp for when we started a run. Can be compared to file versions to check what was run.
         timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
