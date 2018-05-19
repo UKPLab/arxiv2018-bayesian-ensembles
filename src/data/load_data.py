@@ -402,9 +402,12 @@ def load_biomedical_data(regen_data_files):
     # gt_dev = np.copy(gt)
     # gt_dev[:ntestidxs] = -1
     gt_dev = gt[ntestidxs:]
-
     doc_start_dev = doc_start[ntestidxs:]
     text_dev = text[ntestidxs:]
+
+    doc_start_dev = doc_start_dev[gt_dev != -1]
+    text_dev = text_dev[gt_dev != -1]
+    gt_dev = gt_dev[gt_dev != -1]
 
     return gt_test, annos, doc_start, text, gt_dev, doc_start_dev, text_dev
 
