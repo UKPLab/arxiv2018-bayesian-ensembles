@@ -340,35 +340,35 @@ def load_biomedical_data(regen_data_files):
             all_data.to_csv(savepath + '/text.csv', columns=['text'], header=False, index=False)
 
     print('loading annos...')
-    # annos = pd.read_csv(savepath + '/annos.csv', header=None)
-    # annos = annos.fillna(-1)
-    # annos = annos.values
-    # #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
-    #
-    # print('loading text data...')
-    # text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None)
-    # text = text.fillna(' ').values
-    #
-    # print('loading doc starts...')
-    # doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None).values #np.genfromtxt(savepath + '/doc_start.csv')
-    #
-    # print('loading ground truth labels...')
-    # gt = pd.read_csv(savepath + '/gt.csv', header=None).values # np.genfromtxt(savepath + '/gt.csv')
-
-    # debug subset
-    # crowd_labelled[int(np.round(0.01 * len(crowd_labelled) )):] = False
-    annos = pd.read_csv(savepath + './annos_debug.csv', skip_blank_lines=False, header=None)
+    annos = pd.read_csv(savepath + '/annos.csv', header=None)
     annos = annos.fillna(-1)
     annos = annos.values
+    #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
-    text = pd.read_csv(savepath + './text_debug.csv', skip_blank_lines=False, header=None)
+    print('loading text data...')
+    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None)
     text = text.fillna(' ').values
 
-    doc_start = pd.read_csv(savepath + './doc_start_debug.csv', skip_blank_lines=False, header=None)
-    doc_start = doc_start.values.astype(bool)
+    print('loading doc starts...')
+    doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None).values #np.genfromtxt(savepath + '/doc_start.csv')
 
-    gt = pd.read_csv(savepath + './gt_debug.csv', skip_blank_lines=False, header=None)
-    gt = gt.values.astype(int)
+    print('loading ground truth labels...')
+    gt = pd.read_csv(savepath + '/gt.csv', header=None).values # np.genfromtxt(savepath + '/gt.csv')
+
+    # # debug subset
+    # # crowd_labelled[int(np.round(0.01 * len(crowd_labelled) )):] = False
+    # annos = pd.read_csv(savepath + './annos_debug.csv', skip_blank_lines=False, header=None)
+    # annos = annos.fillna(-1)
+    # annos = annos.values
+    #
+    # text = pd.read_csv(savepath + './text_debug.csv', skip_blank_lines=False, header=None)
+    # text = text.fillna(' ').values
+    #
+    # doc_start = pd.read_csv(savepath + './doc_start_debug.csv', skip_blank_lines=False, header=None)
+    # doc_start = doc_start.values.astype(bool)
+    #
+    # gt = pd.read_csv(savepath + './gt_debug.csv', skip_blank_lines=False, header=None)
+    # gt = gt.values.astype(int)
 
     if len(text) == len(annos) - 1:
         # sometimes the last line of text is blank and doesn't get loaded into text, but doc_start and gt contain labels
