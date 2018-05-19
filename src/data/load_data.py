@@ -463,11 +463,12 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None):
 
         doc_gaps = new_data['text'] == ''
         doc_start = np.zeros(doc_gaps.shape[0], dtype=int)
-        doc_start[doc_gaps[doc_gaps].index[:-1] + 1] = 1 # the indexes after the gaps
+        #doc_start[doc_gaps[doc_gaps].index[:-1] + 1] = 1 # the indexes after the gaps
         doc_content = new_data['text'] != ''
 
         new_data['doc_start'] = doc_start
         new_data = new_data[doc_content]
+        new_data['doc_start'].iat[0] = 1
 
         for t, tok in enumerate(new_data['text']):
 
@@ -691,7 +692,6 @@ def load_ner_data(regen_data_files):
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)
-
 
         # 5. Create a file containing only the words for the task 2 validation set, i.e. like annos.csv with no annotations.
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_val_path but blank out the task_1 labels

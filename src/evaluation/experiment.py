@@ -304,7 +304,7 @@ class Experiment(object):
 
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
-                      exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
+                      exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=bac.LSTM if use_LSTM else None)
         alg.max_iter = 10
@@ -614,6 +614,7 @@ class Experiment(object):
                 print('...done')
 
                 # Save the results so far after each method has completed.
+                Nseen = np.sum(doc_start) # update the number of documents processed so far
 
                 # change the timestamps to include AL loop numbers
                 file_identifier = timestamp + ('-Nseen%i' % Nseen)
@@ -644,14 +645,19 @@ class Experiment(object):
                     with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
-                    if model is not None:
+                    if model is not None and not active_learning:
                         with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
                             pickle.dump(model, fh)
 
-                Nseen = np.sum(doc_start) # update the number of documents processed so far
                 if active_learning:
-                    annotations, doc_start, text = self._uncertainty_sampling(annotations_all, doc_start_all,
+                    annotations_new, doc_start_new, text_new = self._uncertainty_sampling(annotations_all, doc_start_all,
                                                                   text_all, batch_size, probs, selected_docs, Ndocs)
+
+                    annotations = np.concatenate((annotations, annotations_new), axis=0)
+                    doc_start = np.concatenate((doc_start, doc_start_new))
+                    text = np.concatenate((text, text_new))
+
+                    print('**** Active learning: No. annotations = %i' % annotations.shape[0])
 
         if test_no_crowd:
             if return_model:

@@ -40,8 +40,16 @@ gold_labelled = gt != -1
 crowd_labelled = np.invert(gold_labelled)
 
 # for debugging
-crowd_labelled[np.random.choice(len(crowd_labelled), int(np.floor(len(crowd_labelled) * 0.1)), replace=False), 0] = False
+crowd_labelled[np.random.choice(len(crowd_labelled), int(np.floor(len(crowd_labelled) * 0.99)), replace=False), 0] = False
 crowd_labelled = crowd_labelled[:, 0]
+
+gold_labelled[np.random.choice(len(gold_labelled), int(np.floor(len(gold_labelled) * 0.99)), replace=False), 0] = False
+gold_labelled = gold_labelled[:, 0]
+
+gt_dev = gt_dev[:100]
+doc_start_dev = doc_start_dev[:100]
+text_dev = text_dev[:100]
+
 
 annos_tr = annos[crowd_labelled, :]
 gt_tr = gt[crowd_labelled] # for evaluating performance on labelled data -- these are all -1 so we can ignore these results
