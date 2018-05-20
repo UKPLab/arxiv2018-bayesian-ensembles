@@ -70,7 +70,23 @@ To evaluate the probabilities produced by each aggregation method, which may be 
 
 As well-established non-sequential baselines, we include token-level majority voting (\emph{MV}), \emph{MACE} \cite{hovy2013learning}, Dawid-Skene (\emph{DS}) ~\cite{dawid_maximum_1979}.  We also test independent Bayesian classifier combination (\emph{IBCC}) \cite{kim2012bayesian,simpson_long_paper}, which can be seen as a Bayesian treatment of Dawid-Skene. 
 
-Next, we test the sequential \emph{HMM-Crowd} method \cite{nguyen2017aggregating}. This method uses a mixture of maximum \emph{a posteriori} (or smoothed maximum likelihood) estimates for the worker model, and variational inference for the transition matrix and feature model. The worker model uses a simple estimate of worker accuracy
+Next, we test the sequential \emph{HMM-Crowd} method \cite{nguyen2017aggregating}. This method uses a mixture of maximum \emph{a posteriori} (or smoothed maximum likelihood) estimates for the worker model, and variational inference for the transition matrix and feature model. The worker model uses a simplification of the DS confusion matrix that models only the probability that a worker labels correctly given each true label class. HMM-Crowd is the current state-of-the-art and allows us to compare our approach against a model without a fully Bayesian treatment. 
+
+We test our proposed method, Bayesian sequence classifier combination (BSCC) in several configurations. Firstly, with different worker models:
+\begin{enumerate}
+\item Accuracy model (\emph{BSCC-ACC}): each worker is represented by a single parameter encoding $p( correct label )$
+\item Spammer model (\emph{BSCC-MACE}): proposed for MACE \cite{hovy2013learning}, each worker has a parameter encoding 
+$p( worker is spamming )$ and a set of $L$ parameters encoding $p( label | worker is spamming)$.
+\item Confusion matrix (\emph{BSCC-IBCC}): as in \emph{simpson_long_paper}, each worker has a matrix of parameters containing $p( label l | true class j)$.
+\item Sequential confusion matrix (\emph{BSCC-Seq}): as described in Section \ref{sec:model}, extends the confusion matrix using an HMM to model label transitions.
+\end{enumerate}
+Secondly, with different feature models:
+\begin{enumerate}
+\item No text features (\emph{NF}): only the crowdsourced labels are taken into account when labelling each token. Has the advantage of being task-independent and hence may be more suitable for cases where individual words are uninformative.
+\item Independent text features (\emph{IF}): the probability of a token is independent of the sequence conditioned on the true label of the token. This is a standard emission model for an HMM.
+\item Integrated LSTM (\emph{intLSTM}): the LSTM is integrated into the variational inference loop as described in Section \ref{sec:model}.
+\end{enumerate}
+
 
 \section{Aggregating Crowdsourced Labels}
 

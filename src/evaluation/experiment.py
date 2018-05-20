@@ -537,7 +537,7 @@ class Experiment(object):
             batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
 
             seed_docs = np.random.choice(Ndocs, batch_size, replace=False)
-            seed_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
+            seed_toks = np.in1d(np.cumsum(doc_start_all) - 1, seed_docs)
 
         for method_idx in range(len(self.methods)):
             
