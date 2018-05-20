@@ -97,7 +97,7 @@ exp.methods =  [
                 #'ibcc',
                 #'bac_ibcc',
                 # best_bac_wm + '_integrateLSTM'
-                best_bac_wm + '_integrateBOF'
+                best_bac_wm + '_integrateBOF_then_LSTM'
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,

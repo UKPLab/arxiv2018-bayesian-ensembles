@@ -35,6 +35,7 @@ import warnings
 
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 from lample_lstm_tagger.loader import tag_mapping
+from scipy.sparse.coo import coo_matrix
 
 
 class BAC(object):
@@ -1609,8 +1610,6 @@ class LSTM:
 
 class BagOfFeatures:
 
-    from scipy.sparse import coo_matrix
-
     def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
 
         self.N = N
@@ -1621,11 +1620,11 @@ class BagOfFeatures:
 
         self.features = []
 
-        for feat in text:
+        for feat in text.flatten():
             if feat not in self.feat_map:
                 self.feat_map[feat] = len(self.feat_map)
 
-            self.features.append( self.feat_map[text] )
+            self.features.append( self.feat_map[feat] )
 
         self.features = np.array(self.features).astype(int)
 
@@ -1657,7 +1656,7 @@ class BagOfFeatures:
         test_features = np.zeros(N, dtype=int)
         valid_feats = np.zeros(N, dtype=bool)
 
-        for i, feat in enumerate(text):
+        for i, feat in enumerate(text.flatten()):
             if feat in self.feat_map:
                 valid_feats[i] = True
                 test_features[i] = self.feat_map[feat]

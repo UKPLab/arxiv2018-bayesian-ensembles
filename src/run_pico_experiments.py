@@ -25,7 +25,7 @@ factors = [1, 4, 9, 36]
 
 methods_to_tune = ['ibcc', 'bac_acc', 'bac_ibcc', 'bac_seq', 'bac_mace']
 
-best_bac_wm = 'bac_ibcc' # choose model with best score for the different BAC worker models
+best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 # best_bac_wm_score = -np.inf
 #
 # # tune with small dataset to save time
@@ -77,18 +77,20 @@ best_bac_wm = 'bac_ibcc' # choose model with best score for the different BAC wo
 # exp.alpha0_diags = best_diags
 # exp.alpha0_factor = best_factor
 #
-exp.alpha0_diags = 50
-exp.alpha0_factor = 9
+exp.alpha0_diags = 1#50
+exp.alpha0_factor = 1#9
 
 # run all the methods that don't require tuning here
 exp.methods =  ['majority',
                 #'ibcc'
                 #'best',
                 #'worst',
-                'HMM_crowd',
+                #'HMM_crowd',
                 #'HMM_crowd_then_LSTM',
-                # best_bac_wm + '_then_LSTM',
-                # best_bac_wm + '_integrateLSTM',
+                best_bac_wm + '_integrateBOF',
+                best_bac_wm + '_integrateBOF_then_LSTM',
+                best_bac_wm + '_then_LSTM',
+                best_bac_wm + '_integrateLSTM',
                 # 'bac_acc' + '_integrateLSTM'
                 ]
 

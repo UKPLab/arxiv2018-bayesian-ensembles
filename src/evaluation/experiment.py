@@ -607,7 +607,7 @@ class Experiment(object):
                 elif 'HMM_crowd' in method:
                     if 'HMM_crowd' not in self.aggs or rerun_all:
                         agg, probs, model = self._run_hmmcrowd(annotations, text, doc_start, outputdir,
-                                                               overwrite_data_file=True)
+                                                               overwrite_data_file=True if active_learning else False)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
