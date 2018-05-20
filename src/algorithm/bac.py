@@ -540,7 +540,9 @@ class BAC(object):
         return pseq, seq
 
     def predict(self, doc_start, text):
-        C = np.zeros((len(doc_start), self.K)) -1 # all blank
+
+        C = np.zeros((len(doc_start), self.K), dtype=int) # all blank
+
         self.C_data = self.data_model.predict(doc_start, text)
 
         with Parallel(n_jobs=-1) as parallel:
