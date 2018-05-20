@@ -464,7 +464,7 @@ class BAC(object):
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
                 # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                if self.iter > 2:
+                if self.iter > -1:
                     # hold off training the feature-based classifier for three iterations
                     self.C_data = self.data_model.fit_predict(self.q_t)
                     self.data_model_updated = True

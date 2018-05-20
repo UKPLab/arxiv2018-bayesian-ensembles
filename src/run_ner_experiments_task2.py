@@ -37,7 +37,7 @@ exp.alpha0_factor = 1#9 # best_factor
 exp.methods =  [
     # 'HMM_crowd',
     # 'HMM_crowd_then_LSTM',
-    best_bac_wm + '_then_LSTM',
+    # best_bac_wm + '_then_LSTM',
     best_bac_wm + '_integrateLSTM',
     'bac_acc_integrateLSTM',
     'bac_acc_then_LSTM'
