@@ -719,14 +719,14 @@ class Experiment(object):
             else:
                 return scores_allmethods, preds_allmethods, probs_allmethods, None, None, None
 
-    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir, overwrite=False):
+    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir, docsubsetidxs, overwrite=False):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
         if not os.path.exists(filename) or overwrite:
             if text is not None:
 
-                ufeats = []
+                ufeats = {}
                 features = np.zeros(len(text))
                 for t, tok in enumerate(text):
 
@@ -736,9 +736,9 @@ class Experiment(object):
                     if tok not in ufeats:
                         features[t] = len(ufeats)
 
-                        ufeats.append(tok)
+                        ufeats[tok] = len(ufeats)
                     else:
-                        features[t] = np.argwhere(ufeats == tok)[0][0]
+                        features[t] = ufeats[tok]
             else:
                 features = []
                 ufeats = []
@@ -788,6 +788,12 @@ class Experiment(object):
             crowd_labels = data[1]
             nfeats = data[2]
 
+        sentences_inst = np.array(sentences_inst)
+        sentences_inst = sentences_inst[docsubsetidxs]
+
+        crowd_labels = np.array(crowd_labels)
+        crowd_labels = crowd_labels[docsubsetidxs]
+        
         if isinstance(sentences_inst[0][0].features[0], float):
             # the features need to be ints not floats!
             for s, sen in enumerate(sentences_inst):
