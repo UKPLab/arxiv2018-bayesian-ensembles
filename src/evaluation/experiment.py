@@ -730,17 +730,15 @@ class Experiment(object):
 
                 ufeats = {}
                 features = np.zeros(len(text))
-                for t, tok in enumerate(text):
+                for t, tok in enumerate(text.flatten()):
 
                     if np.mod(t, 10000) == 0:
                         print('converting data to hmm format: token %i / %i' % (t, len(text)))
 
                     if tok not in ufeats:
-                        features[t] = len(ufeats)
-
                         ufeats[tok] = len(ufeats)
-                    else:
-                        features[t] = ufeats[tok]
+
+                    features[t] = ufeats[tok]
             else:
                 features = []
                 ufeats = []
