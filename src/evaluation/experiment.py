@@ -536,17 +536,19 @@ class Experiment(object):
 
             batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
 
-            selected_docs = np.random.choice(Ndocs, batch_size, replace=False)
-            selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
+            seed_docs = np.random.choice(Ndocs, batch_size, replace=False)
+            seed_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
 
-            seed_toks = selected_toks
-
-        for method_idx in range(len(self.methods)): 
+        for method_idx in range(len(self.methods)):
             
             print('running method: %s' % self.methods[method_idx])
             method = self.methods[method_idx]
 
             if active_learning:
+
+                selected_docs = seed_docs
+                selected_toks = seed_toks
+
                 # reset to the same original sample for the next method to be tested
                 annotations = annotations_all[seed_toks, :]
                 doc_start = doc_start_all[seed_toks]

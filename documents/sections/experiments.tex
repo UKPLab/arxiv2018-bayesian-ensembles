@@ -1,45 +1,121 @@
 \section{Experiments}
 
-\subsection{Synthetic Data}
+%
+%\subsection{Synthetic Data}
+%
+%We use synthetic data to illustrate the strengths and weaknesses of different methods by varying one independent
+%dataset and tracking the performance metrics of each method:
+%\begin{enumerate}
+%  \item When do other methods outperform simple majority voting? Show performance against worker accuracy.
+%  Similar experiments were carried out with a different set of baselines in \cite{Simpson2014Thesis}, Section 2.5.2, with all workers having similar accuracies, and Section 2.5.4, where some workers are noisy and others are highly accurate. Here, we vary the average accuracy of workers, with lower average accuracy leading to more diversity between workers. Analyse whether the full IBCC confusion matrix offers benefits over MACE due to worker accuracy varying between classes when accuracy is lower. 
+%  \item How well do MACE, IBCC, and Seq-BCC handle worker bias? Show performance against worker bias toward one class. This is a comparable experiment to \cite{Simpson2014Thesis}, Section 2.5.3, which notably does not include MACE.
+%  \item How well does each method handle data sparsity? (a) Vary the amount of observations per worker. Expect MACE to perform well, Seq-BCC may suffer from the larger confusion matrix. (b) Vary the number of observations per data point. 
+%  \item Do MACE and IBCC still work with unbalanced datasets? Test with unbalanced class distributions, i.e. starting from $p(B) = p(I) = p(O) = 0.3$, decrease
+%  $p(B)$ and $p(I)$ until $p(O) = 0.99$.
+%\end{enumerate}
+%In each case, we use a set of default values for the variables that are not currently being tested. These are
+% chosen so that all methods perform well (e.g. 90\% accuracy) under the best conditions of the test. E.g. for the test where we vary worker accuracy, we set bias and sparsity to be low so that the performance of all methods is good when workers are 80\% accurate.
+%
+%For all methods except Seq-BCC, we compute performance metrics both before and after the valid annotation post-processing step, which is required to ensure that I tokens do not follow O tokens.
+%
+%Performance metrics:
+%\begin{enumerate}
+%  \item Metrics that evaluate the quality of the most probable class labels: recall, precision and F1-score (of B class and I class separately), accuracy (mean over classes)
+%  \item Metrics that evaluate the confidence values output by the models: area under ROC curve or AUC (separate for B and I classes), and cross entropy error %or brier score (mean over classes)
+%  \item Annotation count error: the mean difference between the number of annotations produced by the model and the true number.
+%  \item Number of invalid labels that must be corrected by post-processing.
+%  \item Mean length of annotations compared to the ground truth: show whether some methods find annotation fragments.
+%\end{enumerate}
+%
+%We also evaluate the competence scores estimated by each method. First, we compute the ground truth from the 
+%synthetic confusion matrices. We use a weighted average over classes (weighted by class frequency) to produce the 
+%overall worker accuracy. Then, we compute accuracy from Seq-BCC, MACE and IBCC using similar methods. 
+%For each method, we can compute the mean and STD of cross entropy error between the estimated and the ground truth
+% confusion matrices. We then reproduce the plots described above, but showing the cross entropy error for the 
+% competence estimates. 
 
-We use synthetic data to illustrate the strengths and weaknesses of different methods by varying one independent
-dataset and tracking the performance metrics of each method:
-\begin{enumerate}
-  \item When do other methods outperform simple majority voting? Show performance against worker accuracy.
-  Similar experiments were carried out with a different set of baselines in \cite{Simpson2014Thesis}, Section 2.5.2, with all workers having similar accuracies, and Section 2.5.4, where some workers are noisy and others are highly accurate. Here, we vary the average accuracy of workers, with lower average accuracy leading to more diversity between workers. Analyse whether the full IBCC confusion matrix offers benefits over MACE due to worker accuracy varying between classes when accuracy is lower. 
-  \item How well do MACE, IBCC, and Seq-BCC handle worker bias? Show performance against worker bias toward one class. This is a comparable experiment to \cite{Simpson2014Thesis}, Section 2.5.3, which notably does not include MACE.
-  \item How well does each method handle data sparsity? (a) Vary the amount of observations per worker. Expect MACE to perform well, Seq-BCC may suffer from the larger confusion matrix. (b) Vary the number of observations per data point. 
-  \item Do MACE and IBCC still work with unbalanced datasets? Test with unbalanced class distributions, i.e. starting from $p(B) = p(I) = p(O) = 0.3$, decrease
-  $p(B)$ and $p(I)$ until $p(O) = 0.99$.
-\end{enumerate}
-In each case, we use a set of default values for the variables that are not currently being tested. These are
- chosen so that all methods perform well (e.g. 90\% accuracy) under the best conditions of the test. E.g. for the test where we vary worker accuracy, we set bias and sparsity to be low so that the performance of all methods is good when workers are 80\% accurate.
+%\subsection{Real-world Data}
+%
+%We investigate the performance on some real datasets to show how well the methods work when combining real workers. Besides the performance metrics mentioned above, we also quantitatively analyse examples of where Seq-BCC outperforms other methods to show where they may have trouble forming valid or grammatically correct annotations, e.g. where the starting token is incorrect. 
+%Ideally, we would also analyse whether the annotations produced are grammatically sensible, e.g. if there is conflict between workers about where an annotation should start, the method should choose one valid start point, not an invalid start point that lies in between. These points can be evaluated by computing:
+%\begin{enumerate}
+%\item The percentage of "sensible" annotations, as judged by an expert for the task. For tasks where this data is not available, we can use the following metrics to gauge annotation quality.
+%\item The percentage of each method's annotations that have an exact match in the gold standard (exact annotation precision)
+%\item The percentage of gold standard annotations that have an exact match in the method's output (exact annotation recall)
+%\item Mean and variance of no. tokens difference to nearest annotation; this is averaged over the annotations, rather than the number of tokens, so gives a greater indication of how well they matched the gold standard.
+%\end{enumerate}
 
-For all methods except Seq-BCC, we compute performance metrics both before and after the valid annotation post-processing step, which is required to ensure that I tokens do not follow O tokens.
+We run several method comparisons using two NLP datasets to test whether the quality of aggregated labels is 
+improved by (a) the more sophisticated worker models described in Section \ref{sec:model},
+(b) the inclusion of text features into the graphical model or (c) a Bayesian approach. 
+We further test whether Bayesian approach facilitates more efficient active learning of sequential annotations from crowds and whether integrating the LSTM into the ensemble of annotators improves performance further.
+Our experiments consist of three tasks: (1) aggregating crowdsourced labels, (2) training the LSTM sequence tagger of Lample et al. ~\shortcite{Lample2016} using aggregated labels, and (3) actively selecting batches of documents for crowdsourced annotation.
+ 
+\section{Datasets}
 
-Performance metrics:
-\begin{enumerate}
-  \item Metrics that evaluate the quality of the most probable class labels: recall, precision and F1-score (of B class and I class separately), accuracy (mean over classes)
-  \item Metrics that evaluate the confidence values output by the models: area under ROC curve or AUC (separate for B and I classes), and cross entropy error %or brier score (mean over classes)
-  \item Annotation count error: the mean difference between the number of annotations produced by the model and the true number.
-  \item Number of invalid labels that must be corrected by post-processing.
-  \item Mean length of annotations compared to the ground truth: show whether some methods find annotation fragments.
-\end{enumerate}
+We use two datasets containing both crowdsourced sequential annotations and gold annotations. 
+The \emph{NER} dataset contains $1,393$ English documents from the CoNLL 2003 named-entity recognition dataset
+~\cite{conll_ner_2003}, all of which contain gold labels for four named entity categories (PER, LOC, ORG, MISC). Of these, we use crowdsourced labels provided by \cite{rodrigues2014} for $415$ documents.
+We also test on the \emph{PICO} dataset, introduced by Nguyen et al. ~\cite{nguyen2017aggregating},
+containing $4,740$ medical paper abstracts, all of which have been 
+annotated by a crowd to indicate text spans that identify the population enrolled in a clinical trial. There are gold labels for $191$ documents.
 
-We also evaluate the competence scores estimated by each method. First, we compute the ground truth from the 
-synthetic confusion matrices. We use a weighted average over classes (weighted by class frequency) to produce the 
-overall worker accuracy. Then, we compute accuracy from Seq-BCC, MACE and IBCC using similar methods. 
-For each method, we can compute the mean and STD of cross entropy error between the estimated and the ground truth
- confusion matrices. We then reproduce the plots described above, but showing the cross entropy error for the 
- competence estimates. 
+\section{Evaluation metrics}
 
-\subsection{Real-world Data}
+For NER we use the established CoNLL 2003 F1-score, which is computed at the level of annotated spans that must match exactly to be considered correct. This measure is intuitive because complete named entities must be marked to be of value. For PICO, we use the relaxed F1-measure defined in ~\cite{nguyen2017aggregating}, which counts the matching fractions of spans when computing precision and recall. 
+%We additionally compute the root mean squared error in the span lengths, i.e. the difference between the  % actually it's not quite that. We computed the difference in mean span lengths. This is already captured by F1 score for pico and better described by the span-level-precision and recall. Our metric might be more if we didn't take the absolute so we could see if spans were often too long or too short.
+To evaluate the probabilities produced by each aggregation method, which may be useful for decision-making tasks such as active learning, we also compute the cross entropy error.
 
-We investigate the performance on some real datasets to show how well the methods work when combining real workers. Besides the performance metrics mentioned above, we also quantitatively analyse examples of where Seq-BCC outperforms other methods to show where they may have trouble forming valid or grammatically correct annotations, e.g. where the starting token is incorrect. 
-Ideally, we would also analyse whether the annotations produced are grammatically sensible, e.g. if there is conflict between workers about where an annotation should start, the method should choose one valid start point, not an invalid start point that lies in between. These points can be evaluated by computing:
-\begin{enumerate}
-\item The percentage of "sensible" annotations, as judged by an expert for the task. For tasks where this data is not available, we can use the following metrics to gauge annotation quality.
-\item The percentage of each method's annotations that have an exact match in the gold standard (exact annotation precision)
-\item The percentage of gold standard annotations that have an exact match in the method's output (exact annotation recall)
-\item Mean and variance of no. tokens difference to nearest annotation; this is averaged over the annotations, rather than the number of tokens, so gives a greater indication of how well they matched the gold standard.
-\end{enumerate}
+\section{Evaluated methods}
+
+As well-established non-sequential baselines, we include token-level majority voting (\emph{MV}), \emph{MACE} \cite{hovy2013learning}, Dawid-Skene (\emph{DS}) ~\cite{dawid_maximum_1979}.  We also test independent Bayesian classifier combination (\emph{IBCC}) \cite{kim2012bayesian,simpson_long_paper}, which can be seen as a Bayesian treatment of Dawid-Skene. 
+
+Next, we test the sequential \emph{HMM-Crowd} method \cite{nguyen2017aggregating}. This method uses a mixture of maximum \emph{a posteriori} (or smoothed maximum likelihood) estimates for the worker model, and variational inference for the transition matrix and feature model. The worker model uses a simple estimate of worker accuracy
+
+\section{Aggregating Crowdsourced Labels}
+
+In this task, we use the aggregation methods to combine crowdsourced labels and evaluate their outputs against the gold standard.
+For NER, we split the $415$ crowd-labelled documents into 50\% validation and test sets as in Nguyen et al. ~\shortcite{nguyen2017}. We run the methods on crowd labels from all $415$ documents, then evaluate on either the
+validation or test set.
+For PICO, we also split the gold-labelled documents randomly into 50\% validation and test sets. However, in this case, we run the methods on all $4,740$ crowd-labelled documents. The results for this dataset are not directly comparable
+with those of Nguyen et al. ~\shortcite{nguyen2014aggregating}, since their test and train splits were not available 
+and they appear to have used a subset of the publicly-available dataset with on average 5 annotators per documents, rather than the 6 per document in the complete dataset.
+
+% HMM Crowd -- report their method's results without bugfixes. Cannot say the improvement is purely down to Bayesian treatment though. Let's do this for now, then we can add the more direct comparison to a revised draft if accepted. OR include both, and label the modified HMM_Crowd differently to highlight our contribution here. But we lack the un-revised version for PICO -- look for older runs to see if we have it?
+
+%Sentence separation -- why does it improve performance if we don't split docs into sentences?
+
+\section{Training an LSTM using the Crowd}\label{sec:task2}
+
+In this task, we use the aggregation methods to train an LSTM sequence tagger \cite{lample2016}
+to show whether integrating the LSTM with the aggregation method improves performance.
+For the NER dataset, we train the aggregation methods on the $415$ crowd-labelled documents, as before,
+then use the outputs to train the LSTM. We then evaluate the LSTM on the validation and test sets
+in the original CoNLL dataset.
+With the PICO dataset, we run the aggregators on the $3,649$ documents without gold labels, 
+use the outputs to train the LSTM, then evaluate the LSTM on the validation and test splits from the gold-labelled data.
+
+\section{Active Document Selection}
+
+We run an active learning simulation to evaluate whether the proposed Bayesian approach and integrated LSTM
+can improve the efficiency of the crowdsourcing process. 
+The simulation is run separately for each method tested, and begins with the same initial set of randomly-chosen
+documents taken from the same crowd-labelled sets used in Section \ref{sec:task2}.
+We retrieve the crowdsourced labels for the selected documents, run the aggregation method,
+then use its posterior probabilities to select a new batch of the $N_{batchsize}$ most uncertain documents that have not yet been labelled. 
+We retrieve the annotations for the selected batch of documents, then repeat the process until
+all of the availble crowd labels have been used.
+We set $N_{batchsize}$ to one tenth of the crowd-labelled dataset size for each of the datasets. At each iteration,
+we monitor progress by training an LSTM on the current output of the aggregation method, 
+and testing its performance as in Section \ref{sec:task2}. 
+With the NER dataset we also evaluate the output of aggregation method on the test set for the crowd-labelled documents. 
+This is not possible with PICO datas because we do not have gold labels for documents labelled by the crowd.
+
+The active learning process tested here employs \emph{uncertainty sampling}, which is a well-established heuristic \cite{active learning paper -- see tacl paper?}. The selection method and batch size could be fine-tuned for future applications -- the goal of our experiment in this paper was to test the benefits of the proposed aggregation methods,
+rather than to establish a robust active learning approach.
+ 
+
+\section{Discussion}
+
+The benefits of sequential models are more evident on the PICO dataset than on NER, which may be due to the longer sequences or the smaller number of labels, since PICO target classes are only B, I, or O, whereas the B and I tags for NER 
+are compounded with PER, LOC, ORG or MISC tags. <show an example from each dataset, with our predictions from HMM, BAC...>
