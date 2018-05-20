@@ -82,12 +82,13 @@ exp.alpha0_factor = 9
 
 # run all the methods that don't require tuning here
 exp.methods =  ['majority',
+                #'ibcc'
                 #'best',
                 #'worst',
-                #'HMM_crowd',
+                'HMM_crowd',
                 #'HMM_crowd_then_LSTM',
-                best_bac_wm + '_then_LSTM',
-                best_bac_wm + '_integrateLSTM',
+                # best_bac_wm + '_then_LSTM',
+                # best_bac_wm + '_integrateLSTM',
                 # 'bac_acc' + '_integrateLSTM'
                 ]
 
