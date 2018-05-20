@@ -552,20 +552,20 @@ class BAC(object):
                                                self.worker_model, self.before_doc_idx)
 
             if self.verbose:
-                print("BAC predict: completed forward pass" % self.iter)
+                print("BAC predict: completed forward pass")
 
             lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
                                               self.lnPi_data, doc_start, self.nscores, self.worker_model,
                                               self.before_doc_idx)
             if self.verbose:
-                print("BAC predict: completed backward pass" % self.iter)
+                print("BAC predict: completed backward pass")
 
             # update q_t and q_t_joint
             q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
                                                   self.C_data, doc_start, self.nscores, self.worker_model,
                                                   self.before_doc_idx)
             if self.verbose:
-                print("BAC predict: computed label sequence probabilities" % self.iter)
+                print("BAC predict: computed label sequence probabilities")
 
             q_t = np.sum(q_t_joint, axis=1)
 
@@ -1604,5 +1604,80 @@ class LSTM:
         '''
         '''
         lnp_Cdata = C_data * np.log(E_t)
+        lnp_Cdata[E_t == 0] = 0
+        return np.sum(lnp_Cdata)
+
+class BagOfFeatures:
+
+    from scipy.sparse import coo_matrix
+
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
+
+        self.N = N
+
+        self.nclasses = nclasses
+
+        self.feat_map = {}
+
+        self.features = []
+
+        for feat in text:
+            if feat not in self.feat_map:
+                self.feat_map[feat] = len(self.feat_map)
+
+            self.features.append( self.feat_map[text] )
+
+        self.features = np.array(self.features).astype(int)
+
+        # sparse matrix of one-hot encoding, nfeatures x N
+        self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
+
+        self.beta0 = np.ones((len(self.feat_map), self.nclasses))
+
+        return alpha0_data
+
+    def fit_predict(self, Et):
+
+        # count the number of occurrences for each label value
+
+        beta = self.beta0 +  self.features_mat.dot(Et)
+
+        self.ElnRho = psi(beta) - psi(np.sum(beta, 0)[None, :])
+
+        lnptext_given_t = self.ElnRho[self.features, :]
+
+        # normalise, assuming equal prior here
+        pt_given_text = np.exp(lnptext_given_t - logsumexp(lnptext_given_t, 1)[:, None])
+
+        return pt_given_text
+
+    def predict(self, doc_start, text):
+        N = len(doc_start)
+
+        test_features = np.zeros(N, dtype=int)
+        valid_feats = np.zeros(N, dtype=bool)
+
+        for i, feat in enumerate(text):
+            if feat in self.feat_map:
+                valid_feats[i] = True
+                test_features[i] = self.feat_map[feat]
+
+        lnptext_given_t = self.ElnRho[test_features[valid_feats], :]
+
+        # normalise, assuming equal prior here
+        pt_given_text = np.exp(lnptext_given_t - logsumexp(lnptext_given_t, 1)[:, None])
+
+        probs = np.zeros((N, self.nclasses))
+        probs[valid_feats, :] = pt_given_text
+
+        return probs
+
+    def log_likelihood(self, C_data, E_t):
+        '''
+        '''
+
+        lnptext_given_t = self.ElnRho[self.features, :]
+
+        lnp_Cdata = np.sum(E_t * lnptext_given_t)
         lnp_Cdata[E_t == 0] = 0
         return np.sum(lnp_Cdata)

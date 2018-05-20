@@ -266,7 +266,7 @@ class Experiment(object):
 
         return agg, probs, ibc
 
-    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False,
+    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False, useBOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None):
 
@@ -303,11 +303,18 @@ class Experiment(object):
         else:
             dev_sentences = None
 
+        if use_LSTM:
+            data_model = bac.LSTM
+        elif useBOF:
+            data_model = bac.BagOfFeatures
+        else:
+            data_model = None
+
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
-                      data_model=bac.LSTM if use_LSTM else None)
+                      data_model=data_model)
         alg.max_iter = 10
         alg.verbose = True
 
@@ -385,7 +392,7 @@ class Experiment(object):
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                                  ground_truth_val, IOB_map, self.num_classes)
+                                                  ground_truth_val, IOB_map, self.num_classes, n_epochs=25)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
@@ -577,6 +584,12 @@ class Experiment(object):
                     if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
                         agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
                                     method, use_LSTM=True,
+                                    ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
+                                    ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
+                                    text_nocrowd=text_nocrowd)
+                    elif len(method.split('_')) > 2 and method.split('_')[2] == 'integrateBOF':
+                        agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
+                                    method, useBOF=True,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
                                     ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
                                     text_nocrowd=text_nocrowd)
