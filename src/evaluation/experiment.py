@@ -333,9 +333,9 @@ class Experiment(object):
 
         return agg, probs, model, agg_nocrowd, probs_nocrowd
 
-    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir, overwrite_data_file=False):
+    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir, doc_subset, overwrite_data_file=False):
         sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir,
-                                                                        overwrite=overwrite_data_file)
+                                                                        doc_subset, overwrite=overwrite_data_file)
 
         data = crowd_data(sentences, crowd_labels)
         hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
@@ -606,8 +606,10 @@ class Experiment(object):
 
                 elif 'HMM_crowd' in method:
                     if 'HMM_crowd' not in self.aggs or rerun_all:
-                        agg, probs, model = self._run_hmmcrowd(annotations, text, doc_start, outputdir,
-                                                               overwrite_data_file=True if active_learning else False)
+                        # we pass all annotations here so they can be saved and reloaded from a single file in HMMCrowd
+                        # format, then the relevant subset selected from that.
+                        agg, probs, model = self._run_hmmcrowd(annotations_all, text_all, doc_start_all, outputdir,
+                                                               selected_docs, overwrite_data_file=False)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
@@ -788,12 +790,13 @@ class Experiment(object):
             crowd_labels = data[1]
             nfeats = data[2]
 
-        sentences_inst = np.array(sentences_inst)
-        sentences_inst = sentences_inst[docsubsetidxs]
+        if docsubsetidxs is not None:
+            sentences_inst = np.array(sentences_inst)
+            sentences_inst = sentences_inst[docsubsetidxs]
 
-        crowd_labels = np.array(crowd_labels)
-        crowd_labels = crowd_labels[docsubsetidxs]
-        
+            crowd_labels = np.array(crowd_labels)
+            crowd_labels = crowd_labels[docsubsetidxs]
+
         if isinstance(sentences_inst[0][0].features[0], float):
             # the features need to be ints not floats!
             for s, sen in enumerate(sentences_inst):
