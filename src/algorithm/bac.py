@@ -1566,7 +1566,7 @@ class LSTM:
                                                            dev_sentences, dev_labels, self.IOB_map, self.nclasses, 1,
                                                            self.tag_to_id, self.id_to_tag)
         else:
-            n_epochs = 3 # for each bac iteration
+            n_epochs = 1 # for each bac iteration
 
             best_dev = -np.inf
             niter_no_imprv = 0
@@ -1576,7 +1576,8 @@ class LSTM:
                 niter_no_imprv, best_dev = lstm_wrapper.run_epoch(0, self.train_data_objs[0], self.train_data_objs[1],
                                    self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4],
                                     niter_no_imprv,
-                                   self.train_data_objs[5], self.train_data_objs[6], self.lstm, best_dev, self.nclasses)
+                                   self.train_data_objs[5], self.train_data_objs[6], self.lstm, best_dev, self.nclasses,
+                                   compute_dev=False)
 
                 if niter_no_imprv >= max_niter_no_imprv:
                     print("- early stopping %i epochs without improvement" % niter_no_imprv)

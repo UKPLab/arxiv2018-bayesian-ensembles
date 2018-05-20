@@ -621,9 +621,13 @@ class Experiment(object):
                     probs[agg.astype(int)] = 1.0
 
                 if '_then_LSTM' in method:
-                    agg, probs, agg_nocrowd, probs_nocrowd = self._run_LSTM(N_withcrowd, text, doc_start, agg,
+                    agg2, probs2, agg_nocrowd, probs_nocrowd = self._run_LSTM(N_withcrowd, text, doc_start, agg,
                                 test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd, ground_truth_nocrowd,
                                 text_val, doc_start_val, ground_truth_val)
+
+                    if not active_learning:
+                        agg = agg2
+                        probs = probs2
 
                 if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
 

@@ -75,7 +75,7 @@ def split_train_to_dev(gold_sentences):
 
 
 def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              dev_sentences, dev_tags, model, best_dev, num_classes):
+              dev_sentences, dev_tags, model, best_dev, num_classes, compute_dev=True):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
@@ -88,18 +88,19 @@ def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_
         if i % 50 == 0 and i > 0 == 0:
             print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
 
-    agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
+    if compute_dev:
+        agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
 
-    dev_score = skm.f1_score(dev_tags, agg, average='macro')
+        dev_score = skm.f1_score(dev_tags, agg, average='macro')
 
-    print("Score on dev: %.5f" % dev_score)
-    if dev_score > best_dev:
-        best_dev = dev_score
-        print("New best score on dev.")
-        print("Saving model to disk...")
-        model.save()
-    else:
-        niter_no_imprv += 1
+        print("Score on dev: %.5f" % dev_score)
+        if dev_score > best_dev:
+            best_dev = dev_score
+            print("New best score on dev.")
+            print("Saving model to disk...")
+            model.save()
+        else:
+            niter_no_imprv += 1
 
     print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
 
