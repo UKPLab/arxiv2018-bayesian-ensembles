@@ -688,8 +688,7 @@ class Experiment(object):
                     #         pickle.dump(model, fh)
 
                 if active_learning:
-                    annotations_new, doc_start_new, text_new, new_docs, new_toks = self._uncertainty_sampling\
-                        (
+                    annotations, doc_start, text, new_docs, new_toks = self._uncertainty_sampling(
                             annotations_all,
                             doc_start_all,
                             text_all,
