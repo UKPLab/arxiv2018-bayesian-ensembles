@@ -706,8 +706,9 @@ class BAC(object):
         converged = ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) \
                     and (not self.workers_converged or self.data_model_updated)
 
-        if converged:
+        if converged and not self.workers_converged:
             self.workers_converged = True
+            return False
 
         return converged
 
