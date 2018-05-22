@@ -535,7 +535,7 @@ class BAC(object):
 
                 self.q_t_old = self.q_t
 
-                self.q_t = self._update_t(parallel, C, doc_start)
+                self._update_t(parallel, C, doc_start)
 
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
