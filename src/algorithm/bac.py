@@ -627,8 +627,11 @@ class BAC(object):
         Taking the most probable labels results in an illegal sequence of [0, 1]. 
         Using most probable sequence would result in [0, 0].
         '''
+        if self.nu.ndim >= 2:
+            EA = self.nu / np.sum(self.nu, axis=1)[:, None]
+        else:
+            EA = self.nu / np.sum(self.nu)
 
-        EA = self.nu / np.sum(self.nu, axis=1)[:, None]
         lnEA = np.zeros_like(EA)
         lnEA[EA != 0] = np.log(EA[EA != 0])
         lnEA[EA == 0] = -np.inf
