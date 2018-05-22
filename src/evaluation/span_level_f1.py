@@ -4,7 +4,7 @@ import pandas as pd
 
 def get_fraction_matches(annos, annos_to_match_with, strict):
 
-    valididxs = annos != -1
+    valididxs = (annos != -1) & (annos_to_match_with != -1)
     annos[valididxs]
     annos_to_match_with[valididxs]
 
