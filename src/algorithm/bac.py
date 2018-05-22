@@ -183,7 +183,7 @@ class BAC(object):
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=1,   exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
-                 data_model=None, alpha0_data=None, tagging_scheme='IOB2'):
+                 data_model=None, alpha0_data=None, tagging_scheme='IOB2', transition_model='HMM'):
         '''
         Constructor
 
@@ -214,6 +214,14 @@ class BAC(object):
         self.beginning_labels = beginning_labels
         self.exclusions = exclusions
 
+        # choose whether to use the HMM transition model or not
+        if transition_model == 'HMM':
+            self._calc_q_A = _calc_q_A
+            self._update_t = self._update_t_trans
+        else:
+            self._calc_q_A = _calc_q_A_notrans
+            self._update_t = self._update_t_notrans
+
         # choose data model
         if data_model is None:
             self.data_model = ignore_features()
@@ -241,6 +249,8 @@ class BAC(object):
             self.worker_model = SequentialWorker
             self._set_transition_constraints = self._set_transition_constraints_seqalpha
             self.alpha_shape = (self.L, self.nscores)
+
+
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
         
@@ -385,10 +395,58 @@ class BAC(object):
                                                                           np.array2string(np.exp(opt_hyperparams[-1]))))
 
         return self.q_t, self._most_probable_sequence(C, doc_start)[1]
-            
-    def run(self, C, doc_start, features=None, dev_data=None):
+
+    def _update_t_notrans(self, parallel, C, doc_start):
+
+        lnpCT = np.zeros((C.shape[0], self.nclasses))
+
+        for j in range(self.L):
+            data = None
+            for l in range(self.nscores):
+                data_l = (C==l) * self.lnPi[j, l, :][None, :]
+
+                data_l = np.sum(data_l, axis=1)
+
+                data = data_l if data is None else data + data_l
+
+            lnpCT[:, j] = data + self.lnkappa[j]
+
+        # ensure that the values are not too small
+        largest = np.max(lnpCT, 1)[:, np.newaxis]
+        joint = lnpCT - largest
+        joint = np.exp(joint)
+        norma = np.sum(joint, axis=1)[:, np.newaxis]
+        ET = joint / norma
+
+        return q_t_joint
+
+    def _update_t_trans(self, parallel, C, doc_start):
+
+        # calculate alphas and betas using forward-backward algorithm
+        self.lnR_ = _parallel_forward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
+                                           self.lnPi_data, self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
+                                           self.worker_model, self.before_doc_idx)
+
+        if self.verbose:
+            print("BAC iteration %i: completed forward pass" % self.iter)
+
+        lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
+                                          self.lnPi_data, doc_start, self.nscores, self.worker_model,
+                                          self.before_doc_idx)
+        if self.verbose:
+            print("BAC iteration %i: completed backward pass" % self.iter)
+
+        # update q_t and q_t_joint
+        q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
+                                              self.C_data, doc_start, self.nscores, self.worker_model,
+                                              self.before_doc_idx)
+
+        return q_t_joint
+
+    def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
+
         '''
 
         # initialise the hyperparameters to correct sizes
@@ -401,7 +459,7 @@ class BAC(object):
         self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
 
         self.alpha_data = self.data_model.init(self.alpha0_data, C.shape[0], features, doc_start,
-                                                               self.L, dev_data)
+                                                       self.L, dev_data, converge_workers_first)
         self.lnPi_data  = self.worker_model._calc_q_pi(self.alpha_data)
 
         # validate input data
@@ -426,11 +484,12 @@ class BAC(object):
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 
         self.data_model_updated = False
+        self.workers_converged = False
 
         # main inference loop
         with Parallel(n_jobs=-1) as parallel:
 
-            while not self._converged():
+            while not self._converged() or not self.workers_converged:
 
                 # print status if desired
                 if self.verbose:
@@ -438,22 +497,8 @@ class BAC(object):
 
                 self.q_t_old = self.q_t
 
-                # calculate alphas and betas using forward-backward algorithm
-                self.lnR_ = _parallel_forward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
-                        self.lnPi_data, self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
-                                                   self.worker_model, self.before_doc_idx)
+                self.q_t_joint = self._update_t(parallel, C, doc_start)
 
-                if self.verbose:
-                    print("BAC iteration %i: completed forward pass" % self.iter)
-
-                lnLambd = _parallel_backward_pass(parallel, C, self.C_data, self.lnA[0:self.L, :], self.lnPi,
-                        self.lnPi_data, doc_start, self.nscores, self.worker_model, self.before_doc_idx)
-                if self.verbose:
-                    print("BAC iteration %i: completed backward pass" % self.iter)
-
-                # update q_t and q_t_joint
-                self.q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
-                              self.C_data, doc_start, self.nscores, self.worker_model, self.before_doc_idx)
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
@@ -465,7 +510,7 @@ class BAC(object):
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
                 # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                if self.iter > -1:
+                if self.iter > -1 and (not converge_workers_first or self.workers_converged):
                     # hold off training the feature-based classifier for three iterations
                     self.C_data = self.data_model.fit_predict(self.q_t)
                     self.data_model_updated = True
@@ -582,7 +627,12 @@ class BAC(object):
         '''
         if self.verbose:
             print("Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
-        return ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) and self.data_model_updated
+        converged = ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) and self.data_model_updated
+
+        if converged:
+            self.workers_converged = True
+
+        return converged
 
 def _log_dir(alpha, lnPi, sum_dim):
     x = (alpha - 1) * lnPi
@@ -605,6 +655,22 @@ def _calc_q_A(E_t, nu0):
     if np.any(np.isnan(q_A)):
         print('_calc_q_A: nan value encountered!')
     
+    return q_A, nu
+
+
+def _calc_q_A_notrans(E_t, nu0):
+    '''
+    Update the transition model.
+    '''
+
+    E_t = np.sum(E_t, axis=1)[:, None, :]
+
+    nu = nu0 + np.sum(E_t, 0)
+    q_A = psi(nu) - psi(np.sum(nu, -1))[:, None]
+
+    if np.any(np.isnan(q_A)):
+        print('_calc_q_A: nan value encountered!')
+
     return q_A, nu
 
 # Worker model: accuracy only ------------------------------------------------------------------------------------------
@@ -1480,7 +1546,7 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
 
 class ignore_features:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
         return np.ones(alpha0_data.shape)
 
     def fit_predict(self, Et):
@@ -1497,7 +1563,12 @@ class ignore_features:
 
 class LSTM:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
+
+        if converge_workers_first:
+            self.n_epochs_per_vb_iter = 20
+        else:
+            self.n_epochs_per_vb_iter = 1
 
         self.N = N
 
@@ -1566,7 +1637,7 @@ class LSTM:
                                                            dev_sentences, dev_labels, self.IOB_map, self.nclasses, 1,
                                                            self.tag_to_id, self.id_to_tag)
         else:
-            n_epochs = 1 # for each bac iteration
+            n_epochs = self.n_epochs_per_vb_iter # for each bac iteration
 
             best_dev = -np.inf
             niter_no_imprv = 0
@@ -1611,7 +1682,7 @@ class LSTM:
 
 class BagOfFeatures:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
 
         self.N = N
 

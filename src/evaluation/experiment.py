@@ -6,6 +6,9 @@ Created on Nov 1, 2016
 
 import matplotlib.pyplot as plt
 import logging
+
+from evaluation.span_level_f1 import precision, recall, f1
+
 logging.basicConfig(level=logging.DEBUG)
 
 import pickle
@@ -43,7 +46,8 @@ class Experiment(object):
     short_bias = None
     
     PARAM_NAMES = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
-    SCORE_NAMES = ['accuracy', 'precision', 'recall', 'f1-score', 'auc-score', 'cross-entropy-error', 'count error', 
+    SCORE_NAMES = ['accuracy', 'precision', 'recall', 'f1-score-spans', 'f1-score-spans' 
+                   'auc-score', 'cross-entropy-error', 'count error',
                    'number of invalid labels', 'mean length error']
     
     generate_data= False
@@ -266,7 +270,7 @@ class Experiment(object):
 
         return agg, probs, ibc
 
-    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=False, useBOF=False,
+    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, useBOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None):
 
@@ -303,7 +307,7 @@ class Experiment(object):
         else:
             dev_sentences = None
 
-        if use_LSTM:
+        if use_LSTM > 0:
             data_model = bac.LSTM
         elif useBOF:
             data_model = bac.BagOfFeatures
@@ -314,7 +318,7 @@ class Experiment(object):
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
-                      data_model=data_model)
+                      data_model=data_model, converge_workers_first=use_LSTM==2)
         alg.max_iter = 10
         alg.verbose = True
 
@@ -387,8 +391,8 @@ class Experiment(object):
             train_sentences = labelled_sentences
             dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
                                                                    doc_start_val, ground_truth_val)
-            print(train_sentences.ndim)
-            print(dev_sentences.ndim)
+
+
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
@@ -584,8 +588,14 @@ class Experiment(object):
                 elif method.split('_')[0] == 'bac':
                     # needs to run integrate method for task 2 as well
                     if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
+
+                        if len(method.split('_')) > 2 and method.split('_') == 'atEnd':
+                            use_LSTM = 2
+                        else:
+                            use_LSTM = 1
+
                         agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
-                                    method, use_LSTM=True,
+                                    method, use_LSTM=use_LSTM,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
                                     ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
                                     text_nocrowd=text_nocrowd)
@@ -810,12 +820,22 @@ class Experiment(object):
 
     def calculate_sample_metrics(self, agg, gt, probs):
 
-        result = -np.ones(6)
+        result = -np.ones(12)
 
         result[0] = skm.accuracy_score(gt, agg)
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
+
+        # token-level metrics - strict
+        result[6] = precision(agg, gt, True)
+        result[7] = recall(agg, gt, True)
+        result[8] = f1(agg, gt, True)
+
+        # token-level metrics -- relaxed
+        result[9] = precision(agg, gt, False)
+        result[10] = recall(agg, gt, False)
+        result[11] = f1(agg, gt, False)
 
         auc_score = 0
         total_weights = 0
@@ -837,8 +857,7 @@ class Experiment(object):
 
     def calculate_scores(self, agg, gt, probs, doc_start):
         
-        result = -np.ones((9,1))        
-        result[7] = metrics.num_invalid_labels(agg, doc_start)        
+        result = -np.ones((len(self.SCORE_NAMES), 1))
 
         # exclude data points with missing ground truth
         agg = agg[gt!=-1]
@@ -903,15 +922,19 @@ class Experiment(object):
                     resample_results = resample_results[:, :i]
                     break
 
-            result[:6, 0] = np.mean(resample_results, axis=1)
+            sample_res = np.mean(resample_results, axis=1)
+            result[:len(sample_res), 0]
             std_result = np.std(resample_results, axis=1)
 
         else:
-            result[:6, 0] = self.calculate_sample_metrics(agg, gt, probs)
-            result[6] = metrics.abs_count_error(agg, gt)
-            result[8] = metrics.mean_length_error(agg, gt, doc_start)
+            sample_res = self.calculate_sample_metrics(agg, gt, probs)
+            result[len(sample_res), 0] = sample_res
 
             std_result = None
+
+        result[len(sample_res)] = metrics.abs_count_error(agg, gt)
+        result[len(sample_res) + 1] = metrics.num_invalid_labels(agg, doc_start)
+        result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
 
         print('F1 score = %f' % result[3])
 
