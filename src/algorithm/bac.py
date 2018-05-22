@@ -664,7 +664,8 @@ class BAC(object):
         '''
         if self.verbose:
             print("Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
-        converged = ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) and self.data_model_updated
+        converged = ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) \
+                    and (not self.workers_converged or self.data_model_updated)
 
         if converged:
             self.workers_converged = True
