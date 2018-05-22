@@ -316,14 +316,16 @@ class Experiment(object):
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
-                      data_model=data_model, converge_workers_first=use_LSTM==2, transition_model=transition_model)
+                      data_model=data_model, transition_model=transition_model)
         alg.max_iter = 10
         alg.verbose = True
 
         if self.opt_hyper:
-            probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences)
+            probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences,
+                                      converge_workers_first=use_LSTM==2, )
         else:
-            probs, agg = alg.run(annotations, doc_start, text, dev_data=dev_sentences)
+            probs, agg = alg.run(annotations, doc_start, text, dev_data=dev_sentences,
+                                 converge_workers_first=use_LSTM==2, )
 
         model = alg
 

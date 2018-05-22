@@ -372,7 +372,7 @@ class BAC(object):
         lb = lnpCt - lnqt + lnp_features_and_Cdata - lnq_Cdata + lnpPi - lnqPi + lnpA - lnqA
         return lb
         
-    def optimize(self, C, doc_start, features=None, maxfun=50, dev_data=None):
+    def optimize(self, C, doc_start, features=None, maxfun=50, dev_data=None, converge_workers_first=False):
         ''' 
         Run with MLII optimisation over the lower bound on the log-marginal likelihood.
         Optimizes the confusion matrix prior to the same values for all previous labels, and the scaling of the transition matrix
@@ -389,7 +389,7 @@ class BAC(object):
             self.nu0 = np.ones((self.L + 1, self.L)) * np.exp(hyperparams[-1])
 
             # run the method
-            self.run(C, doc_start, features, dev_data)
+            self.run(C, doc_start, features, dev_data, converge_workers_first=converge_workers_first)
             
             # compute lower bound
             lb = self.lowerbound()
