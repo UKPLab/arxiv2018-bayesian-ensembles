@@ -278,7 +278,13 @@ class BAC(object):
         
     def _initA(self):
         self.nu = self.nu0
-        self.lnA = psi(self.nu0) - psi(np.sum(self.nu0, -1))[:, None]
+
+        if self.nu0.ndim >= 2:
+            nu0_sum = psi(np.sum(self.nu0, -1))[:, None]
+        else:
+            nu0_sum = psi(np.sum(self.nu0))
+
+        self.lnA = psi(self.nu0) - nu0_sum
 
     def _lowerbound_pi_terms_mace(self):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet

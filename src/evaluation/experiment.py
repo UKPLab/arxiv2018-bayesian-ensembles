@@ -45,13 +45,30 @@ class Experiment(object):
     miss_bias = None
     short_bias = None
     
-    PARAM_NAMES = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
-    SCORE_NAMES = ['accuracy', 'precision-tokens', 'recall-tokens', 'f1-score-tokens',
-                   'auc-score', 'cross-entropy-error',
-                   'precision-spans-strict', 'recall-spans-strict', 'f1-score-spans-strict',
-                   'precision-spans-relaxed', 'recall-spans-relaxed', 'f1-score-spans-relaxed',
+    PARAM_NAMES = ['acc_bias',
+                   'miss_bias',
+                   'short_bias',
+                   'num_docs',
+                   'doc_length',
+                   'group_sizes'
+                   ]
+
+    SCORE_NAMES = ['accuracy',
+                   'precision-tokens',
+                   'recall-tokens',
+                   'f1-score-tokens',
+                   'auc-score',
+                   'cross-entropy-error',
+                   'precision-spans-strict',
+                   'recall-spans-strict',
+                   'f1-score-spans-strict',
+                   'precision-spans-relaxed',
+                   'recall-spans-relaxed',
+                   'f1-score-spans-relaxed',
                    'count error',
-                   'number of invalid labels', 'mean length error']
+                   'number of invalid labels',
+                   'mean length error'
+                   ]
     
     generate_data= False
     
