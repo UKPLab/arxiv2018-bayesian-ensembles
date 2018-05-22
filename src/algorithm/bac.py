@@ -510,7 +510,7 @@ class BAC(object):
         Update the transition model.
         '''
         self.nu = self.nu0 + np.sum(self.q_t, 0)
-        self.q_A = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
+        self.q_A = psi(self.nu) - psi(np.sum(self.nu))
 
         if np.any(np.isnan(self.q_A)):
             print('_calc_q_A: nan value encountered!')
