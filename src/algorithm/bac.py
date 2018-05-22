@@ -91,7 +91,8 @@ class BAC(object):
 
             #disallowed_count = self.nu0[self.outside_labels, restricted_label]
             #self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-            self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
+            if self.nu0.ndim == 2:
+                self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             for other_restricted_label in restricted_labels:
                 if other_restricted_label == restricted_label:
@@ -107,7 +108,8 @@ class BAC(object):
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-                self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
+                if self.nu0.ndim == 2:
+                    self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
@@ -125,22 +127,30 @@ class BAC(object):
                 self.alpha0[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
 
-                self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
+                if self.nu0.ndim == 2:
+                    self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
 
         if self.exclusions is not None:
             for label, excluded in dict(self.exclusions).items():
                 self.alpha0[:, excluded, label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, excluded, label, :] = self.rare_transition_pseudocount
-                self.nu0[label, excluded] = self.rare_transition_pseudocount
+
+                if self.nu0.ndim == 2:
+                    self.nu0[label, excluded] = self.rare_transition_pseudocount
 
     def _set_transition_constraints_nuonly(self):
+
+        if self.nu0.ndim != 2:
+            return
+
         # set priors for invalid transitions (to low values)
         if self.tagging_scheme == 'IOB2':
             for i, inside_label in enumerate(self.inside_labels):
                 # pseudo-counts for the transitions that are not allowed from outside to inside
                 #disallowed_counts = self.nu0[self.outside_labels, inside_label]
                 #self.nu0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+
 
                 self.nu0[self.outside_labels, inside_label] = self.rare_transition_pseudocount
 
