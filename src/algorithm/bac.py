@@ -427,7 +427,7 @@ class BAC(object):
         lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
 
         Cprev = C - 1
-        Cprev[Cprev == -1] = before_doc_idx
+        Cprev[Cprev == -1] = self.before_doc_idx
         Cprev = Cprev[:-1, :]
         Ccurr = C[1:, :] - 1
 
