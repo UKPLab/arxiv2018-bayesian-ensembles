@@ -1599,7 +1599,7 @@ class LSTM:
 
         return alpha0_data
 
-    def fit_predict(self, Et):
+    def fit_predict(self, Et, compute_dev_score=False):
         labels = np.argmax(Et, axis=1)
 
         l = 0
@@ -1640,15 +1640,15 @@ class LSTM:
             n_epochs = self.n_epochs_per_vb_iter # for each bac iteration
 
             best_dev = -np.inf
+            last_score = best_dev
             niter_no_imprv = 0
             max_niter_no_imprv = 1
 
             for epoch in range(n_epochs):
-                niter_no_imprv, best_dev = lstm_wrapper.run_epoch(0, self.train_data_objs[0], self.train_data_objs[1],
-                                   self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4],
-                                    niter_no_imprv,
-                                   self.train_data_objs[5], self.train_data_objs[6], self.lstm, best_dev, self.nclasses,
-                                   compute_dev=False)
+                niter_no_imprv, best_dev, last_score = lstm_wrapper.run_epoch(0, self.train_data_objs[0], self.train_data_objs[1],
+                                    self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4],
+                                    niter_no_imprv, self.train_data_objs[5], self.train_data_objs[6], self.lstm,
+                                    best_dev, last_score, self.nclasses, compute_dev_score, self.IOB_map)
 
                 if niter_no_imprv >= max_niter_no_imprv:
                     print("- early stopping %i epochs without improvement" % niter_no_imprv)

@@ -27,18 +27,27 @@ nclasses = len(np.unique(gt))
 #                                     np.array([1, 1, 1]),
 #                                     np.array([1, 1, 0]), 2)
 
-dev_sentences, _, _ = data_to_lstm_format(N, text, doc_start, gt, nclasses, include_missing=False)
+text_val = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
+text_val = text_val.fillna(' ').values
+
+print('loading doc_starts for task1 test...')
+doc_start_val = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_lines=False, header=None).values
+
+print('loading ground truth for task1 test...')
+gt_val = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None).values
+
+dev_sentences, _, _ = data_to_lstm_format(len(text_val), text_val, doc_start_val, gt_val, nclasses, include_missing=False)
 
 Et = np.zeros((N, nclasses))
 Et[np.arange(N), gt.flatten()] = 1
 
 lstm = LSTM()
 
-lstm.init(None, N, text, doc_start, nclasses, dev_sentences)
+lstm.init(None, N, text, doc_start, nclasses, dev_sentences, False)
 
 n_epochs = 25
 for n in range(n_epochs):
-    prob = lstm.fit_predict(Et)
+    prob = lstm.fit_predict(Et, compute_dev_score=True)
     print('training set accuracy = %f' % accuracy_score(gt.flatten(), np.argmax(prob, 1)))
 
 print(prob)

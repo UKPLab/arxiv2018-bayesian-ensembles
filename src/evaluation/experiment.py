@@ -46,7 +46,9 @@ class Experiment(object):
     short_bias = None
     
     PARAM_NAMES = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
-    SCORE_NAMES = ['accuracy', 'precision', 'recall', 'f1-score-spans', 'f1-score-spans' 
+    SCORE_NAMES = ['accuracy', 'precision-tokens', 'recall-tokens', 'f1-score-tokens',
+                   'precision-spans-strict', 'recall-spans-strict', 'f1-score-spans-strict',
+                   'precision-spans-relaxed', 'recall-spans-relaxed', 'f1-score-spans-relaxed' 
                    'auc-score', 'cross-entropy-error', 'count error',
                    'number of invalid labels', 'mean length error']
     
@@ -76,15 +78,10 @@ class Experiment(object):
     # Only simple IOB2 is implemented so far.
 
     opt_hyper = False
-    
-    '''
-    Constructor
-    '''
+
     def __init__(self, generator, nclasses, nannotators, config=None,
                  alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0):
-        '''
-        Constructor
-        '''
+
         self.generator = generator
         
         if not (config == None):
@@ -272,7 +269,7 @@ class Experiment(object):
 
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, useBOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
-                 ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None):
+                 ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM'):
 
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
@@ -318,7 +315,7 @@ class Experiment(object):
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
-                      data_model=data_model, converge_workers_first=use_LSTM==2)
+                      data_model=data_model, converge_workers_first=use_LSTM==2, transition_model=transition_model)
         alg.max_iter = 10
         alg.verbose = True
 
@@ -478,7 +475,7 @@ class Experiment(object):
                     return_model=False, rerun_all=False,
                     active_learning=False, AL_batch_fraction=0.1):
         '''
-
+        Run the aggregation methods and evaluate them.
         :param annotations:
         :param ground_truth: class labels for computing the performance metrics. Missing values should be set to -1.
         :param doc_start:
@@ -586,10 +583,18 @@ class Experiment(object):
                     agg, probs, model = self._run_ibcc(annotations)
 
                 elif method.split('_')[0] == 'bac':
-                    # needs to run integrate method for task 2 as well
-                    if len(method.split('_')) > 2 and method.split('_')[2] == 'integrateLSTM':
 
-                        if len(method.split('_')) > 2 and method.split('_') == 'atEnd':
+                    method_bits = method.split('_')
+
+                    if method_bits[-1] == 'noHMM':
+                        trans_model = 'None'
+                    else:
+                        trans_model = 'HMM'
+
+                    # needs to run integrate method for task 2 as well
+                    if len(method_bits) > 2 and method_bits[2] == 'integrateLSTM':
+
+                        if len(method_bits) > 2 and method_bits[3] == 'atEnd':
                             use_LSTM = 2
                         else:
                             use_LSTM = 1
@@ -598,18 +603,18 @@ class Experiment(object):
                                     method, use_LSTM=use_LSTM,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
                                     ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                                    text_nocrowd=text_nocrowd)
-                    elif len(method.split('_')) > 2 and method.split('_')[2] == 'integrateBOF':
+                                    text_nocrowd=text_nocrowd, transition_model=trans_model)
+                    elif len(method_bits) > 2 and method_bits[2] == 'integrateBOF':
                         agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
                                     method, useBOF=True,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
                                     ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                                    text_nocrowd=text_nocrowd)
+                                    text_nocrowd=text_nocrowd, transition_model=trans_model)
                     else:
                         methodlabel = method.split('_')[0] + '_' + method.split('_')[1]
                         if methodlabel not in self.aggs or rerun_all:
                             agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
-                                                                                          method)
+                                                                                  method, transition_model=trans_model)
                             self.aggs[methodlabel] = agg
                             self.probs[methodlabel] = probs
                         else:
@@ -820,7 +825,7 @@ class Experiment(object):
 
     def calculate_sample_metrics(self, agg, gt, probs):
 
-        result = -np.ones(12)
+        result = -np.ones(len(self.SCORE_NAMES))
 
         result[0] = skm.accuracy_score(gt, agg)
         result[1] = skm.precision_score(gt, agg, average='macro')
@@ -928,7 +933,7 @@ class Experiment(object):
 
         else:
             sample_res = self.calculate_sample_metrics(agg, gt, probs)
-            result[len(sample_res), 0] = sample_res
+            result[:len(sample_res), 0] = sample_res
 
             std_result = None
 

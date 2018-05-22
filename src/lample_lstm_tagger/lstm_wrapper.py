@@ -75,7 +75,7 @@ def split_train_to_dev(gold_sentences):
 
 
 def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_no_imprv,
-              dev_sentences, dev_tags, model, best_dev, num_classes, compute_dev=True):
+              dev_sentences, dev_tags, model, best_dev, last_score, num_classes, compute_dev=True, IOB_map=None):
     epoch_costs = []
     print("Starting epoch %i..." % epoch)
 
@@ -89,7 +89,7 @@ def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_
             print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
 
     if compute_dev:
-        agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes)
+        agg, probs = predict_LSTM(model, dev_sentences, f_eval, num_classes, IOB_map)
 
         dev_score = skm.f1_score(dev_tags, agg, average='macro')
 
@@ -99,12 +99,14 @@ def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_
             print("New best score on dev.")
             print("Saving model to disk...")
             model.save()
-        else:
+        elif dev_score <= last_score:
             niter_no_imprv += 1
+    else:
+        dev_score = last_score
 
     print("Epoch %i done. Average cost: %f" % (epoch, np.mean(epoch_costs)))
 
-    return niter_no_imprv, best_dev
+    return niter_no_imprv, best_dev, dev_score
 
 def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, nclasses, n_epochs=20,
                tag_to_id=None, id_to_tag=None):
@@ -198,13 +200,15 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
 
     freq_eval = 1000  # evaluate on dev every freq_eval steps
     best_dev = -np.inf
+    last_score = best_dev
     niter_no_imprv = 0 # for early stopping
 
     train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_tags, id_to_tag]
 
     for epoch in range(n_epochs):
-        niter_no_imprv, best_dev = run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval,
-                                          niter_no_imprv, dev_sentences, dev_tags, model, best_dev, nclasses)
+        niter_no_imprv, best_dev, last_score = run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval,
+                                                    niter_no_imprv, dev_sentences, dev_tags, model, best_dev,
+                                                    last_score, nclasses, (epoch % 5) == 0, IOB_map)
 
         if niter_no_imprv >= max_niter_no_imprv:
             print("- early stopping %i epochs without improvement" % niter_no_imprv)
