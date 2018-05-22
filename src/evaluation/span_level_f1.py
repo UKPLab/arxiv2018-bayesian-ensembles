@@ -4,6 +4,10 @@ import pandas as pd
 
 def get_fraction_matches(annos, annos_to_match_with, strict):
 
+    valididxs = annos != -1
+    annos[valididxs]
+    annos_to_match_with[valididxs]
+
     B_labels = [2, 4, 6, 8]
     I_labels = [0, 3, 5, 7]
 
