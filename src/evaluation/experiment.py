@@ -941,7 +941,9 @@ class Experiment(object):
         result[len(sample_res) + 1] = metrics.num_invalid_labels(agg, doc_start)
         result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
 
-        print('F1 score = %f' % result[3])
+        print('F1 score tokens = %f' % result[3])
+        print('F1 score spans strict = %f' % result[3])
+        print('F1 score spans relaxed = %f' % result[3])
 
         return result, std_result
         
