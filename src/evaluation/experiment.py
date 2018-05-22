@@ -47,9 +47,10 @@ class Experiment(object):
     
     PARAM_NAMES = ['acc_bias', 'miss_bias', 'short_bias', 'num_docs', 'doc_length', 'group_sizes']
     SCORE_NAMES = ['accuracy', 'precision-tokens', 'recall-tokens', 'f1-score-tokens',
+                   'auc-score', 'cross-entropy-error',
                    'precision-spans-strict', 'recall-spans-strict', 'f1-score-spans-strict',
-                   'precision-spans-relaxed', 'recall-spans-relaxed', 'f1-score-spans-relaxed' 
-                   'auc-score', 'cross-entropy-error', 'count error',
+                   'precision-spans-relaxed', 'recall-spans-relaxed', 'f1-score-spans-relaxed',
+                   'count error',
                    'number of invalid labels', 'mean length error']
     
     generate_data= False
@@ -942,8 +943,8 @@ class Experiment(object):
         result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
 
         print('F1 score tokens = %f' % result[3])
-        print('F1 score spans strict = %f' % result[3])
-        print('F1 score spans relaxed = %f' % result[3])
+        print('F1 score spans strict = %f' % result[8])
+        print('F1 score spans relaxed = %f' % result[11])
 
         return result, std_result
         
