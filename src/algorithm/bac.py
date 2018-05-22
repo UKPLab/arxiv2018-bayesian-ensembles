@@ -1616,7 +1616,7 @@ class LSTM:
     def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
 
         if converge_workers_first:
-            self.n_epochs_per_vb_iter = 20
+            self.n_epochs_per_vb_iter = 100
         else:
             self.n_epochs_per_vb_iter = 1
 
@@ -1682,13 +1682,16 @@ class LSTM:
 
             dev_labels = self.dev_labels
 
-        if self.train_data_objs is None:
-            self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.all_sentences, train_sentences,
-                                                           dev_sentences, dev_labels, self.IOB_map, self.nclasses, 1,
-                                                           self.tag_to_id, self.id_to_tag)
-        else:
-            n_epochs = self.n_epochs_per_vb_iter # for each bac iteration
+        n_epochs = self.n_epochs_per_vb_iter # for each bac iteration
 
+        if self.train_data_objs is None:
+            if n_epochs < 25:
+                n_epochs = 25 # the first update needs at least 25 epochs
+
+            self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.all_sentences, train_sentences,
+                                                       dev_sentences, dev_labels, self.IOB_map, self.nclasses, n_epochs,
+                                                       self.tag_to_id, self.id_to_tag)
+        else:
             best_dev = -np.inf
             last_score = best_dev
             niter_no_imprv = 0
@@ -1794,8 +1797,6 @@ class BagOfFeatures:
         return probs
 
     def log_likelihood(self, C_data, E_t):
-        '''
-        '''
 
         lnptext_given_t = self.ElnRho[self.features, :]
 
