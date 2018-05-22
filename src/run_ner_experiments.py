@@ -83,7 +83,7 @@ best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the diffe
 #
 # print('best BAC method tested here = %s' % best_bac_wm)
 # #
-exp.alpha0_diags = 100 # best_diags
+exp.alpha0_diags = 50 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
@@ -100,9 +100,9 @@ exp.methods =  [
                 # best_bac_wm + '_integrateLSTM'
                 #best_bac_wm + '_integrateBOF_then_LSTM'
                 #
+                best_bac_wm + '_integrateLSTM_atEnd_noHMM',
                 best_bac_wm + '_integrateLSTM_atEnd',
-                best_bac_wm + '_integrateLSTM_atEnd_noHMM'
-                ]
+]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(annos, gt, doc_start, output_dir,
                                        text, ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)

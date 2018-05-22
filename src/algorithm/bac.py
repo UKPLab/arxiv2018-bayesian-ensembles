@@ -201,11 +201,6 @@ class BAC(object):
         self.nscores = L
         self.K = K
 
-        if nu0 is None:
-            self.nu0 = np.ones((L + 1, L)) * 10 
-        else:
-            self.nu0 = nu0
-
         self.alpha0 = alpha0
         self.alpha0_data = alpha0_data
 
@@ -216,10 +211,20 @@ class BAC(object):
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-            self._calc_q_A = self._calc_q_A
+            if nu0 is None:
+                self.nu0 = np.ones((L + 1, L)) * 10
+            else:
+                self.nu0 = nu0
+
+            self._calc_q_A = self._calc_q_A_trans
             self._update_t = self._update_t_trans
             self._lnpt = self._lnpt_trans
         else:
+            if nu0 is None:
+                self.nu0 = np.ones(L) * 10
+            else:
+                self.nu0 = nu0
+
             self._calc_q_A = self._calc_q_A_notrans
             self._update_t = self._update_t_notrans
             self._lnpt = self._lnpt_notrans
@@ -474,7 +479,7 @@ class BAC(object):
 
         self.q_t = np.sum(self.q_t_joint, axis=1)
 
-    def _calc_q_A(self):
+    def _calc_q_A_trans(self):
         '''
         Update the transition model.
         '''
@@ -484,19 +489,15 @@ class BAC(object):
         if np.any(np.isnan(self.q_A)):
             print('_calc_q_A: nan value encountered!')
 
-
     def _calc_q_A_notrans(self):
         '''
         Update the transition model.
         '''
-        E_t = np.sum(self.q_t, axis=1)
-
-        self.nu = self.nu0 + np.sum(E_t, 0)
+        self.nu = self.nu0 + np.sum(self.q_t, 0)
         self.q_A = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
 
         if np.any(np.isnan(self.q_A)):
             print('_calc_q_A: nan value encountered!')
-
 
 
     def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False):

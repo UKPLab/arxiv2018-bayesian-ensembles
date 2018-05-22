@@ -313,7 +313,8 @@ class Experiment(object):
             data_model = None
 
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
-                      beginning_labels=begin_labels, alpha0=self.bac_alpha0, nu0=self.bac_nu0,
+                      beginning_labels=begin_labels, alpha0=self.bac_alpha0,
+                      nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
@@ -396,7 +397,7 @@ class Experiment(object):
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                                  ground_truth_val, IOB_map, self.num_classes, n_epochs=25)
+                                                  ground_truth_val, IOB_map, self.num_classes, n_epochs=100)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
