@@ -216,11 +216,13 @@ class BAC(object):
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-            self._calc_q_A = _calc_q_A
+            self._calc_q_A = self._calc_q_A
             self._update_t = self._update_t_trans
+            self._lnpt = self._lnpt_trans
         else:
-            self._calc_q_A = _calc_q_A_notrans
+            self._calc_q_A = self._calc_q_A_notrans
             self._update_t = self._update_t_notrans
+            self._lnpt = self._lnpt_notrans
 
         # choose data model
         if data_model is None:
@@ -288,6 +290,20 @@ class BAC(object):
 
         return lnpPi, lnqPi
 
+    def _lnpt_trans(self):
+        lnpt = self.lnA.copy()[None, :, :]
+        lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
+        lnpt = lnpt * self.q_t_joint
+
+        return lnpt
+
+    def _lnpt_notrans(self):
+        lnpt = self.lnA.copy()[None, :]
+        lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
+        lnpt = lnpt * self.q_t
+
+        return lnpt
+
     def lowerbound(self):
         '''
         Compute the variational lower bound on the log marginal likelihood. 
@@ -310,11 +326,9 @@ class BAC(object):
             lnpCj = valid_labels * self.worker_model._read_lnPi(self.lnPi, j, C-1, C_prev-1, np.arange(self.K)[None, :], self.nscores) \
                     * self.q_t[:, j:j+1]
             lnpC += lnpCj            
-            
-        lnpt = self.lnA.copy()[None, :, :]
-        lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
-        lnpt = lnpt * self.q_t_joint
-        
+
+        lnpt = self._lnpt()
+
         lnpCt = np.sum(lnpC) + np.sum(lnpt)
 
         # trying to handle warnings        
@@ -416,9 +430,8 @@ class BAC(object):
         joint = lnpCT - largest
         joint = np.exp(joint)
         norma = np.sum(joint, axis=1)[:, np.newaxis]
-        ET = joint / norma
+        self.q_t = joint / norma
 
-        return q_t_joint
 
     def _update_t_trans(self, parallel, C, doc_start):
 
@@ -437,11 +450,36 @@ class BAC(object):
             print("BAC iteration %i: completed backward pass" % self.iter)
 
         # update q_t and q_t_joint
-        q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
+        self.q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, self.lnPi_data, C,
                                               self.C_data, doc_start, self.nscores, self.worker_model,
                                               self.before_doc_idx)
 
-        return q_t_joint
+        self.q_t = np.sum(self.q_t_joint, axis=1)
+
+    def _calc_q_A(self):
+        '''
+        Update the transition model.
+        '''
+        self.nu = self.nu0 + np.sum(self.q_t_joint, 0)
+        self.q_A = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
+
+        if np.any(np.isnan(self.q_A)):
+            print('_calc_q_A: nan value encountered!')
+
+
+    def _calc_q_A_notrans(self):
+        '''
+        Update the transition model.
+        '''
+        E_t = np.sum(self.q_t, axis=1)
+
+        self.nu = self.nu0 + np.sum(E_t, 0)
+        self.q_A = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
+
+        if np.any(np.isnan(self.q_A)):
+            print('_calc_q_A: nan value encountered!')
+
+
 
     def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False):
         '''
@@ -497,15 +535,14 @@ class BAC(object):
 
                 self.q_t_old = self.q_t
 
-                self.q_t_joint = self._update_t(parallel, C, doc_start)
+                self.q_t = self._update_t(parallel, C, doc_start)
 
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
-                self.q_t = np.sum(self.q_t_joint, axis=1)
-
                 # update E_lnA
-                self.lnA, self.nu = _calc_q_A(self.q_t_joint, self.nu0)
+                self._calc_q_A()
+
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
@@ -644,34 +681,6 @@ def _log_dir(alpha, lnPi, sum_dim):
     z = gammaln(np.sum(alpha, sum_dim)) - np.sum(gammaln_alpha, sum_dim)
     z[np.isinf(z)] = 0
     return np.sum(x + z)
-
-def _calc_q_A(E_t, nu0):
-    '''
-    Update the transition model.
-    '''
-    nu = nu0 + np.sum(E_t, 0)
-    q_A = psi(nu) - psi(np.sum(nu, -1))[:, None]
-    
-    if np.any(np.isnan(q_A)):
-        print('_calc_q_A: nan value encountered!')
-    
-    return q_A, nu
-
-
-def _calc_q_A_notrans(E_t, nu0):
-    '''
-    Update the transition model.
-    '''
-
-    E_t = np.sum(E_t, axis=1)[:, None, :]
-
-    nu = nu0 + np.sum(E_t, 0)
-    q_A = psi(nu) - psi(np.sum(nu, -1))[:, None]
-
-    if np.any(np.isnan(q_A)):
-        print('_calc_q_A: nan value encountered!')
-
-    return q_A, nu
 
 # Worker model: accuracy only ------------------------------------------------------------------------------------------
 # lnPi[1] = ln p(correct)
