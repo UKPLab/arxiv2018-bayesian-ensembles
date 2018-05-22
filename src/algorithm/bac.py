@@ -412,18 +412,36 @@ class BAC(object):
 
     def _update_t_notrans(self, parallel, C, doc_start):
 
-        lnpCT = np.zeros((C.shape[0], self.nclasses))
+        lnpCT = np.zeros((C.shape[0], self.L))
 
-        for j in range(self.L):
-            data = None
-            for l in range(self.nscores):
-                data_l = (C==l) * self.lnPi[j, l, :][None, :]
+        Krange = np.arange(self.K)
 
-                data_l = np.sum(data_l, axis=1)
+        # L x 1 x K
+        lnPi_terms = self.worker_model._read_lnPi(self.lnPi, None, C[0:1, :] - 1, self.before_doc_idx, Krange[None, :],
+                                                  self.nscores)
+        lnPi_data_terms = 0
+        for m in range(self.nscores):
+            lnPi_data_terms = self.worker_model._read_lnPi(self.lnPi_data, None, m, self.before_doc_idx, 0,
+                                                           self.nscores)[:, :, 0] * self.C_data[0, m]
 
-                data = data_l if data is None else data + data_l
+        lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
 
-            lnpCT[:, j] = data + self.lnkappa[j]
+        Cprev = C - 1
+        Cprev[Cprev == -1] = before_doc_idx
+        Cprev = Cprev[:-1, :]
+        Ccurr = C[1:, :] - 1
+
+        # L x (N-1) x K
+        lnPi_terms = self.worker_model._read_lnPi(self.lnPi, None, C[1:, :] - 1, Cprev, Krange[None, :], self.nscores)
+        lnPi_data_terms = 0
+        for m in range(self.nscores):
+            for n in range(self.nscores):
+                lnPi_data_terms += self.worker_model._read_lnPi(self.lnPi_data, None, m, n, 0, self.nscores)[:, :, 0] * \
+                                   self.C_data[1:, m][None, :] * self.C_data[:-1, n][None, :]
+
+        lnpCT[1:, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
+
+        lnpCT += self.lnA
 
         # ensure that the values are not too small
         largest = np.max(lnpCT, 1)[:, np.newaxis]
