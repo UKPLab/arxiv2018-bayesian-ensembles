@@ -631,6 +631,7 @@ class BAC(object):
             EA = self.nu / np.sum(self.nu, axis=1)[:, None]
         else:
             EA = self.nu / np.sum(self.nu)
+            EA = np.tile(EA[None, :], (self.L+1, 1))
 
         lnEA = np.zeros_like(EA)
         lnEA[EA != 0] = np.log(EA[EA != 0])
