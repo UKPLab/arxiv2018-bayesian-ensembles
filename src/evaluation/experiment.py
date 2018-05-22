@@ -825,7 +825,7 @@ class Experiment(object):
 
     def calculate_sample_metrics(self, agg, gt, probs):
 
-        result = -np.ones(len(self.SCORE_NAMES))
+        result = -np.ones(len(self.SCORE_NAMES)-3)
 
         result[0] = skm.accuracy_score(gt, agg)
         result[1] = skm.precision_score(gt, agg, average='macro')
