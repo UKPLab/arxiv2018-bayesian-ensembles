@@ -198,7 +198,7 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     #
     singletons = set([word_to_id[k] for k, v in list(dico_words_train.items()) if v == 1])
 
-    freq_eval = 1000  # evaluate on dev every freq_eval steps
+    freq_eval = 100  # evaluate on dev every freq_eval steps
     best_dev = -np.inf
     last_score = best_dev
     niter_no_imprv = 0 # for early stopping
@@ -208,7 +208,7 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     for epoch in range(n_epochs):
         niter_no_imprv, best_dev, last_score = run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval,
                                                     niter_no_imprv, dev_sentences, dev_tags, model, best_dev,
-                                                    last_score, nclasses, (epoch % 5) == 0, IOB_map)
+                                                    last_score, nclasses, (epoch % freq_eval) == 0, IOB_map)
 
         if niter_no_imprv >= max_niter_no_imprv:
             print("- early stopping %i epochs without improvement" % niter_no_imprv)
