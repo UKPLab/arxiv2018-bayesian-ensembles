@@ -72,7 +72,7 @@ class IBCC(object):
     
     optimise_alpha0_diagonals = False # simplify optimisation by using diagonal alpha0 only
 # Initialisation ---------------------------------------------------------------------------------------------------
-    def __init__(self, nclasses=2, nscores=2, alpha0=None, nu0=None, K=1, uselowerbound=False, dh=None):
+    def __init__(self, nclasses=2, nscores=2, alpha0=None, nu0=None, K=1, uselowerbound=False, dh=None, use_ml=False):
         if dh != None:
             self.nclasses = dh.nclasses
             self.nscores = len(dh.scores)
@@ -99,6 +99,10 @@ class IBCC(object):
             self.alpha0_length = self.alpha0.shape[2]
         else:
             self.alpha0_length = 1
+
+        self.use_ml = use_ml
+        if use_ml:
+            self.uselowerbound = False
         
     def init_params(self, force_reset=False):
         '''
@@ -144,8 +148,14 @@ class IBCC(object):
         # Make sure self.alpha is the right size as well. Values of self.alpha not important as we recalculate below
         self.alpha0 = self.alpha0[:, :, :self.K] # make this the right size if there are fewer classifiers than expected
         self.alpha = np.zeros((self.nclasses, self.nscores, self.K), dtype=np.float) + self.alpha0
-        self.lnPi = np.zeros((self.nclasses, self.nscores, self.K))        
-        self._calc_q_pi(posterior=False) # calculate alpha from the initial/prior values only in the first iteration
+
+        self.lnPi = np.zeros((self.nclasses, self.nscores, self.K))
+
+        if not self.use_ml:
+            self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores, False, self.use_ml) # calculate alpha from the initial/prior values only in the first iteration
+        else:
+            self.lnPi[:] = np.log(0.1 / float(self.nscores - 1))
+            self.lnPi[np.arange(self.nclasses), np.arange(self.nclasses), :] = np.log(0.9)
 
     def init_t(self):
         kappa = (self.nu0 / np.sum(self.nu0, axis=0)).T
@@ -388,11 +398,11 @@ class IBCC(object):
 
             #update params
             #self._calc_q_A()
-            self.lnkappa, self.nu = _calc_q_A(self.E_t, self.nu0)
+            self.lnkappa, self.nu = _calc_q_A(self.E_t, self.nu0, self.use_ml)
             #self._calc_q_pi()
             if np.any(self.E_t):
                 self._post_alpha()
-            self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores)
+            self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores, self.use_ml)
             #check convergence every x iterations
             if np.mod(self.nIts, self.conv_check_freq) == self.conv_check_freq - 1:
                 if self.uselowerbound:
@@ -439,21 +449,6 @@ class IBCC(object):
                 self.alpha[j, l, :] = self.alpha_tr[j, l, :] + counts
 
 # Expectations: methods for calculating expectations with respect to parameters for the VB algorithm ------------------
-    def _calc_q_A(self):
-        sumET = np.sum(self.E_t, 0)
-        for j in range(self.nclasses):
-            self.nu[j] = self.nu0[j] + sumET[j]
-        self.lnkappa = psi(self.nu) - psi(np.sum(self.nu))
-
-    def _calc_q_pi(self, posterior=True):
-        # check if E_t has been initialised. Only update alpha if it has. Otherwise E[lnPi] is given by the prior
-        if np.any(self.E_t) and posterior:
-            self._post_alpha()
-        sumAlpha = np.sum(self.alpha, 1)
-        psiSumAlpha = psi(sumAlpha)
-        for s in range(self.nscores): 
-            self.lnPi[:, s, :] = psi(self.alpha[:, s, :]) - psiSumAlpha
-
     def _expec_t(self):
         self.lnjoint()
         joint = self.lnpCT
@@ -503,7 +498,7 @@ class IBCC(object):
                 if self.testidxs is not None:
                     self.lnpCT[self.testidxs, j] = data + self.lnkappa[j]
                 else:
-                    self.lnpCT[:, j] = np.array(data.sum(axis=1)).reshape(-1) + self.lnkappa[j]
+                    self.lnpCT[:, j] = np.array(data).reshape(-1) + self.lnkappa[j]
         
     def post_lnkappa(self):
         lnpKappa = gammaln(np.sum(self.nu0)) - np.sum(gammaln(self.nu0)) + sum((self.nu0 - 1) * self.lnkappa)
@@ -672,15 +667,22 @@ class IBCC(object):
         return self.E_t
     
 # static functions
-def _calc_q_A(E_t, nu0):
+def _calc_q_A(E_t, nu0, use_ml=False):
     nu = nu0 + np.reshape(np.sum(E_t,0), nu0.shape)
-    lnkappa = (psi(nu).T - psi(np.sum(nu, -1))).T
+    if use_ml:
+        lnkappa = np.log(nu / np.sum(nu, 0))
+    else:
+        lnkappa = (psi(nu) - psi(np.sum(nu, 0)))
     return lnkappa, nu
 
-def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True):
+def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True, use_ml=False):
     alpha_sum = np.sum(alpha, 1)
     for s in range(nscores): 
-        lnPi[:, s, :] = psi(alpha[:, s, :]) - psi(alpha_sum)
+
+        if use_ml:
+            lnPi[:, s, :] = np.log(alpha[:, s, :] / alpha_sum)
+        else:
+            lnPi[:, s, :] = psi(alpha[:, s, :]) - psi(alpha_sum)
     
     return lnPi
 

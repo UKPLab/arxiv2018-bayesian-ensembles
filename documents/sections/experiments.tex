@@ -1,4 +1,4 @@
-\section{Experiments}
+\section{Experiments with Synthetic Data}
 
 %
 %\subsection{Synthetic Data}
@@ -49,7 +49,9 @@ We run several method comparisons using two NLP datasets to test whether the qua
 improved by (a) the more sophisticated worker models described in Section \ref{sec:model},
 (b) the inclusion of text features into the graphical model or (c) a Bayesian approach. 
 We further test whether Bayesian approach facilitates more efficient active learning of sequential annotations from crowds and whether integrating the LSTM into the ensemble of annotators improves performance further.
-Our experiments consist of three tasks: (1) aggregating crowdsourced labels, (2) training the LSTM sequence tagger of Lample et al. ~\shortcite{Lample2016} using aggregated labels, and (3) actively selecting batches of documents for crowdsourced annotation.
+Our experiments consist of three tasks: (1) aggregating crowdsourced labels, (2) training the LSTM sequence tagger of Lample et al. ~\shortcite{lample2016} using aggregated labels, and (3) actively selecting batches of documents for crowdsourced annotation.
+ 
+\section{Experiments with Real Data}
  
 \section{Datasets}
 
@@ -77,7 +79,7 @@ We test our proposed method, Bayesian sequence classifier combination (BSCC) in 
 \item Accuracy model (\emph{BSCC-ACC}): each worker is represented by a single parameter encoding $p( correct label )$
 \item Spammer model (\emph{BSCC-MACE}): proposed for MACE \cite{hovy2013learning}, each worker has a parameter encoding 
 $p( worker is spamming )$ and a set of $L$ parameters encoding $p( label | worker is spamming)$.
-\item Confusion matrix (\emph{BSCC-IBCC}): as in \emph{simpson_long_paper}, each worker has a matrix of parameters containing $p( label l | true class j)$.
+\item Confusion matrix (\emph{BSCC-IBCC}): as in \cite{simpsonlong}, each worker has a matrix of parameters containing $p( label l | true class j)$.
 \item Sequential confusion matrix (\emph{BSCC-Seq}): as described in Section \ref{sec:model}, extends the confusion matrix using an HMM to model label transitions.
 \end{enumerate}
 Secondly, with different feature models:
@@ -101,7 +103,170 @@ and they appear to have used a subset of the publicly-available dataset with on 
 
 %Sentence separation -- why does it improve performance if we don't split docs into sentences?
 
-\section{Training an LSTM using the Crowd}\label{sec:task2}
+\begin{table*}
+% \small
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\hline
+NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} \\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  \\ \hline
+MV & 78.98 & 56.13 & 65.62 & 68.48 & .9411 & 7.66 & \MULTIPLY{0.000906934561183}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
+MACE & 68.13 & 68.02 & 68.08 & 67.35 & .8397 & 2.87 & \MULTIPLY{0.000813915631831078}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
+DS & 77.23 & 70.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{0.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ 
+IBCC & 80.34 & 68.04 & 73.68 & 74.98 & .9671 & 0.45 & \MULTIPLY{0.000697641970141}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % alpha: diags 50, factor 1
+%IBCC & 67.55 & 76.37 & 71.69 & 71.87 & .9602 & 0.54 & \MULTIPLY{0.000418585182085}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % alpha: diags 50, factor 1, before fixing the calc q_A function
+%HMM-Crowd & 78.36 & 70.36 & 74.15 & 75.27 & .9784 & 0.75 & \MULTIPLY{0.000116273661690154}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % whole documents as sequences
+%HMM-Crowd & 77.59 & 70.64 & 74.00 & 75.71 & .9799 & 0.76 & \MULTIPLY{0.000139528394028}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % one EM iteration only, otherwise performance drops!
+HMM-Crowd & 77.68 & 70.07 & 73.68 & 75.36 & .9776 & 1.09 & 0 \\ % 10 EM iterations
+HMM-Crowd-then-LSTM &\\ \hline
+%BSCC-Acc-NF & \\ % we should exclude these -- only include the best variants
+%BSCC-MACE-NF & \\
+%BSCC-Vec-NF & \\
+BSCC-IBCC-NF & \\ \hline
+%BSCC-Seq-NF & \\ \hline
+BSCC-Acc-IF & \\
+BSCC-MACE-IF & \\
+BSCC-Vec-IF & \\
+BSCC-IBCC-IF & \\
+BSCC-Seq-IF & \\ \hline
+BSCC-IBCC-IF-then-LSTM &\\
+%BSCC-IBCC+LSTM &\\ % don't need if we already know that including IF helps
+BSCC-IBCC-IF+LSTM &\\ 
+BCC-IBCC-IF+LSTM &\\ % no HMM because we integrate LSTM instead
+\hline
+\end{tabularx}
+\caption{Crowdsourced label aggregation performance on NER dataset: estimating true labels given crowdsourced labels.}
+\label{tab:aggregation_results_ner}
+\npnoround
+\end{table*}
+
+\begin{table*}
+% \small
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\hline
+PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{4}{|l|}{Token-level metrics (std.)} \\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ \\ \hline
+MV & \\
+MACE & \\
+DS & \\ 
+IBCC & \\ \hline
+HMM-Crowd & \\ 
+HMM-Crowd-then-LSTM &\\ \hline
+%BSCC-Acc-NF & \\ % we should exclude these -- only include the best variants
+%BSCC-MACE-NF & \\
+%BSCC-Vec-NF & \\
+BSCC-IBCC-NF & \\ \hline
+%BSCC-Seq-NF & \\ \hline
+BSCC-Acc-IF & \\
+BSCC-MACE-IF & \\
+BSCC-Vec-IF & \\
+BSCC-IBCC-IF & \\
+BSCC-Seq-IF & \\ \hline
+BSCC-Seq-IF-then-LSTM &\\
+% BSCC-Seq+LSTM &\\ % we already know that the other features help so leave them in
+BSCC-Seq-IF+LSTM &\\
+BCC-Seq-IF+LSTM &\\ % no HMM because we integrate LSTM instead
+\hline
+\end{tabularx}
+\caption{Crowdsourced label aggregation performance on PICO dataset: estimating true labels given crowdsourced labels.}
+\label{tab:aggregation_results_pico}
+\end{table*}
+
+\begin{figure*}
+\centering
+\subfloat[BSCC-Acc-IF]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\subfloat[BSCC-Vec-IF]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\subfloat[BSCC-MACE-IF]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\subfloat[BSCC-IBCC-IF]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\subfloat[BSCC-Seq-IF, previous label = I]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\subfloat[BSCC-Seq-IF, previous label = O]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\subfloat[BSCC-Seq-IF, previous label = B]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+} \\
+\caption{Confusion matrix representations from each BSCC-***-IF variant trained on the PICO datasets 
+showing the different representations of workers. 
+% Show how worker representation benefits from richer model: e.g. show differences between rows in IBCC compared to Acc.
+% Represent all types as IBCC-confusion matrix plots. Seq will need more >= 3 plots! We can focus on PICO data to make it easier to view,
+% or combiner NER classes into BIO. 
+% If each row corresponds to one model, we have 7 rows (2 extra for seq). 
+% Each row can then show either a selection of 5 workers, or we can cluster into 5 groups.
+}
+\label{fig:conf_mat_clusters}
+
+\end{figure*}
+
+\begin{figure}
+\centering
+\subfloat[NER dataset, BSCC-IBCC-IF+LSTM]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}
+\subfloat[PICO dataset, BSCC-Seq-IF+LSTM]{
+  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}
+\caption{Confusion matrices learned for the integrated LSTM using BSCC-***-IF+LSTm. }
+\label{fig:conf_mat_lstm}
+\end{figure}
+
+\subsubsection{Examples of Aggregation}
+
+\begin{figure}
+\centering
+\subfloat[Example 1]{
+  \includegraphics[width=1\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}\\
+\subfloat[Example 2]{
+  \includegraphics[width=1\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}\\
+\subfloat[Example 3]{
+  \includegraphics[width=1\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}
+\caption{Examples of different handling of annotator disagreement on PICO. 
+Lines above the text show the crowd's annotations. Lines below show the aggregated annotations from MV, IBCC, HMM-Crowd and BSCC-Seq-IF.
+The sequential methods are able to resolve some issues, 
+while non-sequential methods can lead to invalid annotations. }
+\label{fig:disagreements}
+\end{figure}
+
+\subsection{Prediction using an LSTM Trained by the Crowd}\label{sec:task2}
 
 In this task, we use the aggregation methods to train an LSTM sequence tagger \cite{lample2016}
 to show whether integrating the LSTM with the aggregation method improves performance.
@@ -110,6 +275,56 @@ then use the outputs to train the LSTM. We then evaluate the LSTM on the validat
 in the original CoNLL dataset.
 With the PICO dataset, we run the aggregators on the $3,649$ documents without gold labels, 
 use the outputs to train the LSTM, then evaluate the LSTM on the validation and test splits from the gold-labelled data.
+
+
+\begin{table*}
+% \small
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\hline
+NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} \\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  \\ \hline
+HMM-Crowd & \\ 
+HMM-Crowd-then-LSTM &\\ 
+LSTM & \\ 
+LSTM-Crowd & \\ \hline
+%BSCC-Acc-IF & \\
+%BSCC-MACE-IF & \\
+%BSCC-Vec-IF & \\
+BSCC-IBCC-IF & \\
+BSCC-Seq-IF & \\ \hline
+BSCC-Seq-IF-then-LSTM &\\
+BSCC-Seq+LSTM &\\
+BSCC-Seq-IF+LSTM &\\
+\hline
+\end{tabularx}
+\caption{Prediction performance on NER test dataset. Methods trained on crowdsourced labels for training set.}
+\label{tab:prediction_results_ner}
+\end{table*}
+
+\begin{table*}
+% \small
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\hline
+PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{4}{|l|}{Token-level metrics (std.)} \\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ \\ \hline
+HMM-Crowd & \\ 
+HMM-Crowd-then-LSTM &\\ 
+LSTM & \\ 
+LSTM-Crowd & \\ \hline
+%BSCC-Acc-IF & \\
+%BSCC-MACE-IF & \\
+%BSCC-Vec-IF & \\
+BSCC-IBCC-IF & \\
+BSCC-Seq-IF & \\ \hline
+BSCC-Seq-IF-then-LSTM &\\
+BSCC-Seq+LSTM &\\
+BSCC-Seq-IF+LSTM &\\
+\hline
+\end{tabularx}
+\caption{Prediction performance on PICO test dataset. Methods trained on crowdsourced labels for training set.}
+\label{tab:prediction_results_pico}
+\end{table*}
+
 
 \section{Active Document Selection}
 
@@ -130,6 +345,17 @@ This is not possible with PICO datas because we do not have gold labels for docu
 The active learning process tested here employs \emph{uncertainty sampling}, which is a well-established heuristic \cite{active learning paper -- see tacl paper?}. The selection method and batch size could be fine-tuned for future applications -- the goal of our experiment in this paper was to test the benefits of the proposed aggregation methods,
 rather than to establish a robust active learning approach.
  
+\begin{figure*}
+\centering
+\subfloat[NER dataset]{
+  \includegraphics[width=.7\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}
+\subfloat[PICO dataset]{
+  \includegraphics[width=.7\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+}
+\caption{Active learning simulation: prediction performance after each labelled batch is received. Mean scores over 10 repeats.}
+\label{fig:al}
+\end{figure*}
 
 \section{Discussion}
 

@@ -46,17 +46,38 @@ class MajorityVoting(object):
         for l in range(self.num_labels):
             votes[:, l] = np.sum((self.annotations==l).astype(int), axis=1)
 
-        if simple:
-            # # avoid choosing class 1 if there's a tie
-            # maxvotes = np.max(votes, axis=1)
-            #
-            # # remove the 1 scores temporarily if there is a tie. Keep the original votes for computing prob estimates.
+        if simple: # we have a simple preference for other classes over 'O' if there is a tie-break situation
+
+            # order used by Nugyen -- first one has preference in a tie.
+            # missing -- 0
+            # 'B-LOC': 1
+            # 'B-MISC': 2
+            # 'B-ORG': 3
+            # 'B-PER': 4
+            # 'I-LOC': 5
+            # 'I-MISC': 6
+            # 'I-ORG': 7
+            # 'I-PER': 8
+            # 'O': 9
+            preferences = np.array([7, 9, 3, 8, 4, 5, 1, 6, 2])
+            # avoid choosing class 1 if there's a tie
+            maxvotes = np.max(votes, axis=1)
+            maxlabels = votes == maxvotes[:, None]
+
+            self.majority = np.zeros(votes.shape[0], dtype=int)
+            for i, row in enumerate(maxlabels):
+                order = preferences[row]
+                chosen = np.argwhere(preferences == np.min(order)).flatten()[0]
+                self.majority[i] = chosen
+
+            # remove the 1 scores temporarily if there is a tie. Keep the original votes for computing prob estimates.
             # ties_to_fix = (np.sum((votes == maxvotes[:, None]), axis=1) >= 2) & (votes[:, 1] == maxvotes)
             # votes_tmp = np.copy(votes)
             # votes_tmp[ties_to_fix, 1] = 0
             #
             # self.majority = np.argmax(votes_tmp, axis=1)
-            self.majority = np.argmax(votes, axis=1)
+
+            # self.majority = np.argmax(votes, axis=1)
         else:
             self.majority = -np.ones((self.num_words, 1))
 

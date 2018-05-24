@@ -53,7 +53,7 @@ best_bac_wm = 'bac_seq' # choose model with best score for the different BAC wor
 #     print('TUNING %s' % method)
 #
 #     best_scores = exp.tune_alpha0(diags, factors, method, tune_annos, tune_gt_dev, tune_doc_start,
-#                                   output_dir, tune_text)
+#                                   output_dir, tune_text, metric_idx_to_optimise=11)
 #     best_idxs = best_scores[1:].astype(int)
 #     exp.alpha0_diags = diags[best_idxs[0]]
 #     exp.alpha0_factor = factors[best_idxs[1]]
@@ -87,10 +87,10 @@ exp.methods =  ['majority',
                 #'worst',
                 #'HMM_crowd',
                 #'HMM_crowd_then_LSTM',
-                best_bac_wm + '_integrateBOF',
-                best_bac_wm + '_integrateBOF_then_LSTM',
-                best_bac_wm + '_then_LSTM',
-                best_bac_wm + '_integrateLSTM',
+                # best_bac_wm + '_integrateBOF',
+                # best_bac_wm + '_integrateBOF_then_LSTM',
+                # best_bac_wm + '_then_LSTM',
+                # best_bac_wm + '_integrateLSTM',
                 # 'bac_acc' + '_integrateLSTM'
                 ]
 

@@ -10,8 +10,8 @@ import numpy as np
 Calculates the absolute difference of numbers of found annotations between the prediction and the target sequence. 
 This is done by counting the number of 'B' tokens in each sequence. 
 '''        
-def abs_count_error(pred, target):
-    return np.abs(len(pred==2) - len(target==2))
+def count_error(pred, target):
+    return len(pred==2) - len(target==2)
 
 '''
 Calculates the number of invalid labels in the given prediction, i.e. the number of 'I' tokens directly following an 'O' token.

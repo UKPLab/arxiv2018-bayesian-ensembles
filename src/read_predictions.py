@@ -60,7 +60,7 @@ def load_results(config):
                 auc_score += skm.roc_auc_score(gt == 2, agg[:, i] == 2) * np.sum(gt == 2)
                 result[4, i] = auc_score / float(gt.shape[0])
                 # result[5] = skm.log_loss(gt, probs, eps=1e-100)
-                result[6, i] = metrics.abs_count_error(agg[:, i], gt)
+                result[6, i] = metrics.count_error(agg[:, i], gt)
                 result[8, i] = metrics.mean_length_error(agg[:, i], gt, doc_start)
                 
             results[param_id, :, :, run_id] = result

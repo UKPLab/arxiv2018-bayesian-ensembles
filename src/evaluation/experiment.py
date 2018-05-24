@@ -161,7 +161,7 @@ class Experiment(object):
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
 
     def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, method, annotations, ground_truth, doc_start,
-                    outputdir, text, anno_path=None):
+                    outputdir, text, anno_path=None, metric_idx_to_optimise=8):
 
         self.methods = [method]
 
@@ -185,7 +185,7 @@ class Experiment(object):
 
                 all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
                                                              anno_path)
-                scores[i, j] = all_scores[3, :] # 3 is F1score
+                scores[i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
                 print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
 
                 if scores[i, j] > best_scores[0]:
@@ -249,29 +249,34 @@ class Experiment(object):
 
         return agg, probs
 
-    def _run_mace(self, anno_path, ground_truth):
+    def _run_mace(self, anno_path, tmp_path, ground_truth):
         # devnull = open(os.devnull, 'w')
-        subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
-                         '../../data/bayesian_annotator_combination/output/data/mace',
-                         anno_path])  # , stdout = devnull, stderr = devnull)
+        #subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
+        #                 tmp_path + '/mace',
+        #                 anno_path])  # , stdout = devnull, stderr = devnull)
 
-        result = np.genfromtxt('../../data/bayesian_annotator_combination/output/data/mace.prediction')
-
-        agg = result[:, 0]
+        result = np.genfromtxt(tmp_path + '/mace.prediction')
 
         probs = np.zeros((ground_truth.shape[0], self.num_classes))
         for i in range(result.shape[0]):
             for j in range(0, self.num_classes * 2, 2):
                 probs[i, int(result[i, j])] = result[i, j + 1]
 
+        agg = np.argmax(probs, 1)
+
         return agg, probs
 
-    def _run_ibcc(self, annotations):
-        self.ibcc_alpha0 = self.alpha0_factor * np.ones((self.num_classes, self.num_classes)) \
-                           + self.alpha0_diags * np.eye(self.num_classes)
+    def _run_ibcc(self, annotations, use_ml=False):
+        if use_ml:
+            alpha0 = 0.0000001 * np.ones((self.num_classes, self.num_classes)) # no prior information at all
+            ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
+                        alpha0=alpha0, uselowerbound=True, use_ml=True)
+        else:
+            self.ibcc_alpha0 = self.alpha0_factor * np.ones((self.num_classes, self.num_classes)) \
+                               + self.alpha0_diags * np.eye(self.num_classes)
+            ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
+                        alpha0=self.ibcc_alpha0, uselowerbound=False)
 
-        ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
-                        alpha0=self.ibcc_alpha0, uselowerbound=True)
         ibc.verbose = True
         ibc.max_iterations = 10
         # ibc.optimise_alpha0_diagonals = True
@@ -285,7 +290,7 @@ class Experiment(object):
 
         return agg, probs, ibc
 
-    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, useBOF=False,
+    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM'):
 
@@ -293,7 +298,7 @@ class Experiment(object):
         L = self.num_classes
 
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
-        if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc':
+        if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc' or self.bac_worker_model == 'vec':
 
             alpha0_factor = self.alpha0_factor / ((L-1)/2)
             alpha0_diags = self.alpha0_diags + self.alpha0_factor - alpha0_factor
@@ -322,12 +327,12 @@ class Experiment(object):
         else:
             dev_sentences = None
 
+        data_model = []
+
         if use_LSTM > 0:
-            data_model = bac.LSTM
-        elif useBOF:
-            data_model = bac.BagOfFeatures
-        else:
-            data_model = None
+            data_model.append('LSTM')
+        if use_BOF:
+            data_model.append('IF')
 
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0,
@@ -365,7 +370,7 @@ class Experiment(object):
         hc.init(init_type='dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
 
         print('Running HMM-crowd inference...')
-        hc.em(1)  # 20)
+        hc.em(1)  # 20) # 10 is too much, performance goes down. This shouldn't really happen.
 
         print('Computing most likely sequence...')
         hc.mls()
@@ -379,7 +384,7 @@ class Experiment(object):
                 probs.append(tok_post_arr)
         probs = np.array(probs)
 
-        return agg, probs, hc
+        return agg.flatten(), probs, hc
 
     def _run_LSTM(self, N_withcrowd, text, doc_start, train_labs, test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd,
                   ground_truth_nocrowd, text_val, doc_start_val, ground_truth_val):
@@ -490,10 +495,10 @@ class Experiment(object):
 
         return annotations, doc_start, text, selected_docs, selected_toks
 
-    def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None, anno_path=None,
+    def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
-                    return_model=False, rerun_all=False,
+                    return_model=False, rerun_all=False, new_data=False,
                     active_learning=False, AL_batch_fraction=0.1):
         '''
         Run the aggregation methods and evaluate them.
@@ -598,7 +603,17 @@ class Experiment(object):
                     agg, probs = self._run_clustering(annotations, doc_start, ground_truth)
 
                 elif  method.split('_')[0] == 'mace':
-                    agg, probs = self._run_mace(anno_path, ground_truth)
+                    tmp_path = outputdir + '/'
+                    anno_path =  tmp_path + 'annos_tmp_%s' % timestamp
+
+                    np.savetxt(anno_path, annotations, delimiter=',')
+
+                    agg, probs = self._run_mace(anno_path, tmp_path, ground_truth)
+
+                    os.remove(anno_path) # clean up tmp file
+
+                elif  method.split('_')[0] == 'ds':
+                    agg, probs, model = self._run_ibcc(annotations, use_ml=True)
 
                 elif  method.split('_')[0] == 'ibcc':
                     agg, probs, model = self._run_ibcc(annotations)
@@ -613,41 +628,39 @@ class Experiment(object):
                         trans_model = 'HMM'
 
                     # needs to run integrate method for task 2 as well
-                    if len(method_bits) > 2 and method_bits[2] == 'integrateLSTM':
+                    if len(method_bits) > 2 and 'integrateLSTM' in method_bits:
 
-                        if len(method_bits) > 2 and method_bits[3] == 'atEnd':
+                        if len(method_bits) > 3 and 'atEnd' in method_bits:
                             use_LSTM = 2
                         else:
                             use_LSTM = 1
-
-                        agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
-                                    method, use_LSTM=use_LSTM,
-                                    ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
-                                    ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                                    text_nocrowd=text_nocrowd, transition_model=trans_model)
-                    elif len(method_bits) > 2 and method_bits[2] == 'integrateBOF':
-                        agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
-                                    method, useBOF=True,
-                                    ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
-                                    ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                                    text_nocrowd=text_nocrowd, transition_model=trans_model)
                     else:
-                        methodlabel = method.split('_')[0] + '_' + method.split('_')[1]
-                        if methodlabel not in self.aggs or rerun_all:
-                            agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
-                                                                                  method, transition_model=trans_model)
-                            self.aggs[methodlabel] = agg
-                            self.probs[methodlabel] = probs
-                        else:
-                            agg = self.aggs[methodlabel]
-                            probs = self.probs[methodlabel]
+                        use_LSTM = 0
+
+                    if len(method_bits) > 2 and 'integrateBOF' in method_bits:
+
+                        use_BOF = True
+                    else:
+                        use_BOF = False
+
+                    if method not in self.aggs or rerun_all:
+                        agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
+                                    method, use_LSTM=use_LSTM, use_BOF=use_BOF,
+                                    ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
+                                    ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
+                                    text_nocrowd=text_nocrowd, transition_model=trans_model)
+                        self.aggs[method] = agg
+                        self.probs[method] = probs
+                    else:
+                        agg = self.aggs[method]
+                        probs = self.probs[method]
 
                 elif 'HMM_crowd' in method:
                     if 'HMM_crowd' not in self.aggs or rerun_all:
                         # we pass all annotations here so they can be saved and reloaded from a single file in HMMCrowd
                         # format, then the relevant subset selected from that.
                         agg, probs, model = self._run_hmmcrowd(annotations_all, text_all, doc_start_all, outputdir,
-                                                               selected_docs, overwrite_data_file=False)
+                                                               selected_docs, overwrite_data_file=new_data)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
@@ -745,6 +758,8 @@ class Experiment(object):
                     N_withcrowd = annotations.shape[0]
 
                     print('**** Active learning: No. annotations = %i' % N_withcrowd)
+                else:
+                    selected_docs = None
 
         if test_no_crowd:
             if return_model:
@@ -844,7 +859,7 @@ class Experiment(object):
 
         return sentences_inst, crowd_labels, nfeats
 
-    def calculate_sample_metrics(self, agg, gt, probs):
+    def calculate_sample_metrics(self, agg, gt, probs, doc_starts):
 
         result = -np.ones(len(self.SCORE_NAMES)-3)
 
@@ -854,14 +869,14 @@ class Experiment(object):
         result[3] = skm.f1_score(gt, agg, average='macro')
 
         # token-level metrics - strict
-        result[6] = precision(agg, gt, True)
-        result[7] = recall(agg, gt, True)
-        result[8] = f1(agg, gt, True)
+        result[6] = precision(agg, gt, True, doc_starts)
+        result[7] = recall(agg, gt, True, doc_starts)
+        result[8] = f1(agg, gt, True, doc_starts)
 
         # token-level metrics -- relaxed
-        result[9] = precision(agg, gt, False)
-        result[10] = recall(agg, gt, False)
-        result[11] = f1(agg, gt, False)
+        result[9] = precision(agg, gt, False, doc_starts)
+        result[10] = recall(agg, gt, False, doc_starts)
+        result[11] = f1(agg, gt, False, doc_starts)
 
         auc_score = 0
         total_weights = 0
@@ -915,17 +930,17 @@ class Experiment(object):
         gold_doc_start[gt == -1] = 0
 
         Ndocs = int(np.sum(gold_doc_start))
-        if Ndocs < 200:
+        if Ndocs < 100:
 
             print('Using bootstrapping with small test set size')
 
             # use bootstrap resampling with small datasets
             nbootstraps = 100
-            nmetrics = 6
+            nmetrics = len(self.SCORE_NAMES) - 3
             resample_results = np.zeros((nmetrics, nbootstraps))
 
             for i in range(nbootstraps):
-
+                print('Bootstrapping the evaluation: %i of %i' % (i, nbootstraps))
                 not_sampled = True
                 nsample_attempts = 0
                 while not_sampled:
@@ -943,22 +958,23 @@ class Experiment(object):
                 if nsample_attempts <= Ndocs:
                     resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],
                                                                        gt[sampleidxs],
-                                                                       probs[sampleidxs])
+                                                                       probs[sampleidxs],
+                                                                       doc_start[sampleidxs])
                 else: # can't find enough valid samples for the bootstrap, let's just use what we got so far.
                     resample_results = resample_results[:, :i]
                     break
 
             sample_res = np.mean(resample_results, axis=1)
-            result[:len(sample_res), 0]
+            result[:len(sample_res), 0] = sample_res
             std_result = np.std(resample_results, axis=1)
 
         else:
-            sample_res = self.calculate_sample_metrics(agg, gt, probs)
+            sample_res = self.calculate_sample_metrics(agg, gt, probs, doc_start)
             result[:len(sample_res), 0] = sample_res
 
             std_result = None
 
-        result[len(sample_res)] = metrics.abs_count_error(agg, gt)
+        result[len(sample_res)] = metrics.count_error(agg, gt)
         result[len(sample_res) + 1] = metrics.num_invalid_labels(agg, doc_start)
         result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
 

@@ -1,23 +1,26 @@
 \section{Modelling Text Span Annotations}\label{sec:model}
 
-\begin{itemize}
-\item model description, VB equations, algorithm summary...
-\item ...How to set priors for IOB – incorporating sequence knowledge
-\item If we find that MACE and HMM_Crowd outperform IBCC and BAC, then the 
-confusion matrix model may have too many parameters. We can also test variants of BAC, therefore, that use (a) BAC confusion matrix, (b) IBCC confusion matrix, (c) MACE spamming patterns, (d) an adaptation of MACE model to sequential data. The purpose
-of (d) is to allow for constraints in the sequence of labels and detect any sequential patterns such as late starts or short spans. A naive solution to this would be to make the spamming model depend on the previous label, but this removes the advantage of having few parameters when the number of labels is large. Instead, we could make a single MACE spamming pattern, apply constraints that simply zero out disallowed transitions and re-normalise. This would remove any modelling of overly long/short or late/early annotations and could underweight B annotations that start late.   Alternatively, allow separate spamming models or BAC confusion matrices depending on I, O and B but any more specific annotation types share common I, O and B models.
-\item It's unclear whether BAC is correctly measuring early/late starts/ends. Think this through...
-\item Late starts: worker labels O when ground truth is B or I if their previous label was O. This would also be modelled by IBCC.  Worker then labels B when ground truth is I and previous label was O. BAC models the relevance of the B label to indicating an I or a B if the previous label was O. But IBCC would also be able to model this because it is not clear that it really matters what the previous label was. 
-\item split annotations: worker labels B when ground truth is I and previous label was I. IBCC would need to model this in the same way as a late starter and cannot distinguish the cases. How often we need to distinguish these cases is hard to say.
-\item Early starts: worker labels B then I when ground truth is O and previous label was  O. We down-weight their I votes because they follow B or I. This is bad when we reach the actual annotation. Again not clear how the previous label helps here...
-\item Erroneous annotation span: worker labels B then I when ground truth is O. We down-weight their i votes because they follow a B or I, but their next B vote still carries weight if it follows an O vote. The B votes become the relevant ones which is bad if workers disagree on the starting token.
-\item Late finishes: worker labels I when ground truth is O because they already labelled I. This is modelled by BAC but means that the I votes carry less weight. The result is that shorter spans will be recognised by BAC when annotators disagree (the conjunction), 
-rather than a kind of average of the workers' spans.
-\item Not splitting spans when they should be: worker labels I when B is true label and I or B is previous label. Since I can only follow I or B, it's not clear why splitting these cases is useful.
-\item Short finishes: worker labels O when ground truth is I and previous label was I. This is modelled by BAC and would cancel out the point before.
-\item Early starts/late finishes could better be modelled by a dependency on the true labels several steps away? While other problems are reasonably captured by IBCC anyway.
-\end{itemize}
-
+% \begin{itemize}
+% \item model description, VB equations, algorithm summary... 
+% \item ...How to set priors for IOB – incorporating sequence knowledge
+% \item If we find that MACE and HMM_Crowd outperform IBCC and BAC, then the 
+% confusion matrix model may have too many parameters. We can also test variants of BAC, therefore, that use (a) BAC confusion matrix, (b) IBCC confusion matrix, (c) MACE spamming patterns, (d) an adaptation of MACE model to sequential data. The purpose
+% of (d) is to allow for constraints in the sequence of labels and detect any sequential patterns such as late starts or short spans. A naive solution to this would be to make the spamming model depend on the previous label, but this removes the advantage of having few parameters when the number of labels is large. Instead, we could make a single MACE spamming pattern, apply constraints that simply zero out disallowed transitions and re-normalise. This would remove any modelling of overly long/short or late/early annotations and could underweight B annotations that start late.   Alternatively, allow separate spamming models or BAC confusion matrices depending on I, O and B but any more specific annotation types share common I, O and B models.
+% \item It's unclear whether BAC is correctly measuring early/late starts/ends. Think this through...
+% \item Late starts: worker labels O when ground truth is B or I if their previous label was O. 
+% This would also be modelled by IBCC.  Worker then labels B when ground truth is I and previous label was O. 
+% BAC models the relevance of the B label to indicating an I or a B if the previous label was O. 
+% But IBCC would also be able to model this because it is not clear that it really matters what the previous label was. 
+% \item split annotations: worker labels B when ground truth is I and previous label was I. IBCC would need to model this in the same way as a late starter and cannot distinguish the cases. How often we need to distinguish these cases is hard to say.
+% \item Early starts: worker labels B then I when ground truth is O and previous label was  O. We down-weight their I votes because they follow B or I. This is bad when we reach the actual annotation. Again not clear how the previous label helps here...
+% \item Erroneous annotation span: worker labels B then I when ground truth is O. We down-weight their i votes because they follow a B or I, but their next B vote still carries weight if it follows an O vote. The B votes become the relevant ones which is bad if workers disagree on the starting token.
+% \item Late finishes: worker labels I when ground truth is O because they already labelled I. This is modelled by BAC but means that the I votes carry less weight. The result is that shorter spans will be recognised by BAC when annotators disagree (the conjunction), 
+% rather than a kind of average of the workers' spans.
+% \item Not splitting spans when they should be: worker labels I when B is true label and I or B is previous label. Since I can only follow I or B, it's not clear why splitting these cases is useful.
+% \item Short finishes: worker labels O when ground truth is I and previous label was I. This is modelled by BAC and would cancel out the point before.
+% \item Early starts/late finishes could better be modelled by a dependency on the true labels several steps away? While other problems are reasonably captured by IBCC anyway.
+% \end{itemize}
+%
 
 We model annotations using the IOB schema, in which each token in a document is labelled as either I (in), O (out), or B (begin). The IOB schema requires that the label I cannot directly follow a label O, since a B token must precede the first I in any span. The IOB schema allows us to identify whether a token forms part of an annotation or not, and the use of the B label enables us to separate annotations when one annotation span begins immediately after another without any gap. This schema does not permit overlapping annotations, which are typically undesirable in crowdsourcing tasks where the crowd is instructed to provide one type of annotation. The schema also does not consider different types of annotation, although it is trivial to extend both the schema and our model to permit this case. Using a single model for different types of annotation may be desirable if the annotators are likely to have consistent confusion patterns betweeen different annotation types. 
 
