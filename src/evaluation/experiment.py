@@ -184,7 +184,7 @@ class Experiment(object):
                 self.alpha0_factor = alpha0factor
 
                 all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
-                                                             anno_path)
+                                                             anno_path, bootstrapping=False)
                 scores[i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
                 print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
 
@@ -499,7 +499,8 @@ class Experiment(object):
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
-                    active_learning=False, AL_batch_fraction=0.1):
+                    active_learning=False, AL_batch_fraction=0.1,
+                    bootstrapping=True):
         '''
         Run the aggregation methods and evaluate them.
         :param annotations:
@@ -695,14 +696,15 @@ class Experiment(object):
 
                     scores_allmethods[:,method_idx][:,None], \
                     score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
-                                                                                    doc_start_all)
+                                                                                    doc_start_all, boostrapping)
                     preds_allmethods[:, method_idx] = agg.flatten()
                     probs_allmethods[:,:,method_idx] = probs
 
                 if test_no_crowd:
                     scores_nocrowd[:,method_idx][:,None], \
                     score_std_nocrowd[:, method_idx] = self.calculate_scores(agg_nocrowd,
-                                                        ground_truth_nocrowd.flatten(), probs_nocrowd, doc_start_nocrowd)
+                                                        ground_truth_nocrowd.flatten(), probs_nocrowd,
+                                                        doc_start_nocrowd, bootstrapping)
                     preds_allmethods_nocrowd[:, method_idx] = agg_nocrowd.flatten()
                     probs_allmethods_nocrowd[:,:,method_idx] = probs_nocrowd
 
@@ -896,7 +898,7 @@ class Experiment(object):
 
         return result
 
-    def calculate_scores(self, agg, gt, probs, doc_start):
+    def calculate_scores(self, agg, gt, probs, doc_start, bootstrapping=True):
         
         result = -np.ones((len(self.SCORE_NAMES), 1))
 
@@ -930,7 +932,7 @@ class Experiment(object):
         gold_doc_start[gt == -1] = 0
 
         Ndocs = int(np.sum(gold_doc_start))
-        if Ndocs < 100:
+        if Ndocs < 100 and bootstrapping:
 
             print('Using bootstrapping with small test set size')
 
