@@ -162,9 +162,14 @@ exp.methods =  [
                 best_bac_wm + 'integrateBOF_then_LSTM',
                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
-                # 'HMM_crowd_then_LSTM',
+                'HMM_crowd_then_LSTM',
 ]
+
+# should run both task 1 and 2.
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
     annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val, new_data=regen_data)
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
