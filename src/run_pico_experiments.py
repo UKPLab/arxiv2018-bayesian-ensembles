@@ -34,19 +34,22 @@ ndocs = np.sum(doc_start[idxs])
 
 if ndocs > s:
     idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
+    dev_idxs = idxs
+    tune_gt_dev = gt_dev[dev_idxs]
 elif ndocs < s:  # not enough validation data
     moreidxs = np.argwhere(gt != -1)[:, 0]
     deficit = s - ndocs
     ndocs = np.sum(doc_start[moreidxs])
     if ndocs > deficit:
         moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
+    dev_idxs = idxs
+    tune_gt_dev = np.concatenate((gt_dev[dev_idxs].flatten(), np.zeros(len(moreidxs))-1))
     idxs = np.concatenate((idxs, moreidxs))
 
 tune_gt = gt[idxs]
 tune_annos = annos[idxs]
 tune_doc_start = doc_start[idxs]
 tune_text = text[idxs]
-tune_gt_dev = gt_dev[idxs]
 
 for m, method in enumerate(methods_to_tune):
     print('TUNING %s' % method)
