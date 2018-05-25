@@ -696,7 +696,7 @@ class Experiment(object):
 
                     scores_allmethods[:,method_idx][:,None], \
                     score_std_allmethods[:, method_idx] = self.calculate_scores(agg, ground_truth.flatten(), probs,
-                                                                                    doc_start_all, boostrapping)
+                                                                                    doc_start_all, bootstrapping)
                     preds_allmethods[:, method_idx] = agg.flatten()
                     probs_allmethods[:,:,method_idx] = probs
 
