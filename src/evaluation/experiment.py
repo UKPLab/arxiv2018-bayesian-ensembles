@@ -278,7 +278,7 @@ class Experiment(object):
                         alpha0=self.ibcc_alpha0, uselowerbound=False)
 
         ibc.verbose = True
-        ibc.max_iterations = 10
+        ibc.max_iterations = 20
         # ibc.optimise_alpha0_diagonals = True
 
         if self.opt_hyper:
@@ -340,7 +340,7 @@ class Experiment(object):
                       exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
-        alg.max_iter = 10
+        alg.max_iter = 20
         alg.verbose = True
 
         if self.opt_hyper:
