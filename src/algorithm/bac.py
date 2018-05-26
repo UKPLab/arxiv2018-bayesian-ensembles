@@ -59,6 +59,7 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
+    max_data_updates_at_end = 4
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def _set_transition_constraints_seqalpha(self):
@@ -586,10 +587,11 @@ class BAC(object):
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 
-        if len(self.data_model):
-            self.data_model_updated = False
+        for model in self.data_model:
+            if type(model) == LSTM:
+                self.data_model_updated = 0
         else:
-            self.data_model_updated = True
+            self.data_model_updated = self.max_data_updates_at_end
 
         self.workers_converged = False
 
@@ -619,19 +621,22 @@ class BAC(object):
                 for model in self.data_model:
 
                     # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                    if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
+                    if type(model) != LSTM or self.iter > -1 and \
+                            (not converge_workers_first or self.workers_converged):
                     # hold off training the feature-based classifier for three iterations
 
                         model.C_data = model.fit_predict(self.q_t)
 
-                        self.data_model_updated = True
+                        self.data_model_updated += 1
                         if self.verbose:
                             print("BAC iteration %i: updated feature-based predictions" % self.iter)
 
                 for model in self.data_model:
-                    model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, self.alpha0_data,
-                                    model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
-                    model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
+                    if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
+
+                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, self.alpha0_data,
+                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                        model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
 
                 if self.verbose:
                     print("BAC iteration %i: updated model for feature-based predictor" % self.iter)
@@ -765,10 +770,11 @@ class BAC(object):
         if self.verbose:
             print("Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
         converged = ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) \
-                    and (not self.workers_converged or self.data_model_updated)
+                    and (not self.workers_converged or self.data_model_updated >= self.max_data_updates_at_end)
 
         if converged and not self.workers_converged:
             self.workers_converged = True
+
             return False
 
         return converged
