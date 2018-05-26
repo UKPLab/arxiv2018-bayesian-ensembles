@@ -266,7 +266,7 @@ def _load_bio_folder(anno_path_root, folder_name):
         doc_start[0] = 1
 
         doc_gaps = doc_data['text'] == '\n\n' # sentence breaks
-        #doc_start[doc_gaps.index[:-1] + 1] = 1
+        doc_start[doc_gaps[doc_gaps].index[:-1] + 1] = 1
         doc_data['doc_start'] = doc_start
 
         # doc_data = doc_data.replace(r'\n', ' ', regex=True)

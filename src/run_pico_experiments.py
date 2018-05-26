@@ -10,11 +10,9 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 
-# Todo turn on SENTENCE SPLITTING!!!
-# Todo what happened to the span-level prec/recall scores? See last result on Barney for PICO.
-# Todo Make it save the models for BAC
-
-gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
+regen_data = True
+gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
+    load_data.load_biomedical_data(regen_data)
 
 exp = Experiment(None, 3, annos.shape[1], None)
 
@@ -60,7 +58,9 @@ for m, method in enumerate(methods_to_tune):
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+    )
 
     best_score = np.max(best_scores)
     if 'bac' in method and best_score > best_bac_wm_score:
@@ -92,4 +92,6 @@ exp.methods =  ['majority',
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+                )

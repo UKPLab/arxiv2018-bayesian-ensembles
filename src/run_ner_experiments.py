@@ -142,7 +142,11 @@ for m, method in enumerate(methods_to_tune):
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
-                ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
+                ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
+                text_nocrowd=text_nocrowd,
+                new_data=regen_data
+                )
 
     best_score = np.max(best_scores)
     if 'bac' in method and best_score > best_bac_wm_score:
