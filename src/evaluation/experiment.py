@@ -337,7 +337,7 @@ class Experiment(object):
         alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0,
                       nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
-                      exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bac_worker_model,
+                      exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
         alg.max_iter = 20
@@ -583,6 +583,9 @@ class Experiment(object):
                 text = text_all[seed_toks]
                 N_withcrowd = annotations.shape[0]
 
+            else:
+                selected_docs = None
+
             Nseen = 0
             while Nseen < Ndocs:
                 # the active learning loop -- loop until no more labels
@@ -742,9 +745,9 @@ class Experiment(object):
                     with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
-                    # if model is not None and not active_learning:
-                    #     with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
-                    #         pickle.dump(model, fh)
+                    if model is not None and not active_learning and return_model:
+                        with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
+                            pickle.dump(model, fh)
 
                 if active_learning:
                     annotations, doc_start, text, selected_docs, selected_toks = self._uncertainty_sampling(

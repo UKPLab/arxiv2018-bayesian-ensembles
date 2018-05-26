@@ -9,9 +9,12 @@ import numpy as np
 # import pandas as pd
 # from data.load_data import _map_ner_str_to_labels
 
+# TODO: why do the BAC methods fail to work properly?
+# TODO: rerun the BAC methods.
+
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
-regen_data = True
+regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
     load_data.load_ner_data(regen_data)
 #
@@ -91,9 +94,15 @@ exp.opt_hyper = False#True
 
 # best IBCC setting so far is diag=100, factor=36. Let's reuse this for BIO and all BAC_IBCC runs.
 
-diags = [0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = ['ibcc', 'bac_vec', 'bac_seq', 'bac_ibcc', 'bac_acc', 'bac_mace']
+diags = [5]#[0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [1]#[0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
+methods_to_tune = [#'ibcc',
+                   'bac_vec_integrateBOF',
+                   'bac_ibcc_integrateBOF',
+                   'bac_seq_integrateBOF',
+                   'bac_acc_integrateBOF',
+                   'bac_mace_integrateBOF'
+                   ]
 
 best_bac_wm = 'bac_vec' #'unknown' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
@@ -132,12 +141,12 @@ for m, method in enumerate(methods_to_tune):
 
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True,
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
                 ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
 
     best_score = np.max(best_scores)
     if 'bac' in method and best_score > best_bac_wm_score:
-        best_bac_wm = method
+        best_bac_wm = 'bac_' + method.split('_')[1]
         best_bac_wm_score = best_score
         best_diags = exp.alpha0_diags
         best_factor = exp.alpha0_factor
@@ -159,7 +168,7 @@ exp.methods =  [
                 #'best', 'worst',
                 #'HMM_crowd',
                 best_bac_wm,
-                best_bac_wm + 'integrateBOF_then_LSTM',
+                best_bac_wm + '_integrateBOF_then_LSTM',
                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
                 'HMM_crowd_then_LSTM',

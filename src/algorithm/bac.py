@@ -294,28 +294,28 @@ class BAC(object):
 
         self.lnA = psi(self.nu0) - nu0_sum
 
-    def _lowerbound_pi_terms_mace(self):
+    def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
         sum_dim = 0 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
 
-        lnpPi_correct = _log_dir(self.alpha0[0:2, :], self.lnPi[0:2, :], sum_dim)
-        lnpPi_strategy = _log_dir(self.alpha0[2:, :], self.lnPi[2:, :], sum_dim)
+        lnpPi_correct = _log_dir(alpha0[0:2, :], lnPi[0:2, :], sum_dim)
+        lnpPi_strategy = _log_dir(alpha0[2:, :], lnPi[2:, :], sum_dim)
 
-        lnqPi_correct = _log_dir(self.alpha[0:2, :], self.lnPi[0:2, :], sum_dim)
-        lnqPi_strategy = _log_dir(self.alpha[2:, :], self.lnPi[2:, :], sum_dim)
+        lnqPi_correct = _log_dir(alpha[0:2, :], lnPi[0:2, :], sum_dim)
+        lnqPi_strategy = _log_dir(alpha[2:, :], lnPi[2:, :], sum_dim)
 
         return lnpPi_correct + lnpPi_strategy, lnqPi_correct + lnqPi_strategy
 
-    def _lowerbound_pi_terms(self):
+    def _lowerbound_pi_terms(self, alpha0, alpha, lnPi):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
-        if self.alpha.ndim == 2:
+        if alpha.ndim == 2:
             sum_dim = 0 # in the case that we have only one Dirichlet per worker, e.g. accuracy model
         else:
             sum_dim = 1 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
 
-        lnpPi = _log_dir(self.alpha0, self.lnPi, sum_dim)
+        lnpPi = _log_dir(alpha0, lnPi, sum_dim)
 
-        lnqPi = _log_dir(self.alpha, self.lnPi, sum_dim)
+        lnqPi = _log_dir(alpha, lnPi, sum_dim)
 
         return lnpPi, lnqPi
 
@@ -377,7 +377,12 @@ class BAC(object):
             
         # E[ln p(\pi | \alpha_0)]
         # E[ln q(\pi)]
-        lnpPi, lnqPi = self._lowerbound_pi_terms()
+        lnpPi, lnqPi = self._lowerbound_pi_terms(self.alpha0, self.alpha, self.lnPi)
+
+        for model in self.data_model:
+            lnpPi_model, lnqPi_model = self._lowerbound_pi_terms(model.alpha0_data,
+                                                                 model.alpha_data,
+                                                                 model.lnPi)
 
         # E[ln p(A | nu_0)]
         x = (self.nu0 - 1) * self.lnA
@@ -523,9 +528,9 @@ class BAC(object):
         Update the transition model.
         '''
         self.nu = self.nu0 + np.sum(self.q_t_joint, 0)
-        self.q_A = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
+        self.lnA = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
 
-        if np.any(np.isnan(self.q_A)):
+        if np.any(np.isnan(self.lnA)):
             print('_calc_q_A: nan value encountered!')
 
     def _calc_q_A_notrans(self):
@@ -533,9 +538,9 @@ class BAC(object):
         Update the transition model.
         '''
         self.nu = self.nu0 + np.sum(self.q_t, 0)
-        self.q_A = psi(self.nu) - psi(np.sum(self.nu))
+        self.lnA = psi(self.nu) - psi(np.sum(self.nu))
 
-        if np.any(np.isnan(self.q_A)):
+        if np.any(np.isnan(self.lnA)):
             print('_calc_q_A: nan value encountered!')
 
 
@@ -640,9 +645,9 @@ class BAC(object):
 
                 # Note: we are not using this to check convergence -- it's only here to check correctness of algorithm
                 # Can be commented out to save computational costs.
-                #lb = self.lowerbound()
-                #print('Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb))
-                #oldlb = lb
+                # lb = self.lowerbound()
+                # print('Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb))
+                # oldlb = lb
 
                 # increase iteration number
                 self.iter += 1
@@ -1183,7 +1188,7 @@ class ConfusionMatrixWorker():
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
-                counts = (C == l + 1).T.dot(Tj).reshape(-1)
+                counts = (C == l + 1).T.dot(Tj)
                 alpha[j, l, :] += counts
 
         return alpha
@@ -1261,6 +1266,8 @@ class VectorWorker():
     def _calc_q_pi(alpha):
         '''
         Update the annotator models.
+
+        TODO Representing using a full matrix might break lower bound
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
         q_pi = psi(alpha) - psi_alpha_sum
@@ -2014,6 +2021,6 @@ class IndependentFeatures:
 
         lnptext_given_t = self.ElnRho[self.features, :]
 
-        lnp_Cdata = np.sum(E_t * lnptext_given_t)
+        lnp_Cdata = E_t * lnptext_given_t
         lnp_Cdata[E_t == 0] = 0
         return np.sum(lnp_Cdata)

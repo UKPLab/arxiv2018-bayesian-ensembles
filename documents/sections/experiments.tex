@@ -111,18 +111,20 @@ NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolum
 & Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  \\ \hline
 MV & 78.98 & 56.13 & 65.62 & 68.48 & .9411 & 7.66 & \MULTIPLY{0.000906934561183}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
 MACE & 68.13 & 68.02 & 68.08 & 67.35 & .8397 & 2.87 & \MULTIPLY{0.000813915631831078}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
-DS & 77.23 & 70.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{0.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ 
-IBCC & 80.34 & 68.04 & 73.68 & 74.98 & .9671 & 0.45 & \MULTIPLY{0.000697641970141}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % alpha: diags 50, factor 1
+%DS & 77.23 & 70.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{0.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % max 10 iterations
+DS & 77.02 & 71.79 & 74.31 & 75.17 & .9546 & 4.19 & \MULTIPLY{0.000604623040789}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
+IBCC & 76.93 & 72.00 & 74.36 & 75.43 & .9592 & 0.62 & \MULTIPLY{0.000488269896998303}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ \hline
+%IBCC & 80.34 & 68.04 & 73.68 & 74.98 & .9671 & 0.45 & \MULTIPLY{0.000697641970141}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % only 10 iterations alpha: diags 50, factor 1
 %IBCC & 67.55 & 76.37 & 71.69 & 71.87 & .9602 & 0.54 & \MULTIPLY{0.000418585182085}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % alpha: diags 50, factor 1, before fixing the calc q_A function
 %HMM-Crowd & 78.36 & 70.36 & 74.15 & 75.27 & .9784 & 0.75 & \MULTIPLY{0.000116273661690154}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % whole documents as sequences
 %HMM-Crowd & 77.59 & 70.64 & 74.00 & 75.71 & .9799 & 0.76 & \MULTIPLY{0.000139528394028}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % one EM iteration only, otherwise performance drops!
 HMM-Crowd & 77.68 & 70.07 & 73.68 & 75.36 & .9776 & 1.09 & 0 \\ % 10 EM iterations
 HMM-Crowd-then-LSTM &\\ \hline
-%BSCC-Acc-NF & \\ % we should exclude these -- only include the best variants
-%BSCC-MACE-NF & \\
-%BSCC-Vec-NF & \\
-BSCC-IBCC-NF & \\ \hline
-%BSCC-Seq-NF & \\ \hline
+%BSCC-Acc-NF & 81.22 & 47.01 & 59.55 & 60.77 & .9531 & 1.26 & 0 \\ % we should exclude these -- only include the best variants
+%BSCC-MACE-NF & 26.46 & 78.63 & 39.60 & 36.98 & .9086 & 2.92 & 0 \\
+%BSCC-Vec-NF & 79.30 & 62.89 & 70.15 & 70.96 & .9641 & 0.63 & 0 \\
+%BSCC-IBCC-NF & 60.91 & 71.76 & 65.89 & 66.78 & .9339 & 1.87 & 0 \\ \hline
+BSCC-Seq-NF & 68.28 & 67.15 & 67.71 & 67.20 & .8921 & 3.27 & 0 \\ \hline
 BSCC-Acc-IF & \\
 BSCC-MACE-IF & \\
 BSCC-Vec-IF & \\

@@ -8,8 +8,8 @@ def get_fraction_matches(annos, annos_to_match_with, doc_starts, strict):
     annos_to_match_with = annos_to_match_with.flatten()
 
     valididxs = (annos != -1) & (annos_to_match_with != -1)
-    annos[valididxs]
-    annos_to_match_with[valididxs]
+    annos = annos[valididxs]
+    annos_to_match_with = annos_to_match_with[valididxs]
 
     B_labels = [2, 4, 6, 8]
     I_labels = [0, 3, 5, 7]
@@ -93,7 +93,10 @@ def get_fraction_matches(annos, annos_to_match_with, doc_starts, strict):
         else:
             total_matches += nmatches / float(length)
 
-    frac_matches = total_matches / float(span_count)
+    if span_count == 0:
+        frac_matches = 0
+    else:
+        frac_matches = total_matches / float(span_count)
 
     return frac_matches
 
@@ -106,6 +109,11 @@ def recall(predictions, gold, strict, doc_starts):
 def f1(predictions, gold, strict, doc_starts):
     prec = precision(predictions, gold, strict, doc_starts=doc_starts)
     rec = recall(predictions, gold, strict, doc_starts=doc_starts)
+
+    if prec + rec == 0:
+        print('Warning: zero precision and recall scores!')
+        return 0
+
     return 2 * prec * rec / (prec + rec)
 
 

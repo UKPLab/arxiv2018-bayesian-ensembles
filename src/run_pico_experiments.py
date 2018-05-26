@@ -10,6 +10,10 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 
+# Todo turn on SENTENCE SPLITTING!!!
+# Todo what happened to the span-level prec/recall scores? See last result on Barney for PICO.
+# Todo Make it save the models for BAC
+
 gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 exp = Experiment(None, 3, annos.shape[1], None)
@@ -22,7 +26,13 @@ exp.alpha0_factor = 9
 
 diags = [0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = ['ibcc', 'bac_vec', 'bac_seq', 'bac_ibcc', 'bac_acc', 'bac_mace']
+methods_to_tune = ['ibcc',
+                   'bac_vec_integrateBOF',
+                   'bac_seq_integrateBOF',
+                   'bac_ibcc_integrateBOF',
+                   'bac_acc_integrateBOF',
+                   'bac_mace_integrateBOF'
+                   ]
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
@@ -74,7 +84,7 @@ exp.methods =  ['majority',
                 #'worst',
                 'HMM_crowd',
                 best_bac_wm,
-                best_bac_wm + 'integrateBOF_then_LSTM',
+                best_bac_wm + '_integrateBOF_then_LSTM',
                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
                 'HMM_crowd_then_LSTM',
