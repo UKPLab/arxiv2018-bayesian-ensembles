@@ -14,7 +14,7 @@ output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 # Todo what happened to the span-level prec/recall scores? See last result on Barney for PICO.
 # Todo Make it save the models for BAC
 
-gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
+gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 exp = Experiment(None, 3, annos.shape[1], None)
 
@@ -38,10 +38,10 @@ best_bac_wm = 'bac_seq' # choose model with best score for the different BAC wor
 best_bac_wm_score = -np.inf
 
 # tune with small dataset to save time
-idxs = np.argwhere(gt_dev != -1)[:, 0]
+idxs = np.argwhere(gt_task1_dev != -1)[:, 0]
+idxs = np.concatenate((idxs, np.argwhere(gt != -1)[:, 0]))
 
-tune_gt_dev = gt_dev[idxs]
-tune_gt = gt[idxs]
+tune_gt_dev = gt_task1_dev[idxs]
 tune_annos = annos[idxs]
 tune_doc_start = doc_start[idxs]
 tune_text = text[idxs]
@@ -59,7 +59,7 @@ for m, method in enumerate(methods_to_tune):
 
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True,
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
 
     best_score = np.max(best_scores)

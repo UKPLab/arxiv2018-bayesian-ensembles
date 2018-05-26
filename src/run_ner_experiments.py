@@ -94,8 +94,8 @@ exp.opt_hyper = False#True
 
 # best IBCC setting so far is diag=100, factor=36. Let's reuse this for BIO and all BAC_IBCC runs.
 
-diags = [5]#[0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-factors = [1]#[0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
+diags = [0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [#'ibcc',
                    'bac_vec_integrateBOF',
                    'bac_ibcc_integrateBOF',

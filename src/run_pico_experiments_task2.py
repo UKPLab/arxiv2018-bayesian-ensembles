@@ -10,7 +10,7 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task2/'
 
-gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
+gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 # TASK 2 also needs to reload the optimised hyperparameters.
 

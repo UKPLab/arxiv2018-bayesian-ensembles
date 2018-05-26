@@ -399,17 +399,17 @@ def load_biomedical_data(regen_data_files):
     gt_test = np.copy(gt)
     gt_test[ntestidxs:] = -1
 
-    # gt_dev = np.copy(gt)
-    # gt_dev[:ntestidxs] = -1
-    gt_dev = gt[ntestidxs:]
-    doc_start_dev = doc_start[ntestidxs:]
-    text_dev = text[ntestidxs:]
+    gt_dev = np.copy(gt)
+    gt_dev[:ntestidxs] = -1
 
-    doc_start_dev = doc_start_dev[gt_dev != -1]
-    text_dev = text_dev[gt_dev != -1]
+    doc_start_dev = doc_start[gt_dev != -1]
+    text_dev = text[gt_dev != -1]
+
+    gt_task1_dev = gt_dev
+
     gt_dev = gt_dev[gt_dev != -1]
 
-    return gt_test, annos, doc_start, text, gt_dev, doc_start_dev, text_dev
+    return gt_test, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev
 
 def _map_ner_str_to_labels(arr):
 

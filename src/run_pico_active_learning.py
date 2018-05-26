@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-gt, annos, doc_start, text, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
+gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
 exp = Experiment(None, 3, annos.shape[1], None)
 
