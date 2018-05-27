@@ -10,7 +10,7 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 
-regen_data = True
+regen_data = False
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data)
 
@@ -24,7 +24,7 @@ exp.alpha0_factor = 9
 
 diags = [0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = ['ibcc',
+methods_to_tune = [#'ibcc',
                    'bac_vec_integrateBOF',
                    'bac_seq_integrateBOF',
                    'bac_ibcc_integrateBOF',

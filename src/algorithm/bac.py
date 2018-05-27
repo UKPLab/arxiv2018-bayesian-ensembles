@@ -448,7 +448,11 @@ class BAC(object):
         print("Optimal hyper-parameters: alpha_0 = %s, nu0 scale = %s" % (np.array2string(np.exp(opt_hyperparams[:-1])),
                                                                           np.array2string(np.exp(opt_hyperparams[-1]))))
 
-        return self.q_t, self._most_probable_sequence(C, doc_start)[1]
+        C_data = []
+        for model in self.data_model:
+            C_data.append(model.C_data)
+
+        return self.q_t, self._most_probable_sequence(C, C_data, doc_start)[1]
 
     def _update_t_notrans(self, parallel, C, doc_start):
 
@@ -659,13 +663,15 @@ class BAC(object):
 
             if self.verbose:
                 print("BAC iteration %i: computing most probable sequence..." % self.iter)
-            seq = self._most_probable_sequence(C, doc_start, parallel)[1]
+
+            C_data = [model.C_data for model in self.data_model]
+            seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
         if self.verbose:
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
         return self.q_t, seq
 
-    def _most_probable_sequence(self, C, doc_start, parallel):
+    def _most_probable_sequence(self, C, C_data, doc_start, parallel):
         '''
         Use Viterbi decoding to ensure we make a valid prediction. There
         are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
@@ -701,9 +707,8 @@ class BAC(object):
         docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
 
         C_data_by_doc = []
-        for model in self.data_model:
-            Cdata_m = model.C_data
-            C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
+        for C_data_m in C_data:
+            C_data_by_doc.append(np.split(C_data_m, np.where(doc_start == 1)[0][1:], axis=0))
         if len(self.data_model) >= 1:
             C_data_by_doc = list(zip(*C_data_by_doc))
 
@@ -757,7 +762,7 @@ class BAC(object):
 
             q_t = np.sum(q_t_joint, axis=1)
 
-            seq = self._most_probable_sequence(C, doc_start, parallel)[1]
+            seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
 
         return q_t, seq
 

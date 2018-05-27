@@ -92,12 +92,30 @@ exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1
 exp.save_results = True
 exp.opt_hyper = False#True
 
+exp.alpha0_diags = 50
+exp.alpha0_factor = 0.1
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+                'bac_vec_integrateBOF',
+]
+
+# should run both task 1 and 2.
+
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data, rerun_all=True, return_model=True,
+)
+
+
 # best IBCC setting so far is diag=100, factor=36. Let's reuse this for BIO and all BAC_IBCC runs.
 
 diags = [0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [#'ibcc',
-                   'bac_vec_integrateBOF',
+                   # 'bac_vec_integrateBOF',
                    'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',
                    'bac_acc_integrateBOF',
@@ -180,7 +198,7 @@ exp.methods =  [
 
 # should run both task 1 and 2.
 
-results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+exp.run_methods(
     annos, gt, doc_start, output_dir, text,
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
