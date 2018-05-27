@@ -1509,7 +1509,6 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
     flags = -np.inf * np.ones_like(lnS)
     flags[np.where(doc_start == 1)[0], before_doc_idx, :] = 0
     flags[np.where(doc_start == 0)[0], :L, :] = 0
-    flags[np.where(doc_start == 0)[0], before_doc_idx, :] = -np.inf
 
     Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, C[:-1, :], axis=0)
     Cprev[Cprev == 0] = before_doc_idx
