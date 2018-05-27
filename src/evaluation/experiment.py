@@ -419,7 +419,7 @@ class Experiment(object):
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                                  ground_truth_val, IOB_map, self.num_classes, n_epochs=100)
+                                                  ground_truth_val, IOB_map, self.num_classes, n_epochs=25)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
