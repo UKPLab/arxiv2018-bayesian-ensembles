@@ -340,7 +340,7 @@ class Experiment(object):
                       exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
-        alg.max_iter = 1# 20
+        alg.max_iter = 20
         alg.verbose = True
 
         if self.opt_hyper:
