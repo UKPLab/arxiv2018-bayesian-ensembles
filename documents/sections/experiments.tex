@@ -105,35 +105,38 @@ and they appear to have used a subset of the publicly-available dataset with on 
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
 \hline
-NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} \\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  \\ \hline
+NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} & & \\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  & Notes & Hyperparams\\ \hline
 MV & 78.98 & 56.13 & 65.62 & 68.48 & .9411 & 7.66 & \MULTIPLY{0.000906934561183}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
 MACE & 68.13 & 68.02 & 68.08 & 67.35 & .8397 & 2.87 & \MULTIPLY{0.000813915631831078}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
 %DS & 77.23 & 70.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{0.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % max 10 iterations
 DS & 77.02 & 71.79 & 74.31 & 75.17 & .9546 & 4.19 & \MULTIPLY{0.000604623040789}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\
-IBCC & 76.93 & 72.00 & 74.36 & 75.43 & .9592 & 0.62 & \MULTIPLY{0.000488269896998303}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ \hline
+IBCC & 76.93 & 72.00 & 74.36 & 75.43 & .9592 & 0.62 & \MULTIPLY{0.000488269896998303}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & 50, 1 \\ \hline
 %IBCC & 80.34 & 68.04 & 73.68 & 74.98 & .9671 & 0.45 & \MULTIPLY{0.000697641970141}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % only 10 iterations alpha: diags 50, factor 1
 %IBCC & 67.55 & 76.37 & 71.69 & 71.87 & .9602 & 0.54 & \MULTIPLY{0.000418585182085}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol  \\  \hline % alpha: diags 50, factor 1, before fixing the calc q_A function
 %HMM-Crowd & 78.36 & 70.36 & 74.15 & 75.27 & .9784 & 0.75 & \MULTIPLY{0.000116273661690154}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % whole documents as sequences
 %HMM-Crowd & 77.59 & 70.64 & 74.00 & 75.71 & .9799 & 0.76 & \MULTIPLY{0.000139528394028}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % one EM iteration only, otherwise performance drops!
-HMM-Crowd & 77.68 & 70.07 & 73.68 & 75.36 & .9776 & 1.09 & 0 \\ % 10 EM iterations
-HMM-Crowd-then-LSTM &\\ \hline
+HMM-Crowd & 77.68 & 70.07 & 73.68 & 75.36 & .9776 & 1.09 & 0 & Why better than BSCC-Vec-IF? & 0, 0.1 \\ % 10 EM iterations
+HMM-Crowd-then-LSTM & & & & & & & & Running \\ \hline
+% some old stuff
 %BSCC-Acc-NF & 81.22 & 47.01 & 59.55 & 60.77 & .9531 & 1.26 & 0 \\ % we should exclude these -- only include the best variants
 %BSCC-MACE-NF & 26.46 & 78.63 & 39.60 & 36.98 & .9086 & 2.92 & 0 \\
 %BSCC-Vec-NF & 79.30 & 62.89 & 70.15 & 70.96 & .9641 & 0.63 & 0 \\
+%BSCC-Seq-NF & 68.28 & 67.15 & 67.71 & 67.20 & .8921 & 3.27 & 0 \\ \hline
 %BSCC-IBCC-NF & 60.91 & 71.76 & 65.89 & 66.78 & .9339 & 1.87 & 0 \\ \hline
-BSCC-Seq-NF & 68.28 & 67.15 & 67.71 & 67.20 & .8921 & 3.27 & 0 \\ \hline
-BSCC-Acc-IF & \\
-BSCC-MACE-IF & \\
-BSCC-Vec-IF & \\
-BSCC-IBCC-IF & \\
-BSCC-Seq-IF & \\ \hline
-BSCC-IBCC-IF-then-LSTM &\\
+%end old stuff
+BSCC-IBCC-NF & 77.02 & 71.79 & 74.31 & 73.64 & .9580 & 0.73 & 0 & Worse than IBCC? Check hyperparams & 50, 9\\ \hline
+BSCC-Acc-IF & 81.20 & 47.89 & 60.25 & 61.37 & .9365 & 2.21 & 0 & Hyperparams? & 0.1, 0.1 \\
+BSCC-MACE-IF & 25.19 & 79.86 & 38.30 & 36.16 & .9219 & 3.40 & 0 & Failed on testing & 0.1, 1\\
+BSCC-Vec-IF & 81.35 & 61.10 & 69.76 & 70.44 & .9600 & 1.33 & 0 & Hyperparams? & 50, 0.1 \\
+BSCC-IBCC-IF & 76.33 & 72.76 & 74.51 & 74.15 & .9644 & 0.74 & 0 & Small imprvmt over NF & 50, 9\\
+BSCC-Seq-IF & 80.98 & 68.00 & 73.92 & 73.45 & .9221 & 2.68 & 0 & & 50, 0.1\\ \hline
+BSCC-IBCC-IF-then-LSTM & 71.53 & 69.88 & 70.70 & 70.61 & .9082 & 16.92 & 0 & Compare to HMM-Crowd-then-LSTM & 50, 9\\
 %BSCC-IBCC+LSTM &\\ % don't need if we already know that including IF helps
-BSCC-IBCC-IF+LSTM &\\ 
-BCC-IBCC-IF+LSTM &\\ % no HMM because we integrate LSTM instead
+BSCC-IBCC-IF+LSTM & 75.83 & 72.98 & 74.38 & 74.07 & .9614 & 0.72 & 0 & Imprvmt over then-LSTM. Helped by more epochs? & 50, 9\\ 
+BCC-IBCC-IF+LSTM & & & & & & & & Running & 50, 9 \\ % no HMM because we integrate LSTM instead
 \hline
 \end{tabularx}
 \caption{Crowdsourced label aggregation performance on NER dataset: estimating true labels given crowdsourced labels.}
@@ -143,26 +146,26 @@ BCC-IBCC-IF+LSTM &\\ % no HMM because we integrate LSTM instead
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
 \hline
-PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{4}{|l|}{Token-level metrics (std.)} \\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ \\ \hline
-MV & \\
-MACE & \\
-DS & \\ 
+PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{4}{|l|}{Token-level metrics (std.)} & &\\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ & Notes & Hyperparams. \\ \hline
+MV & 91.89 & 48.03 & 63.03 & \\
+MACE & 45.01 & 88.49 & 59.63 &\\
+DS & 77.85 & 66.77 & 71.84 &\\ 
 IBCC & \\ \hline
-HMM-Crowd & \\ 
+HMM-Crowd & 72.81 & 75.14 & 73.93 &\\ 
 HMM-Crowd-then-LSTM &\\ \hline
 %BSCC-Acc-NF & \\ % we should exclude these -- only include the best variants
 %BSCC-MACE-NF & \\
 %BSCC-Vec-NF & \\
 BSCC-IBCC-NF & \\ \hline
 %BSCC-Seq-NF & \\ \hline
-BSCC-Acc-IF & \\
+BSCC-Acc-IF & 89.37 & 45.11 & 59.96 & 74.57 & .8961 & 1.43 & 0 & & 100, 1 \\
 BSCC-MACE-IF & \\
-BSCC-Vec-IF & \\
-BSCC-IBCC-IF & \\
-BSCC-Seq-IF & \\ \hline
+BSCC-Vec-IF & 76.78 & 65.64 & 70.78 & 76.64 & .9360 & 0.96 & 0 & How about vec-to-seq? & 1, 0.1\\
+BSCC-IBCC-IF & 55.57 & 79.46 & 65.40 & 72.73 & .9404 & 2.14 & 0 & & 100, 9 \\
+BSCC-Seq-IF & 68.07 & 69.77 & 68.91 & 73.81 & .9165 & 1.03 & 0 & Beats IBCC. Seq useful but too many params? & 50, 9 \\ \hline
 BSCC-Seq-IF-then-LSTM &\\
 % BSCC-Seq+LSTM &\\ % we already know that the other features help so leave them in
 BSCC-Seq-IF+LSTM &\\
@@ -281,22 +284,21 @@ use the outputs to train the LSTM, then evaluate the LSTM on the validation and 
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X |}
 \hline
 NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} \\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  \\ \hline
-HMM-Crowd & \\ 
-HMM-Crowd-then-LSTM &\\ 
-LSTM & \\ 
-LSTM-Crowd & \\ \hline
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ & Notes  \\ \hline
+HMM-Crowd &  \\ 
+HMM-Crowd-then-LSTM & 76.19 & 66.24 & 70.87 &\\ 
+LSTM & 83.19 & 57.12 & 67.73 \\ 
+LSTM-Crowd & 82.38 & 62.10 & 70.82 \\ \hline
 %BSCC-Acc-IF & \\
 %BSCC-MACE-IF & \\
 %BSCC-Vec-IF & \\
-BSCC-IBCC-IF & \\
-BSCC-Seq-IF & \\ \hline
-BSCC-Seq-IF-then-LSTM &\\
-BSCC-Seq+LSTM &\\
-BSCC-Seq-IF+LSTM &\\
+BSCC-IBCC-IF & 0 & 0 & 0 & 18.17 & .8259 & 0.67 & 0 & Failed \\ \hline
+BSCC-IBCC-IF-then-LSTM & 57.67 & 66.04 & 61.57 & 33.60 & .8821 & 32.64 & 0 \\
+BSCC-IBCC-IF+LSTM & 51.51 & 3.79 & 7.06 & 12.61 & .8120 & 0.74 & 0 & Failed \\
+IBCC-IF+LSTM &\\
 \hline
 \end{tabularx}
 \caption{Prediction performance on NER test dataset. Methods trained on crowdsourced labels for training set.}

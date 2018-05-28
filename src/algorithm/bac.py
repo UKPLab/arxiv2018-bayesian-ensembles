@@ -729,6 +729,8 @@ class BAC(object):
 
     def predict(self, doc_start, text):
 
+        doc_start = doc_start.astype(bool)
+
         C = np.zeros((len(doc_start), self.K), dtype=int) # all blank
 
         C_data = []
@@ -1494,7 +1496,8 @@ def _expec_t(lnR_, lnLambda):
     '''
     return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None])
 
-def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model, before_doc_idx=-1):
+def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
+                         before_doc_idx=-1, skip=True):
     '''
     Calculate joint label probabilities for each pair of tokens.
     '''
@@ -1505,50 +1508,38 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
 
     lnS = np.repeat(lnLambda[:, None, :], L + 1, 1)
 
+    mask = np.ones_like(C)
+    if skip:
+        mask = (C != 0)
+
+    C = C - 1
+
     # flags to indicate whether the entries are valid or should be zeroed out later.
     flags = -np.inf * np.ones_like(lnS)
     flags[np.where(doc_start == 1)[0], before_doc_idx, :] = 0
     flags[np.where(doc_start == 0)[0], :L, :] = 0
 
-    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, C[:-1, :], axis=0)
+    Cprev = np.copy(C)
+    Cprev[doc_start.flatten(), :]  = before_doc_idx
+    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, Cprev[:-1, :], axis=0)
     Cprev[Cprev == 0] = before_doc_idx
-
-    lnR_prev = np.append(np.zeros((1, L)), lnR_[:-1, :], axis=0)
 
     for l in range(L):
 
-        # print('_expec_joint_t_quick: For class %i: adding likelihoods to Lambdas for doc_starts' % l)
-
-        # for the document starts
-        #lnPi[l, C-1, before_doc_idx, np.arange(K)[None, :]]
-
-        lnPi_terms = worker_model._read_lnPi(lnPi, l, C-1, before_doc_idx, np.arange(K)[None, :], nscores)
+        # Non-doc-starts
+        lnPi_terms = worker_model._read_lnPi(lnPi, l, C, Cprev, np.arange(K)[None, :], nscores)
         if C_data is not None and len(C_data):
             lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
         else:
             lnPi_data_terms = 0
 
         for model in range(len(C_data)):
-
+            C_data_prev = np.copy(C_data[model])
+            C_data_prev[doc_start.flatten(), before_doc_idx] = 1
             C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
+            C_data_prev[0, before_doc_idx] = 1
 
-            for m in range(nscores):
-                lnPi_data_terms_m = C_data[model][:, m] * worker_model._read_lnPi(lnPi_data[model], l, m, before_doc_idx, 0, nscores)
-                lnPi_data_terms_m[np.isnan(lnPi_data_terms_m)] = 0
-                lnPi_data_terms += lnPi_data_terms_m
-
-        lnS[:, before_doc_idx, l] += np.sum(lnPi_terms * (C!=0), 1) + lnPi_data_terms + lnA[before_doc_idx, l]
-
-        # print('_expec_joint_t_quick: For class %i: adding likelihoods to Lambdas for all data points ' % l)
-        lnPi_terms = worker_model._read_lnPi(lnPi, l, C-1, Cprev-1, np.arange(K)[None, :], nscores)
-        if C_data is not None and len(C_data):
-            lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
-        else:
-            lnPi_data_terms = 0
-
-        for model in range(len(C_data)):
             for m in range(L):
-
                 weights = C_data[model][:, m:m+1] * C_data_prev
 
                 for n in range(L):
@@ -1557,11 +1548,12 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
                     lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
                     lnPi_data_terms += lnPi_data_terms_mn
 
-        loglikelihood_l = (np.sum(lnPi_terms * (C != 0), 1) + lnPi_data_terms)[:, None]
+        loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
 
         # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
         # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
-        lnS[:, :L, l] += loglikelihood_l + lnA[:L, l][None, :] + lnR_prev
+        lnS[:, :, l] += loglikelihood_l + lnA[:, l][None, :]
+        lnS[1:, :L, l] += lnR_[:-1, :]
 
     # print('_expec_joint_t_quick: Normalising...')
 
@@ -1591,12 +1583,13 @@ def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worke
     lnR_ = np.zeros((T, L))
 
     mask = np.ones_like(C)
-    
     if skip:
         mask = (C != 0)
 
+    # For the first data point
     lnPi_terms = worker_model._read_lnPi(lnPi, None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], nscores)
     lnPi_data_terms = 0
+
     if C_data is not None:
         for m in range(nscores):
             for model in range(len(C_data)):
@@ -1611,6 +1604,7 @@ def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worke
     Cprev = Cprev[:-1, :]
     Ccurr = C[1:, :] -1
 
+    # the other data points
     lnPi_terms = worker_model._read_lnPi(lnPi, None, Ccurr, Cprev, Krange[None, :], nscores)
     lnPi_data_terms = 0
     if C_data is not None:
@@ -1948,7 +1942,7 @@ class LSTM:
     def predict(self, doc_start, text):
         N = len(doc_start)
         test_sentences, _, _ = lstm_wrapper.data_to_lstm_format(N, text, doc_start,
-                                                                np.ones(N), self.nclasses, include_missing=False)
+                                                                np.zeros(N) - 1, self.nclasses)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(self.lstm, test_sentences, self.f_eval, self.nclasses, self.IOB_map)
