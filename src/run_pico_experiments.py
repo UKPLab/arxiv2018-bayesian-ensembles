@@ -22,7 +22,7 @@ exp.opt_hyper = False #True
 exp.alpha0_diags = 100
 exp.alpha0_factor = 9
 
-diags = [0.1, 1, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+diags = [0.1, 1, 10, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [#'ibcc',
                    'bac_vec_integrateBOF',
