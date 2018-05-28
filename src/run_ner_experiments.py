@@ -203,4 +203,4 @@ exp.run_methods(
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
     new_data=regen_data
-# )
+)
