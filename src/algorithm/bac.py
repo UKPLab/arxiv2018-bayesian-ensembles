@@ -729,21 +729,22 @@ class BAC(object):
 
     def predict(self, doc_start, text):
 
-        doc_start = doc_start.astype(bool)
-
-        C = np.zeros((len(doc_start), self.K), dtype=int) # all blank
-
-        C_data = []
-        for model in self.data_model:
-            C_data.append(model.predict(doc_start, text))
-
         with Parallel(n_jobs=-1) as parallel:
+
+            doc_start = doc_start.astype(bool)
+            C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
+
+            C_data = []
+            lnPi_data = []
+            for model in self.data_model:
+                C_data.append(model.predict(doc_start, text))
+                lnPi_data.append(model.lnPi_data)
 
             q_t = self._update_t(
                 parallel,
                 C,
-                [C_data for model in self.data_model],
-                [model.lnPi_data for model in self.data_model],
+                C_data,
+                lnPi_data,
                 doc_start
             )
 
