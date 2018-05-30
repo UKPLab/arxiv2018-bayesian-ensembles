@@ -454,7 +454,7 @@ class BAC(object):
 
         return self.q_t, self._most_probable_sequence(C, C_data, doc_start)[1]
 
-    def _update_t_notrans(self, parallel, C, doc_start):
+    def _update_t_notrans(self, parallel, C, C_data, lnPi_data,  doc_start):
 
         lnpCT = np.zeros((C.shape[0], self.L))
 
@@ -464,10 +464,10 @@ class BAC(object):
         lnPi_terms = self.worker_model._read_lnPi(self.lnPi, None, C[0:1, :] - 1, self.before_doc_idx, Krange[None, :],
                                                   self.nscores)
         lnPi_data_terms = 0
-        for model in self.data_model:
+        for model in range(len(self.data_model)):
             for m in range(self.nscores):
-                lnPi_data_terms = self.worker_model._read_lnPi(model.lnPi_data, None,
-                                m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * model.C_data[0, m]
+                lnPi_data_terms = self.worker_model._read_lnPi(lnPi_data[model], None,
+                                m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * C_data[model][0, m]
 
         lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
 
@@ -481,11 +481,11 @@ class BAC(object):
 
         lnPi_data_terms = 0
 
-        for model in self.data_model:
+        for model in range(len(self.data_model)):
             for m in range(self.nscores):
                 for n in range(self.nscores):
-                    lnPi_data_terms += self.worker_model._read_lnPi(model.lnPi_data, None, m, n, 0, self.nscores)[:, :, 0] * \
-                                       model.C_data[1:, m][None, :] * model.C_data[:-1, n][None, :]
+                    lnPi_data_terms += self.worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, self.nscores)[:, :, 0] * \
+                                       C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]
 
         lnpCT[1:, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
 
@@ -498,35 +498,33 @@ class BAC(object):
         norma = np.sum(joint, axis=1)[:, np.newaxis]
         self.q_t = joint / norma
 
+        return self.q_t
 
-    def _update_t_trans(self, parallel, C, doc_start):
+
+    def _update_t_trans(self, parallel, C, C_data, lnPi_data, doc_start):
 
         # calculate alphas and betas using forward-backward algorithm
-        self.lnR_ = _parallel_forward_pass(parallel, C, [model.C_data for model in self.data_model],
-                                           self.lnA[0:self.L, :], self.lnPi,
-                                           [model.lnPi_data for model in self.data_model],
+        self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
+                                           self.lnA[0:self.L, :], self.lnPi, lnPi_data,
                                            self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
                                            self.worker_model, self.before_doc_idx)
 
         if self.verbose:
             print("BAC iteration %i: completed forward pass" % self.iter)
 
-        lnLambd = _parallel_backward_pass(parallel, C, [model.C_data for model in self.data_model],
-                                          self.lnA[0:self.L, :], self.lnPi,
-                                          [model.lnPi_data for model in self.data_model],
-                                          doc_start, self.nscores, self.worker_model,
-                                          self.before_doc_idx)
+        lnLambd = _parallel_backward_pass(parallel, C, C_data,
+                                          self.lnA[0:self.L, :], self.lnPi, lnPi_data,
+                                          doc_start, self.nscores, self.worker_model, self.before_doc_idx)
         if self.verbose:
             print("BAC iteration %i: completed backward pass" % self.iter)
 
         # update q_t and q_t_joint
-        self.q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi,
-                                              [model.lnPi_data for model in self.data_model], C,
-                                              [model.C_data for model in self.data_model],
-                                              doc_start, self.nscores, self.worker_model,
-                                              self.before_doc_idx)
+        self.q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, lnPi_data, C, C_data,
+                                              doc_start, self.nscores, self.worker_model, self.before_doc_idx)
 
         self.q_t = np.sum(self.q_t_joint, axis=1)
+
+        return self.q_t
 
     def _calc_q_A_trans(self):
         '''
@@ -610,7 +608,9 @@ class BAC(object):
 
                 self.q_t_old = self.q_t
 
-                self._update_t(parallel, C, doc_start)
+                lnPi_data = [model.lnPi_data for model in self.data_model]
+                C_data = [model.C_data for model in self.data_model]
+                self._update_t(parallel, C, C_data, lnPi_data, doc_start)
 
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
@@ -739,30 +739,13 @@ class BAC(object):
 
         with Parallel(n_jobs=-1) as parallel:
 
-            self.lnR_ = _parallel_forward_pass(parallel, C, C_data, self.lnA[0:self.L, :], self.lnPi,
-                                               [model.lnPi_data for model in self.data_model],
-                                               self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
-                                               self.worker_model, self.before_doc_idx)
-
-            if self.verbose:
-                print("BAC predict: completed forward pass")
-
-            lnLambd = _parallel_backward_pass(parallel, C, C_data, self.lnA[0:self.L, :], self.lnPi,
-                                              [model.lnPi_data for model in self.data_model],
-                                              doc_start, self.nscores, self.worker_model,
-                                              self.before_doc_idx)
-            if self.verbose:
-                print("BAC predict: completed backward pass")
-
-            # update q_t and q_t_joint
-            q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi,
-                                             [model.lnPi_data for model in self.data_model],
-                                             C, C_data, doc_start, self.nscores, self.worker_model,
-                                                  self.before_doc_idx)
-            if self.verbose:
-                print("BAC predict: computed label sequence probabilities")
-
-            q_t = np.sum(q_t_joint, axis=1)
+            q_t = self._update_t(
+                parallel,
+                C,
+                [C_data for model in self.data_model],
+                [model.lnPi_data for model in self.data_model],
+                doc_start
+            )
 
             seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
 
@@ -1850,7 +1833,7 @@ class LSTM:
         labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
 
         self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels,
-                                                                                    nclasses, include_missing=False)
+                                                                                    nclasses)
 
         self.Ndocs = self.sentences.shape[0]
 
@@ -1868,9 +1851,6 @@ class LSTM:
             self.dev_labels = dev_gold
         else:
             self.all_sentences = self.sentences
-
-        self.tag_to_id = self.IOB_map
-        self.id_to_tag = self.IOB_label
 
         return alpha0_data
 
@@ -1914,8 +1894,8 @@ class LSTM:
                 n_epochs = 25 # the first update needs at least 25 epochs
 
             self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.all_sentences, train_sentences,
-                                                       dev_sentences, dev_labels, self.IOB_map, self.nclasses, n_epochs,
-                                                       self.tag_to_id, self.id_to_tag)
+                                                       dev_sentences, dev_labels, self.IOB_map, self.IOB_label,
+                                                                                   self.nclasses, n_epochs)
         else:
             best_dev = -np.inf
             last_score = best_dev
@@ -1942,7 +1922,7 @@ class LSTM:
     def predict(self, doc_start, text):
         N = len(doc_start)
         test_sentences, _, _ = lstm_wrapper.data_to_lstm_format(N, text, doc_start,
-                                                                np.zeros(N) - 1, self.nclasses)
+                                                                np.ones(N), self.nclasses)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(self.lstm, test_sentences, self.f_eval, self.nclasses, self.IOB_map)

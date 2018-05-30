@@ -15,7 +15,7 @@ from lample_lstm_tagger.model import Model
 import numpy as np
 
 
-def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0, include_missing=True):
+def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0, include_missing=False):
     sentences_list = np.empty(int(np.sum(doc_start[:nannotations])), dtype=object)
 
     labels = labels.flatten()
@@ -108,8 +108,8 @@ def run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval, niter_
 
     return niter_no_imprv, best_dev, dev_score
 
-def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, nclasses, n_epochs=20,
-               tag_to_id=None, id_to_tag=None):
+def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, IOB_label, nclasses, n_epochs=20,
+               freq_eval=100, max_niter_no_imprv=3):
 
     # parameters
     parameters = OrderedDict()
@@ -130,9 +130,8 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     parameters['cap_dim'] = 0
     parameters['crf'] = 1
     parameters['dropout'] = 0.5
-    parameters['lr_method'] = "adam-lr_.01"#"sgd-lr_.005"
+    parameters['lr_method'] = "adam-lr_.001"#"sgd-lr_.005"
 
-    max_niter_no_imprv = 3
     #lr_decay = 0.9 # not currently used
 
     if not os.path.exists(models_path):
@@ -144,21 +143,6 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
 
     # Data parameters
     lower = parameters['lower']
-    #tag_scheme = parameters['tag_scheme']
-
-    # Use selected tagging scheme (IOB / IOBES)
-    # update_tag_scheme(train_sentences, tag_scheme)
-    # update_tag_scheme(dev_sentences, tag_scheme)
-    # update_tag_scheme(test_sentences, tag_scheme)
-
-    # dico_words_train = word_mapping(train_sentences, lower)[0]
-    # dico_words, word_to_id, id_to_word = augment_with_pretrained(
-    #     dico_words_train.copy(),
-    #     parameters['pre_emb'],
-    #     list(itertools.chain.from_iterable(
-    #         [[w[0] for w in s] for s in dev_sentences + test_sentences])
-    #     ) if not parameters['all_emb'] else None
-    # )
 
     # Following LSTM-CROWD, we don't load any pre-trained word embeddings.
     dico_words, word_to_id, id_to_word = word_mapping(all_sentences, lower)
@@ -167,28 +151,22 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     # Create a dictionary and a mapping for words / POS tags / tags
     dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
 
-    if tag_to_id is None:
-        _, tag_to_id, id_to_tag = tag_mapping(all_sentences)
-
-    print(tag_to_id.keys())
-    print(id_to_tag.keys())
-
     # Index data
     train_data, _ = prepare_dataset(
-        train_sentences, word_to_id, char_to_id, tag_to_id, lower
+        train_sentences, word_to_id, char_to_id, IOB_map, lower
     )
     dev_data, dev_tags = prepare_dataset(
-        dev_sentences, word_to_id, char_to_id, tag_to_id, lower
+        dev_sentences, word_to_id, char_to_id, IOB_map, lower
     )
     if dev_labels is None:
         dev_tags = np.array(dev_tags).flatten()
-        dev_tags = np.array([tag_to_id[tag] for tag in dev_tags])
+        dev_tags = np.array([IOB_map[tag] for tag in dev_tags])
     else:
         dev_tags = np.array(dev_labels).flatten()
 
     # Save the mappings to disk
     print('Saving the mappings to disk...')
-    model.save_mappings(id_to_word, id_to_char, id_to_tag)
+    model.save_mappings(id_to_word, id_to_char, IOB_label)
 
     # Build the model
     f_train, f_eval = model.build(**parameters)
@@ -198,12 +176,12 @@ def train_LSTM(all_sentences, train_sentences, dev_sentences, dev_labels, IOB_ma
     #
     singletons = set([word_to_id[k] for k, v in list(dico_words_train.items()) if v == 1])
 
-    freq_eval = 100  # evaluate on dev every freq_eval steps
+    # evaluate on dev every freq_eval steps
     best_dev = -np.inf
     last_score = best_dev
     niter_no_imprv = 0 # for early stopping
 
-    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_tags, id_to_tag]
+    train_data_objs = [train_data, singletons, parameters, f_train, f_eval, dev_sentences, dev_tags, IOB_label]
 
     for epoch in range(n_epochs):
         niter_no_imprv, best_dev, last_score = run_epoch(epoch, train_data, singletons, parameters, f_train, f_eval,
@@ -248,21 +226,10 @@ def predict_LSTM(model, test_sentences, f_eval, num_classes, IOB_map=None):
         else:
             y_preds = f_eval(*input).argmax(axis=1)
 
-        # TODO replace id_to_tag map by our own map from the experiment data loader stuff... then we can skip all this
-        y_preds = [model.id_to_tag[y_pred] for y_pred in y_preds]
+        agg.extend(y_preds)
 
         probs_sen = np.zeros((len(y_preds), num_classes))
-        for i, val in enumerate(y_preds):
-
-            if IOB_map is not None:
-                val = IOB_map[val]
-            else:
-                val = tag_to_id[val]
-
-            val = int(val)
-
-            probs_sen[i, val] = 1
-            agg.append(val)
+        probs_sen[range(len(y_preds)), y_preds] = 1
 
         probs = np.concatenate((probs, probs_sen), axis=0)
 

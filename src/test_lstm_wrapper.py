@@ -36,7 +36,7 @@ doc_start_val = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_li
 print('loading ground truth for task1 test...')
 gt_val = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None).values
 
-dev_sentences, _, _ = data_to_lstm_format(len(text_val), text_val, doc_start_val, gt_val, nclasses, include_missing=False)
+dev_sentences, _, _ = data_to_lstm_format(len(text_val), text_val, doc_start_val, gt_val, nclasses)
 
 Et = np.zeros((N, nclasses))
 Et[np.arange(N), gt.flatten()] = 1

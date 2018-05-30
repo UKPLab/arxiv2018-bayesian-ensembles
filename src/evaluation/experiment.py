@@ -98,7 +98,7 @@ class Experiment(object):
     opt_hyper = False
 
     def __init__(self, generator, nclasses, nannotators, config=None,
-                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0):
+                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20):
 
         self.generator = generator
         
@@ -115,13 +115,12 @@ class Experiment(object):
         self.alpha0_diags = alpha0_diags
         self.nu0_factor = nu0_factor
 
-        self.bac_nu0 = np.ones((nclasses + 1, nclasses)) * self.nu0_factor
-        self.ibcc_nu0 = np.ones(nclasses) * self.nu0_factor
-
         # save results from methods here. If we use compound methods, we can reuse these results in different
         # combinations of methods.
         self.aggs = {}
         self.probs = {}
+
+        self.max_iter = max_iter # allow all methods to use a maximum no. iterations
             
     def read_config_file(self):
         
@@ -160,45 +159,51 @@ class Experiment(object):
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
 
-    def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, method, annotations, ground_truth, doc_start,
+    def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, nu0factor_proposals, method,
+                    annotations, ground_truth, doc_start,
                     outputdir, text, anno_path=None, metric_idx_to_optimise=8):
 
         self.methods = [method]
 
-        scores = np.zeros((len(alpha0diag_propsals), len(alpha0factor_proposals) ))
+        scores = np.zeros((len(nu0factor_proposals) * len(alpha0diag_propsals), len(alpha0factor_proposals) ))
 
-        best_scores = np.zeros(3)
+        best_scores = np.zeros(4)
 
-        for i, alpha0diag in enumerate(alpha0diag_propsals):
+        for h, nu0factor in enumerate(nu0factor_proposals):
 
-            self.alpha0_diags = alpha0diag
+            self.nu0_factor = nu0factor
 
-            for j, alpha0factor in enumerate(alpha0factor_proposals):
+            for i, alpha0diag in enumerate(alpha0diag_propsals):
 
-                # reset saved data so that models are run again.
-                self.aggs = {}
-                self.probs = {}
+                self.alpha0_diags = alpha0diag
 
-                outputdir_ij = outputdir + ('_%i_%i_' % (i, j)) + method + '/'
+                for j, alpha0factor in enumerate(alpha0factor_proposals):
 
-                self.alpha0_factor = alpha0factor
+                    # reset saved data so that models are run again.
+                    self.aggs = {}
+                    self.probs = {}
 
-                all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
-                                                             anno_path, bootstrapping=False)
-                scores[i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
-                print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
+                    outputdir_ij = outputdir + ('_%i_%i_%i_' % (h, i, j)) + method + '/'
 
-                if scores[i, j] > best_scores[0]:
-                    best_scores[0] = scores[i, j]
-                    best_scores[1] = i
-                    best_scores[2] = j
+                    self.alpha0_factor = alpha0factor
 
-                print('Saving scores for this setting to %s' % (outputdir + '/%s_scores.csv' % method))
-                np.savetxt(outputdir + '/%s_scores.csv' % method, scores, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
+                    all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
+                                                                 anno_path, bootstrapping=False)
+                    scores[(h*len(nu0factor_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
+                    print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
 
-                np.savetxt(outputdir + '/%s_bestscores.csv' % method, best_scores, fmt='%s', delimiter=',',
-                           header=str(self.methods).strip('[]'))
+                    if scores[i, j] > best_scores[0]:
+                        best_scores[0] = scores[i, j]
+                        best_scores[1] = nu0factor
+                        best_scores[2] = alpha0diag
+                        best_scores[3] = alpha0factor
+
+                    print('Saving scores for this setting to %s' % (outputdir + '/%s_scores.csv' % method))
+                    np.savetxt(outputdir + '/%s_scores.csv' % method, scores, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+
+                    np.savetxt(outputdir + '/%s_bestscores.csv' % method, best_scores, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
 
         return best_scores
 
@@ -278,7 +283,7 @@ class Experiment(object):
                         alpha0=self.ibcc_alpha0, uselowerbound=False)
 
         ibc.verbose = True
-        ibc.max_iterations = 20
+        ibc.max_iterations = self.max_iter
         # ibc.optimise_alpha0_diagonals = True
 
         if self.opt_hyper:
@@ -340,7 +345,7 @@ class Experiment(object):
                       exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
-        alg.max_iter = 20
+        alg.max_iter = self.max_iter
         alg.verbose = True
 
         if self.opt_hyper:
@@ -352,7 +357,7 @@ class Experiment(object):
 
         model = alg
 
-        if ground_truth_nocrowd is not None:
+        if ground_truth_nocrowd is not None and '_thenLSTM' not in method:
             probs_nocrowd, agg_nocrowd = alg.predict(doc_start_nocrowd, text_nocrowd)
         else:
             probs_nocrowd = None
@@ -370,7 +375,7 @@ class Experiment(object):
         hc.init(init_type='dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
 
         print('Running HMM-crowd inference...')
-        hc.em(1)  # 20) # 10 is too much, performance goes down. This shouldn't really happen.
+        hc.em(self.max_iter) # performance goes down with more iterations...?!
 
         print('Computing most likely sequence...')
         hc.mls()
@@ -398,7 +403,7 @@ class Experiment(object):
         - Can do task 2 better than a simple model like Hmm_crowd
         - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
         '''
-        labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
+        labelled_sentences, IOB_map, IOB_label = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
                                                                           train_labs.flatten(), self.num_classes)
 
         if ground_truth_val is None or doc_start_val is None or text_val is None:
@@ -419,14 +424,15 @@ class Experiment(object):
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                                  ground_truth_val, IOB_map, self.num_classes, n_epochs=25)
+                                  ground_truth_val, IOB_map, IOB_label, self.num_classes, n_epochs=25, freq_eval=1,
+                                                  max_niter_no_imprv=20) #self.max_iter)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
 
         if test_no_crowd:
             labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
-                                                          doc_start_nocrowd, np.zeros(N_nocrowd) - 1, self.num_classes)
+                                                          doc_start_nocrowd, np.ones(N_nocrowd), self.num_classes)
 
             agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval,
                                                                    self.num_classes, IOB_map)
@@ -558,6 +564,9 @@ class Experiment(object):
         doc_start_all = doc_start
         text_all = text
 
+        self.bac_nu0 = np.ones((self.num_classes + 1, self.num_classes)) * self.nu0_factor
+        self.ibcc_nu0 = np.ones(self.num_classes) * self.nu0_factor
+
         if active_learning:
 
             rerun_all = True
@@ -675,7 +684,7 @@ class Experiment(object):
                     # for debugging
                     agg = ground_truth.flatten()
                     probs = np.zeros((len(ground_truth), self.num_classes))
-                    probs[agg.astype(int)] = 1.0
+                    probs[range(len(agg)), agg.astype(int)] = 1.0
 
                 if '_then_LSTM' in method:
                     agg2, probs2, agg_nocrowd, probs_nocrowd = self._run_LSTM(N_withcrowd, text, doc_start, agg,

@@ -9,9 +9,6 @@ import numpy as np
 # import pandas as pd
 # from data.load_data import _map_ner_str_to_labels
 
-# TODO: why do the BAC methods fail to work properly?
-# TODO: rerun the BAC methods.
-
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
 regen_data = False
@@ -112,14 +109,15 @@ exp.opt_hyper = False#True
 
 # best IBCC setting so far is diag=100, factor=36. Let's reuse this for BIO and all BAC_IBCC runs.
 
-diags = [0.1, 1, 10, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-factors = [0.1, 1, 9, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
+nu_factors = [0.1, 1, 10]
+diags = [0.1, 1, 10]#, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [0.1, 1, 9]#, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [#'ibcc',
                    'bac_vec_integrateBOF',
-                   'bac_ibcc_integrateBOF',
+                   # 'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',
-                   'bac_acc_integrateBOF',
-                   'bac_mace_integrateBOF'
+                   # 'bac_acc_integrateBOF',
+                   # 'bac_mace_integrateBOF'
                    ]
 
 best_bac_wm = 'bac_vec' #'unknown' # choose model with best score for the different BAC worker models
@@ -149,7 +147,7 @@ tune_gt_task1_val = gt_task1_val[idxs]
 for m, method in enumerate(methods_to_tune):
     print('TUNING %s' % method)
 
-    best_scores = exp.tune_alpha0(diags, factors, method, tune_annos, tune_gt_task1_val, tune_doc_start,
+    best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, tune_annos, tune_gt_task1_val, tune_doc_start,
                                   output_dir, tune_text)
     best_idxs = best_scores[1:].astype(int)
     exp.alpha0_diags = diags[best_idxs[0]]
@@ -174,33 +172,33 @@ for m, method in enumerate(methods_to_tune):
         best_factor = exp.alpha0_factor
 
 print('best BAC method tested here = %s' % best_bac_wm)
+# #
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
 #
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-
-# exp.alpha0_diags = 50
-# exp.alpha0_factor = 1
-
-# run all the methods that don't require tuning here
-exp.methods =  [
-                #'majority',
-                #'mace',
-                #'ibcc',
-                'ds',
-                #'best', 'worst',
-                #'HMM_crowd',
-                best_bac_wm,
-                best_bac_wm + '_integrateBOF_then_LSTM',
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
-                'HMM_crowd_then_LSTM',
-]
-
-# should run both task 1 and 2.
-
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data
-)
+# # exp.alpha0_diags = 50
+# # exp.alpha0_factor = 1
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 #'majority',
+#                 #'mace',
+#                 #'ibcc',
+#                 'ds',
+#                 #'best', 'worst',
+#                 #'HMM_crowd',
+#                 best_bac_wm,
+#                 best_bac_wm + '_integrateBOF_then_LSTM',
+#                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+#                 best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
+#                 'HMM_crowd_then_LSTM',
+# ]
+#
+# # should run both task 1 and 2.
+#
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     new_data=regen_data
+# )

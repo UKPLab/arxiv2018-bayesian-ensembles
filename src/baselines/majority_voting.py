@@ -59,7 +59,7 @@ class MajorityVoting(object):
             # 'I-ORG': 7
             # 'I-PER': 8
             # 'O': 9
-            preferences = np.array([7, 9, 3, 8, 4, 5, 1, 6, 2])
+            preferences = np.array([7, 9, 3, 8, 4, 5, 1, 6, 2])[:self.num_labels]
             # avoid choosing class 1 if there's a tie
             maxvotes = np.max(votes, axis=1)
             maxlabels = votes == maxvotes[:, None]
