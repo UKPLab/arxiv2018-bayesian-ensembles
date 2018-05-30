@@ -190,7 +190,8 @@ class Experiment(object):
                     all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
                                                                  anno_path, bootstrapping=False)
                     scores[(h*len(nu0factor_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
-                    print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor, scores[i, j]))
+                    print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor,
+                                                         scores[(h*len(nu0factor_proposals)) + i, j]))
 
                     if scores[i, j] > best_scores[0]:
                         best_scores[0] = scores[i, j]
@@ -424,7 +425,7 @@ class Experiment(object):
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                  ground_truth_val, IOB_map, IOB_label, self.num_classes, n_epochs=25, freq_eval=1,
+                                  ground_truth_val, IOB_map, IOB_label, self.num_classes, n_epochs=25, freq_eval=30,
                                                   max_niter_no_imprv=20) #self.max_iter)
 
         # now make predictions for all sentences

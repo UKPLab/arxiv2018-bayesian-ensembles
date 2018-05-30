@@ -53,8 +53,9 @@ for m, method in enumerate(methods_to_tune):
     best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, tune_annos, tune_gt_dev, tune_doc_start,
                                   output_dir, tune_text, metric_idx_to_optimise=11)
     best_idxs = best_scores[1:].astype(int)
-    exp.alpha0_diags = diags[best_idxs[0]]
-    exp.alpha0_factor = factors[best_idxs[1]]
+    exp.nu0_factor = nu_factors[best_idxs[0]]
+    exp.alpha0_diags = diags[best_idxs[1]]
+    exp.alpha0_factor = factors[best_idxs[2]]
 
     print('Best values: %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
 
@@ -71,11 +72,13 @@ for m, method in enumerate(methods_to_tune):
         best_bac_wm_score = best_score
         best_diags = exp.alpha0_diags
         best_factor = exp.alpha0_factor
+        best_nu0factor = exp.nu0_factor
 
 print('best BAC method = %s' % best_bac_wm)
 
 exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
 
 # exp.alpha0_diags = 1#50
 # exp.alpha0_factor = 1#9
