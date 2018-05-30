@@ -24,10 +24,10 @@ exp.alpha0_factor = 9
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 
-nu_factors = [0.1, 1, 10]
-diags = [0.1, 1, 100]# 10, 50,  [1, 50, 100]#[1, 5, 10, 50]
-factors = [0.1, 1, 36]#9, [36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = [#'ibcc',
+nu_factors = [0.1, 1, 10, 100]
+diags = [0.1, 1, 10, 100] # 10, 50,  [1, 50, 100]#[1, 5, 10, 50]
+factors = [0.1, 1, 10, 100] #9, [36, 49, 64]#[1, 4, 9, 16, 25]
+methods_to_tune = ['ibcc',
                    'bac_vec_integrateBOF',
                    'bac_seq_integrateBOF',
                    'bac_ibcc_integrateBOF',
@@ -40,6 +40,7 @@ best_bac_wm_score = -np.inf
 # tune with small dataset to save time
 idxs = np.argwhere(gt_task1_dev != -1)[:, 0]
 idxs = np.concatenate((idxs, np.argwhere(gt != -1)[:, 0]))
+idxs = np.concatenate((idxs, np.argwhere((gt == -1) & (gt_task1_dev == -1))[:100, 0]))  # 100 more to make sure the dataset is reasonable size
 
 tune_gt_dev = gt_task1_dev[idxs]
 tune_annos = annos[idxs]

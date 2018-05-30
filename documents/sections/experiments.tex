@@ -132,9 +132,11 @@ HMM-Crowd-then-LSTM & & & & & & & & Running \\ \hline
 BSCC-Seq-NF & 81.30 & 67.46 & 73.74 & 70.35 & .9585 & 0.45 & 0 & & 100, 36\\ \hline
 BSCC-Acc-IF & 81.25 & 47.19 & 59.71 & 61.05 & .9583 & 1.60 & 0 & Bad hyper-params? & .1, .1 \\
 BSCC-MACE-IF & 60.32 & 76.17 & 67.33 & 68.04 & .9553 & 0.87 & 0 &  & .1, 1\\
-BSCC-Vec-IF & 81.01 & 62.72 & 70.71 & 71.28 & .9695 & 0.82 & 0 &  & 10, 1 \\
+%BSCC-Vec-IF & 81.01 & 62.72 & 70.71 & 71.28 & .9695 & 0.82 & 0 &  & 10, 1 \\
+BSCC-Vec-IF & 81.01 & 63.16 & 71.01 & 71.38 & .9702 & 0.80 & 0 &  &  .1, 1, .1\\
 BSCC-IBCC-IF & 75.43 & 74.21 & 74.82 & 74.33 & .9733 & 0.55 & 0 &  & .1, 9\\
-BSCC-Seq-IF & 81.66 & 69.49 & 75.08 & 71.31 & .9707 & 0.44 & 0 & & 100, 36\\ \hline
+%BSCC-Seq-IF & 81.66 & 69.49 & 75.08 & 71.31 & .9707 & 0.44 & 0 & & 100, 36\\ \hline
+BSCC-Seq-IF & 81.88 & 70.66 & 75.86 & 73.94 & .9304 & 0.82 & 0 & & .1, 1, 1\\ \hline
 BSCC-IBCC-IF-then-LSTM & 71.53 & 69.88 & 70.70 & 70.61 & .9082 & 16.92 & 0 & Pre bug-fix result & 50, 9 \\% Post bug-fix (with BSCC-seq), the LSTM seems to have failed - sometimes more epochs are required? Compare to HMM-Crowd-then-LSTM & 50, 9\\
 %BSCC-IBCC+LSTM &\\ % don't need if we already know that including IF helps
 BSCC-Seq-IF+LSTM & 81.67 & 69.64 & 75.17 & 71.32 & .9707 & 0.44 & 0 & & 100, 36 \\ 

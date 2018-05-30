@@ -190,7 +190,7 @@ class Experiment(object):
                     all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
                                                                  anno_path, bootstrapping=False)
                     scores[(h*len(nu0factor_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
-                    print('Scores for %f, %f: %f' % (alpha0diag, alpha0factor, scores[i, j]))
+                    print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor, scores[i, j]))
 
                     if scores[i, j] > best_scores[0]:
                         best_scores[0] = scores[i, j]

@@ -62,136 +62,6 @@ class BAC(object):
     max_data_updates_at_end = 4
     eps = None  # maximum difference of estimate differences in convergence chack
 
-    def _set_transition_constraints_seqalpha(self):
-
-        if self.tagging_scheme == 'IOB':
-            restricted_labels = self.beginning_labels # labels that cannot follow an outside label
-            unrestricted_labels = self.inside_labels # labels that can follow any label
-        elif self.tagging_scheme == 'IOB2':
-            restricted_labels = self.inside_labels
-            unrestricted_labels = self.beginning_labels
-
-        # set priors for invalid transitions (to low values)
-        for i, restricted_label in enumerate(restricted_labels):
-            # pseudo-counts for the transitions that are not allowed from outside to inside
-            for outside_label in self.outside_labels:
-
-                # remove transition from outside to restricted label.
-                # Move pseudo count to unrestricted label of same type.
-                disallowed_count = self.alpha0[:, restricted_label, outside_label, :]
-                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
-
-                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :]
-                self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
-
-
-                # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
-
-            #disallowed_count = self.nu0[self.outside_labels, restricted_label]
-            #self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-            if self.nu0.ndim == 2:
-                self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
-
-            for other_restricted_label in restricted_labels:
-                if other_restricted_label == restricted_label:
-                    continue
-
-                disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :]
-                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
-
-                disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :]
-                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count
-
-                # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-                if self.nu0.ndim == 2:
-                    self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
-
-            for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
-                # prevent transitions from unrestricted to restricted if they don't have the same types
-                if typeid == i: # same type is allowed
-                    continue
-
-                disallowed_count = self.alpha0[:, other_unrestricted_label, restricted_label, :]
-                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, other_unrestricted_label, restricted_label, :] += disallowed_count
-
-                disallowed_count = self.alpha0_data[:, other_unrestricted_label, restricted_label, :]
-                self.alpha0_data[:, other_unrestricted_label, other_unrestricted_label, :] += disallowed_count
-
-                # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
-
-                if self.nu0.ndim == 2:
-                    self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
-
-
-        if self.exclusions is not None:
-            for label, excluded in dict(self.exclusions).items():
-                self.alpha0[:, excluded, label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, excluded, label, :] = self.rare_transition_pseudocount
-
-                if self.nu0.ndim == 2:
-                    self.nu0[label, excluded] = self.rare_transition_pseudocount
-
-    def _set_transition_constraints_nuonly(self):
-
-        if self.nu0.ndim != 2:
-            return
-
-        # set priors for invalid transitions (to low values)
-        if self.tagging_scheme == 'IOB2':
-            for i, inside_label in enumerate(self.inside_labels):
-                # pseudo-counts for the transitions that are not allowed from outside to inside
-                #disallowed_counts = self.nu0[self.outside_labels, inside_label]
-                #self.nu0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
-
-
-                self.nu0[self.outside_labels, inside_label] = self.rare_transition_pseudocount
-
-                # cannot jump from one type to another
-                for b, begin_label in enumerate(self.beginning_labels):
-                    if i == b:
-                        continue # this transitiion is allowed
-                    self.nu0[begin_label, inside_label] = self.rare_transition_pseudocount
-
-                # can't switch types mid annotation
-                for other_inside_label in self.inside_labels:
-                    if other_inside_label == inside_label:
-                        continue
-                    self.nu0[other_inside_label, inside_label] = self.rare_transition_pseudocount
-
-        elif self.tagging_scheme == 'IOB':
-            for i, begin_label in enumerate(self.beginning_labels):
-                # pseudo-counts for the transitions that are not allowed from outside to inside
-                #disallowed_counts = self.nu0[self.outside_labels, begin_label]
-                #self.nu0[self.outside_labels, self.inside_labels[i]] += disallowed_counts
-
-                self.nu0[self.outside_labels, begin_label] = self.rare_transition_pseudocount
-
-                # cannot jump from one type to another
-                for j, inside_label in enumerate(self.inside_labels):
-                    if i == j:
-                        continue # this transitiion is allowed
-
-                    self.nu0[inside_label, begin_label] = self.rare_transition_pseudocount
-
-                # if switching types, a B is not used
-                for other_b_label in self.beginning_labels:
-                    if other_b_label == begin_label:
-                        continue
-                    self.nu0[other_b_label, begin_label] = self.rare_transition_pseudocount
-
-        if self.exclusions is not None:
-                for label, excluded in dict(self.exclusions).items():
-                    self.nu0[label, excluded] = self.rare_transition_pseudocount
-
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=1,   exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
                  data_model=None, alpha0_data=None, tagging_scheme='IOB2', transition_model='HMM'):
@@ -284,7 +154,133 @@ class BAC(object):
         self.eps = eps  # threshold for convergence 
         
         self.verbose = False  # can change this if you want progress updates to be printed
-        
+
+    def _set_transition_constraints_seqalpha(self):
+
+        if self.tagging_scheme == 'IOB':
+            restricted_labels = self.beginning_labels  # labels that cannot follow an outside label
+            unrestricted_labels = self.inside_labels  # labels that can follow any label
+        elif self.tagging_scheme == 'IOB2':
+            restricted_labels = self.inside_labels
+            unrestricted_labels = self.beginning_labels
+
+        # set priors for invalid transitions (to low values)
+        for i, restricted_label in enumerate(restricted_labels):
+            # pseudo-counts for the transitions that are not allowed from outside to inside
+            for outside_label in self.outside_labels:
+                # remove transition from outside to restricted label.
+                # Move pseudo count to unrestricted label of same type.
+                disallowed_count = self.alpha0[:, restricted_label, outside_label, :]
+                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
+
+                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :]
+                self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
+
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
+
+            # disallowed_count = self.nu0[self.outside_labels, restricted_label]
+            # self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+            if self.nu0.ndim == 2:
+                self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
+
+            for other_restricted_label in restricted_labels:
+                if other_restricted_label == restricted_label:
+                    continue
+
+                disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :]
+                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+
+                disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :]
+                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                if self.nu0.ndim == 2:
+                    self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
+
+            for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
+                # prevent transitions from unrestricted to restricted if they don't have the same types
+                if typeid == i:  # same type is allowed
+                    continue
+
+                disallowed_count = self.alpha0[:, other_unrestricted_label, restricted_label, :]
+                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                self.alpha0[:, other_unrestricted_label, restricted_label, :] += disallowed_count
+
+                disallowed_count = self.alpha0_data[:, other_unrestricted_label, restricted_label, :]
+                self.alpha0_data[:, other_unrestricted_label, other_unrestricted_label, :] += disallowed_count
+
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, other_unrestricted_label, restricted_label, :] = self.rare_transition_pseudocount
+
+                if self.nu0.ndim == 2:
+                    self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
+
+        if self.exclusions is not None:
+            for label, excluded in dict(self.exclusions).items():
+                self.alpha0[:, excluded, label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, excluded, label, :] = self.rare_transition_pseudocount
+
+                if self.nu0.ndim == 2:
+                    self.nu0[label, excluded] = self.rare_transition_pseudocount
+
+    def _set_transition_constraints_nuonly(self):
+
+        if self.nu0.ndim != 2:
+            return
+
+        # set priors for invalid transitions (to low values)
+        if self.tagging_scheme == 'IOB2':
+            for i, inside_label in enumerate(self.inside_labels):
+                # pseudo-counts for the transitions that are not allowed from outside to inside
+                # disallowed_counts = self.nu0[self.outside_labels, inside_label]
+                # self.nu0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+
+                self.nu0[self.outside_labels, inside_label] = self.rare_transition_pseudocount
+
+                # cannot jump from one type to another
+                for b, begin_label in enumerate(self.beginning_labels):
+                    if i == b:
+                        continue  # this transitiion is allowed
+                    self.nu0[begin_label, inside_label] = self.rare_transition_pseudocount
+
+                # can't switch types mid annotation
+                for other_inside_label in self.inside_labels:
+                    if other_inside_label == inside_label:
+                        continue
+                    self.nu0[other_inside_label, inside_label] = self.rare_transition_pseudocount
+
+        elif self.tagging_scheme == 'IOB':
+            for i, begin_label in enumerate(self.beginning_labels):
+                # pseudo-counts for the transitions that are not allowed from outside to inside
+                # disallowed_counts = self.nu0[self.outside_labels, begin_label]
+                # self.nu0[self.outside_labels, self.inside_labels[i]] += disallowed_counts
+
+                self.nu0[self.outside_labels, begin_label] = self.rare_transition_pseudocount
+
+                # cannot jump from one type to another
+                for j, inside_label in enumerate(self.inside_labels):
+                    if i == j:
+                        continue  # this transitiion is allowed
+
+                    self.nu0[inside_label, begin_label] = self.rare_transition_pseudocount
+
+                # if switching types, a B is not used
+                for other_b_label in self.beginning_labels:
+                    if other_b_label == begin_label:
+                        continue
+                    self.nu0[other_b_label, begin_label] = self.rare_transition_pseudocount
+
+        if self.exclusions is not None:
+            for label, excluded in dict(self.exclusions).items():
+                self.nu0[label, excluded] = self.rare_transition_pseudocount
+
     def _initA(self):
         self.nu = self.nu0
 
@@ -780,6 +776,340 @@ def _log_dir(alpha, lnPi, sum_dim):
     z = gammaln(np.sum(alpha, sum_dim)) - np.sum(gammaln_alpha, sum_dim)
     z[np.isinf(z)] = 0
     return np.sum(x + z)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def _expec_t(lnR_, lnLambda):
+    '''
+    Calculate label probabilities for each token.
+    '''
+    return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None])
+
+
+def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
+                         before_doc_idx=-1, skip=True):
+    '''
+    Calculate joint label probabilities for each pair of tokens.
+    '''
+    # initialise variables
+    T = lnR_.shape[0]
+    L = lnA.shape[-1]
+    K = lnPi.shape[-1]
+
+    lnS = np.repeat(lnLambda[:, None, :], L + 1, 1)
+
+    mask = np.ones_like(C)
+    if skip:
+        mask = (C != 0)
+
+    C = C - 1
+
+    # flags to indicate whether the entries are valid or should be zeroed out later.
+    flags = -np.inf * np.ones_like(lnS)
+    flags[np.where(doc_start == 1)[0], before_doc_idx, :] = 0
+    flags[np.where(doc_start == 0)[0], :L, :] = 0
+
+    Cprev = np.copy(C)
+    Cprev[doc_start.flatten(), :] = before_doc_idx
+    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, Cprev[:-1, :], axis=0)
+    Cprev[Cprev == 0] = before_doc_idx
+
+    for l in range(L):
+
+        # Non-doc-starts
+        lnPi_terms = worker_model._read_lnPi(lnPi, l, C, Cprev, np.arange(K)[None, :], nscores)
+        if C_data is not None and len(C_data):
+            lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
+        else:
+            lnPi_data_terms = 0
+
+        for model in range(len(C_data)):
+            C_data_prev = np.copy(C_data[model])
+            C_data_prev[doc_start.flatten(), before_doc_idx] = 1
+            C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
+            C_data_prev[0, before_doc_idx] = 1
+
+            for m in range(L):
+                weights = C_data[model][:, m:m + 1] * C_data_prev
+
+                for n in range(L):
+                    lnPi_data_terms_mn = weights[:, n] * worker_model._read_lnPi(lnPi_data[model], l, m, n, 0, nscores)
+                    lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
+                    lnPi_data_terms += lnPi_data_terms_mn
+
+        loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
+
+        # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
+        # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
+        lnS[:, :, l] += loglikelihood_l + lnA[:, l][None, :]
+        lnS[1:, :L, l] += lnR_[:-1, :]
+
+    # print('_expec_joint_t_quick: Normalising...')
+
+    # normalise and return
+    lnS = lnS + flags
+    if np.any(np.isnan(np.exp(lnS))):
+        print('_expec_joint_t: nan value encountered (1) ')
+
+    lnS = lnS - logsumexp(lnS, axis=(1, 2))[:, None, None]
+
+    if np.any(np.isnan(np.exp(lnS))):
+        print('_expec_joint_t: nan value encountered')
+
+    return np.exp(lnS)
+
+
+def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
+    '''
+    Perform the forward pass of the Forward-Backward algorithm (for a single document).
+    '''
+    T = C.shape[0]  # infer number of tokens
+    L = lnA.shape[0]  # infer number of labels
+    K = lnPi.shape[-1]  # infer number of annotators
+    Krange = np.arange(K)
+
+    # initialise variables
+    lnR_ = np.zeros((T, L))
+
+    mask = np.ones_like(C)
+    if skip:
+        mask = (C != 0)
+
+    # For the first data point
+    lnPi_terms = worker_model._read_lnPi(lnPi, None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], nscores)
+    lnPi_data_terms = 0
+
+    if C_data is not None:
+        for m in range(nscores):
+            for model in range(len(C_data)):
+                lnPi_data_terms += (worker_model._read_lnPi(lnPi_data[model], None, m, before_doc_idx, 0, nscores)[:, :,
+                                    0] \
+                                    * C_data[model][0, m])[:, 0]
+
+    lnR_[0, :] = initProbs + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
+    lnR_[0, :] = lnR_[0, :] - logsumexp(lnR_[0, :])
+
+    Cprev = C - 1
+    Cprev[Cprev == -1] = before_doc_idx
+    Cprev = Cprev[:-1, :]
+    Ccurr = C[1:, :] - 1
+
+    # the other data points
+    lnPi_terms = worker_model._read_lnPi(lnPi, None, Ccurr, Cprev, Krange[None, :], nscores)
+    lnPi_data_terms = 0
+    if C_data is not None:
+        for m in range(nscores):
+            for n in range(nscores):
+                for model in range(len(C_data)):
+                    lnPi_data_terms += worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, nscores)[:, :, 0] * \
+                                       C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]
+
+    likelihood_next = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms  # L x T-1
+    # lnPi[:, Ccurr, Cprev, Krange[None, :]]
+
+    # iterate through all tokens, starting at the beginning going forward
+    for t in range(1, T):
+        # iterate through all possible labels
+        # prev_idx = Cprev[t - 1, :]
+        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnA, axis=0) + likelihood_next[:, t - 1]
+        # , np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
+
+        # normalise
+        lnR_[t, :] = lnR_t - logsumexp(lnR_t)
+
+    return lnR_
+
+
+def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
+                           before_doc_idx=1, skip=True):
+    '''
+    Perform the forward pass of the Forward-Backward algorithm (for multiple documents in parallel).
+    '''
+    # split into documents
+    C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+
+    C_data_by_doc = []
+    for m, Cdata_m in enumerate(Cdata):
+        C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
+    if len(Cdata) >= 1:
+        C_data_by_doc = list(zip(*C_data_by_doc))
+
+    # run forward pass for each doc concurrently
+    # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
+    if len(Cdata) > 0:
+        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnA, lnPi, lnPi_data, initProbs,
+                                                  nscores, worker_model, before_doc_idx, skip)
+                       for d, C_doc in enumerate(C_by_doc))
+    else:
+        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnA, lnPi, lnPi_data, initProbs,
+                                                  nscores, worker_model, before_doc_idx, skip)
+                       for d, C_doc in enumerate(C_by_doc))
+
+    # res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnA, lnPi, lnPi_data, initProbs, nscores, worker_model,
+    #                         before_doc_idx, skip)
+    #       for d, C_doc in enumerate(C_by_doc)]
+
+    # reformat results
+    lnR_ = np.concatenate(res, axis=0)
+
+    return lnR_
+
+
+def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
+    '''
+    Perform the backward pass of the Forward-Backward algorithm (for a single document).
+    '''
+    # infer number of tokens, labels, and annotators
+    T = C.shape[0]
+    L = lnA.shape[0]
+    K = lnPi.shape[-1]
+    Krange = np.arange(K)
+
+    # initialise variables
+    lnLambda = np.zeros((T, L))
+
+    mask = np.ones_like(C)
+
+    if skip:
+        mask = (C != 0)
+
+    Ccurr = C - 1
+    Ccurr[Ccurr == -1] = before_doc_idx
+    Ccurr = Ccurr[:-1, :]
+    Cnext = C[1:, :] - 1
+
+    lnPi_terms = worker_model._read_lnPi(lnPi, None, Cnext, Ccurr, Krange[None, :], nscores)
+    lnPi_data_terms = 0
+    if C_data is not None:
+        for model in range(len(C_data)):
+
+            C_data_curr = C_data[model][:-1, :]
+            C_data_next = C_data[model][1:, :]
+
+            for m in range(nscores):
+                for n in range(nscores):
+                    terms_mn = worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, nscores)[:, :, 0] \
+                               * C_data_next[:, m][None, :] \
+                               * C_data_curr[:, n][None, :]
+                    terms_mn[:, (C_data_next[:, m] * C_data_curr[:, n]) == 0] = 0
+                    lnPi_data_terms += terms_mn
+
+    likelihood = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms
+
+    # iterate through all tokens, starting at the end going backwards
+    for t in range(T - 2, -1, -1):
+        # prev_idx = Cprev[t, :]
+
+        # logsumexp over the L classes of the next timestep
+        lnLambda_t = logsumexp(lnA + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
+        # np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, Krange], axis=1)[None, :], axis = 1)
+
+        # logsumexp over the L classes of the current timestep to normalise
+        lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
+
+    if (np.any(np.isnan(lnLambda))):
+        print('backward pass: nan value encountered at indexes: ')
+        print(np.argwhere(np.isnan(lnLambda)))
+
+    return lnLambda
+
+
+def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start, nscores, worker_model,
+                            before_doc_idx=1, skip=True):
+    '''
+    Perform the backward pass of the Forward-Backward algorithm (for multiple documents in parallel).
+    '''
+    # split into documents
+    docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+
+    C_data_by_doc = []
+    for m, Cdata_m in enumerate(C_data):
+        C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
+    if len(C_data) >= 1:
+        C_data_by_doc = list(zip(*C_data_by_doc))
+    # docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+    # run forward pass for each doc concurrently
+
+    if len(C_data) > 0:
+        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnA, lnPi, lnPi_data, nscores, worker_model,
+                                                   before_doc_idx, skip) for d, doc in enumerate(docs))
+    else:
+        res = parallel(delayed(_doc_backward_pass)(doc, None, lnA, lnPi, lnPi_data, nscores, worker_model,
+                                                   before_doc_idx, skip) for d, doc in enumerate(docs))
+
+    # reformat results
+    lnLambda = np.concatenate(res, axis=0)
+
+    return lnLambda
+
+
+def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, K, worker_model, before_doc_idx):
+    lnV = np.zeros((C.shape[0], L))
+    prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
+
+    mask = C != 0
+
+    t = 0
+    for l in range(L):
+        lnPi_terms = worker_model._read_lnPi(lnEPi, l, C[t, :] - 1, before_doc_idx, np.arange(K), nscores)
+
+        lnPi_data_terms = 0
+        if C_data is not None:
+            for model, C_data_m in enumerate(C_data):
+                for m in range(L):
+                    terms_startm = C_data_m[t, m] * worker_model._read_lnPi(lnEPi_data[model],
+                                                                            l, m, before_doc_idx, 0, nscores)
+                    if C_data_m[t, m] == 0:
+                        terms_startm = 0
+
+                    lnPi_data_terms += terms_startm
+
+        likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
+
+        lnV[t, l] = lnEA[before_doc_idx, l] + likelihood_current
+
+    Cprev = np.copy(C)
+    Cprev[C == 0] = before_doc_idx
+
+    lnPi_terms = worker_model._read_lnPi(lnEPi, None, C[1:, :] - 1, Cprev[:-1, :] - 1, np.arange(K), nscores)
+    lnPi_data_terms = 0
+    if C_data is not None:
+        for model, C_data_m in enumerate(C_data):
+            for m in range(L):
+                for n in range(L):
+                    weights = (C_data_m[1:, m] * C_data_m[:-1, n])[None, :]
+                    terms_mn = weights * worker_model._read_lnPi(lnEPi_data[model], None,
+                                                                 m, n, 0, nscores)[:, :, 0]
+                    terms_mn[:, weights[0] == 0] = 0
+
+                    lnPi_data_terms += terms_mn
+
+    likelihood_current = np.sum(mask[1:, :][None, :, :] * lnPi_terms, axis=2) + lnPi_data_terms
+
+    for t in range(1, C.shape[0]):
+        for l in range(L):
+            p_current = lnV[t - 1, :] + lnEA[:L, l] + likelihood_current[l, t - 1]
+            lnV[t, l] = np.max(p_current)
+            prev[t, l] = np.argmax(p_current, axis=0)
+
+    # decode
+    seq = np.zeros(C.shape[0], dtype=int)
+    pseq = np.zeros((C.shape[0], L), dtype=float)
+
+    t = C.shape[0] - 1
+
+    seq[t] = np.argmax(lnV[t, :])
+    pseq[t, :] = lnV[t, :]
+
+    for t in range(C.shape[0] - 2, -1, -1):
+        seq[t] = prev[t + 1, seq[t + 1]]
+        pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]] - lnEA[prev[t + 1, :],
+                                                                                        np.arange(lnEA.shape[1])])[None,
+                                        :] + lnEA[:lnV.shape[1]], axis=1)
+        pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
+
+    return pseq, seq
 
 # Worker model: accuracy only ------------------------------------------------------------------------------------------
 # lnPi[1] = ln p(correct)
@@ -1360,7 +1690,7 @@ class VectorWorker():
             for l in range(alpha.shape[1]):
                 if j == l:
                     continue
-                EPi[j, l, :] = EPi_incorrect[j, :] / float(alpha.shape[1] - 1)
+                EPi[j, l, :] = EPi_incorrect[j, :]
 
         return EPi
 
@@ -1471,334 +1801,6 @@ class SequentialWorker():
 
     def _calc_EPi(alpha):
         return alpha / np.sum(alpha, axis=1)[:, None, :, :]
-
-#-----------------------------------------------------------------------------------------------------------------------
-
-def _expec_t(lnR_, lnLambda):
-    '''
-    Calculate label probabilities for each token.
-    '''
-    return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None])
-
-def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
-                         before_doc_idx=-1, skip=True):
-    '''
-    Calculate joint label probabilities for each pair of tokens.
-    '''
-    # initialise variables
-    T = lnR_.shape[0]
-    L = lnA.shape[-1]
-    K = lnPi.shape[-1]
-
-    lnS = np.repeat(lnLambda[:, None, :], L + 1, 1)
-
-    mask = np.ones_like(C)
-    if skip:
-        mask = (C != 0)
-
-    C = C - 1
-
-    # flags to indicate whether the entries are valid or should be zeroed out later.
-    flags = -np.inf * np.ones_like(lnS)
-    flags[np.where(doc_start == 1)[0], before_doc_idx, :] = 0
-    flags[np.where(doc_start == 0)[0], :L, :] = 0
-
-    Cprev = np.copy(C)
-    Cprev[doc_start.flatten(), :]  = before_doc_idx
-    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, Cprev[:-1, :], axis=0)
-    Cprev[Cprev == 0] = before_doc_idx
-
-    for l in range(L):
-
-        # Non-doc-starts
-        lnPi_terms = worker_model._read_lnPi(lnPi, l, C, Cprev, np.arange(K)[None, :], nscores)
-        if C_data is not None and len(C_data):
-            lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
-        else:
-            lnPi_data_terms = 0
-
-        for model in range(len(C_data)):
-            C_data_prev = np.copy(C_data[model])
-            C_data_prev[doc_start.flatten(), before_doc_idx] = 1
-            C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
-            C_data_prev[0, before_doc_idx] = 1
-
-            for m in range(L):
-                weights = C_data[model][:, m:m+1] * C_data_prev
-
-                for n in range(L):
-
-                    lnPi_data_terms_mn = weights[:, n] * worker_model._read_lnPi(lnPi_data[model], l, m, n, 0, nscores)
-                    lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
-                    lnPi_data_terms += lnPi_data_terms_mn
-
-        loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
-
-        # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
-        # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
-        lnS[:, :, l] += loglikelihood_l + lnA[:, l][None, :]
-        lnS[1:, :L, l] += lnR_[:-1, :]
-
-    # print('_expec_joint_t_quick: Normalising...')
-
-    # normalise and return
-    lnS = lnS + flags
-    if np.any(np.isnan(np.exp(lnS))):
-        print('_expec_joint_t: nan value encountered (1) ')
-
-    lnS = lnS - logsumexp(lnS, axis=(1, 2))[:, None, None]
-
-    if np.any(np.isnan(np.exp(lnS))):
-        print('_expec_joint_t: nan value encountered')
-
-    return np.exp(lnS)
-
-
-def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
-    '''
-    Perform the forward pass of the Forward-Backward algorithm (for a single document).
-    '''
-    T = C.shape[0]  # infer number of tokens
-    L = lnA.shape[0]  # infer number of labels
-    K = lnPi.shape[-1]  # infer number of annotators
-    Krange = np.arange(K)
-
-    # initialise variables
-    lnR_ = np.zeros((T, L))
-
-    mask = np.ones_like(C)
-    if skip:
-        mask = (C != 0)
-
-    # For the first data point
-    lnPi_terms = worker_model._read_lnPi(lnPi, None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], nscores)
-    lnPi_data_terms = 0
-
-    if C_data is not None:
-        for m in range(nscores):
-            for model in range(len(C_data)):
-                lnPi_data_terms += (worker_model._read_lnPi(lnPi_data[model], None, m, before_doc_idx, 0, nscores)[:, :, 0] \
-                                  * C_data[model][0, m])[:, 0]
-
-    lnR_[0, :] = initProbs + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
-    lnR_[0, :] = lnR_[0, :] - logsumexp(lnR_[0, :])
-
-    Cprev = C - 1
-    Cprev[Cprev == -1] = before_doc_idx
-    Cprev = Cprev[:-1, :]
-    Ccurr = C[1:, :] -1
-
-    # the other data points
-    lnPi_terms = worker_model._read_lnPi(lnPi, None, Ccurr, Cprev, Krange[None, :], nscores)
-    lnPi_data_terms = 0
-    if C_data is not None:
-        for m in range(nscores):
-            for n in range(nscores):
-                for model in range(len(C_data)):
-                    lnPi_data_terms += worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, nscores)[:, :, 0] *\
-                                   C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]
-
-    likelihood_next = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms # L x T-1
-    #lnPi[:, Ccurr, Cprev, Krange[None, :]]
-
-    # iterate through all tokens, starting at the beginning going forward
-    for t in range(1, T):
-        # iterate through all possible labels
-        #prev_idx = Cprev[t - 1, :]
-        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnA, axis=0) + likelihood_next[:, t-1]
-        #, np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
-
-        # normalise
-        lnR_[t, :] = lnR_t - logsumexp(lnR_t)
-            
-    return lnR_
-
-def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
-                           before_doc_idx=1, skip=True):
-    '''
-    Perform the forward pass of the Forward-Backward algorithm (for multiple documents in parallel).
-    '''
-    # split into documents
-    C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-
-    C_data_by_doc = []
-    for m, Cdata_m in enumerate(Cdata):
-        C_data_by_doc.append( np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0) )
-    if len(Cdata) >= 1:
-        C_data_by_doc = list(zip(*C_data_by_doc))
-
-    # run forward pass for each doc concurrently
-    # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
-    if len(Cdata) > 0:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnA, lnPi, lnPi_data, initProbs,
-                                              nscores, worker_model, before_doc_idx, skip)
-                   for d, C_doc in enumerate(C_by_doc))
-    else:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnA, lnPi, lnPi_data, initProbs,
-                                                  nscores, worker_model, before_doc_idx, skip)
-                       for d, C_doc in enumerate(C_by_doc))
-
-    #res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnA, lnPi, lnPi_data, initProbs, nscores, worker_model,
-    #                         before_doc_idx, skip)
-    #       for d, C_doc in enumerate(C_by_doc)]
-
-    # reformat results
-    lnR_ = np.concatenate(res, axis=0)
-    
-    return lnR_
-    
-def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
-    '''
-    Perform the backward pass of the Forward-Backward algorithm (for a single document).
-    '''
-    # infer number of tokens, labels, and annotators
-    T = C.shape[0]
-    L = lnA.shape[0]
-    K = lnPi.shape[-1]
-    Krange = np.arange(K)
-
-    # initialise variables
-    lnLambda = np.zeros((T, L))
-
-    mask = np.ones_like(C)
-    
-    if skip:
-        mask = (C != 0)
-
-    Ccurr = C - 1
-    Ccurr[Ccurr == -1] = before_doc_idx
-    Ccurr = Ccurr[:-1, :]
-    Cnext = C[1:, :] - 1
-
-    lnPi_terms =  worker_model._read_lnPi(lnPi, None, Cnext, Ccurr, Krange[None, :], nscores)
-    lnPi_data_terms = 0
-    if C_data is not None:
-        for model in range(len(C_data)):
-
-            C_data_curr = C_data[model][:-1, :]
-            C_data_next = C_data[model][1:, :]
-
-            for m in range(nscores):
-                for n in range(nscores):
-                    terms_mn = worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, nscores)[:, :, 0] \
-                                   * C_data_next[:, m][None, :] \
-                                   * C_data_curr[:, n][None, :]
-                    terms_mn[:, (C_data_next[:, m] * C_data_curr[:, n]) == 0] = 0
-                    lnPi_data_terms += terms_mn
-
-    likelihood = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms
-
-    # iterate through all tokens, starting at the end going backwards
-    for t in range(T - 2, -1, -1):
-        #prev_idx = Cprev[t, :]
-
-        # logsumexp over the L classes of the next timestep
-        lnLambda_t = logsumexp(lnA + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis = 1)
-        #np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, Krange], axis=1)[None, :], axis = 1)
-
-        # logsumexp over the L classes of the current timestep to normalise
-        lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
-
-    if(np.any(np.isnan(lnLambda))):
-        print('backward pass: nan value encountered at indexes: ')
-        print(np.argwhere(np.isnan(lnLambda)))
-  
-    return lnLambda
-
-
-def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start, nscores, worker_model,
-                            before_doc_idx=1, skip=True):
-    '''
-    Perform the backward pass of the Forward-Backward algorithm (for multiple documents in parallel).
-    '''
-    # split into documents
-    docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-
-    C_data_by_doc = []
-    for m, Cdata_m in enumerate(C_data):
-        C_data_by_doc.append( np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0) )
-    if len(C_data) >= 1:
-        C_data_by_doc = list(zip(*C_data_by_doc))
-    # docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-    # run forward pass for each doc concurrently
-
-    if len(C_data) > 0:
-        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnA, lnPi, lnPi_data, nscores, worker_model,
-                                               before_doc_idx, skip) for d, doc in enumerate(docs))
-    else:
-        res = parallel(delayed(_doc_backward_pass)(doc, None, lnA, lnPi, lnPi_data, nscores, worker_model,
-                                               before_doc_idx, skip) for d, doc in enumerate(docs))
-
-    # reformat results
-    lnLambda = np.concatenate(res, axis=0)
-
-    return lnLambda
-
-def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, K, worker_model, before_doc_idx):
-    lnV = np.zeros((C.shape[0], L))
-    prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
-
-    mask = C != 0
-
-    t = 0
-    for l in range(L):
-        lnPi_terms = worker_model._read_lnPi(lnEPi, l, C[t, :] - 1, before_doc_idx, np.arange(K), nscores)
-
-        lnPi_data_terms = 0
-        if C_data is not None:
-            for model, C_data_m in enumerate(C_data):
-                for m in range(L):
-                    terms_startm = C_data_m[t, m] * worker_model._read_lnPi(lnEPi_data[model],
-                                                                l, m, before_doc_idx, 0, nscores)
-                    if C_data_m[t, m] == 0:
-                        terms_startm = 0
-
-                    lnPi_data_terms += terms_startm
-
-        likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
-
-        lnV[t, l] = lnEA[before_doc_idx, l] + likelihood_current
-
-    Cprev = np.copy(C)
-    Cprev[C == 0] = before_doc_idx
-
-    lnPi_terms = worker_model._read_lnPi(lnEPi, None, C[1:, :] - 1, Cprev[:-1, :] - 1, np.arange(K), nscores)
-    lnPi_data_terms = 0
-    if C_data is not None:
-        for model, C_data_m in enumerate(C_data):
-            for m in range(L):
-                for n in range(L):
-                    weights = (C_data_m[1:, m] * C_data_m[:-1, n])[None, :]
-                    terms_mn = weights * worker_model._read_lnPi(lnEPi_data[model], None,
-                                                                 m, n, 0, nscores)[:, :, 0]
-                    terms_mn[:, weights[0] == 0] = 0
-
-                    lnPi_data_terms += terms_mn
-
-    likelihood_current = np.sum(mask[1:, :][None, :, :] * lnPi_terms, axis=2) + lnPi_data_terms
-
-    for t in range(1, C.shape[0]):
-        for l in range(L):
-            p_current = lnV[t - 1, :] + lnEA[:L, l] + likelihood_current[l, t-1]
-            lnV[t, l] = np.max(p_current)
-            prev[t, l] = np.argmax(p_current, axis=0)
-
-    # decode
-    seq = np.zeros(C.shape[0], dtype=int)
-    pseq = np.zeros((C.shape[0], L), dtype=float)
-
-    t = C.shape[0] - 1
-
-    seq[t] = np.argmax(lnV[t, :])
-    pseq[t, :] = lnV[t, :]
-
-    for t in range(C.shape[0] - 2, -1, -1):
-        seq[t] = prev[t + 1, seq[t + 1]]
-        pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]] - lnEA[prev[t + 1, :],
-                                            np.arange(lnEA.shape[1])])[None, :] + lnEA[:lnV.shape[1]], axis=1)
-        pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
-
-    return pseq, seq
 
 # DATA MODEL -----------------------------------------------------------------------------------------------------------
 # Models the likelihood of the features given the class.
