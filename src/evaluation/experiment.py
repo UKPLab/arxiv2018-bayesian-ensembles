@@ -168,6 +168,7 @@ class Experiment(object):
         scores = np.zeros((len(nu0factor_proposals) * len(alpha0diag_propsals), len(alpha0factor_proposals) ))
 
         best_scores = np.zeros(4)
+        best_idxs = np.zeros(4)
 
         for h, nu0factor in enumerate(nu0factor_proposals):
 
@@ -194,10 +195,15 @@ class Experiment(object):
                                                          scores[(h*len(nu0factor_proposals)) + i, j]))
 
                     if scores[i, j] > best_scores[0]:
-                        best_scores[0] = scores[i, j]
+                        best_scores[0] = scores[(h*len(nu0factor_proposals)) + i, j]
                         best_scores[1] = nu0factor
                         best_scores[2] = alpha0diag
                         best_scores[3] = alpha0factor
+
+                        best_idxs[0] = scores[(h*len(nu0factor_proposals)) + i, j]
+                        best_idxs[1] = h
+                        best_idxs[2] = i
+                        best_idxs[3] = j
 
                     print('Saving scores for this setting to %s' % (outputdir + '/%s_scores.csv' % method))
                     np.savetxt(outputdir + '/%s_scores.csv' % method, scores, fmt='%s', delimiter=',',
@@ -206,7 +212,7 @@ class Experiment(object):
                     np.savetxt(outputdir + '/%s_bestscores.csv' % method, best_scores, fmt='%s', delimiter=',',
                                header=str(self.methods).strip('[]'))
 
-        return best_scores
+        return best_idxs
 
     def _run_best_worker(self, annos, gt, doc_start):
         # choose the best classifier by f1-score
