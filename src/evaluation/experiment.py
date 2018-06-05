@@ -262,10 +262,10 @@ class Experiment(object):
         return agg, probs
 
     def _run_mace(self, anno_path, tmp_path, ground_truth):
-        # devnull = open(os.devnull, 'w')
-        #subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
-        #                 tmp_path + '/mace',
-        #                 anno_path])  # , stdout = devnull, stderr = devnull)
+        devnull = open(os.devnull, 'w')
+        subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
+                        tmp_path + '/mace',
+                        anno_path])  # , stdout = devnull, stderr = devnull)
 
         result = np.genfromtxt(tmp_path + '/mace.prediction')
 
