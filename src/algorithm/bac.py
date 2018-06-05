@@ -1964,7 +1964,12 @@ class IndependentFeatures:
         # sparse matrix of one-hot encoding, nfeatures x N
         self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
 
-        self.beta0 = np.ones((len(self.feat_map), self.nclasses))
+        self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
+
+        # set this to trust the model completely
+        alpha0_data = np.ones_like(alpha0_data)
+        alpha0_data[:] = 0.001
+        alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
 
         return alpha0_data
 

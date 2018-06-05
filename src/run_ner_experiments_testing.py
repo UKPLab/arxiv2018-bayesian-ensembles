@@ -40,11 +40,11 @@ exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-exp.alpha0_diags = 0.001
-exp.alpha0_factor = 0.001
-exp.nu0_factor = 0.1
+exp.alpha0_diags = 0.8
+exp.alpha0_factor = 0.1
+exp.nu0_factor = 0.001
 
-best_bac_wm = 'bac_seq'
+best_bac_wm = 'bac_vec'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
