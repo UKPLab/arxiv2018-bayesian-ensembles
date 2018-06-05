@@ -103,10 +103,12 @@ and they appear to have used a subset of the publicly-available dataset with on 
 
 %Sentence separation -- why does it improve performance if we don't split docs into sentences?
 
-% TODO: why the discrepancy between the latest results and some previous ones, e.g. DS, BSCC-Seq-IF with 
+% The discrepancy between the latest results and some previous ones, e.g. DS, BSCC-Seq-IF with 
 % same priors, BSCC-Vec-IF for NER? For BSCC, it may be due to different conf mat for the IF data model.
-% TODO: re-run NER task 2 with BSCC-Seq.
-% TODO: run DS and MACE with pico task 1.
+% For DS, I think it was still using the priors chosen for IBCC, so results changed when nu0 changed.
+
+% TODO: re-run NER task 2 with BSCC-Seq. -- running
+% TODO: run BSCC-Seq, DS and MACE with pico task 1. -- running
 % TODO: still have an unexplained difference between HMM-crowd and BSCC-Vec. Is it the initialisation? The attempt to test the same hyperparameter values as HMM-crowd failed -- why is that? Diff may also be due to the use of confusion matrix for the data model - check that is working okay.
 
 \begin{table*}
