@@ -1969,7 +1969,12 @@ class IndependentFeatures:
         # set this to trust the model completely
         alpha0_data = np.ones_like(alpha0_data)
         alpha0_data[:] = 0.001
-        alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
+        if alpha0_data.ndim == 2:
+            alpha0_data[1, 0] = 1000
+        elif alpha0_data.ndim == 3:
+            alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
+        elif alpha0_data.ndim == 4:
+            alpha0_data[np.arange(nclasses), np.arange(nclasses), np.arange(nclasses), 0] = 1000
 
         return alpha0_data
 
