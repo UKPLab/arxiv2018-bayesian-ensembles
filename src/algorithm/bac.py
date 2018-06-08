@@ -883,9 +883,8 @@ def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worke
     if C_data is not None:
         for m in range(nscores):
             for model in range(len(C_data)):
-                lnPi_data_terms += (worker_model._read_lnPi(lnPi_data[model], None, m, before_doc_idx, 0, nscores)[:, :,
-                                    0] \
-                                    * C_data[model][0, m])[:, 0]
+                lnPi_data_terms += (worker_model._read_lnPi(lnPi_data[model], None, m, before_doc_idx, 0,
+                                                            nscores)[:, :, 0] * C_data[model][0, m])[:, 0]
 
     lnR_[0, :] = initProbs + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
     lnR_[0, :] = lnR_[0, :] - logsumexp(lnR_[0, :])
@@ -1970,6 +1969,7 @@ class IndependentFeatures:
         alpha0_data = np.ones_like(alpha0_data)
         alpha0_data[:] = 0.001
         if alpha0_data.ndim == 2:
+            alpha0_data *= (nclasses - 1)
             alpha0_data[1, 0] = 1000
         elif alpha0_data.ndim == 3:
             alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000

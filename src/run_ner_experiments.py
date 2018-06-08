@@ -11,7 +11,7 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
-regen_data = True
+regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
     load_data.load_ner_data(regen_data)
 
@@ -34,14 +34,18 @@ exp.opt_hyper = False#True
 
 best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
+best_diags = 10
+best_factor = 1
+best_nu0factor = 0.1
 
 nu_factors = [0.1, 1, 10, 100]
 diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = ['ibcc',
-                   'bac_vec_integrateBOF',
-                   'bac_ibcc_integrateBOF',
-                   'bac_seq_integrateBOF',
+methods_to_tune = [
+                   # 'ibcc',
+                   # 'bac_vec_integrateBOF',
+                   # 'bac_ibcc_integrateBOF',
+                   # 'bac_seq_integrateBOF',
                    'bac_acc_integrateBOF',
                    'bac_mace_integrateBOF'
                    ]
@@ -89,12 +93,12 @@ for m, method in enumerate(methods_to_tune):
                 )
 
     best_score = best_scores[0]
-    if 'bac_seq' in method and best_score > best_bac_wm_score:
-        best_bac_wm = 'bac_' + method.split('_')[1]
-        best_bac_wm_score = best_score
-        best_diags = exp.alpha0_diags
-        best_factor = exp.alpha0_factor
-        best_nu0factor = exp.nu0_factor
+    # if 'bac_seq' in method and best_score > best_bac_wm_score:
+    #     best_bac_wm = 'bac_' + method.split('_')[1]
+    #     best_bac_wm_score = best_score
+    #     best_diags = exp.alpha0_diags
+    #     best_factor = exp.alpha0_factor
+    #     best_nu0factor = exp.nu0_factor
 
 print('best BAC method tested here = %s' % best_bac_wm)
 
