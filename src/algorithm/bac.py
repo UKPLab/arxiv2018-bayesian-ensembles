@@ -634,7 +634,7 @@ class BAC(object):
                 for model in self.data_model:
                     if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
 
-                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, self.alpha0_data,
+                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data,
                                         model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
 
@@ -1121,7 +1121,10 @@ class AccuracyWorker():
         # Returns the initial values for alpha and lnPi
         psi_alpha_sum = psi(np.sum(alpha0, 0))
         lnPi = psi(alpha0) - psi_alpha_sum[None, :]
-        return alpha0, lnPi
+
+        # init to prior
+        alpha = np.copy(alpha0)
+        return alpha, lnPi
 
     def _calc_q_pi(alpha):
         '''
@@ -1268,7 +1271,11 @@ class MACEWorker():
         psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 0))[None, :]
 
         lnPi = psi(alpha0) - psi_alpha_sum
-        return alpha0, lnPi
+
+        # init to prior
+        alpha = np.copy(alpha0)
+
+        return alpha, lnPi
 
     def _calc_q_pi(alpha):
         '''
@@ -1493,7 +1500,10 @@ class ConfusionMatrixWorker():
         # Returns the initial values for alpha and lnPi
         psi_alpha_sum = psi(np.sum(alpha0, 1))
         lnPi = psi(alpha0) - psi_alpha_sum[:, None, :]
-        return alpha0, lnPi
+
+        # init to prior
+        alpha = np.copy(alpha0)
+        return alpha, lnPi
 
     def _calc_q_pi(alpha):
         '''
@@ -1587,7 +1597,10 @@ class VectorWorker():
     def _init_lnPi(alpha0):
         # Returns the initial values for alpha and lnPi
         lnPi = VectorWorker._calc_q_pi(alpha0)
-        return alpha0, lnPi
+
+        # init to prior
+        alpha = np.copy(alpha0)
+        return alpha, lnPi
 
     def _calc_q_pi(alpha):
         '''
@@ -1702,7 +1715,9 @@ class SequentialWorker():
         psi_alpha_sum = psi(np.sum(alpha0, 1))
         lnPi = psi(alpha0) - psi_alpha_sum[:, None, :, :]
 
-        return alpha0, lnPi
+        # init to prior
+        alpha = np.copy(alpha0)
+        return alpha, lnPi
 
     def _calc_q_pi(alpha):
         '''
@@ -1723,13 +1738,13 @@ class SequentialWorker():
 
             for l in range(dims[1]):
                 counts = ((C == l + 1) * doc_start).T.dot(Tj).reshape(-1)
-                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0)).T.dot(Tj[1:]).reshape(-1) # add counts of where
+                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0)).T.dot(Tj[1:]) # add counts of where
                 # previous tokens are missing.
 
                 alpha[j, l, before_doc_idx, :] += counts
 
                 for m in range(dims[1]):
-                    counts = ((C == l + 1)[1:, :] * (1 - doc_start[1:]) * (C == m + 1)[:-1, :]).T.dot(Tj[1:]).reshape(-1)
+                    counts = ((C == l + 1)[1:, :] * (1 - doc_start[1:]) * (C == m + 1)[:-1, :]).T.dot(Tj[1:])
                     alpha[j, l, m, :] += counts
 
         return alpha
@@ -1854,7 +1869,10 @@ class LSTM:
         else:
             self.all_sentences = self.sentences
 
-        return alpha0_data
+        alpha_data = np.copy(alpha0_data)
+        model.alpha0_data = alpha0_data
+
+        return alpha_data
 
     def fit_predict(self, Et, compute_dev_score=False):
         labels = np.argmax(Et, axis=1)
@@ -1971,12 +1989,14 @@ class IndependentFeatures:
         if alpha0_data.ndim == 2:
             alpha0_data *= (nclasses - 1)
             alpha0_data[1, 0] = 1000
-        elif alpha0_data.ndim == 3:
+        elif alpha0_data.ndim >= 3:
             alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
-        elif alpha0_data.ndim == 4:
-            alpha0_data[np.arange(nclasses), np.arange(nclasses), np.arange(nclasses), 0] = 1000
 
-        return alpha0_data
+        alpha_data = np.copy(alpha0_data)
+
+        model.alpha0_data = alpha0_data
+
+        return alpha_data
 
     def fit_predict(self, Et):
 

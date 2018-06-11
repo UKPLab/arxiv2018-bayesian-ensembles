@@ -14,7 +14,7 @@ regen_data = False
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data)
 
-exp = Experiment(None, 3, annos.shape[1], None)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 
 exp.save_results = True
 exp.opt_hyper = False #True
@@ -80,24 +80,33 @@ best_bac_wm = 'bac_seq' # choose model with best score for the different BAC wor
 # exp.alpha0_factor = best_factor
 # exp.nu0_factor = best_nu0factor
 
-exp.nu0_factor = 0.1
-exp.alpha0_diags = 0.1
-exp.alpha0_factor = 0.1
+exp.nu0_factor = .1
+exp.alpha0_diags = .1
+exp.alpha0_factor = .1
 
 # run all the methods that don't require tuning here
 exp.methods =  ['majority',
-                'mace',
-                'ds',
+                #'mace',
+                #'ds',
                 #'ibcc'
                 #'best',
                 #'worst',
                 #'HMM_crowd',
                 best_bac_wm,
-                best_bac_wm + '_integrateBOF_then_LSTM',
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
-                'HMM_crowd_then_LSTM',
+                #best_bac_wm + '_integrateBOF_then_LSTM',
+                #best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+                #best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
+                #'HMM_crowd_then_LSTM',
 ]
+
+# # debugging
+# idxs = np.argwhere(gt_task1_dev != -1)[:, 0]
+# idxs = np.concatenate((idxs, np.argwhere((gt == -1) & (gt_task1_dev == -1))[:300, 0]))  # 100 more to make sure the dataset is reasonable size
+# gt = gt_task1_dev[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# text = text[idxs]
+
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,

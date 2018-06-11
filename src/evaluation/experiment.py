@@ -12,6 +12,7 @@ from evaluation.span_level_f1 import precision, recall, f1
 logging.basicConfig(level=logging.DEBUG)
 
 import pickle
+import pandas as pd
 import datetime
 from baselines import ibcc, clustering, majority_voting
 from algorithm import bac
@@ -261,8 +262,14 @@ class Experiment(object):
 
         return agg, probs
 
-    def _run_mace(self, anno_path, tmp_path, ground_truth):
-        devnull = open(os.devnull, 'w')
+    def _run_mace(self, anno_path, tmp_path, ground_truth, annotations):
+
+        annotations = pd.DataFrame(annotations)
+        annotations.replace(-1, np.nan)
+        annotations.to_csv(anno_path, sep=',', header=False, index=False)
+
+        #np.savetxt(anno_path, annotations, delimiter=',')
+
         subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
                         tmp_path + '/mace',
                         anno_path])  # , stdout = devnull, stderr = devnull)
@@ -626,9 +633,7 @@ class Experiment(object):
                     tmp_path = outputdir + '/'
                     anno_path =  tmp_path + 'annos_tmp_%s' % timestamp
 
-                    np.savetxt(anno_path, annotations, delimiter=',')
-
-                    agg, probs = self._run_mace(anno_path, tmp_path, ground_truth)
+                    agg, probs = self._run_mace(anno_path, tmp_path, ground_truth, annotations)
 
                     os.remove(anno_path) # clean up tmp file
 

@@ -396,6 +396,8 @@ def load_biomedical_data(regen_data_files):
     # # devidxs = np.ones(len(gt), dtype=bool)
     # # devidxs[testidxs] = False
     #
+
+    # The first half of the labelled data is used as dev, second half as test
     gt_test = np.copy(gt)
     gt_test[ntestidxs:] = -1
 

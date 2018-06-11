@@ -36,20 +36,26 @@ gt_task1_val = gt_task1_val[idxs]
 
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=1)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-exp.alpha0_diags = 0.8
-exp.alpha0_factor = 0.1
-exp.nu0_factor = 0.001
+# exp.alpha0_diags = 0.8
+# exp.alpha0_factor = 0.1
+# exp.nu0_factor = 0.001
 
-best_bac_wm = 'bac_vec'
+exp.alpha0_diags = 10
+exp.alpha0_factor = 1
+exp.nu0_factor = 0.1
+
+best_bac_wm = 'bac_seq'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-               'ds',
+                'majority',
+               #'ds',
                 #'gt_then_LSTM',
+                best_bac_wm
                 # best_bac_wm + '_integrateBOF',
                 # best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',

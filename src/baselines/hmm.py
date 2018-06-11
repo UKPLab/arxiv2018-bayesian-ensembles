@@ -1241,7 +1241,10 @@ def longest_x(a, x=0):
 
 def eval_pico_new(gold, res, l=0, r=950, dic_res = False):
     """
-    eval PICO using three metrics
+    eval PICO using three metrics.
+
+    ***This seems to match with their results reported for the PICO dataset.***
+
     :param gold:
     :param res:
     :param l:

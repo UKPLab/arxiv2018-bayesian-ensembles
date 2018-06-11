@@ -22,18 +22,33 @@ def get_fraction_matches(annos, annos_to_match_with, doc_starts, strict):
     span_count = 0
     total_matches = 0
 
+    def endspan(start, end, span_count, nmatches, total_matches, prevtype):
+        length = end - start
+        span_count += 1
+        if strict:
+
+            # check that the anno_to_match also ended at the same place
+            if end < len(annos_to_match_with):
+
+                matching = nmatches == length
+
+                if annos_to_match_with[end] in I_labels and np.argwhere(I_labels == annos_to_match_with[i])[0][0] == prevtype:
+                   # the span in annos_to_match_with has gone too far
+                   matching = False
+            else:
+                matching = nmatches == length
+
+            total_matches += matching
+        else:
+            total_matches += nmatches / float(length)
+        return span_count, total_matches
+
     for i, label in enumerate(annos):
 
         if label == 1 and prev != 1:
             # end of previous label, if there was one
 
-            end = i
-            length = end - start
-            span_count += 1
-            if strict:
-                total_matches += nmatches == length
-            else:
-                total_matches += nmatches / float(length)
+            span_count, total_matches = endspan(start, i, span_count, nmatches, total_matches, prevtype)
 
             prev = 1
             prevtype = -1
@@ -56,13 +71,7 @@ def get_fraction_matches(annos, annos_to_match_with, doc_starts, strict):
         elif labtype != prevtype or label in B_labels:
             # There was an old span. We will start a new one because the type has changed or there is a B label.
             # Count up for the old span
-            end = i
-            length = end - start
-            span_count += 1
-            if strict:
-                total_matches += nmatches == length
-            else:
-                total_matches += nmatches / float(length)
+            span_count, total_matches = endspan(start, i, span_count, nmatches, total_matches, prevtype)
 
             # new span
             start = i
@@ -77,7 +86,12 @@ def get_fraction_matches(annos, annos_to_match_with, doc_starts, strict):
         else:
             target_labtype = -1
 
-        nmatches += labtype == target_labtype
+        if strict: # check that the start and end are the same location
+            if label in B_labels and annos_to_match_with[i] in B_labels or \
+                label in I_labels and annos_to_match_with[i] in I_labels:
+                nmatches += labtype == target_labtype
+        else:
+            nmatches += labtype == target_labtype
 
         prev = label
         prevtype = labtype
@@ -85,13 +99,7 @@ def get_fraction_matches(annos, annos_to_match_with, doc_starts, strict):
     # finish any span that ran until the end of the file
     if prev != 1:
         # end of span
-        end = i + 1
-        length = end - start
-        span_count += 1
-        if strict:
-            total_matches += nmatches == length
-        else:
-            total_matches += nmatches / float(length)
+        span_count, total_matches = endspan(start, i+1, span_count, nmatches, total_matches, prevtype)
 
     if span_count == 0:
         frac_matches = 0
