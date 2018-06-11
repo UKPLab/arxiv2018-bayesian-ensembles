@@ -635,14 +635,14 @@ class BAC(object):
                     if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
 
                         model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data,
-                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                                        doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
 
                 if self.verbose:
                     print("BAC iteration %i: updated model for feature-based predictor" % self.iter)
 
                 # update E_lnpi
-                self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
+                self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, doc_start,
                                                            self.nscores, self.before_doc_idx)
                 self.lnPi = self.worker_model._calc_q_pi(self.alpha)
                 if self.verbose:
@@ -1134,7 +1134,7 @@ class AccuracyWorker():
         q_pi = psi(alpha) - psi_alpha_sum
         return q_pi
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -1155,7 +1155,7 @@ class AccuracyWorker():
 
         return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -1294,7 +1294,7 @@ class MACEWorker():
 
         return ElnPi
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -1356,7 +1356,7 @@ class MACEWorker():
 
         return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -1513,7 +1513,7 @@ class ConfusionMatrixWorker():
         q_pi = psi(alpha) - psi_alpha_sum
         return q_pi
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -1529,7 +1529,7 @@ class ConfusionMatrixWorker():
 
         return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -1623,7 +1623,7 @@ class VectorWorker():
 
         return q_pi
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -1639,7 +1639,7 @@ class VectorWorker():
 
         return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -1727,11 +1727,12 @@ class SequentialWorker():
         q_pi = psi(alpha) - psi_alpha_sum
         return q_pi
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
         dims = alpha0.shape
+        alpha = alpha0.copy()
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
@@ -1749,7 +1750,7 @@ class SequentialWorker():
 
         return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(E_t, C, alpha0, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''

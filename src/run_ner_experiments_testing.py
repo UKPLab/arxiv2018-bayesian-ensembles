@@ -19,15 +19,15 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 # s = 1000
 # idxs = np.argwhere(gt!=-1)[:s, 0]
 
-idxs = (gt != -1).flatten()
-
-gt = gt[idxs]
-annos = annos[idxs]
-doc_start = doc_start[idxs]
-print('No. documents:')
-print(np.sum(doc_start))
-text = text[idxs]
-gt_task1_val = gt_task1_val[idxs]
+# idxs = (gt != -1).flatten()
+#
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# print('No. documents:')
+# print(np.sum(doc_start))
+# text = text[idxs]
+# gt_task1_val = gt_task1_val[idxs]
 
 # ntest = 5000
 # doc_start_nocrowd = doc_start_nocrowd[:ntest]
@@ -36,7 +36,7 @@ gt_task1_val = gt_task1_val[idxs]
 
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=1)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 
