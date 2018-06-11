@@ -146,11 +146,11 @@ if __name__ == '__main__':
         agg = agg.iloc[:gold.shape[0]]
 
     print('Predictions:')
-    print(agg)
+    print(agg.shape)
     print('Gold:')
-    print(gold)
+    print(gold.shape)
     print('doc_starts:')
-    print(doc_starts)
+    print(doc_starts.shape)
 
     if agg.ndim == 1:
         agg = agg[:, None]
@@ -160,7 +160,10 @@ if __name__ == '__main__':
         prec = get_fraction_matches(annos=agg[col].values, annos_to_match_with=gold, strict=args.strict=='strict', doc_starts=doc_starts)
         rec = get_fraction_matches(annos=gold, annos_to_match_with=agg[col].values, strict=args.strict=='strict', doc_starts=doc_starts)
 
-        f1 = 2 * prec * rec / (prec + rec)
+        if prec + rec > 0:
+            f1 = 2 * prec * rec / (prec + rec)
+        else:
+            f1 = 0  
 
         print('Results for %s' % col)
         print('precision = %f' % prec)

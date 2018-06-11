@@ -55,8 +55,8 @@ exp.methods =  [
                 'majority',
                #'ds',
                 #'gt_then_LSTM',
-                best_bac_wm
-                # best_bac_wm + '_integrateBOF',
+                #best_bac_wm
+                best_bac_wm + '_integrateBOF',
                 # best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 #'bac_vec_integrateBOF'
