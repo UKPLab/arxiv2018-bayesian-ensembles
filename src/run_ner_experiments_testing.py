@@ -40,24 +40,24 @@ exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 
+# exp.nu0_factor = 0.001
 # exp.alpha0_diags = 0.8
 # exp.alpha0_factor = 0.1
-# exp.nu0_factor = 0.001
 
+exp.nu0_factor = 0.1
 exp.alpha0_diags = 10
 exp.alpha0_factor = 1
-exp.nu0_factor = 0.1
 
 best_bac_wm = 'bac_seq'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
                 'majority',
-               #'ds',
+                'ds',
                 #'gt_then_LSTM',
                 #best_bac_wm
-                best_bac_wm + '_integrateBOF',
-                # best_bac_wm + '_integrateBOF_then_LSTM',
+                #best_bac_wm + '_integrateBOF',
+                best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 #'bac_vec_integrateBOF'
 ]

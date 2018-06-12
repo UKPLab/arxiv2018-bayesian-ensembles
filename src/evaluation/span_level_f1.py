@@ -163,7 +163,7 @@ if __name__ == '__main__':
         if prec + rec > 0:
             f1 = 2 * prec * rec / (prec + rec)
         else:
-            f1 = 0  
+            f1 = 0
 
         print('Results for %s' % col)
         print('precision = %f' % prec)
