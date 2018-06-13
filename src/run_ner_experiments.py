@@ -27,7 +27,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 # gt_task1_val = gt_task1_val[idxs]
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1)
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=100)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -43,10 +43,10 @@ diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [
                    'ibcc',
-                   'bac_vec_integrateBOF',
-                   'bac_ibcc_integrateBOF',
+                   #'bac_vec_integrateBOF',
+                   # 'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',
-                   'bac_acc_integrateBOF',
+                   # 'bac_acc_integrateBOF',
                    'bac_mace_integrateBOF'
                    ]
 
@@ -116,12 +116,12 @@ exp.methods =  [
                 'mace',
                 'ds',
                 #'best', 'worst',
-                #'HMM_crowd',
-                best_bac_wm,
+                'HMM_crowd',
+                # best_bac_wm,
                 # best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
-                'HMM_crowd_then_LSTM',
+                # 'HMM_crowd_then_LSTM',
 ]
 
 # should run both task 1 and 2.
