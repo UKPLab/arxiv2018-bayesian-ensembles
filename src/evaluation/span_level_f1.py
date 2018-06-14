@@ -125,6 +125,51 @@ def f1(predictions, gold, strict, doc_starts):
     return 2 * prec * rec / (prec + rec)
 
 
+def get_spans(labels, doc_starts):
+    B_labels = [2, 4, 6, 8]
+    I_labels = [0, 3, 5, 7]
+
+    span_starts = []
+    span_ends = []
+    span_types = []
+
+    for i, tok in enumerate(labels):
+
+        if (doc_starts[i] or tok not in I_labels) and len(span_starts) > len(span_ends):
+            span_ends.append(i)
+
+        if tok in B_labels:
+            span_starts.append(i)
+            span_types.append(np.argwhere(B_labels == tok)[0][0])
+
+    if len(span_ends) < len(span_starts):
+        span_ends.append(i + 1)
+
+    spans = list(zip(span_starts, span_ends, span_types))
+
+    return spans
+
+def strict_span_metrics_2(predictions, gold, doc_starts):
+    # retrieve spans (Start and end points)
+    pspans = get_spans(predictions, doc_starts)
+    gspans = get_spans(gold, doc_starts)
+
+    # TP
+    tp = np.sum([1 if span in gspans else 0 for span in pspans])
+
+    # FP
+    fp = len(pspans) - tp
+
+    # FN
+    fn = len(gspans) - tp
+
+    prec = tp / float(tp + fp)
+    rec = tp / float(tp + fn)
+
+    f1 = 2 * prec * rec / (prec + rec)
+
+    return prec, rec, f1
+
 if __name__ == '__main__':
 
     parser = ArgumentParser()

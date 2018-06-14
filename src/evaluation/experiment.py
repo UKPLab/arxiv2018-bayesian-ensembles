@@ -7,7 +7,7 @@ Created on Nov 1, 2016
 import matplotlib.pyplot as plt
 import logging
 
-from evaluation.span_level_f1 import precision, recall, f1
+from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -898,6 +898,17 @@ class Experiment(object):
         result[6] = precision(agg, gt, True, doc_starts)
         result[7] = recall(agg, gt, True, doc_starts)
         result[8] = f1(agg, gt, True, doc_starts)
+
+        print('strict metrics 1:')
+        print(result[6])
+        print(result[7])
+        print(result[8])
+
+        print('strict metrics 2:')
+        p, r, f = strict_span_metrics_2(agg, gt, doc_starts)
+        print(p)
+        print(r)
+        print(f)
 
         # token-level metrics -- relaxed
         result[9] = precision(agg, gt, False, doc_starts)
