@@ -718,7 +718,7 @@ def load_ner_data(regen_data_files):
     task2_val_path = '../../data/bayesian_annotator_combination/data/English NER/eng.testa'
     task2_test_path = '../../data/bayesian_annotator_combination/data/English NER/eng.testa'
 
-    if regen_data_files:
+    if regen_data_files or not os.path.isfile(savepath + '/task1_val_annos.csv'):
         # Steps to load data (all steps need to map annotations to consecutive integer labels).
         # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
 
