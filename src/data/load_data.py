@@ -863,8 +863,9 @@ def load_ner_data(regen_data_files):
     gt_val_task1 = pd.concat((gt_blanks, gt_val_task1_orig), axis=0).values
 
     print('not concatenating ground truth for task1 val')
-    # gt_v = pd.DataFrame(np.zeros(annos_v.shape[0]) - 1) # gt_val_task1_orig#
-    gt_v = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None)
+    gt_v = pd.DataFrame(np.zeros(annos_v.shape[0]) - 1) # gt_val_task1_orig#
+    #gt = pd.DataFrame(np.zeros(gt.shape[0]) - 1)  # gt_val_task1_orig#
+    #gt_v = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None)
     gt = pd.concat((gt, gt_v), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
 

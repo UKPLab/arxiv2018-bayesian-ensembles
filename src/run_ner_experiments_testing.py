@@ -9,6 +9,12 @@ import numpy as np
 # import pandas as pd
 # from data.load_data import _map_ner_str_to_labels
 
+# TODO: possible reasons for discrepancies in MV results
+# 1. bad f1 calculations -- does it include bad spans or not? - This is fine.
+# 2. bad data -- should we skip or correct the broken tokens?
+# 3. using different data -- did they actually use the validation set and test set differently or test on both? -- testing on both is close to their values. Testing on val is not.
+# 4. compared to rodrigues -- perhaps different tie-breaking in MV
+
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
 regen_data = False

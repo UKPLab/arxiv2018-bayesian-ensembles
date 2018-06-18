@@ -132,15 +132,39 @@ def get_spans(labels, doc_starts):
     span_starts = []
     span_ends = []
     span_types = []
+    prevtype = -1
 
     for i, tok in enumerate(labels):
 
-        if (doc_starts[i] or tok not in I_labels) and len(span_starts) > len(span_ends):
+        if tok in B_labels:
+            labeltype = np.argwhere(B_labels == tok)[0][0]
+        elif tok in I_labels:
+            labeltype = np.argwhere(I_labels == tok)[0][0]
+        else:
+            labeltype = -1
+
+        if (doc_starts[i] or tok in B_labels or labeltype == -1 or labeltype != prevtype) and len(span_starts) > len(span_ends):
             span_ends.append(i)
 
         if tok in B_labels:
             span_starts.append(i)
-            span_types.append(np.argwhere(B_labels == tok)[0][0])
+            span_types.append(labeltype)
+
+        # # bad spans start with an I -- include them anyway?
+        # ner metrics with this switched on:
+        # 0.7238678090575276
+        # 0.5469848316685164
+        # 0.6231166368138237
+        # Switched off:
+        # 0.7494293685011413
+        # 0.5492565055762082
+        # 0.6339161214201438
+        # elif tok in I_labels and len(span_starts) == len(span_ends):
+        #     # we have an I label but no open span. Assume this is the start
+        #     span_starts.append(i)
+        #     span_types.append(labeltype)
+
+        prevtype = labeltype
 
     if len(span_ends) < len(span_starts):
         span_ends.append(i + 1)
@@ -162,6 +186,21 @@ def strict_span_metrics_2(predictions, gold, doc_starts):
 
     # FN
     fn = len(gspans) - tp
+    #
+    # tp = 0
+    # fp = 0
+    # fn = 0
+    #
+    # for gspan in gspans:
+    #     if gspan in pspans:
+    #         tp += 1
+    #     else:
+    #         fn += 1
+    #
+    # for pspan in pspans:
+    #     if pspan not in gspans:
+    #         fp += 1
+
 
     prec = tp / float(tp + fp)
     rec = tp / float(tp + fn)
