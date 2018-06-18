@@ -23,15 +23,18 @@ exp.alpha0_diags = 100
 exp.alpha0_factor = 9
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
+best_nu0factor = 0.1
+best_diags = 100
+best_factor = 1.0
 
 nu_factors = [0.1, 1, 10, 100]
 diags = [0.1, 1, 10, 100] # 10, 50,  [1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10, 100] #9, [36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = ['ibcc',
-                   'bac_vec_integrateBOF',
-                   'bac_seq_integrateBOF',
-                   'bac_ibcc_integrateBOF',
-                   'bac_acc_integrateBOF',
+methods_to_tune = [#'ibcc',
+                   #'bac_vec_integrateBOF',
+                   #'bac_seq_integrateBOF',
+                   #'bac_ibcc_integrateBOF',
+                   #'bac_acc_integrateBOF',
                    'bac_mace_integrateBOF'
                    ]
 
@@ -67,12 +70,12 @@ for m, method in enumerate(methods_to_tune):
     )
 
     best_score = np.max(best_scores)
-    if 'bac' in method and best_score > best_bac_wm_score:
-        best_bac_wm = method
-        best_bac_wm_score = best_score
-        best_diags = exp.alpha0_diags
-        best_factor = exp.alpha0_factor
-        best_nu0factor = exp.nu0_factor
+    # if 'bac' in method and best_score > best_bac_wm_score:
+    #     best_bac_wm = method
+    #     best_bac_wm_score = best_score
+    #     best_diags = exp.alpha0_diags
+    #     best_factor = exp.alpha0_factor
+    #     best_nu0factor = exp.nu0_factor
 
 print('best BAC method = %s' % best_bac_wm)
 
@@ -95,7 +98,7 @@ exp.methods =  ['majority',
                 best_bac_wm,
                 #best_bac_wm + '_integrateBOF_then_LSTM',
                 #best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                #best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
+                best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
                 'HMM_crowd_then_LSTM',
 ]
 
