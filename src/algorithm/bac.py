@@ -182,9 +182,9 @@ class BAC(object):
                 self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
-            disallowed_count = self.nu0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-            if self.nu0.ndim == 2:
+            if self.nu0.ndim >= 2:
+                disallowed_count = self.nu0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
+                self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
                 self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             for other_restricted_label in restricted_labels:
@@ -202,9 +202,9 @@ class BAC(object):
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
 
-                disallowed_count = self.nu0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                self.nu0[other_restricted_label, other_restricted_label] += disallowed_count
-                if self.nu0.ndim == 2:
+                if self.nu0.ndim >= 2:
+                    disallowed_count = self.nu0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
+                    self.nu0[other_restricted_label, other_restricted_label] += disallowed_count
                     self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
@@ -223,9 +223,9 @@ class BAC(object):
                 self.alpha0[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
 
-                disallowed_count = self.nu0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                self.nu0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
-                if self.nu0.ndim == 2:
+                if self.nu0.ndim >= 2:
+                    disallowed_count = self.nu0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
+                    self.nu0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
                     self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:

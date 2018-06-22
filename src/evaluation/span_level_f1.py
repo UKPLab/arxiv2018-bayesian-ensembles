@@ -193,7 +193,10 @@ def strict_span_metrics_2(predictions, gold, doc_starts):
         prec = tp / float(tp + fp)
     rec = tp / float(tp + fn)
 
-    f1 = 2 * prec * rec / (prec + rec)
+    if prec + rec == 0:
+        f1 = 0
+    else:
+        f1 = 2 * prec * rec / (prec + rec)
 
     return prec, rec, f1
 

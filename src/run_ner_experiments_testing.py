@@ -42,7 +42,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=5)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -53,22 +53,22 @@ exp.opt_hyper = False#True
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 10
 
-# exp.alpha0_factor = 1
-# best_bac_wm = 'bac_seq'
+exp.alpha0_factor = 1
+best_bac_wm = 'bac_seq'
 
-exp.alpha0_factor = 0.1
-best_bac_wm = 'bac_vec'
+# exp.alpha0_factor = 0.1
+# best_bac_wm = 'bac_vec'
 
 # exp.alpha0_factor = 0.1
 # best_bac_wm = 'bac_mace'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                'majority',
+                #'majority',
                 # 'ds',
                 #'gt_then_LSTM',
                 #best_bac_wm
-                # best_bac_wm + '_integrateBOF',
+                #best_bac_wm + '_integrateBOF',
                 #best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 best_bac_wm + '_integrateBOF_noHMM',
