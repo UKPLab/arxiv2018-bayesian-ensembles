@@ -64,13 +64,14 @@ best_bac_wm = 'bac_vec'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                # 'majority',
+                'majority',
                 # 'ds',
                 #'gt_then_LSTM',
                 #best_bac_wm
-                best_bac_wm + '_integrateBOF',
+                # best_bac_wm + '_integrateBOF',
                 #best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+                best_bac_wm + '_integrateBOF_noHMM',
 ]
 
 # should run both task 1 and 2.

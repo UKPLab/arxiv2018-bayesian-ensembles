@@ -186,23 +186,11 @@ def strict_span_metrics_2(predictions, gold, doc_starts):
 
     # FN
     fn = len(gspans) - tp
-    #
-    # tp = 0
-    # fp = 0
-    # fn = 0
-    #
-    # for gspan in gspans:
-    #     if gspan in pspans:
-    #         tp += 1
-    #     else:
-    #         fn += 1
-    #
-    # for pspan in pspans:
-    #     if pspan not in gspans:
-    #         fp += 1
 
-
-    prec = tp / float(tp + fp)
+    if tp + fp == 0:
+        prec = 0
+    else:
+        prec = tp / float(tp + fp)
     rec = tp / float(tp + fn)
 
     f1 = 2 * prec * rec / (prec + rec)
