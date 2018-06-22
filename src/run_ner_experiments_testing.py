@@ -56,11 +56,11 @@ exp.alpha0_diags = 10
 # exp.alpha0_factor = 1
 # best_bac_wm = 'bac_seq'
 
-# exp.alpha0_factor = 0.1
-# best_bac_wm = 'bac_vec'
-
 exp.alpha0_factor = 0.1
-best_bac_wm = 'bac_mace'
+best_bac_wm = 'bac_vec'
+
+# exp.alpha0_factor = 0.1
+# best_bac_wm = 'bac_mace'
 
 # run all the methods that don't require tuning here
 exp.methods =  [

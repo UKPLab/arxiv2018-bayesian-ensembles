@@ -1689,14 +1689,20 @@ class VectorWorker():
         return alpha0, alpha0_data
 
     def _calc_EPi(alpha):
-        EPi = alpha / np.sum(alpha, axis=1)[:, None, :]
-        EPi_incorrect = (np.sum(alpha, axis=1) - alpha[np.arange(alpha.shape[0]), np.arange(alpha.shape[0]), :])\
-                        / np.sum(alpha, axis=1)
+
+        EPi = np.zeros_like(alpha)
+
         for j in range(alpha.shape[0]):
+
+            EPi[j, j, :] = alpha[j, j, :] / np.sum(alpha[j, :, :], axis=0)
+
+            EPi_incorrect_j = (np.sum(alpha[j, :, :], axis=0) - alpha[j, j, :]) / np.sum(alpha[j, :, :], axis=0)
+            EPi_incorrect_j /= float(alpha.shape[1] - 1)
+
             for l in range(alpha.shape[1]):
                 if j == l:
                     continue
-                EPi[j, l, :] = EPi_incorrect[j, :]
+                EPi[j, l, :] = EPi_incorrect_j
 
         return EPi
 
