@@ -90,16 +90,13 @@ exp.nu0_factor = best_nu0factor
 # run all the methods that don't require tuning here
 exp.methods =  ['majority',
                 'mace',
-                #'ds',
-                #'ibcc'
+                'ds',
                 #'best',
                 #'worst',
-                #'HMM_crowd',
                 best_bac_wm,
                 best_bac_wm + '_integrateBOF_then_LSTM',
                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 #best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
-                #'HMM_crowd_then_LSTM',
 ]
 
 # # debugging
@@ -111,6 +108,27 @@ exp.methods =  ['majority',
 # text = text[idxs]
 
 
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(annos, gt, doc_start, output_dir, text,
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+                )
+
+# reset to free memory? ------------------------------------------------------------------------------------------------
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+
+exp.save_results = True
+exp.opt_hyper = False
+
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+                'HMM_crowd',
+                'HMM_crowd_then_LSTM',
+]
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,
                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,

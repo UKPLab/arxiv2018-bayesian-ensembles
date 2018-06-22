@@ -889,28 +889,19 @@ class Experiment(object):
 
         result = -np.ones(len(self.SCORE_NAMES)-3)
 
+        # token-level metrics
         result[0] = skm.accuracy_score(gt, agg)
         result[1] = skm.precision_score(gt, agg, average='macro')
         result[2] = skm.recall_score(gt, agg, average='macro')
         result[3] = skm.f1_score(gt, agg, average='macro')
 
-        # token-level metrics - strict
-        result[6] = precision(agg, gt, True, doc_starts)
-        result[7] = recall(agg, gt, True, doc_starts)
-        result[8] = f1(agg, gt, True, doc_starts)
-
-        print('strict metrics 1:')
-        print(result[6])
-        print(result[7])
-        print(result[8])
-
-        print('strict metrics 2:')
+        # span-level metrics - strict
         p, r, f = strict_span_metrics_2(agg, gt, doc_starts)
-        print(p)
-        print(r)
-        print(f)
+        result[6] = p #precision(agg, gt, True, doc_starts)
+        result[7] = r #recall(agg, gt, True, doc_starts)
+        result[8] = f #f1(agg, gt, True, doc_starts)
 
-        # token-level metrics -- relaxed
+        # span-level metrics -- relaxed
         result[9] = precision(agg, gt, False, doc_starts)
         result[10] = recall(agg, gt, False, doc_starts)
         result[11] = f1(agg, gt, False, doc_starts)
