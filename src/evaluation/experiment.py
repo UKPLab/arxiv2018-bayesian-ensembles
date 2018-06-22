@@ -4,7 +4,7 @@ Created on Nov 1, 2016
 @author: Melvin Laux
 '''
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import logging
 
 from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
@@ -1145,68 +1145,67 @@ class Experiment(object):
             return
         else:
             return self.run_exp()
-        
-        
-    def make_plot(self, x_vals, y_vals, x_ticks_labels, ylabel):
-        
-        styles = ['-', '--', '-.', ':']
-        markers = ['o', 'v', 's', 'p', '*']
-        
-        for j in range(len(self.methods)):
-            plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=self.methods[j], ls=styles[j%4], marker=markers[j%5])
-                  
-        plt.legend(loc='best')
-        
-        plt.title('parameter influence')
-        plt.ylabel(ylabel)
-        plt.xlabel(self.PARAM_NAMES[self.param_idx])
-        plt.xticks(x_vals, x_ticks_labels)
-        plt.grid(True)
-        plt.grid(True, which='Minor', axis='y')
-        
-        if np.min(y_vals) < 0:
-            plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
-        else:
-            plt.ylim([0, np.max([1, np.max(y_vals)])])
-    
-    
-    def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/', score_names=None):
-        
-        if score_names is None: 
-            score_names = self.SCORE_NAMES
-        
-        # create output directory if necessary
-        if save_plot and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-            
-        # initialise values for x axis
-        if (self.param_values.ndim > 1):
-            x_vals = self.param_values[:, 0]
-        else:
-            x_vals = self.param_values
-            
-        # initialise x-tick labels 
-        x_ticks_labels = list(map(str, self.param_values))
-            
-        for i in range(len(score_names)):  
-            self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
-        
-            if save_plot:
-                print('Saving plot...')
-                plt.savefig(output_dir + 'plot_' + score_names[i] + '.png') 
-                plt.clf()
-        
-            if show_plot:
-                plt.show()
-                
-            if i == 5:
-                self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
-                plt.ylim([0,1])
-                
-                if save_plot:
-                    print('Saving plot...')
-                    plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.png') 
-                    plt.clf()
-        
-                if show_plot:
-                    plt.show()
+
+    # def make_plot(self, x_vals, y_vals, x_ticks_labels, ylabel):
+    #
+    #     styles = ['-', '--', '-.', ':']
+    #     markers = ['o', 'v', 's', 'p', '*']
+    #
+    #     for j in range(len(self.methods)):
+    #         plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=self.methods[j], ls=styles[j%4], marker=markers[j%5])
+    #
+    #     plt.legend(loc='best')
+    #
+    #     plt.title('parameter influence')
+    #     plt.ylabel(ylabel)
+    #     plt.xlabel(self.PARAM_NAMES[self.param_idx])
+    #     plt.xticks(x_vals, x_ticks_labels)
+    #     plt.grid(True)
+    #     plt.grid(True, which='Minor', axis='y')
+    #
+    #     if np.min(y_vals) < 0:
+    #         plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
+    #     else:
+    #         plt.ylim([0, np.max([1, np.max(y_vals)])])
+    #
+    #
+    # def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/', score_names=None):
+    #
+    #     if score_names is None:
+    #         score_names = self.SCORE_NAMES
+    #
+    #     # create output directory if necessary
+    #     if save_plot and not os.path.exists(output_dir):
+    #         os.makedirs(output_dir)
+    #
+    #     # initialise values for x axis
+    #     if (self.param_values.ndim > 1):
+    #         x_vals = self.param_values[:, 0]
+    #     else:
+    #         x_vals = self.param_values
+    #
+    #     # initialise x-tick labels
+    #     x_ticks_labels = list(map(str, self.param_values))
+    #
+    #     for i in range(len(score_names)):
+    #         self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
+    #
+    #         if save_plot:
+    #             print('Saving plot...')
+    #             plt.savefig(output_dir + 'plot_' + score_names[i] + '.png')
+    #             plt.clf()
+    #
+    #         if show_plot:
+    #             plt.show()
+    #
+    #         if i == 5:
+    #             self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
+    #             plt.ylim([0,1])
+    #
+    #             if save_plot:
+    #                 print('Saving plot...')
+    #                 plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.png')
+    #                 plt.clf()
+    #
+    #             if show_plot:
+    #                 plt.show()
