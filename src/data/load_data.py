@@ -467,7 +467,8 @@ def _map_ner_str_to_labels(arr):
     return arr_ints
 
 
-def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_tokens=None):
+def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_tokens=None, gold_sen_start=None,
+                                skip_imperfect_matches=False):
     worker_data = None
 
     gold_to_keep = {}
@@ -494,27 +495,25 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
         new_data = new_data[doc_content]
         new_data['doc_start'].iat[0] = 1
 
+        annos_to_keep = np.ones(new_data.shape[0], dtype=bool)
+
         for t, tok in enumerate(new_data['text']):
 
             if len(tok.split('/')) > 1:
                 tok = tok.split('/')[0]
                 new_data['text'].iat[t] = tok
 
-            # if (tok == 'B-MISC' or tok == 'B-LOC' or tok == 'B-PER' or tok == 'B-ORG' \
-            #     or tok == 'I-LOC' or tok == 'I-MISC' or tok == 'I-PER' or tok == 'I-ORG') and \
-            #     len(new_data[worker_str].iat[t]) == 0:
-            #
-            #     # there was a misalignment because the text token was equal to the separator!
-            #     new_data[worker_str].iat[t] = new_data['text'].iat[t]
-            #     new_data['text'].iat[t] = ''
+            if len(tok) == 0:
+                annos_to_keep[t] = False
 
-        doc_start = []
 
         # compare the tokens in the worker annotations to the gold labels. They are misaligned in the dataset. We will
         # skip labels in the worker annotations that are assigned to only a part of a token in the gold dataset.
         char_counter = 0
-        annos_to_keep = np.ones(new_data.shape[0], dtype=bool)
         gold_tok_idx = 0
+
+        skip_sentence = False
+        sentence_start = 0
 
         if gold_char_idxs is not None:
 
@@ -522,45 +521,62 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
             gold_chars = np.array(gold_char_idxs[doc_str])
 
+
+            last_accepted_tok = ''
+            last_accepted_idx = -1
+
             for t, tok in enumerate(new_data['text']):
 
+                if skip_imperfect_matches and skip_sentence:
+                    new_data[worker_str].iloc[t] = -1
+
+                    if new_data['doc_start'].iat[t]:
+                        skip_sentence = False
+
+                if new_data['doc_start'].iat[t]:
+                    sentence_start = t
+
                 gold_char_idx = gold_chars[gold_tok_idx]
-                #print('Token char idxs -- gold = %s, worker = %s, token = %s' % (gold_char_idx, char_counter, tok))
                 gold_tok = gold_tokens[doc_str][gold_tok_idx]
 
+                #print('tok = %s, gold_tok = %s' % (tok, gold_tok))
+
+                if not annos_to_keep[t]:
+                    continue # already marked as skippable
+
                 if char_counter < gold_char_idx and \
-                        (new_data['text'].iat[t-1] + tok) in gold_tokens[doc_str][gold_tok_idx-1]:
+                        (last_accepted_tok + tok) in gold_tokens[doc_str][gold_tok_idx-1]:
                     print('Correcting misaligned annotations (split word in worker data): %i, %s' % (t, tok))
 
-                    annos_to_keep[t-1] = False  # skip the previous ones until the end
+                    skip_sentence = True
+
+                    last_accepted_tok += tok
+
+                    annos_to_keep[last_accepted_idx] = False  # skip the previous ones until the end
 
                     # where we remove a line, assume that the last annotation in the removed line really belongs to the
                     # line before...
                     # new_data[worker_str].iat[t - 1] = new_data[worker_str].iat[t]
+
                     # assume that the first annotation was actually correct
-                    new_data[worker_str].iat[t] = new_data[worker_str].iat[t - 1]
+                    new_data[worker_str].iat[t] = new_data[worker_str].iat[last_accepted_idx]
 
-                elif (char_counter < gold_char_idx) or \
-                        tok == 'B-MISC' or tok == 'B-LOC' or tok == 'B-PER' or tok == 'B-ORG' \
-                        or tok == 'I-LOC' or tok == 'I-MISC' or tok == 'I-PER' or tok == 'I-ORG' \
-                        or tok not in gold_tok or (tok == '' and gold_tok != ''):
+                    last_accepted_idx = t
 
+                    char_counter += len(tok)
+
+                elif tok not in gold_tok or (tok == '' and gold_tok != ''):
                     print('Correcting misaligned annotations (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
+
+                    skip_sentence = True
 
                     annos_to_keep[t] = False # skip the previous ones until the end
 
-                    char_counter -= len(tok) # remove the skipped token
-
-                    # where we remove a line, assume that the last annotation in the removed line really belongs to the
-                    # line before...
-                    # new_data[worker_str].iat[t - 1] = new_data[worker_str].iat[t]
-                    # take the previous label
-                    # new_data[worker_str].iat[t] = new_data[worker_str].iat[t - 1]
-
-                    # if new_data[worker_str].iloc[t-1] == 'O' and new_data[worker_str].iloc[t] != 'O':
-                    #     new_data[worker_str].iloc[t-1] = new_data[worker_str].iloc[t]
-                else:
+                elif tok == gold_tok[:len(tok)]: # needs to match the first characters in the string, not just be there somewhere
                     gold_tok_idx += 1
+
+                    if tok != gold_tok:
+                        skip_sentence = True
 
                     while char_counter > gold_char_idx:
                         print('error in text alignment between worker and gold!')
@@ -575,10 +591,21 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                         gold_char_idx = gold_chars[gold_tok_idx]
 
-                char_counter += len(tok)
+                    last_accepted_tok = tok
+                    last_accepted_idx = t
+
+                    char_counter += len(tok)
+                else:
+                    skip_sentence = True
+
+                    annos_to_keep[t] = False
 
             gold_char_idxs[doc_str] = gold_chars
 
+        # no more text in this document, but the last sentence must be skipped
+        if skip_imperfect_matches and skip_sentence:
+            # annos_to_keep[sentence_start:t+1] = False
+            new_data[worker_str].iloc[sentence_start:t+1] = -1
 
         new_data = new_data[annos_to_keep]
 
@@ -586,8 +613,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
         new_data['doc_id'] = doc_str
 
-        new_data['tok_idx'] = np.arange(new_data.shape[0]) # new_data.index -- don't use index because we remove
-        # invalid extra rows from some files in the iloc line above.
+        new_data['tok_idx'] = np.arange(new_data.shape[0])
 
         # add to data from this worker
         if worker_data is None:
@@ -597,14 +623,15 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
     return worker_data, gold_to_keep, gold_char_idxs
 
-def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
+def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, skip_dirty=False):
 
     worker_dirs = os.listdir(annotation_data_path)
 
     data = None
     annotator_cols = np.array([], dtype=str)
 
-    char_idx_word_starts = {}  # np.zeros(gold_data.shape[0], dtype=int)
+    char_idx_word_starts = {}
+    gold_sen_starts = {}
     gold_doc_starts = {}
     chars = {}
 
@@ -615,8 +642,10 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
             starts = []
             toks = []
             char_idx_word_starts[gold_data['doc_id'].iloc[t]] = starts
+
             chars[gold_data['doc_id'].iloc[t]] = toks
             gold_doc_starts[gold_data['doc_id'].iloc[t]] = t
+            gold_sen_starts[gold_data['doc_id'].iloc[t]] = gold_data['doc_start'][gold_data['doc_id'] == gold_data['doc_id'].iloc[t]].values
 
         starts.append(char_counter)
         toks.append(tok)
@@ -634,7 +663,8 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data):
 
         print('Processing dir for worker %s (%i of %i)' % (worker_str, widx, len(worker_dirs)))
 
-        worker_data, gold_to_keep, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str, char_idx_word_starts, chars)
+        worker_data, gold_to_keep, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str,
+                                                            char_idx_word_starts, chars, gold_sen_starts, skip_dirty)
 
         idxs_to_drop = []
         for doc in gold_to_keep:
@@ -695,7 +725,7 @@ def IOB2_to_IOB(seq):
 
     return seq
 
-def load_ner_data(regen_data_files):
+def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     # In Nguyen et al 2017, the original data has been separated out for task 1, aggregation of crowd labels. In this
     # task, the original training data is further split into val and test -- to make our results comparable with Nguyen
     # et al, we need to test on the test split for task 1, but train our model on both.
@@ -726,7 +756,8 @@ def load_ner_data(regen_data_files):
         gold_data, _, _ = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
 
         # load the validation data
-        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/', gold_data)
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
+                                                                       gold_data, skip_sen_with_dirty_data)
 
         # convert the text to feature vectors
         #data['text'], _ = build_feature_vectors(data['text'].values)
@@ -755,7 +786,8 @@ def load_ner_data(regen_data_files):
         gold_data, _, _ = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
 
         # load the test data
-        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/', gold_data)
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/',
+                                                                       gold_data, skip_sen_with_dirty_data)
 
         # convert the text to feature vectors
         #data['text'], _ = build_feature_vectors(data['text'].values)
@@ -837,12 +869,24 @@ def load_ner_data(regen_data_files):
     print('loading ground truth for task1 test...')
     gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
 
+    # remove any lines with no annotations
+    annotated_idxs = np.argwhere(np.any(annos != -1, axis=1)).flatten()
+    annos = annos.iloc[annotated_idxs, :]
+    gt = gt.iloc[annotated_idxs]
+    text = text.iloc[annotated_idxs]
+    doc_start = doc_start.iloc[annotated_idxs]
+
     print('Unique labels: ')
     print(np.unique(gt))
     print(gt.shape)
 
     print('loading annos for task1 val...')
     annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None, skip_blank_lines=False)
+
+    # remove any lines with no annotations
+    annotated_idxs = np.argwhere(np.any(annos_v != -1, axis=1)).flatten()
+    annos_v = annos_v.iloc[annotated_idxs, :]
+
     annos = pd.concat((annos, annos_v), axis=0)
     annos = annos.fillna(-1)
     annos = annos.values
@@ -850,11 +894,15 @@ def load_ner_data(regen_data_files):
 
     print('loading text data for task1 val...')
     text_v = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
+    text_v = text_v.iloc[annotated_idxs]
+
     text = pd.concat((text, text_v), axis=0)
     text = text.fillna(' ').values
 
     print('loading doc_starts for task1 val...')
     doc_start_v = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_lines=False, header=None)
+    doc_start_v = doc_start_v.iloc[annotated_idxs]
+
     doc_start = pd.concat((doc_start, doc_start_v), axis=0).values
 
     print('Loading a gold valdation set for task 1')
@@ -866,6 +914,8 @@ def load_ner_data(regen_data_files):
     gt_v = pd.DataFrame(np.zeros(annos_v.shape[0]) - 1) # gt_val_task1_orig#
     #gt = pd.DataFrame(np.zeros(gt.shape[0]) - 1)  # gt_val_task1_orig#
     #gt_v = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None)
+    #gt_v = gt_v.iloc[annotated_idxs]
+
     gt = pd.concat((gt, gt_v), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
 

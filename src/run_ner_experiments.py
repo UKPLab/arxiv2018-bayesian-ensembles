@@ -38,15 +38,15 @@ best_diags = 10
 best_factor = 1
 best_nu0factor = 0.1
 
-nu_factors = [0.1, 1, 10, 100]
+nu_factors = [0.1]#, 1, 10, 100]
 diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [
                    'ibcc',
-                   #'bac_vec_integrateBOF',
-                   # 'bac_ibcc_integrateBOF',
+                   'bac_vec_integrateBOF',
+                   'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',
-                   # 'bac_acc_integrateBOF',
+                   'bac_acc_integrateBOF',
                    'bac_mace_integrateBOF'
                    ]
 
@@ -116,12 +116,78 @@ exp.methods =  [
                 'mace',
                 'ds',
                 #'best', 'worst',
+                best_bac_wm,
+                best_bac_wm + '_integrateBOF_then_LSTM',
+]
+
+# should run both task 1 and 2.
+
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
+
+# reset to free memory? ------------------------------------------------------------------------------------------------
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=100)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+]
+
+# should run both task 1 and 2.
+
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
+
+# reset to free memory? ------------------------------------------------------------------------------------------------
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=100)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+                best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
+]
+
+# should run both task 1 and 2.
+
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
+
+# reset to free memory? ------------------------------------------------------------------------------------------------
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=100)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+
+# run all the methods that don't require tuning here
+exp.methods =  [
                 'HMM_crowd',
-                # best_bac_wm,
-                # best_bac_wm + '_integrateBOF_then_LSTM',
-                # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                # best_bac_wm + '_integrateLSTM_integrateBOF_atEnd_noHMM',
-                # 'HMM_crowd_then_LSTM',
+                'HMM_crowd_then_LSTM',
 ]
 
 # should run both task 1 and 2.

@@ -52,20 +52,25 @@ exp.opt_hyper = False#True
 
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 10
-exp.alpha0_factor = 1
 
-best_bac_wm = 'bac_seq'
+# exp.alpha0_factor = 1
+# best_bac_wm = 'bac_seq'
+
+# exp.alpha0_factor = 0.1
+# best_bac_wm = 'bac_vec'
+
+exp.alpha0_factor = 0.1
+best_bac_wm = 'bac_mace'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                'majority',
-                'ds',
+                # 'majority',
+                # 'ds',
                 #'gt_then_LSTM',
                 #best_bac_wm
-                #best_bac_wm + '_integrateBOF',
+                best_bac_wm + '_integrateBOF',
                 #best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                #'bac_vec_integrateBOF'
 ]
 
 # should run both task 1 and 2.

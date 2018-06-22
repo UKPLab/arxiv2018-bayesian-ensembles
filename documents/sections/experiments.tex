@@ -118,6 +118,18 @@ Token-level F1-score catches this because it penalises the erroneous B tokens. W
 % ...however, this means the scores have now dropped below nguyen's, except DS...
 % * means we have values from the old dataset
 
+% with the new f1 span metric, precision is now lower for BSCC than for IBCC.
+% Precision was higher then for IBCC before, which means that more spans identified by BSCC are covered by the ground truth than for IBCC. However, prec has dropped because BSCC spans are too short. 
+% Recall also dropped below that of IBCC for BSCC-IBCC. This suggests some predicted spans are too long. 
+% The difference in the models is the ground truth HMM and the priors. 
+% The HMM could cause the drop in precision if spans are not sticky enough, i.e. if I-O 
+% transition is more likely than I-I. However, this should not be stronger than the p(O) used by IBCC.
+% Alternatively, there may be an error where labels switch between types caused by initialising using MV? Easily fixed with smaller values for disallowed transitions.
+% 
+% Investigate class-wise prec and rec?
+
+% what has happened to BSCC-Seq?
+
 \begin{table*}
 % \small
 \begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
