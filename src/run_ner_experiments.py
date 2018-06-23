@@ -6,8 +6,6 @@ Created on April 27, 2018
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
-# import pandas as pd
-# from data.load_data import _map_ner_str_to_labels
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
@@ -15,32 +13,21 @@ regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
     load_data.load_ner_data(regen_data)
 
-# debug with subset -------
-# s = 1000
-# idxs = np.argwhere(gt!=-1)[:s, 0]
-# gt = gt[idxs]
-# annos = annos[idxs]
-# doc_start = doc_start[idxs]
-# print('No. documents:')
-# print(np.sum(doc_start))
-# text = text[idxs]
-# gt_task1_val = gt_task1_val[idxs]
-# -------------------------
-
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 
 
 best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
+
+best_nu0factor = 0.1
 best_diags = 10
 best_factor = 1
-best_nu0factor = 0.1
 
 nu_factors = [0.1]#, 1, 10, 100]
-diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-factors = [0.1, 1, 10, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
+diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [0.1, 1, 10]#, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [
                    'ibcc',
                    'bac_vec_integrateBOF',
@@ -118,6 +105,7 @@ exp.methods =  [
                 #'best', 'worst',
                 best_bac_wm,
                 best_bac_wm + '_integrateBOF_then_LSTM',
+                # best_bac_wm + '_integrateBOF'
 ]
 
 # should run both task 1 and 2.

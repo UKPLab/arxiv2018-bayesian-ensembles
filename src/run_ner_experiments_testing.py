@@ -6,14 +6,6 @@ Created on April 27, 2018
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
-# import pandas as pd
-# from data.load_data import _map_ner_str_to_labels
-
-# TODO: possible reasons for discrepancies in MV results
-# 1. bad f1 calculations -- does it include bad spans or not? - This is fine.
-# 2. bad data -- should we skip or correct the broken tokens?
-# 3. using different data -- did they actually use the validation set and test set differently or test on both? -- testing on both is close to their values. Testing on val is not.
-# 4. compared to rodrigues -- perhaps different tie-breaking in MV
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
@@ -42,7 +34,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=5)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -51,8 +43,8 @@ exp.opt_hyper = False#True
 # exp.alpha0_factor = 0.1
 
 exp.nu0_factor = 0.1
-exp.alpha0_diags = 10
 
+exp.alpha0_diags = 10
 exp.alpha0_factor = 1
 best_bac_wm = 'bac_seq'
 
@@ -68,14 +60,13 @@ exp.methods =  [
                 # 'ds',
                 #'gt_then_LSTM',
                 #best_bac_wm
-                #best_bac_wm + '_integrateBOF',
+                best_bac_wm + '_integrateBOF',
                 #best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                best_bac_wm + '_integrateBOF_noHMM',
+                #best_bac_wm + '_integrateBOF_noHMM',
 ]
 
 # should run both task 1 and 2.
-
 exp.run_methods(
     annos, gt, doc_start, output_dir, text,
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,

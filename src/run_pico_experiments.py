@@ -24,13 +24,14 @@ exp.alpha0_factor = 9
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 best_nu0factor = 0.1
-best_diags = 100
-best_factor = 1.0
+best_diags = 0.1
+best_factor = 0.1
 
 nu_factors = [0.1]#, 1, 10, 100]
-diags = [0.1, 1, 10, 100] # 10, 50,  [1, 50, 100]#[1, 5, 10, 50]
-factors = [0.1, 1, 10, 100] #9, [36, 49, 64]#[1, 4, 9, 16, 25]
-methods_to_tune = [#'ibcc',
+diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [0.1, 1, 10]
+methods_to_tune = [
+                   'ibcc',
                    'bac_vec_integrateBOF',
                    'bac_seq_integrateBOF',
                    'bac_ibcc_integrateBOF',
