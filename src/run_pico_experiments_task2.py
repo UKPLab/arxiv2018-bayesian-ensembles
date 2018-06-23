@@ -10,7 +10,9 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task2/'
 
-gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
+regen_data = False
+gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
+    load_data.load_biomedical_data(regen_data)
 
 # TASK 2 also needs to reload the optimised hyperparameters.
 
@@ -27,22 +29,21 @@ doc_start_test = doc_start[gold_labelled]
 text_test = text[gold_labelled]
 
 
-exp = Experiment(None, 3, annos.shape[1], None)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 
 exp.save_results = True
 exp.opt_hyper = False #True
 
-exp.alpha0_diags = 100
-exp.alpha0_factor = 9
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 0.1
+exp.alpha0_factor = 0.1
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                'bac_seq' + '_integrateLSTM',
+                'bac_seq_integrateBOF_integrateLSTM',
                 'HMM_crowd',
                 'HMM_crowd_then_LSTM',
-                'bac_seq' + '_then_LSTM',
-                'bac_acc' + '_then_LSTM'
-                'bac_acc' + '_integrateLSTM'
+                'bac_seq_integrateBOF_then_LSTM',
                 ]
 
 exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
