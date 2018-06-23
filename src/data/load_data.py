@@ -285,7 +285,7 @@ def _load_bio_folder(anno_path_root, folder_name):
 
     return all_data, workerids
 
-def load_biomedical_data(regen_data_files):
+def load_biomedical_data(regen_data_files, debug_subset_size=None):
     savepath = '../../data/bayesian_annotator_combination/data/bio/'
     if not os.path.isdir(savepath):
         os.mkdir(savepath)
@@ -340,20 +340,20 @@ def load_biomedical_data(regen_data_files):
             all_data.to_csv(savepath + '/text.csv', columns=['text'], header=False, index=False)
 
     print('loading annos...')
-    annos = pd.read_csv(savepath + '/annos.csv', header=None)
+    annos = pd.read_csv(savepath + '/annos.csv', header=None, nrows=debug_subset_size)
     annos = annos.fillna(-1)
     annos = annos.values
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
     print('loading text data...')
-    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None)
+    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
     text = text.fillna(' ').values
 
     print('loading doc starts...')
-    doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None).values #np.genfromtxt(savepath + '/doc_start.csv')
+    doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None, nrows=debug_subset_size).values #np.genfromtxt(savepath + '/doc_start.csv')
 
     print('loading ground truth labels...')
-    gt = pd.read_csv(savepath + '/gt.csv', header=None).values # np.genfromtxt(savepath + '/gt.csv')
+    gt = pd.read_csv(savepath + '/gt.csv', header=None, nrows=debug_subset_size).values # np.genfromtxt(savepath + '/gt.csv')
 
     # # debug subset
     # # crowd_labelled[int(np.round(0.01 * len(crowd_labelled) )):] = False

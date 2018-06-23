@@ -1438,8 +1438,9 @@ class MACEWorker():
                 ll_correct = lnPi[1, Krange] * idx
                 ll_correct[idx == 0] = - np.inf
 
-        p_correct = np.exp(ll_correct) / (np.exp(ll_correct) + np.exp(ll_incorrect))
-        p_incorrect = np.exp(ll_incorrect) / (np.exp(ll_correct) + np.exp(ll_incorrect))
+        # avoid values that are too small
+        p_correct = np.exp(ll_correct - logsumexp([ll_correct, ll_incorrect], axis=0))
+        p_incorrect = np.exp(ll_incorrect - logsumexp([ll_correct, ll_incorrect], axis=0))
 
         # deal with infs
         if not np.isscalar(ll_correct):
