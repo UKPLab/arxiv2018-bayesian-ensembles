@@ -49,7 +49,7 @@ exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
 
 exp.methods =  [
-                'bac_seq_integrateBOF_integrateLSTM',
+                'bac_seq_integrateBOF_integrateLSTM_atEnd',
                 ]
 
 exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,

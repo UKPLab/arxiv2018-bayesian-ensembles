@@ -36,10 +36,30 @@ exp.alpha0_factor = 1#9 # best_factor
 # run all the methods that don't require tuning here
 exp.methods =  [
     #'HMM_crowd_then_LSTM',
-    'bac_acc_integrateBOF_thenLSTM',
-    'bac_acc_integrateLSTM',
     'bac_seq_integrateBOF_thenLSTM',
-    'bac_seq_integrateLSTM',
+                ]
+
+results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+                    annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+                    active_learning=True
+)
+
+exp.methods =  [
+    'HMM_crowd_then_LSTM',
+                ]
+
+results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+                    annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+                    active_learning=True
+)
+
+exp.methods =  [
+    #'HMM_crowd_then_LSTM',
+    'bac_seq_integrateBOF_integrateLSTM_atEnd',
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
