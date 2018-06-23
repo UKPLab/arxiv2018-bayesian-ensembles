@@ -1871,7 +1871,7 @@ class LSTM:
             self.all_sentences = self.sentences
 
         alpha_data = np.copy(alpha0_data)
-        model.alpha0_data = alpha0_data
+        self.alpha0_data = alpha0_data
 
         return alpha_data
 
