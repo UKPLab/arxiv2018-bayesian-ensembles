@@ -35,7 +35,7 @@ exp.alpha0_factor = 1#9 # best_factor
 # run all the methods that don't require tuning here
 exp.methods =  [
     #'HMM_crowd_then_LSTM',
-    'bac_seq_integrateBOF_thenLSTM',
+    'bac_seq_integrateBOF_then_LSTM',
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
