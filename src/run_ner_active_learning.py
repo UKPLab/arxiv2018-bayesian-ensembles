@@ -22,15 +22,14 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 # gt_task1_val = gt_task1_val[idxs]
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1)
+best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the different BAC worker models
+
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-# best IBCC setting so far is diag=100, factor=36. Let's reuse this for BIO and all BAC_IBCC runs.
-
-best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the different BAC worker models
-
-exp.alpha0_diags = 50 # best_diags
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 10 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
@@ -46,6 +45,14 @@ results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_m
                     active_learning=True
 )
 
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 10 # best_diags
+exp.alpha0_factor = 1#9 # best_factor
+
 exp.methods =  [
     'HMM_crowd_then_LSTM',
                 ]
@@ -56,6 +63,14 @@ results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_m
                     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
                     active_learning=True
 )
+
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 10 # best_diags
+exp.alpha0_factor = 1#9 # best_factor
 
 exp.methods =  [
     #'HMM_crowd_then_LSTM',
