@@ -89,12 +89,13 @@ exp.nu0_factor = best_nu0factor
 # exp.alpha0_factor = .1
 
 # run all the methods that don't require tuning here
-exp.methods =  ['majority',
-                'mace',
-                'ds',
-                #'best',
-                #'worst',
-                best_bac_wm,
+exp.methods =  [
+                # 'majority',
+                # 'mace',
+                # 'ds',
+                # #'best',
+                # #'worst',
+                # best_bac_wm,
                 best_bac_wm + '_integrateBOF_then_LSTM',
                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
 ]
