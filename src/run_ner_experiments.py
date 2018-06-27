@@ -33,11 +33,11 @@ methods_to_tune = [
                    # 'bac_ibcc_noHMM',
                    # 'bac_seq',
                    #'ibcc',
-                   # 'bac_vec_integrateBOF',
-                   # 'bac_ibcc_integrateBOF',
+                   'bac_vec_integrateBOF',
+                   'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',
-                   # 'bac_acc_integrateBOF',
-                   # 'bac_mace_integrateBOF'
+                   'bac_acc_integrateBOF',
+                   'bac_mace_integrateBOF'
                    ]
 
 # tune with small dataset to save time
@@ -96,28 +96,28 @@ exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 
-# exp.nu0_factor = 0.1
-# exp.alpha0_diags = 1
-# exp.alpha0_factor = 1
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 1
+exp.alpha0_factor = 1
 
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 'majority',
-#                 'mace',
-#                 'ds',
-#                 #'best', 'worst',
-#                 best_bac_wm,
-#                 best_bac_wm + '_integrateBOF_then_LSTM',
-#                 # best_bac_wm + '_integrateBOF'
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(
-#     annos, gt, doc_start, output_dir, text,
-#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     new_data=regen_data
-# )
+# run all the methods that don't require tuning here
+exp.methods =  [
+                'majority',
+                'mace',
+                'ds',
+                #'best', 'worst',
+                best_bac_wm,
+                best_bac_wm + '_integrateBOF_then_LSTM',
+                # best_bac_wm + '_integrateBOF'
+]
+
+# should run both task 1 and 2.
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
 
 
 # reset to free memory? ------------------------------------------------------------------------------------------------

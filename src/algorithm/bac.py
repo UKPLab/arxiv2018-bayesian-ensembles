@@ -628,7 +628,7 @@ class BAC(object):
                 for model in self.data_model:
                     if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
 
-                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, self.alpha0_data,
+                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
                                         model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
 
@@ -1360,7 +1360,6 @@ class MACEWorker():
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
-        alpha = alpha0.copy()
 
         # start by determining the probability of not spamming at each data point using current estimates of pi
         pknowing = 0
@@ -1878,7 +1877,7 @@ class LSTM:
             self.all_sentences = self.sentences
 
         alpha_data = np.copy(alpha0_data)
-        self.alpha0_data = alpha0_data
+        self.alpha0_data = np.copy(alpha0_data)
 
         return alpha_data
 
