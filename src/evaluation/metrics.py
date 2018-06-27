@@ -23,7 +23,7 @@ def num_invalid_labels(pred, doc_start):
     except:
         print('Could not count any invalid labels because some classes were not present.')
         count_invalid = 0
-    return np.sum(list(map(count_invalid, docs)))/float(len(pred))
+    return np.sum(list(map(count_invalid, docs))) #/float(len(pred))
 
 '''
 Calculates the difference of the mean length of annotations between prediction and target sequences.

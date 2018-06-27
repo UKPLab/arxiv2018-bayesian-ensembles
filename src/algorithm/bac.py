@@ -59,7 +59,7 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
-    max_data_updates_at_end = 4
+    max_data_updates_at_end = 1
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
@@ -150,7 +150,7 @@ class BAC(object):
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
         
-        self.max_iter = max_iter  # maximum number of iterations
+        self.max_iter = max_iter - self.max_data_updates_at_end  # maximum number of iterations
         self.eps = eps  # threshold for convergence 
         
         self.verbose = False  # can change this if you want progress updates to be printed
@@ -187,16 +187,16 @@ class BAC(object):
                 self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
                 self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
-            for other_restricted_label in restricted_labels:
+            for typeid, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
                     continue
 
                 disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+                self.alpha0[:, restricted_labels[typeid], other_restricted_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+                self.alpha0_data[:, restricted_labels[typeid], other_restricted_label, :] += disallowed_count
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
@@ -204,7 +204,7 @@ class BAC(object):
 
                 if self.nu0.ndim >= 2:
                     disallowed_count = self.nu0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.nu0[other_restricted_label, other_restricted_label] += disallowed_count
+                    self.nu0[other_restricted_label, restricted_labels[typeid]] += disallowed_count
                     self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
@@ -536,7 +536,6 @@ class BAC(object):
         if np.any(np.isnan(self.lnA)):
             print('_calc_q_A: nan value encountered!')
 
-
     def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
@@ -579,11 +578,11 @@ class BAC(object):
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 
-        for model in self.data_model:
-            if type(model) == LSTM:
-                self.data_model_updated = 0
-        else:
-            self.data_model_updated = self.max_data_updates_at_end
+        self.data_model_updated = self.max_data_updates_at_end
+        if converge_workers_first:
+            for model in self.data_model:
+                if type(model) == LSTM:
+                    self.data_model_updated = 0
 
         self.workers_converged = False
 
@@ -615,15 +614,16 @@ class BAC(object):
                 for model in self.data_model:
 
                     # Update the data model by retraining the integrated task classifier and obtaining its predictions
-                    if type(model) != LSTM or self.iter > -1 and \
-                            (not converge_workers_first or self.workers_converged):
-                    # hold off training the feature-based classifier for three iterations
+                    if type(model) != LSTM or not converge_workers_first or self.workers_converged:
 
                         model.C_data = model.fit_predict(self.q_t)
 
-                        self.data_model_updated += 1
+                        if type(model) == LSTM:
+                            self.data_model_updated += 1
+
                         if self.verbose:
-                            print("BAC iteration %i: updated feature-based predictions" % self.iter)
+                            print("BAC iteration %i: updated feature-based predictions from %s" %
+                                  (self.iter, type(model)))
 
                 for model in self.data_model:
                     if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
@@ -750,13 +750,19 @@ class BAC(object):
         '''
         if self.verbose:
             print("Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
-        converged = ((self.iter >= self.max_iter) or np.max(np.abs(self.q_t_old - self.q_t)) < self.eps) \
-                    and (not self.workers_converged or self.data_model_updated >= self.max_data_updates_at_end)
+
+        if not self.workers_converged:
+            converged = self.iter >= self.max_iter
+        else:
+            converged = self.data_model_updated >= self.max_data_updates_at_end
+
+        if not converged:
+            converged = np.max(np.abs(self.q_t_old - self.q_t)) < self.eps
 
         if converged and not self.workers_converged:
+            # the worker model has converged, but we need to do more iterations to converge the data model
             self.workers_converged = True
-
-            return False
+            converged = False
 
         return converged
 

@@ -9,7 +9,7 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
-regen_data = False
+regen_data = True
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
     load_data.load_ner_data(regen_data)
 

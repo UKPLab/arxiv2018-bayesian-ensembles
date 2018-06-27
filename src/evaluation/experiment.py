@@ -29,6 +29,163 @@ from baselines.util import crowd_data, crowdlab, instance
 # things needed for the LSTM
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 
+PARAM_NAMES = ['acc_bias',
+               'miss_bias',
+               'short_bias',
+               'num_docs',
+               'doc_length',
+               'group_sizes'
+               ]
+
+SCORE_NAMES = ['accuracy',
+               'precision-tokens',
+               'recall-tokens',
+               'f1-score-tokens',
+               'auc-score',
+               'cross-entropy-error',
+               'precision-spans-strict',
+               'recall-spans-strict',
+               'f1-score-spans-strict',
+               'precision-spans-relaxed',
+               'recall-spans-relaxed',
+               'f1-score-spans-relaxed',
+               'count error',
+               'number of invalid labels',
+               'mean length error'
+               ]
+
+
+def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
+    result = -np.ones(len(SCORE_NAMES) - 3)
+
+    # token-level metrics
+    result[0] = skm.accuracy_score(gt, agg)
+
+    # the results are undefined if some classes are not present in the gold labels
+    prec_by_class = skm.precision_score(gt, agg, average=None)
+    rec_by_class = skm.recall_score(gt, agg, average=None)
+    f1_by_class = skm.f1_score(gt, agg, average=None)
+
+    result[1] = np.mean(prec_by_class[np.unique(gt)])
+    result[2] = np.mean(rec_by_class[np.unique(gt)])
+    result[3] = np.mean(f1_by_class[np.unique(gt)])
+
+    # span-level metrics - strict
+    p, r, f = strict_span_metrics_2(agg, gt, doc_starts)
+    result[6] = p  # precision(agg, gt, True, doc_starts)
+    result[7] = r  # recall(agg, gt, True, doc_starts)
+    result[8] = f  # f1(agg, gt, True, doc_starts)
+
+    # span-level metrics -- relaxed
+    result[9] = precision(agg, gt, False, doc_starts)
+    result[10] = recall(agg, gt, False, doc_starts)
+    result[11] = f1(agg, gt, False, doc_starts)
+
+    auc_score = 0
+    total_weights = 0
+    for i in range(probs.shape[1]):
+
+        if not np.any(gt == i) or np.all(gt == i):
+            print('Could not evaluate AUC for class %i -- all data points have same value.' % i)
+            continue
+
+        auc_i = skm.roc_auc_score(gt == i, probs[:, i])
+        # print 'AUC for class %i: %f' % (i, auc_i)
+        auc_score += auc_i * np.sum(gt == i)
+        total_weights += np.sum(gt == i)
+    result[4] = auc_score / float(total_weights)
+
+    result[5] = skm.log_loss(gt, probs, eps=1e-100, labels=np.arange(nclasses))
+
+    return result
+
+def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrapping=True):
+    result = -np.ones((len(SCORE_NAMES), 1))
+
+    # exclude data points with missing ground truth
+    agg = agg[gt != -1]
+    probs = probs[gt != -1]
+    doc_start = doc_start[gt != -1]
+    gt = gt[gt != -1]
+
+    print('unique ground truth values: ')
+    print(np.unique(gt))
+    print('unique prediction values: ')
+    print(np.unique(agg))
+
+    if postprocess:
+        agg = data_utils.postprocess(agg, doc_start)
+
+    print('Plotting confusion matrix for errors: ')
+
+    nclasses = probs.shape[1]
+    conf = np.zeros((nclasses, nclasses))
+    for i in range(nclasses):
+        for j in range(nclasses):
+            conf[i, j] = np.sum((gt == i).flatten() & (agg == j).flatten())
+
+        # print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
+    print(np.round(conf))
+
+    gold_doc_start = np.copy(doc_start)
+    gold_doc_start[gt == -1] = 0
+
+    Ndocs = int(np.sum(gold_doc_start))
+    if Ndocs < 100 and bootstrapping:
+
+        print('Using bootstrapping with small test set size')
+
+        # use bootstrap resampling with small datasets
+        nbootstraps = 100
+        nmetrics = len(SCORE_NAMES) - 3
+        resample_results = np.zeros((nmetrics, nbootstraps))
+
+        for i in range(nbootstraps):
+            print('Bootstrapping the evaluation: %i of %i' % (i, nbootstraps))
+            not_sampled = True
+            nsample_attempts = 0
+            while not_sampled:
+                sampleidxs = np.random.choice(Ndocs, Ndocs, replace=True)
+                sampleidxs = np.in1d(np.cumsum(gold_doc_start) - 1, sampleidxs)
+
+                if len(np.unique(gt[sampleidxs])) >= 2:
+                    not_sampled = False
+                    # if we have at least two class labels in the sample ground truth, we can use this sample
+
+                nsample_attempts += 1
+                if nsample_attempts >= Ndocs:
+                    not_sampled = False
+
+            if nsample_attempts <= Ndocs:
+                resample_results[:, i] = calculate_sample_metrics(SCORE_NAMES, nclasses,
+                                                                  agg[sampleidxs],
+                                                                  gt[sampleidxs],
+                                                                  probs[sampleidxs],
+                                                                  doc_start[sampleidxs])
+            else:  # can't find enough valid samples for the bootstrap, let's just use what we got so far.
+                resample_results = resample_results[:, :i]
+                break
+
+        sample_res = np.mean(resample_results, axis=1)
+        result[:len(sample_res), 0] = sample_res
+        std_result = np.std(resample_results, axis=1)
+
+    else:
+        sample_res = calculate_sample_metrics(nclasses, agg, gt, probs, doc_start)
+        result[:len(sample_res), 0] = sample_res
+
+        std_result = None
+
+    result[len(sample_res)] = metrics.count_error(agg, gt)
+    result[len(sample_res) + 1] = metrics.num_invalid_labels(agg, doc_start)
+    result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
+
+    print('F1 score tokens = %f' % result[3])
+    print('F1 score spans strict = %f' % result[8])
+    print('F1 score spans relaxed = %f' % result[11])
+
+    return result, std_result
+
 class Experiment(object):
     '''
     classdocs
@@ -45,31 +202,6 @@ class Experiment(object):
     acc_bias = None
     miss_bias = None
     short_bias = None
-    
-    PARAM_NAMES = ['acc_bias',
-                   'miss_bias',
-                   'short_bias',
-                   'num_docs',
-                   'doc_length',
-                   'group_sizes'
-                   ]
-
-    SCORE_NAMES = ['accuracy',
-                   'precision-tokens',
-                   'recall-tokens',
-                   'f1-score-tokens',
-                   'auc-score',
-                   'cross-entropy-error',
-                   'precision-spans-strict',
-                   'recall-spans-strict',
-                   'f1-score-spans-strict',
-                   'precision-spans-relaxed',
-                   'recall-spans-relaxed',
-                   'f1-score-spans-relaxed',
-                   'count error',
-                   'number of invalid labels',
-                   'mean length error'
-                   ]
     
     generate_data= False
     
@@ -353,13 +485,13 @@ class Experiment(object):
         if use_BOF:
             data_model.append('IF')
 
-        alg = bac.BAC(L=L, K=annotations.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
+        alg = bac.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+                      inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0,
                       nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
                       exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
-        alg.max_iter = self.max_iter
         alg.verbose = True
 
         if self.opt_hyper:
@@ -545,8 +677,8 @@ class Experiment(object):
 
         print('Running experiment, Optimisation=%s' % (self.opt_hyper))
 
-        scores_allmethods = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
-        score_std_allmethods = np.zeros((len(self.SCORE_NAMES)-3, len(self.methods)))
+        scores_allmethods = np.zeros((len(SCORE_NAMES), len(self.methods)))
+        score_std_allmethods = np.zeros((len(SCORE_NAMES)-3, len(self.methods)))
 
         preds_allmethods = -np.ones((annotations.shape[0], len(self.methods)))
         probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
@@ -561,8 +693,8 @@ class Experiment(object):
             ground_truth, text, N_withcrowd = self._get_nocrowd_test_data(annotations, doc_start, ground_truth, text)
 
         # for the additional test set with no crowd labels
-        scores_nocrowd = np.zeros((len(self.SCORE_NAMES), len(self.methods)))
-        score_std_nocrowd = np.zeros((len(self.SCORE_NAMES)-3, len(self.methods)))
+        scores_nocrowd = np.zeros((len(SCORE_NAMES), len(self.methods)))
+        score_std_nocrowd = np.zeros((len(SCORE_NAMES)-3, len(self.methods)))
 
         preds_allmethods_nocrowd = -np.ones((N_nocrowd, len(self.methods)))
         probs_allmethods_nocrowd = -np.ones((N_nocrowd, self.num_classes, len(self.methods)))
@@ -885,133 +1017,10 @@ class Experiment(object):
 
         return sentences_inst, crowd_labels, nfeats
 
-    def calculate_sample_metrics(self, agg, gt, probs, doc_starts):
-
-        result = -np.ones(len(self.SCORE_NAMES)-3)
-
-        # token-level metrics
-        result[0] = skm.accuracy_score(gt, agg)
-        result[1] = skm.precision_score(gt, agg, average='macro')
-        result[2] = skm.recall_score(gt, agg, average='macro')
-        result[3] = skm.f1_score(gt, agg, average='macro')
-
-        # span-level metrics - strict
-        p, r, f = strict_span_metrics_2(agg, gt, doc_starts)
-        result[6] = p #precision(agg, gt, True, doc_starts)
-        result[7] = r #recall(agg, gt, True, doc_starts)
-        result[8] = f #f1(agg, gt, True, doc_starts)
-
-        # span-level metrics -- relaxed
-        result[9] = precision(agg, gt, False, doc_starts)
-        result[10] = recall(agg, gt, False, doc_starts)
-        result[11] = f1(agg, gt, False, doc_starts)
-
-        auc_score = 0
-        total_weights = 0
-        for i in range(probs.shape[1]):
-
-            if not np.any(gt == i) or np.all(gt == i):
-                print('Could not evaluate AUC for class %i -- all data points have same value.' % i)
-                continue
-
-            auc_i = skm.roc_auc_score(gt == i, probs[:, i])
-            # print 'AUC for class %i: %f' % (i, auc_i)
-            auc_score += auc_i * np.sum(gt == i)
-            total_weights += np.sum(gt == i)
-        result[4] = auc_score / float(total_weights)
-
-        result[5] = skm.log_loss(gt, probs, eps=1e-100, labels=np.arange(self.num_classes))
-
-        return result
-
     def calculate_scores(self, agg, gt, probs, doc_start, bootstrapping=True):
-        
-        result = -np.ones((len(self.SCORE_NAMES), 1))
+        return calculate_scores(self.num_classes, self.postprocess, agg, gt, probs, doc_start,
+                                bootstrapping)
 
-        # exclude data points with missing ground truth
-        agg = agg[gt!=-1]
-        probs = probs[gt!=-1]
-        doc_start = doc_start[gt!=-1]
-        gt = gt[gt!=-1]
-
-        print('unique ground truth values: ')
-        print(np.unique(gt))
-        print('unique prediction values: ')
-        print(np.unique(agg))
-                        
-        if self.postprocess:
-            agg = data_utils.postprocess(agg, doc_start)
-        
-
-        print('Plotting confusion matrix for errors: ')
-        
-        nclasses = probs.shape[1]
-        conf = np.zeros((nclasses, nclasses))
-        for i in range(nclasses):
-            for j in range(nclasses):
-                conf[i, j] = np.sum((gt==i).flatten() & (agg==j).flatten())
-                
-            #print 'Acc for class %i: %f' % (i, skm.accuracy_score(gt==i, agg==i))
-        print(np.round(conf))
-
-        gold_doc_start = np.copy(doc_start)
-        gold_doc_start[gt == -1] = 0
-
-        Ndocs = int(np.sum(gold_doc_start))
-        if Ndocs < 100 and bootstrapping:
-
-            print('Using bootstrapping with small test set size')
-
-            # use bootstrap resampling with small datasets
-            nbootstraps = 100
-            nmetrics = len(self.SCORE_NAMES) - 3
-            resample_results = np.zeros((nmetrics, nbootstraps))
-
-            for i in range(nbootstraps):
-                print('Bootstrapping the evaluation: %i of %i' % (i, nbootstraps))
-                not_sampled = True
-                nsample_attempts = 0
-                while not_sampled:
-                    sampleidxs = np.random.choice(Ndocs, Ndocs, replace=True)
-                    sampleidxs = np.in1d(np.cumsum(gold_doc_start) - 1, sampleidxs)
-
-                    if len(np.unique(gt[sampleidxs])) >= 2:
-                        not_sampled = False
-                        # if we have at least two class labels in the sample ground truth, we can use this sample
-
-                    nsample_attempts += 1
-                    if nsample_attempts >= Ndocs:
-                        not_sampled = False
-
-                if nsample_attempts <= Ndocs:
-                    resample_results[:, i] = self.calculate_sample_metrics(agg[sampleidxs],
-                                                                       gt[sampleidxs],
-                                                                       probs[sampleidxs],
-                                                                       doc_start[sampleidxs])
-                else: # can't find enough valid samples for the bootstrap, let's just use what we got so far.
-                    resample_results = resample_results[:, :i]
-                    break
-
-            sample_res = np.mean(resample_results, axis=1)
-            result[:len(sample_res), 0] = sample_res
-            std_result = np.std(resample_results, axis=1)
-
-        else:
-            sample_res = self.calculate_sample_metrics(agg, gt, probs, doc_start)
-            result[:len(sample_res), 0] = sample_res
-
-            std_result = None
-
-        result[len(sample_res)] = metrics.count_error(agg, gt)
-        result[len(sample_res) + 1] = metrics.num_invalid_labels(agg, doc_start)
-        result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
-
-        print('F1 score tokens = %f' % result[3])
-        print('F1 score spans strict = %f' % result[8])
-        print('F1 score spans relaxed = %f' % result[11])
-
-        return result, std_result
-        
     def create_experiment_data(self):
         for param_idx in range(self.param_values.shape[0]):
             # update tested parameter
@@ -1039,7 +1048,7 @@ class Experiment(object):
     
     def run_exp(self):
         # initialise result array
-        results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES), len(self.methods), self.num_runs))
+        results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
         # read experiment directory
         param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
        
@@ -1083,8 +1092,8 @@ class Experiment(object):
 
 
         # initialise result array
-        results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES), len(self.methods), self.num_runs))
-        std_results = np.zeros((self.param_values.shape[0], len(self.SCORE_NAMES)-3, len(self.methods), self.num_runs))
+        results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
+        std_results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES)-3, len(self.methods), self.num_runs))
         # read experiment directory
         param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
 
@@ -1172,7 +1181,7 @@ class Experiment(object):
     # def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/', score_names=None):
     #
     #     if score_names is None:
-    #         score_names = self.SCORE_NAMES
+    #         score_names = SCORE_NAMES
     #
     #     # create output directory if necessary
     #     if save_plot and not os.path.exists(output_dir):

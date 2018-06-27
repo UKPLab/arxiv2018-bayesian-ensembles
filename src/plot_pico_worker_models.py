@@ -21,7 +21,7 @@ import matplotlib.cm as cm
 output_dir = '../../data/bayesian_annotator_combination/output/bio_workers/'
 
 # debug with subset -------
-s = None #100
+s = 10000#None #100
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
