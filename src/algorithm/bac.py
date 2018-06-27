@@ -456,10 +456,10 @@ class BAC(object):
         lnPi_data_terms = 0
         for model in range(len(self.data_model)):
             for m in range(self.nscores):
-                lnPi_data_terms = self.worker_model._read_lnPi(lnPi_data[model], None,
-                                m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * C_data[model][0, m]
+                lnPi_data_terms += (self.worker_model._read_lnPi(lnPi_data[model], None,
+                                m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * C_data[model][0, m]).T
 
-        lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
+        lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms
 
         Cprev = C - 1
         Cprev[Cprev == -1] = self.before_doc_idx
@@ -474,10 +474,10 @@ class BAC(object):
         for model in range(len(self.data_model)):
             for m in range(self.nscores):
                 for n in range(self.nscores):
-                    lnPi_data_terms += self.worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, self.nscores)[:, :, 0] * \
-                                       C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]
+                    lnPi_data_terms += (self.worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, self.nscores)[:, :, 0] * \
+                                       C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]).T
 
-        lnpCT[1:, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms.T
+        lnpCT[1:, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms
 
         lnpCT += self.lnA
 

@@ -29,8 +29,9 @@ nu_factors = [0.1]#, 1, 10, 100]
 diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]#, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 methods_to_tune = [
-                   'bac_ibcc_noHMM',
-                   'bac_seq',
+                   # 'bac_mace_noHMM',
+                   # 'bac_ibcc_noHMM',
+                   # 'bac_seq',
                    #'ibcc',
                    # 'bac_vec_integrateBOF',
                    # 'bac_ibcc_integrateBOF',

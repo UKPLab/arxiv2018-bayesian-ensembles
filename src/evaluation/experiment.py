@@ -58,6 +58,8 @@ SCORE_NAMES = ['accuracy',
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     result = -np.ones(len(SCORE_NAMES) - 3)
 
+    gt = gt.astype(int)
+
     # token-level metrics
     result[0] = skm.accuracy_score(gt, agg)
 
