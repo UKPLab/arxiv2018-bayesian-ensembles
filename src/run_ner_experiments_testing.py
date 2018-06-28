@@ -48,11 +48,11 @@ exp.alpha0_diags = 10
 #exp.alpha0_factor = 1
 #best_bac_wm = 'bac_seq'
 
-exp.alpha0_factor = 0.1
-best_bac_wm = 'bac_vec'
-
 # exp.alpha0_factor = 0.1
-# best_bac_wm = 'bac_mace'
+# best_bac_wm = 'bac_vec'
+
+exp.alpha0_factor = 0.1
+best_bac_wm = 'bac_mace'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
@@ -65,7 +65,6 @@ exp.methods =  [
                 #best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 #best_bac_wm + '_integrateBOF_noHMM',
                 #best_bac_wm + '_noHMM'
-                'bac_vec_integrateBOF'
 ]
 
 # should run both task 1 and 2.

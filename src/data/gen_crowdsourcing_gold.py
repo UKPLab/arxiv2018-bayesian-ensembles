@@ -23,7 +23,7 @@ maj = data_utils.postprocess(maj, doc_start)
 
 # run BAC 
 bac_ = bac.BAC(L=L, K=K, nu0=np.ones((L+1, L)) * 100, alpha0=100.0 * (np.ones((L, L, L+1, K)) + 1.0 * np.eye(3)[:, :, None, None]))
-probs, agg = bac_.run(annos, doc_start)
+probs, agg = bac_.run_synth(annos, doc_start)
 
 np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/probs2.csv', probs, delimiter=',')
 np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/agg2.csv', agg, delimiter=',')

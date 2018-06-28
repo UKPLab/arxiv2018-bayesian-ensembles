@@ -29,31 +29,7 @@ from baselines.util import crowd_data, crowdlab, instance
 # things needed for the LSTM
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 
-PARAM_NAMES = ['acc_bias',
-               'miss_bias',
-               'short_bias',
-               'num_docs',
-               'doc_length',
-               'group_sizes'
-               ]
-
-SCORE_NAMES = ['accuracy',
-               'precision-tokens',
-               'recall-tokens',
-               'f1-score-tokens',
-               'auc-score',
-               'cross-entropy-error',
-               'precision-spans-strict',
-               'recall-spans-strict',
-               'f1-score-spans-strict',
-               'precision-spans-relaxed',
-               'recall-spans-relaxed',
-               'f1-score-spans-relaxed',
-               'count error',
-               'number of invalid labels',
-               'mean length error'
-               ]
-
+from evaluation.plots import SCORE_NAMES, plot_results
 
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     result = -np.ones(len(SCORE_NAMES) - 3)
@@ -1023,6 +999,7 @@ class Experiment(object):
         return calculate_scores(self.num_classes, self.postprocess, agg, gt, probs, doc_start,
                                 bootstrapping)
 
+# CODE RELATING TO SYNTHETIC DATA EXPERIMENTS --------------------------------------------------------------------------
     def create_experiment_data(self):
         for param_idx in range(self.param_values.shape[0]):
             # update tested parameter
@@ -1046,7 +1023,8 @@ class Experiment(object):
             for i in range(self.num_runs):
                 path = param_path + 'set' + str(i) + '/'
                 self.generator.init_crowd_models(self.acc_bias, self.miss_bias, self.short_bias, self.group_sizes)
-                self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length, group_sizes=self.group_sizes, save_to_file=True, output_dir=path)
+                self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length,
+                                                group_sizes=self.group_sizes, save_to_file=True, output_dir=path)
     
     def run_exp(self):
         # initialise result array
@@ -1091,7 +1069,6 @@ class Experiment(object):
 
     def replot_results(self):
         # Reloads predictions and probabilities from file, then computes metrics and plots.
-
 
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
@@ -1142,11 +1119,13 @@ class Experiment(object):
             results.dump(self.output_dir + 'results')
 
         if self.show_plots or self.save_plots:
-            self.plot_results(results, self.show_plots, self.save_plots, self.output_dir)
+            print('making plots for parameter setting: {0}'.format(self.param_idx))
+            plot_results(self.param_values, self.methods, self.param_idx, results,
+                         self.show_plots, self.save_plots, self.output_dir)
 
         return results
     
-    def run(self):
+    def run_synth(self):
         
         if self.generate_data:
             self.create_experiment_data()
@@ -1157,66 +1136,4 @@ class Experiment(object):
         else:
             return self.run_exp()
 
-    # def make_plot(self, x_vals, y_vals, x_ticks_labels, ylabel):
-    #
-    #     styles = ['-', '--', '-.', ':']
-    #     markers = ['o', 'v', 's', 'p', '*']
-    #
-    #     for j in range(len(self.methods)):
-    #         plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=self.methods[j], ls=styles[j%4], marker=markers[j%5])
-    #
-    #     plt.legend(loc='best')
-    #
-    #     plt.title('parameter influence')
-    #     plt.ylabel(ylabel)
-    #     plt.xlabel(self.PARAM_NAMES[self.param_idx])
-    #     plt.xticks(x_vals, x_ticks_labels)
-    #     plt.grid(True)
-    #     plt.grid(True, which='Minor', axis='y')
-    #
-    #     if np.min(y_vals) < 0:
-    #         plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
-    #     else:
-    #         plt.ylim([0, np.max([1, np.max(y_vals)])])
-    #
-    #
-    # def plot_results(self, results, show_plot=False, save_plot=False, output_dir='/output/', score_names=None):
-    #
-    #     if score_names is None:
-    #         score_names = SCORE_NAMES
-    #
-    #     # create output directory if necessary
-    #     if save_plot and not os.path.exists(output_dir):
-    #         os.makedirs(output_dir)
-    #
-    #     # initialise values for x axis
-    #     if (self.param_values.ndim > 1):
-    #         x_vals = self.param_values[:, 0]
-    #     else:
-    #         x_vals = self.param_values
-    #
-    #     # initialise x-tick labels
-    #     x_ticks_labels = list(map(str, self.param_values))
-    #
-    #     for i in range(len(score_names)):
-    #         self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
-    #
-    #         if save_plot:
-    #             print('Saving plot...')
-    #             plt.savefig(output_dir + 'plot_' + score_names[i] + '.png')
-    #             plt.clf()
-    #
-    #         if show_plot:
-    #             plt.show()
-    #
-    #         if i == 5:
-    #             self.make_plot(x_vals, results[:,i,:,:], x_ticks_labels, score_names[i])
-    #             plt.ylim([0,1])
-    #
-    #             if save_plot:
-    #                 print('Saving plot...')
-    #                 plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.png')
-    #                 plt.clf()
-    #
-    #             if show_plot:
-    #                 plt.show()
+

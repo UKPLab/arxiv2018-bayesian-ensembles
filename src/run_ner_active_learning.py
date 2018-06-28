@@ -12,6 +12,11 @@ output_dir = '../../data/bayesian_annotator_combination/output/ner_al/'
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
     load_data.load_ner_data(False)
 
+# TODO: recompute metrics for test data... they are using the bad old code?
+# TODO: include a random baseline
+# TODO: change integrateLSTM to run 20 epochs in first use of LSTM, then one epoch per VB iteration,
+# TODO: allow 6 VB iterations with LSTM after initial 14 with workers only
+
 # debug with subset -------
 # s = 100
 # idxs = np.argwhere(gt!=-1)[:s, 0]
