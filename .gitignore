@@ -1,3 +1,4 @@
+*.pkl
 *.pyc
 *.bak
 *~
@@ -71,7 +72,7 @@ output/short_bias_exp_full
 output/crowdsourcing_2/
 *.out
 env
-models
+models/*
 tmpresults
-evaluation
 documents/related_work/MasterThesis_annotated.pdf
+evaluation/*

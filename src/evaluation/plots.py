@@ -107,7 +107,7 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
             if show_plot:
                 plt.show()
 
-def plot_active_learning_results(results_dir, output_dir):
+def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 
     ndocs = np.array([605, 1210, 1815, 2420, 3025, 3630, 4235, 4840, 5445, 6045]) # NER dataset
     methods = np.array([
@@ -124,25 +124,49 @@ def plot_active_learning_results(results_dir, output_dir):
 
     for resfile in resfiles:
 
-        if resfile[:7] != 'result_':
+        if result_str not in resfile:
             continue
 
-        if 'result_std_started' in resfile:
+        if result_str + 'std_started' in resfile:
             continue
-        elif 'result_std_nocrowd' in resfile:
+        elif result_str + 'std_nocrowd' in resfile:
             continue
 
-        res = pd.read_csv(os.path.join(results_dir, resfile))
+        ndocsidx = int(resfile.split('.csv')[0].split('Nseen')[-1])
+        ndocsidx = np.argwhere(ndocs == ndocsidx)[0][0]
 
-        for col in res.columns:
-            methodidx = np.argwhere(methods == col.strip("\\# '"))[0][0]
-            ndocsidx = int(resfile.split('.csv')[0].split('Nseen')[-1])
-            ndocsidx = np.argwhere(ndocs == ndocsidx)[0][0]
+        if resfile.split('.')[-1] == 'csv':
+            res = pd.read_csv(os.path.join(results_dir, resfile))
 
-        if 'result_started' in resfile:
-            results[ndocsidx, :, methodidx, 0] = res[col]
-        elif 'result_nocrowd_started' in resfile:
-            results_nocrowd[ndocsidx, :, methodidx, 0] = res[col]
+            for col in res.columns:
+                methodidx = np.argwhere(methods == col.strip("\\# '"))[0][0]
+
+                if result_str + 'started' in resfile:
+                    results[ndocsidx, :, methodidx, 0] = res[col]
+                elif result_str + 'nocrowd_started' in resfile:
+                    results_nocrowd[ndocsidx, :, methodidx, 0] = res[col]
+
+        elif resfile.split('.')[-1] == 'tex':
+            res = pd.read_csv(os.path.join(results_dir, resfile), sep='&', header=None)
+
+            for row in range(res.shape[0]):
+                methodidx = np.argwhere(methods == res[res.columns[0]][row].strip())[0][0]
+
+                recomputed_order = [6, 7, 8, 3, 4, 5, 13]
+
+                if result_str + 'started' in resfile:
+                    for m, metric in enumerate(recomputed_order):
+                        results[ndocsidx, metric, methodidx, 0] = res[res.columns[m+1]][row]
+                elif result_str + 'nocrowd_started' in resfile:
+                    for m, metric in enumerate(recomputed_order):
+                        results_nocrowd[ndocsidx, metric, methodidx, 0] = res[res.columns[m+1]][row]
+
+        else:
+            continue
+
+
+
+
 
     output_pool_dir = os.path.join(output_dir, 'pool/')
     output_test_dir = os.path.join(output_dir, 'test/')
@@ -160,5 +184,5 @@ if __name__ == '__main__':
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    plot_active_learning_results(results_dir, output_dir)
+    plot_active_learning_results(results_dir, output_dir, result_str='recomputed_')
 
