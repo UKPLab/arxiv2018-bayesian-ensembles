@@ -159,7 +159,7 @@ def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrap
                     not_sampled = False
 
             if nsample_attempts <= Ndocs:
-                resample_results[:, i] = calculate_sample_metrics(SCORE_NAMES, nclasses,
+                resample_results[:, i] = calculate_sample_metrics(nclasses,
                                                                   agg[sampleidxs],
                                                                   gt[sampleidxs],
                                                                   probs[sampleidxs],
