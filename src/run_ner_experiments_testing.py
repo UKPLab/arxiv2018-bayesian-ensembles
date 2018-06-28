@@ -60,9 +60,9 @@ exp.alpha0_diags = 1
 exp.alpha0_factor = 1
 best_bac_wm = 'bac_acc'
 
-exp.alpha0_diags = 0.1
-exp.alpha0_factor = 0.1
-best_bac_wm = 'bac_ibcc'
+# exp.alpha0_diags = 0.1
+# exp.alpha0_factor = 0.1
+# best_bac_wm = 'bac_ibcc'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
