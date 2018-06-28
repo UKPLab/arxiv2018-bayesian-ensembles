@@ -29,6 +29,59 @@ doc_start_test = doc_start[gold_labelled]
 text_test = text[gold_labelled]
 
 
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False #True
+#
+# exp.nu0_factor = 0.1
+# exp.alpha0_diags = 0.1
+# exp.alpha0_factor = 0.1
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 'HMM_crowd',
+#                 'HMM_crowd_then_LSTM',
+#                 ]
+#
+# exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
+#                 ground_truth_nocrowd=gt_test, doc_start_nocrowd=doc_start_test, text_nocrowd=text_test,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False #True
+#
+# exp.nu0_factor = 0.1
+# exp.alpha0_diags = 0.1
+# exp.alpha0_factor = 0.1
+#
+# exp.methods =  [
+#                 'bac_seq_integrateBOF_integrateLSTM_atEnd',
+#                 ]
+#
+# exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
+#                 ground_truth_nocrowd=gt_test, doc_start_nocrowd=doc_start_test, text_nocrowd=text_test,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False #True
+#
+# exp.nu0_factor = 0.1
+# exp.alpha0_diags = 0.1
+# exp.alpha0_factor = 0.1
+#
+# exp.methods =  [
+#                 'bac_seq_integrateBOF_then_LSTM',
+#                 ]
+#
+# exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
+#                 ground_truth_nocrowd=gt_test, doc_start_nocrowd=doc_start_test, text_nocrowd=text_test,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
+
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 
 exp.save_results = True
@@ -38,44 +91,8 @@ exp.nu0_factor = 0.1
 exp.alpha0_diags = 0.1
 exp.alpha0_factor = 0.1
 
-# run all the methods that don't require tuning here
 exp.methods =  [
-                'HMM_crowd',
-                'HMM_crowd_then_LSTM',
-                ]
-
-exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
-                ground_truth_nocrowd=gt_test, doc_start_nocrowd=doc_start_test, text_nocrowd=text_test,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
-
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False #True
-
-exp.nu0_factor = 0.1
-exp.alpha0_diags = 0.1
-exp.alpha0_factor = 0.1
-
-exp.methods =  [
-                'bac_seq_integrateBOF_integrateLSTM_atEnd',
-                ]
-
-exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
-                ground_truth_nocrowd=gt_test, doc_start_nocrowd=doc_start_test, text_nocrowd=text_test,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev)
-
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False #True
-
-exp.nu0_factor = 0.1
-exp.alpha0_diags = 0.1
-exp.alpha0_factor = 0.1
-
-exp.methods =  [
-                'bac_seq_integrateBOF_then_LSTM',
+                'bac_seq__integrateLSTM_integrateBOF_atEnd_noHMM',
                 ]
 
 exp.run_methods(annos_tr, gt_tr, doc_start_tr, output_dir, text_tr,
