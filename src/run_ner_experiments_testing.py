@@ -14,23 +14,23 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
     load_data.load_ner_data(regen_data)
 
 # debug with subset -------
-s = 500
-idxs = np.argwhere(gt!=-1)[:s, 0]
+#s = 500
+#idxs = np.argwhere(gt!=-1)[:s, 0]
 
-idxs = (gt != -1).flatten()
+#idxs = (gt != -1).flatten()
 
-gt = gt[idxs]
-annos = annos[idxs]
-doc_start = doc_start[idxs]
-print('No. documents:')
-print(np.sum(doc_start))
-text = text[idxs]
-gt_task1_val = gt_task1_val[idxs]
+#gt = gt[idxs]
+#annos = annos[idxs]
+#doc_start = doc_start[idxs]
+#print('No. documents:')
+#print(np.sum(doc_start))
+#text = text[idxs]
+#gt_task1_val = gt_task1_val[idxs]
 
-ntest = 500
-doc_start_nocrowd = doc_start_nocrowd[:ntest]
-text_nocrowd = text_nocrowd[:ntest]
-gt_nocrowd = gt_nocrowd[:ntest]
+#ntest = 500
+#doc_start_nocrowd = doc_start_nocrowd[:ntest]
+#text_nocrowd = text_nocrowd[:ntest]
+#gt_nocrowd = gt_nocrowd[:ntest]
 
 # -------------------------
 
@@ -45,11 +45,11 @@ exp.opt_hyper = False#True
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 10
 
-exp.alpha0_factor = 1
-best_bac_wm = 'bac_seq'
+#exp.alpha0_factor = 1
+#best_bac_wm = 'bac_seq'
 
-# exp.alpha0_factor = 0.1
-# best_bac_wm = 'bac_vec'
+exp.alpha0_factor = 0.1
+best_bac_wm = 'bac_vec'
 
 # exp.alpha0_factor = 0.1
 # best_bac_wm = 'bac_mace'
@@ -60,11 +60,12 @@ exp.methods =  [
                 # 'ds',
                 #'gt_then_LSTM',
                 #best_bac_wm
-                # best_bac_wm + '_integrateBOF',
-                best_bac_wm + '_integrateBOF_then_LSTM',
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+                best_bac_wm + '_integrateBOF',
+                #best_bac_wm + '_integrateBOF_then_LSTM',
+                #best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 #best_bac_wm + '_integrateBOF_noHMM',
                 #best_bac_wm + '_noHMM'
+                'bac_vec_integrateBOF'
 ]
 
 # should run both task 1 and 2.
