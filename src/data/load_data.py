@@ -752,62 +752,62 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # Steps to load data (all steps need to map annotations to consecutive integer labels).
         # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
 
-        # # load the gold data in the same way as the worker data
-        # gold_data, _, _ = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
-        #
-        # # load the validation data
-        # data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
-        #                                                                gold_data, skip_sen_with_dirty_data)
-        #
-        # # convert the text to feature vectors
-        # #data['text'], _ = build_feature_vectors(data['text'].values)
-        #
-        # # save the annos.csv
-        # data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
-        #             float_format='%.f', na_rep=-1)
-        #
-        # # save the text in same order
-        # data.to_csv(savepath + '/task1_val_text.csv', columns=['text'], header=False, index=False)
-        #
-        # # save the doc starts
-        # data.to_csv(savepath + '/task1_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
-        #
-        #
-        # # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
-        # # merge gold with the worker data
-        # data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
-        #
-        # # save the annos.csv
-        # data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
-        #
-        #
-        # # 3. Load worker annotations for test set.
-        # # load the gold data in the same way as the worker data
-        # gold_data, _, _ = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
-        #
-        # # load the test data
-        # data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/',
-        #                                                                gold_data, skip_sen_with_dirty_data)
-        #
-        # # convert the text to feature vectors
-        # #data['text'], _ = build_feature_vectors(data['text'].values)
-        #
-        # # save the annos.csv
-        # data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
-        #             float_format='%.f', na_rep=-1)
-        #
-        # # save the text in same order
-        # data.to_csv(savepath + '/task1_test_text.csv', columns=['text'], header=False, index=False)
-        #
-        # # save the doc starts
-        # data.to_csv(savepath + '/task1_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
-        #
-        # # 4. Create ground truth CSV for task1_test_path
-        # # merge with the worker data
-        # data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
-        #
-        # # save the annos.csv
-        # data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)
+        # load the gold data in the same way as the worker data
+        gold_data, _, _ = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
+
+        # load the validation data
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
+                                                                       gold_data, skip_sen_with_dirty_data)
+
+        # convert the text to feature vectors
+        #data['text'], _ = build_feature_vectors(data['text'].values)
+
+        # save the annos.csv
+        data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
+                    float_format='%.f', na_rep=-1)
+
+        # save the text in same order
+        data.to_csv(savepath + '/task1_val_text.csv', columns=['text'], header=False, index=False)
+
+        # save the doc starts
+        data.to_csv(savepath + '/task1_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
+
+
+        # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
+        # merge gold with the worker data
+        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
+
+        # save the annos.csv
+        data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
+
+
+        # 3. Load worker annotations for test set.
+        # load the gold data in the same way as the worker data
+        gold_data, _, _ = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
+
+        # load the test data
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/',
+                                                                       gold_data, skip_sen_with_dirty_data)
+
+        # convert the text to feature vectors
+        #data['text'], _ = build_feature_vectors(data['text'].values)
+
+        # save the annos.csv
+        data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
+                    float_format='%.f', na_rep=-1)
+
+        # save the text in same order
+        data.to_csv(savepath + '/task1_test_text.csv', columns=['text'], header=False, index=False)
+
+        # save the doc starts
+        data.to_csv(savepath + '/task1_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
+
+        # 4. Create ground truth CSV for task1_test_path
+        # merge with the worker data
+        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
+
+        # save the annos.csv
+        data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)
 
         # 5. Create a file containing only the words for the task 2 validation set, i.e. like annos.csv with no annotations.
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_val_path but blank out the task_1 labels

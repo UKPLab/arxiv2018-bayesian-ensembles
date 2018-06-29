@@ -8,15 +8,15 @@
 %\begin{enumerate}
 %  \item When do other methods outperform simple majority voting? Show performance against worker accuracy.
 %  Similar experiments were carried out with a different set of baselines in \cite{Simpson2014Thesis}, Section 2.5.2, with all workers having similar accuracies, and Section 2.5.4, where some workers are noisy and others are highly accurate. Here, we vary the average accuracy of workers, with lower average accuracy leading to more diversity between workers. Analyse whether the full IBCC confusion matrix offers benefits over MACE due to worker accuracy varying between classes when accuracy is lower. 
-%  \item How well do MACE, IBCC, and Seq-BCC handle worker bias? Show performance against worker bias toward one class. This is a comparable experiment to \cite{Simpson2014Thesis}, Section 2.5.3, which notably does not include MACE.
-%  \item How well does each method handle data sparsity? (a) Vary the amount of observations per worker. Expect MACE to perform well, Seq-BCC may suffer from the larger confusion matrix. (b) Vary the number of observations per data point. 
-%  \item Do MACE and IBCC still work with unbalanced datasets? Test with unbalanced class distributions, i.e. starting from $p(B) = p(I) = p(O) = 0.3$, decrease
-%  $p(B)$ and $p(I)$ until $p(O) = 0.99$.
+%  \item How well do MACE, IBCC, and seq-BCC handle worker bias? Show performance against worker bias toward one class. This is a comparable experiment to \cite{Simpson2014Thesis}, Section 2.5.3, which notably does not include MACE.
+%  \item How well does each method handle data sparsity? (a) Vary the amount of observations per worker. Expect MACE to perform well, seq-BCC may suffer from the larger confusion matrix. (b) Vary the number of observations per data point. 
+%  \item Do MACE and IBCC still work with unbalanced datasets? Test with unbalanced class distributions, i.e. starting from $p(B) = p(I) = p(O) = .3$, decrease
+%  $p(B)$ and $p(I)$ until $p(O) = .99$.
 %\end{enumerate}
 %In each case, we use a set of default values for the variables that are not currently being tested. These are
 % chosen so that all methods perform well (e.g. 90\% accuracy) under the best conditions of the test. E.g. for the test where we vary worker accuracy, we set bias and sparsity to be low so that the performance of all methods is good when workers are 80\% accurate.
 %
-%For all methods except Seq-BCC, we compute performance metrics both before and after the valid annotation post-processing step, which is required to ensure that I tokens do not follow O tokens.
+%For all methods except seq-BCC, we compute performance metrics both before and after the valid annotation post-processing step, which is required to ensure that I tokens do not follow O tokens.
 %
 %Performance metrics:
 %\begin{enumerate}
@@ -29,14 +29,14 @@
 %
 %We also evaluate the competence scores estimated by each method. First, we compute the ground truth from the 
 %synthetic confusion matrices. We use a weighted average over classes (weighted by class frequency) to produce the 
-%overall worker accuracy. Then, we compute accuracy from Seq-BCC, MACE and IBCC using similar methods. 
+%overall worker accuracy. Then, we compute accuracy from seq-BCC, MACE and IBCC using similar methods. 
 %For each method, we can compute the mean and STD of cross entropy error between the estimated and the ground truth
 % confusion matrices. We then reproduce the plots described above, but showing the cross entropy error for the 
 % competence estimates. 
 
 %\subsection{Real-world Data}
 %
-%We investigate the performance on some real datasets to show how well the methods work when combining real workers. Besides the performance metrics mentioned above, we also quantitatively analyse examples of where Seq-BCC outperforms other methods to show where they may have trouble forming valid or grammatically correct annotations, e.g. where the starting token is incorrect. 
+%We investigate the performance on some real datasets to show how well the methods work when combining real workers. Besides the performance metrics mentioned above, we also quantitatively analyse examples of where seq-BCC outperforms other methods to show where they may have trouble forming valid or grammatically correct annotations, e.g. where the starting token is incorrect. 
 %Ideally, we would also analyse whether the annotations produced are grammatically sensible, e.g. if there is conflict between workers about where an annotation should start, the method should choose one valid start point, not an invalid start point that lies in between. These points can be evaluated by computing:
 %\begin{enumerate}
 %\item The percentage of "sensible" annotations, as judged by an expert for the task. For tasks where this data is not available, we can use the following metrics to gauge annotation quality.
@@ -76,11 +76,11 @@ Next, we test the sequential \emph{HMM-Crowd} method \cite{nguyen2017aggregating
 
 We test our proposed method, Bayesian sequence classifier combination (BSCC) in several configurations. Firstly, with different worker models:
 \begin{enumerate}
-\item Accuracy model (\emph{BSCC-ACC}): each worker is represented by a single parameter encoding $p( correct label )$
+\item accuracy model (\emph{BSCC-acc}): each worker is represented by a single parameter encoding $p( correct label )$
 \item Spammer model (\emph{BSCC-MACE}): proposed for MACE \cite{hovy2013learning}, each worker has a parameter encoding 
 $p( worker is spamming )$ and a set of $L$ parameters encoding $p( label | worker is spamming)$.
 \item Confusion matrix (\emph{BSCC-IBCC}): as in \cite{simpsonlong}, each worker has a matrix of parameters containing $p( label l | true class j)$.
-\item Sequential confusion matrix (\emph{BSCC-Seq}): as described in Section \ref{sec:model}, extends the confusion matrix using an HMM to model label transitions.
+\item sequential confusion matrix (\emph{BSCC-seq}): as described in Section \ref{sec:model}, extends the confusion matrix using an HMM to model label transitions.
 \end{enumerate}
 Secondly, with different feature models:
 \begin{enumerate}
@@ -103,12 +103,12 @@ and they appear to have used a subset of the publicly-available dataset with on 
 
 %Sentence separation -- why does it improve performance if we don't split docs into sentences?
 
-% The discrepancy between the latest results and some previous ones, e.g. DS, BSCC-Seq-IF with 
+% The discrepancy between the latest results and some previous ones, e.g. DS, BSCC-seq-IF with 
 % same priors, BSCC-Vec-IF for NER? For BSCC, it may be due to different conf mat for the IF data model.
 % For DS, I think it was still using the priors chosen for IBCC, so results changed when nu0 changed.
 
-% TODO: re-run NER task 2 with BSCC-Seq. -- running
-% TODO: run BSCC-Seq, DS and MACE with pico task 1. -- running
+% TODO: re-run NER task 2 with BSCC-seq. -- running
+% TODO: run BSCC-seq, DS and MACE with pico task 1. -- running
 % TODO: still have an unexplained difference between HMM-crowd and BSCC-Vec. Is it the initialisation? The attempt to test the same hyperparameter values as HMM-crowd failed -- why is that? Diff may also be due to the use of confusion matrix for the data model - check that is working okay.
 
 Note that the token-level F1-score can be skewed upwards by matching a few long spans correctly, but is useful for PICO because it shows up cases where the spans matched but the predictions were split, i.e. B is used instead of I. With non-strict entity matching, the precision and recall can be 100\% even though the prediction is split into multiple spans.
@@ -128,146 +128,153 @@ Token-level F1-score catches this because it penalises the erroneous B tokens. W
 % 
 % Investigate class-wise prec and rec?
 
-% what has happened to BSCC-Seq?
+% what has happened to BSCC-seq?
+
+% \begin{table*}
+% % \small
+% \begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
+% \hline
+% NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} & & \\ \hline 
+% & Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  & Notes & Hyperparams\\ \hline
+% MV &  74.05 & 55.11 & 63.19 & 68.45 & .9406 & 7.72 & \MULTIPLY{.000883515461520577}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol &&\\
+% MACE ! & 67.01 & 67.16 & 67.09 & 66.95 & .8385 & 2.87 & \MULTIPLY{.000837014647756336}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, .1\\
+% %DS & 77.23 & 7.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % max 10 iterations
+% DS & 73.15 & 69.70 & 71.38 & 75.35 & .9548 & 4.10 & \MULTIPLY{.000651011392699372}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & &\\
+% IBCC & 73.92 & 69.56 & 71.67 & 75.41 & .9586 & .61 & \MULTIPLY{.00053475935828877}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, 10, .1 \\ \hline
+% HMM-Crowd* !& 77.67 & 7.05 & 73.67 & 75.33 & .9766 & 1.11 & 0 & Why better than BSCC-Vec-IF? Uses posteriors, different initialisation & 0, .1 \\ % 10 EM iterations
+% HMM-Crowd-then-LSTM*! & 77.67 & 7.66 & 74.00 & 75.11 & .9058 & 13.92 & 0 & & 0, .1\\  \hline
+% BSCC-seq-NF*! & 81.30 & 67.46 & 73.74 & 7.35 & .9585 & .45 & 0 & & 100, 100, 36\\ \hline
+% BSCC-acc-IF & 77.60 & 52.88 & 62.90 & 67.42 & .9643 & 1.41 & 0 & & .1, 1, 1 \\
+% BSCC-MACE-IF! & 44.42 & 79.92 & 57.10 & 57.93 & .9534 & 1.35 & 0 &  & .1, 1, .1\\
+% BSCC-Vec-IF & 75.66 & 63.25 & 68.90 & 72.88 & .9747 & .93 & 0 &  &  .1, 10, .1\\
+% %BSCC-Vec-IF & 81.01 & 62.72 & 7.71 & 71.28 & .9695 & .82 & 0 &  & 10, 1 \\
+% % BSCC-Vec-IF & 81.01 & 63.16 & 71.01 & 71.38 & .9702 & .80 & 0 &  &  .1, 1, .1\\
+% BSCC-IBCC-IF & 7.91 & 7.89 & 7.90 & 74.36 & .9739 & .87 & 0 &  & .1, .1, 1\\
+% %BSCC-IBCC-IF & 75.43 & 74.21 & 74.82 & 74.33 & .9733 & .55 & 0 &  & 100, .1, 9\\
+% BSCC-seq-IF & 
+% 73.63 & 78.51 & 7.98 & 71.96 & .9015 & 1.45 & 0 & & .1, 10, 1\\ \hline
+% %BSCC-seq-IF & 81.66 & 69.49 & 75.08 & 71.31 & .9707 & .44 & 0 & & 100, 36\\ \hline
+% %BSCC-seq-IF & 81.88 & 7.66 & 75.86 & 73.94 & .9304 & .82 & 0 & & .1, 1, 1\\ \hline
+% BSCC-IBCC-IF-then-LSTM*! & 71.53 & 69.88 & 7.70 & 7.61 & .9082 & 16.92 & 0 & Pre bug-fix result & 50, 9 \\% Post bug-fix (with BSCC-seq), the LSTM seems to have failed - sometimes more epochs are required? Compare to HMM-Crowd-then-LSTM & 50, 9\\
+% %BSCC-IBCC+LSTM &\\ % don't need if we already know that including IF helps
+% BSCC-seq-IF+LSTM*! & 81.67 & 69.64 & 75.17 & 71.32 & .9707 & .44 & 0 & & 100, 36 \\ 
+% BCC-seq-IF+LSTM*! & & & & & & & & Running & 100, 36 \\ % no HMM because we integrate LSTM instead
+% \hline
+% \end{tabularx}
+% \caption{Crowdsourced label aggregation performance on NER dataset: estimating true labels given crowdsourced labels.}
+% \label{tab:aggregation_results_ner}
+% \npnoround
+% \end{table*}
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | Y | Y | >{\raggedleft\arraybackslash}p{1.6cm} |}
 \hline
-NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} & & \\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  & Notes & Hyperparams\\ \hline
-MV &  74.05 & 55.11 & 63.19 & 68.45 & .9406 & 7.72 & \MULTIPLY{0.000883515461520577}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol &&\\
-MACE ! & 67.01 & 67.16 & 67.09 & 66.95 & .8385 & 2.87 & \MULTIPLY{0.000837014647756336}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, .1\\
-%DS & 77.23 & 70.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{0.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % max 10 iterations
-DS & 73.15 & 69.70 & 71.38 & 75.35 & .9548 & 4.10 & \MULTIPLY{0.000651011392699372}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & &\\
-IBCC & 73.92 & 69.56 & 71.67 & 75.41 & .9586 & 0.61 & \MULTIPLY{0.00053475935828877}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, 10, .1 \\ \hline
-HMM-Crowd* !& 77.67 & 70.05 & 73.67 & 75.33 & .9766 & 1.11 & 0 & Why better than BSCC-Vec-IF? Uses posteriors, different initialisation & 0, 0.1 \\ % 10 EM iterations
-HMM-Crowd-then-LSTM*! & 77.67 & 70.66 & 74.00 & 75.11 & .9058 & 13.92 & 0 & & 0, .1\\  \hline
-BSCC-Seq-NF*! & 81.30 & 67.46 & 73.74 & 70.35 & .9585 & 0.45 & 0 & & 100, 100, 36\\ \hline
-BSCC-Acc-IF & 77.60 & 52.88 & 62.90 & 67.42 & .9643 & 1.41 & 0 & & .1, 1, 1 \\
-BSCC-MACE-IF! & 44.42 & 79.92 & 57.10 & 57.93 & .9534 & 1.35 & 0 &  & .1, 1, .1\\
-BSCC-Vec-IF & 75.66 & 63.25 & 68.90 & 72.88 & .9747 & 0.93 & 0 &  &  .1, 10, .1\\
-%BSCC-Vec-IF & 81.01 & 62.72 & 70.71 & 71.28 & .9695 & 0.82 & 0 &  & 10, 1 \\
-% BSCC-Vec-IF & 81.01 & 63.16 & 71.01 & 71.38 & .9702 & 0.80 & 0 &  &  .1, 1, .1\\
-BSCC-IBCC-IF & 70.91 & 70.89 & 70.90 & 74.36 & .9739 & 0.87 & 0 &  & .1, .1, 1\\
-%BSCC-IBCC-IF & 75.43 & 74.21 & 74.82 & 74.33 & .9733 & 0.55 & 0 &  & 100, .1, 9\\
-BSCC-Seq-IF & 
-73.63 & 78.51 & 70.98 & 71.96 & .9015 & 1.45 & 0 & & .1, 10, 1\\ \hline
-%BSCC-Seq-IF & 81.66 & 69.49 & 75.08 & 71.31 & .9707 & 0.44 & 0 & & 100, 36\\ \hline
-%BSCC-Seq-IF & 81.88 & 70.66 & 75.86 & 73.94 & .9304 & 0.82 & 0 & & .1, 1, 1\\ \hline
-BSCC-IBCC-IF-then-LSTM*! & 71.53 & 69.88 & 70.70 & 70.61 & .9082 & 16.92 & 0 & Pre bug-fix result & 50, 9 \\% Post bug-fix (with BSCC-seq), the LSTM seems to have failed - sometimes more epochs are required? Compare to HMM-Crowd-then-LSTM & 50, 9\\
-%BSCC-IBCC+LSTM &\\ % don't need if we already know that including IF helps
-BSCC-Seq-IF+LSTM*! & 81.67 & 69.64 & 75.17 & 71.32 & .9707 & 0.44 & 0 & & 100, 36 \\ 
-BCC-Seq-IF+LSTM*! & & & & & & & & Running & 100, 36 \\ % no HMM because we integrate LSTM instead
+NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} & \\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$  & Hyper.\\ \hline
+MV & 75.1 & 54.9 & 63.5 & %.796 & .581 & .672 & 
+68.5 & .941 & 7.62 & 40 & \\ 
+MACE & 71.2 & 64.9 & 67.9 & %.741 & .694 & .717 & 
+71.6 & .837 & 1.14 & 35 & .1, .1 \\ 
+DS & 74.9 & 69.7 & 72.2 & %.786 & .739 & .762 & 
+75.4 & .955 & 4.16 & 25 &  \\ 
+IBCC & 75.7 & 69.6 & 72.5 & %.791 & .735 & .762 & 
+75.5 & .959 & \textbf{0.62} & 21 & .1, 10, .1 \\ 
+\hline
+
+HMM-crowd & 74.2 & 68.2 & 71.1 & %.784 & .717 & .749 & 
+75.2 & \textbf{.977} & 1.08 & 1 & 0, .1 \\ 
+HMM-crowd$\rightarrow$LSTM & 74.3 & 68.3 & 71.2 & %.785 & .717 & .749 & 
+75.5 & .907 & 13.75 & 1 & 0, .1 \\ 
+\hline
+
+BSC-seq-notext & 75.8 & 65.4 & 70.2 & %.829 & .695 & .756 & 
+70.8 & .894 & 1.15 & 0 & .1, 10, 1 \\ \hline
+
+BSC-acc & 78.0 & 53.2 & 63.2 & 67.5 & .966 & 1.43 & 0 & .1, 1, 1 \\ 
+BSC-MACE & 63.6 & 73.0 & 68.0 & %.562 & .803 & .661 & 
+73.0 & .964 & 1.22 & 0 & .1, 10, .1 \\ 
+BSC-CV & 76.8 & 62.7 & 69.0 & %.809 & .658 & .726 & 
+72.8 & .974 & 1.05 & 0 & .1, 10, .1 \\ 
+BSC-CM & 73.7 & 72.2 & 72.9 & 75.6 & .965 & 1.80 & 0 & .1, .1, .1 \\ 
+BSC-seq & \textbf{77.0} & \textbf{72.0} & \textbf{74.4} & \textbf{76.4} & .913 & 1.35 & 0 & .1, 10, 1 \\ 
+\hline
+
+%BSC-seq$\rightarrow$LSTM & 76.6 & 70.9 & 73.6 & 75.6 & .906 & 12.71 & 0 & .1, 10, 1 \\ % old prior
+BSC-seq$\rightarrow$LSTM & 76.2 & 70.2 & 73.1 & 75.8 & .902 & 12.98 & 0 & .1, 10, 1 \\ 
+%BSC-seq+LSTM & 75.3 & 69.3 & 72.2 & 74.7 & .913 & 1.24 & 0 & .1, 10, 1 \\% old prior
+BSC-seq+LSTM & 74.9 & 68.3 & 71.4 & 74.1 & .910 & 1.99 & 0 & .1, 10, 1 \\
+BCC-seq+LSTM & 51.6 & 20.4 & 29.3 & 36.3 & .947 & 3.54 & 0 & .1, 10, 1 \\
 \hline
 \end{tabularx}
-\caption{Crowdsourced label aggregation performance on NER dataset: estimating true labels given crowdsourced labels.}
+\caption{NER dataset: estimating true labels for documents that have been labelled by the crowd.}
 \label{tab:aggregation_results_ner}
 \npnoround
 \end{table*}
 
+
 % tuning tested the following hyperparameters on a subset of the validation data:
-%diags = [0.1, 1, 10, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-%factors = [0.1, 1, 9, 36]
+%diags = [.1, 1, 10, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+%factors = [.1, 1, 9, 36]
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | Y | Y | >{\raggedleft\arraybackslash}p{1.6cm} |}
 \hline
-PICO & \multicolumn{3}{|l|}{Span-level metrics}                          & \multicolumn{4}{|l|}{Token-level metrics} & &\\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ & Notes & Hyperparams. \\ \hline
-MV & 82.45 & 52.75 & 64.34 & 76.41 & .9232 & 2.55 & \MULTIPLY{0.00145910848471584}{54358}{\sol}\ROUND[0]{\sol}{\sol}\sol & &  \\
-MACE* & 45.01 & 88.49 & 59.63 & & & & & results from \cite{nguyen2017aggregating} &\\
-DS & 71.32 & 66.30 & 68.72 & 79.33 & .9336 & 0.44 & \MULTIPLY{0.000984898227183191}{54358}{\sol}\ROUND[0]{\sol}{\sol}\sol  & &\\ 
-IBCC & 72.12 & 65.99 & 68.92 & 79.31 & .9349 & 0.27 & \MULTIPLY{0.000693076530240023}{54358}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, 10, 10 \\ \hline
-%HMM-Crowd* & 72.81 & 75.14 & 73.93 & & & & & &\\  % from Nguyen -- different split
-HMM-Crowd & 76.49 & 66.23 & 70.99 & 77.90 & .9435 & 0.79 & 0 & 3\% lower than \cite{nguyen2017aggregating} on different split &\\ 
-HMM-Crowd-then-LSTM & & & & & & & & running & \\ \hline
-%BSCC-Acc-NF & \\ % we should exclude these -- only include the best variants
-%BSCC-MACE-NF & \\
-%BSCC-Vec-NF & \\
-%BSCC-IBCC-NF & 61.83 & 76.33 & 68.32 & 74.80 & .9389 & 1.37 & 0 & &\\ \hline
-BSCC-Seq-NF & 81.16 & 59.18 & 68.45 & 59.76 & .9218 & 0.73 & 0 & & .1, .1, .1\\ \hline
-%BSCC-Acc-IF & 89.53 & 45.11 & 59.99 & 74.76 & .9080 & 1.57 & 0 & & 100, 100, .1 \\
-BSCC-Acc-IF & 89.58 & 45.14 & 60.04 & 74.95 & .9260 & 1.06 & 0 & Without strong prior on IF & .1, .1, 10 \\
-%BSCC-MACE-IF & 45.79 & 84.43 & 59.38 & 67.94 & .9441 & 2.01 & 0 & &  100, 100, .1\\
-BSCC-MACE-IF & 46.68 & 84.36 & 60.10 & 68.51 & .9443 & 1.98 & 0 & &  .1, 100, .1\\
-%BSCC-Vec-IF & 77.22 & 64.86 & 70.51 & 77.41 & .9342 & 0.81 & 0 & Without strong prior on IF & 100, 1, .1\\ % How about vec-to-seq? 
-%BSCC-Vec-IF & 74.90 & 67.18 & 70.83 & 76.95 & .9344 & 0.81 & 0 & Without strong prior on IF & .1, 1, .1\\ % How about vec-to-seq? 
-BSCC-Vec-IF & 74.90 & 67.18 & 71.11 & 77.19 & .9363 & 0.84 & 0 & With strong prior on IF & .1, 1, .1\\ % How about vec-to-seq? 
-%BSCC-IBCC-IF & 61.92 & 76.62 & 68.49 & 74.86 & .9387 & 1.37 & 0 & & 100, 100, 1 \\
-BSCC-IBCC-IF & 61.83 & 76.33 & 68.32 & 74.80 & .9389 & 1.37 & 0 & Without strong prior on IF & .1, 100, 1 \\
-BSCC-Seq-IF & 74.67 & 73.64 & 74.15 & 58.84 & .9292 & .97 & 0 & With strong prior on IF & .1, .1, .1 \\ \hline 
-%BSCC-Seq-IF & 78.37 & 62.78 & 69.71 & 38.95 & .9310 & 0.71 & 0 & Beats IBCC. Seq useful but too many params? & 100, .1, .1 \\ \hline
-%BSCC-Seq-IF & 86.39 & 61.97 & 72.17 & 52.64 & .9288 & .73 & 0 & & .1, .1, .1 \\ \hline 
-%BSCC-IBCC-IF-then-LSTM & 61.88 & 76.33 & 68.35 & 74.73 & .8868 & 19.69 & 0 & & .1, 100, 1 \\
-% BSCC-Seq+LSTM &\\ % we already know that the other features help so leave them in
-%BSCC-IBCC-IF+LSTM & 61.15 & 76.56 & 67.99 & 74.90 & .9389 & 1.37 & 0 & & .1, 100, 1 \\
-%BCC-IBCC-IF+LSTM &\\ % no HMM because we integrate LSTM instead
-BSCC-Seq-then-LSTM & 87.14 & 61.38 & 72.02 & 51.55 & .8212 & 21.62 & 0 & & .1, .1, .1 \\
-BSCC-Seq+LSTM & 75.09 & 77.33 & 76.20 & 51.85 & .9336 & 0.68 & 0 & & .1, .1, .1 \\
-BCC-Seq+LSTM & 52.88 & 17.06 & 25.80 & 46.92 & .8446 & 0.58 & \MULTIPLY{0.0107974027868972}{54358}{\sol}\ROUND[0]{\sol}{\sol}\sol  & fail! & .1, .1, .1 \\
+PICO & \multicolumn{3}{|l|}{Span-level metrics}                          & \multicolumn{4}{|l|}{Token-level metrics} &\\ \hline 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$ & Hyper. \\ \hline
+MV & 82.5 & 52.8 & 64.3 & 76.4 & .923 & 2.55 & 80 &  \\
+MACE & 25.4 & 84.1 & 39.0 & 44.3 & .840 & 58.23 & 0 & .1, .1\\
+DS & 71.3 & 66.3 & 68.7 & \textbf{79.3} & .934 & 0.44 & 54 &\\ 
+IBCC & 72.1 & 66.0 & 68.9 & \textbf{79.3} & .935 & \textbf{0.27} & 37 & .1, 10, 10 \\ \hline
+
+HMM-Crowd & 76.5 & 66.2 & 71.0 & 77.9 & \textbf{.944} & 0.79 & 0, .1 & \\ 
+HMM-Crowd-then-LSTM & 76.5 & 66.5 & 71.2 & 78.2 & .868 & 12.94 & 0 & 0, .1 \\ \hline
+
+BSCC-seq-notext & 81.2 & 59.2 & 68.5 & 59.8 & .922 & 0.73 & 0 & .1, .1, .1\\ \hline
+
+BSCC-acc & \textbf{89.6} & 45.1 & 60.0 & 75.0 & .926 & 1.06 & 0 & .1, .1, 10 \\
+BSCC-MACE & 46.7 & 84.4 & 60.1 & 68.5 & \textbf{.944} & 1.98 & 0 &  .1, 100, .1\\
+BSCC-CV & 74.9 & 67.2 & 71.1 & 77.2 & .936 & 0.84 & 0 & .1, 1, .1\\
+BSCC-CM & 61.8 & 76.3 & 68.3 & 74.8 & .939 & 1.37 & 0 & .1, 100, 1 \\
+BSCC-seq & 74.7 & 73.6 & 74.2 & 58.8 & .929 & 0.97 & 0 & .1, .1, .1 \\ \hline 
+
+BSCC-seq$\rightarrow$LSTM & 87.1 & 61.4 & 72.0 & 51.6 & .821 & 21.62 & 0 & .1, .1, .1 \\
+BSCC-seq+LSTM & 75.1 & \textbf{77.3} & \textbf{76.2} & 51.9 & .934 & 0.68 & 0 & .1, .1, .1 \\
+BCC-seq+LSTM & needs & to & be & rerun & & & & .1, .1, .1 \\
 \hline
 \end{tabularx}
-\caption{Crowdsourced label aggregation performance on PICO dataset: estimating true labels given crowdsourced labels.}
+\caption{PICO dataset: estimating true labels for documents that have been labelled by the crowd.}
 \label{tab:aggregation_results_pico}
 \end{table*}
 
 \begin{figure*}
 \centering
-\subfloat[BSCC-Acc-IF]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-} \\
+% \subfloat[BSCC-acc-IF]{
+%   \includegraphics[width=0.9\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/acc}
+% } \\
 \subfloat[BSCC-Vec-IF]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/vec}
 } \\
 \subfloat[BSCC-MACE-IF]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/mace}
 } \\
 \subfloat[BSCC-IBCC-IF]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/ibcc}
 } \\
-\subfloat[BSCC-Seq-IF, previous label = I]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+\subfloat[BSCC-seq-IF, previous label = I]{
+  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev0}
 } \\
-\subfloat[BSCC-Seq-IF, previous label = O]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+\subfloat[BSCC-seq-IF, previous label = O]{
+  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev1}
 } \\
-\subfloat[BSCC-Seq-IF, previous label = B]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+\subfloat[BSCC-seq-IF, previous label = B]{
+  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev2}
 } \\
 \caption{Confusion matrix representations from each BSCC-***-IF variant trained on the PICO datasets 
 showing the different representations of workers. 
-% Show how worker representation benefits from richer model: e.g. show differences between rows in IBCC compared to Acc.
-% Represent all types as IBCC-confusion matrix plots. Seq will need more >= 3 plots! We can focus on PICO data to make it easier to view,
+% Show how worker representation benefits from richer model: e.g. show differences between rows in IBCC compared to acc.
+% Represent all types as IBCC-confusion matrix plots. seq will need more >= 3 plots! We can focus on PICO data to make it easier to view,
 % or combiner NER classes into BIO. 
 % If each row corresponds to one model, we have 7 rows (2 extra for seq). 
 % Each row can then show either a selection of 5 workers, or we can cluster into 5 groups.
@@ -281,7 +288,7 @@ showing the different representations of workers.
 \subfloat[NER dataset, BSCC-IBCC-IF+LSTM]{
   \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
 }
-\subfloat[PICO dataset, BSCC-Seq-IF+LSTM]{
+\subfloat[PICO dataset, BSCC-seq-IF+LSTM]{
   \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
 }
 \caption{Confusion matrices learned for the integrated LSTM using BSCC-***-IF+LSTm. }
@@ -302,7 +309,7 @@ showing the different representations of workers.
   \includegraphics[width=1\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
 }
 \caption{Examples of different handling of annotator disagreement on PICO. 
-Lines above the text show the crowd's annotations. Lines below show the aggregated annotations from MV, IBCC, HMM-Crowd and BSCC-Seq-IF.
+Lines above the text show the crowd's annotations. Lines below show the aggregated annotations from MV, IBCC, HMM-Crowd and BSCC-seq-IF.
 The sequential methods are able to resolve some issues, 
 while non-sequential methods can lead to invalid annotations. }
 \label{fig:disagreements}
@@ -321,49 +328,39 @@ use the outputs to train the LSTM, then evaluate the LSTM on the validation and 
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | Y | Y |}
 \hline
 NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} \\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ & Notes  \\ \hline
-HMM-Crowd &  \\ 
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$  \\ \hline 
 %HMM-Crowd-then-LSTM & 76.19 & 66.24 & 70.87 &\\ % original results from Nguyen 2017
-HMM-Crowd-then-LSTM & 72.75 & 68.26 & 70.43 & 35.73 & .8752 & 23.45 & 0 & V. close to Nguyen et al.~\shortcite{nguyen2017aggregating}\\ 
-LSTM & 83.19 & 57.12 & 67.73 \\ 
-LSTM-Crowd & 82.38 & 62.10 & 70.82 \\ \hline
-%BSCC-Acc-IF & \\
-%BSCC-MACE-IF & \\
-%BSCC-Vec-IF & \\
-%BSCC-IBCC-IF & 0 & 0 & 0 & 18.17 & .8259 & 0.67 & 0 & Failed \\ \hline % most of the words don't have any training examples, so cannot be classified using only IF.
-BSCC-IBCC-IF-then-LSTM & 57.67 & 66.04 & 61.57 & 33.60 & .8821 & 32.64 & 0 \\ % old results, pre-bugfix. The post-bugfix fun with BSCC-Seq seems to have failed to train. May need more epochs or automatic restarts/testing against dev.
-BSCC-Seq-IF+LSTM & 51.51 & 3.79 & 7.06 & 12.61 & .8120 & 0.74 & 0 & Failed \\ % old results, but the new ones are basically the same.
-BCC-Seq-IF+LSTM &\\
+%HMM-Crowd-then-LSTM & 72.75 & 68.26 & 70.43 & 35.73 & .8752 & 23.45 & 0 & V. close to Nguyen et al.~\shortcite{nguyen2017aggregating}\\ 
+HMM-crowd$\rightarrow$LSTM & 68.8 & \textbf{65.4} & \textbf{67.1} & \textbf{67.5} & .910 & 15.21 & 1 \\ 
+%LSTM & 83.19 & 57.12 & 67.73 \\ 
+%LSTM-Crowd & 82.38 & 62.10 & 70.82 \\ \hline
+%BSC-seq$\rightarrow$LSTM & \textbf{75.0} & \textbf{68.0} & \textbf{71.3} & \textbf{70.2} & .909 & 13.35 & 0 \\ % this was achieved before the priors were 'fixed' so that the disallowed count from banned transition from restricted_type1 -> restricted_type2 was transferred to unrestricted_type2 instead of restricted_type1. However, the method without LSTM improved...
+BSC-seq$\rightarrow$LSTM & \textbf{71.5} & 59.3 & 64.9 & 66.7 & .867 & 17.43 & 0 \\  
+%BSC-seq+LSTM & 71.7 & 62.7 & 66.9 & 65.9 & \textbf{.957} & \textbf{0.542} & 0 \\
+BSC-seq+LSTM & 69.3 & 61.1 & 64.9 & 66.3 & \textbf{.945} & \textbf{0.89} & 0 \\  
+BCC-seq+LSTM & 39.7 & 14.1 & 20.9 & 31.6 & .924 & 2.14 & 0 \\
 \hline
 \end{tabularx}
-\caption{Prediction performance on NER test dataset. Methods trained on crowdsourced labels for training set.}
+\caption{Prediction performance on NER test dataset with training on crowdsourced labels.}
 \label{tab:prediction_results_ner}
 \end{table*}
 
 \begin{table*}
 % \small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X |}
+\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | Y | Y |}
 \hline
 PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{4}{|l|}{Token-level metrics (std.)} \\ \hline 
-& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$ \\ \hline
-HMM-Crowd & \\ 
-HMM-Crowd-then-LSTM &\\ 
-LSTM & \\ 
-LSTM-Crowd & \\ \hline
-%BSCC-Acc-IF & \\
-%BSCC-MACE-IF & \\
-%BSCC-Vec-IF & \\
-BSCC-IBCC-IF & \\
-BSCC-Seq-IF & \\ \hline
-BSCC-Seq-IF-then-LSTM &\\
-BSCC-Seq+LSTM &\\
-BSCC-Seq-IF+LSTM &\\
+& Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$ \\ \hline
+HMM-Crowd$\rightarrow$LSTM &\\ \hline
+BSC-seq$\rightarrow$LSTM &\\
+BSC-seq+LSTM &\\
+BCC-seq+LSTM &\\
 \hline
 \end{tabularx}
-\caption{Prediction performance on PICO test dataset. Methods trained on crowdsourced labels for training set.}
+\caption{Prediction performance on PICO test dataset with training on crowdsourced labels.}
 \label{tab:prediction_results_pico}
 \end{table*}
 

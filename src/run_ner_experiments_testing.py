@@ -44,9 +44,9 @@ exp.opt_hyper = False#True
 
 exp.nu0_factor = 0.1
 
-# exp.alpha0_diags = 10
-#exp.alpha0_factor = 1
-#best_bac_wm = 'bac_seq'
+exp.alpha0_diags = 10
+exp.alpha0_factor = 1
+best_bac_wm = 'bac_seq'
 
 # exp.alpha0_diags = 10
 # exp.alpha0_factor = 0.1
@@ -56,9 +56,9 @@ exp.nu0_factor = 0.1
 # exp.alpha0_factor = 0.1
 # best_bac_wm = 'bac_mace'
 
-exp.alpha0_diags = 1
-exp.alpha0_factor = 1
-best_bac_wm = 'bac_acc'
+# exp.alpha0_diags = 1
+# exp.alpha0_factor = 1
+# best_bac_wm = 'bac_acc'
 
 # exp.alpha0_diags = 0.1
 # exp.alpha0_factor = 0.1

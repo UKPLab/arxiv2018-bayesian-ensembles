@@ -17,11 +17,12 @@ from sklearn.cluster import MiniBatchKMeans
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
+import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_workers/'
 
 # debug with subset -------
-s = 10000#None #100
+s = 1000#None #100
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
@@ -34,13 +35,30 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load
 nu0_factor = 0.1
 alpha0_diags = 0.1
 alpha0_factor = 0.1
+# worker_models = [
+#                     'acc',
+#                     'vec',
+#                     'ibcc',
+#                     'mace',
+#                     'seq',
+#                     ]
 worker_models = [
-                    'acc',
-                    'vec',
-                    'ibcc',
-                    'mace',
-                    'seq',
-                    ]
+    'seq'
+]
+
+
+# data_models = [
+#     ['IF'],
+#     ['IF'],
+#     ['IF'],
+#     ['IF'],
+#     ['IF'],
+# ]
+
+# corresponding list of data models
+data_models = [
+    ['LSTM', 'IF']
+]
 
 inside_labels = [0]
 outside_labels = [1]
@@ -53,7 +71,7 @@ nu0 = np.ones((L + 1, L)) * nu0_factor
 
 confmats = {}
 
-for worker_model in worker_models:
+for w, worker_model in enumerate(worker_models):
 # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
     if worker_model == 'seq' or worker_model == 'ibcc' or worker_model == 'vec':
 
@@ -71,9 +89,11 @@ for worker_model in worker_models:
         alpha0 = alpha0_factor * np.ones((2))
         alpha0[1] += alpha0_diags  # diags are bias toward correct answer
 
+    data_model = data_models[w]
+
     model = BAC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                 beginning_labels=begin_labels, alpha0=alpha0, nu0=nu0, before_doc_idx=1,
-                worker_model=worker_model, tagging_scheme='IOB2', data_model='IF', transition_model='HMM')
+                worker_model=worker_model, tagging_scheme='IOB2', data_model=data_model, transition_model='HMM')
 
     model.verbose = True
 
@@ -94,13 +114,49 @@ for worker_model in worker_models:
 
     model.max_iter = 20
 
-    probs, agg = model.run(annos, doc_start, text)
+    if 'LSTM' in data_model:
+        dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(gt_dev), text_dev,
+                                                               doc_start_dev, gt_dev)
+    else:
+        dev_sentences = None
 
-    print('completed training with worker model = %s' % worker_model)
+    probs, agg = model.run(annos, doc_start, text, dev_data=dev_sentences,
+                                 converge_workers_first=2 if 'LSTM' in data_model else 0)
 
-    EPi = model.worker_model._calc_EPi(model.alpha)
+    print('completed training with worker model = %s and data models %s' % (worker_model, data_model))
 
+    # DATA MODELS
+    for d, dm in enumerate(model.data_model):
+        alpha_data = dm.alpha_data
+        EPi = model.worker_model._calc_EPi(alpha_data)
+
+        # get the confusion matrices from the worker model
+        if worker_model == 'acc':
+            EPi_square = np.zeros((L, L))
+            EPi_square[:, :] = EPi[0, 0] / (L - 1)
+            EPi_square[range(L), range(L)] = EPi[1, 0]
+
+        elif worker_model == 'vec' or worker_model == 'ibcc':
+            EPi_square = EPi[:, :, 0]
+
+        elif worker_model == 'seq':
+            EPi_square = []  # create a separate conf mat for each previous label value
+            for l in range(L):
+                EPi_square.append(EPi[:, :, l, 0])
+
+        elif worker_model == 'mace':
+
+            EPi_square = np.zeros((L, L))
+            # add the spamming strategy
+            EPi_square[:, :] = (EPi[0, 0] * EPi[2:, 0])
+            # add the probability of being correct
+            EPi_square[range(L), range(L)] += EPi[1, 0]
+
+        confmats[worker_model + ' + ' + data_model[d]] = EPi_square
+
+    # WORKERS
     EPi_list = []
+    EPi = model.worker_model._calc_EPi(model.alpha)
 
     # get the confusion matrices from the worker model
     if worker_model == 'acc':
@@ -136,9 +192,10 @@ for worker_model in worker_models:
         nclusters = 5
 
         EPi = np.array(EPi)
+        if EPi.shape[2] < nclusters:
+            nclusters = EPi.shape[-1]
 
-
-        EPi_vec = np.swapaxes(EPi, 0, -1).reshape(annos.shape[1], int(EPi.size / annos.shape[1]))
+        EPi_vec = np.swapaxes(EPi, 0, -1).reshape(EPi.shape[-1], int(EPi.size / EPi.shape[-1]))
         mbk = MiniBatchKMeans(init='k-means++', n_clusters=nclusters, batch_size=100,
                               n_init=50, max_no_improvement=10, verbose=0,
                               random_state=0)

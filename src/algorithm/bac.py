@@ -59,7 +59,7 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
-    max_data_updates_at_end = 1
+    max_data_updates_at_end = 6
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
@@ -552,8 +552,8 @@ class BAC(object):
         self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
 
         for model in self.data_model:
-            model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start,
-                                                       self.L, dev_data, converge_workers_first)
+            model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L, dev_data,
+                                          self.max_data_updates_at_end if converge_workers_first else self.max_iter)
             model.lnPi_data  = self.worker_model._calc_q_pi(model.alpha_data)
 
         # validate input data
@@ -632,8 +632,8 @@ class BAC(object):
                                         model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
 
-                if self.verbose:
-                    print("BAC iteration %i: updated model for feature-based predictor" % self.iter)
+                    if self.verbose:
+                        print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
 
                 # update E_lnpi
                 self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
@@ -1828,7 +1828,7 @@ class SequentialWorker():
 
 class ignore_features:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_iters_after_workers_converge):
         return np.ones(alpha0_data.shape)
 
     def fit_predict(self, Et):
@@ -1845,12 +1845,10 @@ class ignore_features:
 
 class LSTM:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters):
 
-        if converge_workers_first:
-            self.n_epochs_per_vb_iter = 25
-        else:
-            self.n_epochs_per_vb_iter = 1
+        self.n_epochs_per_vb_iter = 1
+        self.max_vb_iters = max_vb_iters
 
         self.N = N
 
@@ -1858,6 +1856,8 @@ class LSTM:
 
         self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels,
                                                                                     nclasses)
+
+        self.LSTMWrapper = lstm_wrapper.LSTMWrapper()
 
         self.Ndocs = self.sentences.shape[0]
 
@@ -1916,33 +1916,30 @@ class LSTM:
 
             dev_labels = self.dev_labels
 
-        n_epochs = self.n_epochs_per_vb_iter # for each bac iteration
+        if self.LSTMWrapper.model is None:
+            # the first update needs more epochs to reach a useful level
+            n_epochs = lstm_wrapper.MAX_NO_EPOCHS - ((self.max_vb_iters + 1) * self.n_epochs_per_vb_iter)
 
-        if self.train_data_objs is None:
-            if n_epochs < 25:
-                n_epochs = 25 # the first update needs at least 25 epochs
-
-            self.lstm, self.f_eval, self.train_data_objs = lstm_wrapper.train_LSTM(self.all_sentences, train_sentences,
-                                                       dev_sentences, dev_labels, self.IOB_map, self.IOB_label,
-                                                                                   self.nclasses, n_epochs)
+            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
+                                                 dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs)
         else:
+            n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
+
             best_dev = -np.inf
             last_score = best_dev
             niter_no_imprv = 0
             max_niter_no_imprv = 1
 
             for epoch in range(n_epochs):
-                niter_no_imprv, best_dev, last_score = lstm_wrapper.run_epoch(0, self.train_data_objs[0], self.train_data_objs[1],
-                                    self.train_data_objs[2], self.train_data_objs[3], self.train_data_objs[4],
-                                    niter_no_imprv, self.train_data_objs[5], self.train_data_objs[6], self.lstm,
-                                    best_dev, last_score, self.nclasses, compute_dev_score, self.IOB_map)
+                niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
+                                    best_dev, last_score, compute_dev_score)
 
                 if niter_no_imprv >= max_niter_no_imprv:
                     print("- early stopping %i epochs without improvement" % niter_no_imprv)
                     break
 
         # now make predictions for all sentences
-        agg, probs = lstm_wrapper.predict_LSTM(self.lstm, self.sentences, self.f_eval, self.nclasses, self.IOB_map)
+        agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
 
         print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
@@ -1969,7 +1966,7 @@ class LSTM:
 
 class IndependentFeatures:
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, converge_workers_first):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_iters_after_workers_converge):
 
         self.N = N
 

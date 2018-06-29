@@ -6,30 +6,27 @@ Created on Nov 1, 2016
 
 #import matplotlib.pyplot as plt
 import logging
-
-from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
-
-logging.basicConfig(level=logging.DEBUG)
-
 import pickle
 import pandas as pd
 import datetime
-from baselines import ibcc, clustering, majority_voting
-from algorithm import bac
-from data import data_utils
 import configparser
 import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
-import evaluation.metrics as metrics
 import glob
-from baselines.hmm import HMM_crowd
-from baselines.util import crowd_data, crowdlab, instance
+import matplotlib.pyplot as plt
 
+logging.basicConfig(level=logging.DEBUG)
 # things needed for the LSTM
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
-
+import evaluation.metrics as metrics
 from evaluation.plots import SCORE_NAMES, plot_results
+from baselines.hmm import HMM_crowd
+from baselines.util import crowd_data, crowdlab, instance
+from baselines import ibcc, clustering, majority_voting
+from algorithm import bac
+from data import data_utils
+from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
 
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     result = -np.ones(len(SCORE_NAMES) - 3)
@@ -548,8 +545,8 @@ class Experiment(object):
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                  ground_truth_val, IOB_map, IOB_label, self.num_classes, n_epochs=25, freq_eval=30,
-                                                  max_niter_no_imprv=20) #self.max_iter)
+                                  ground_truth_val, IOB_map, IOB_label, self.num_classes, freq_eval=32,
+                                                  max_niter_no_imprv=self.max_iter)
 
         # now make predictions for all sentences
         agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)

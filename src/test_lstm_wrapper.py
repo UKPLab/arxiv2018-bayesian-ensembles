@@ -43,9 +43,9 @@ Et[np.arange(N), gt.flatten()] = 1
 
 lstm = LSTM()
 
-lstm.init(None, N, text, doc_start, nclasses, dev_sentences, False)
+n_epochs = 30
+lstm.init(None, N, text, doc_start, nclasses, dev_sentences, n_epochs)
 
-n_epochs = 25
 for n in range(n_epochs):
     prob = lstm.fit_predict(Et, compute_dev_score=True)
     print('training set accuracy = %f' % accuracy_score(gt.flatten(), np.argmax(prob, 1)))
