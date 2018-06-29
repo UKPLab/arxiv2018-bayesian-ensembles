@@ -102,7 +102,7 @@ exp.methods =  [
                 # 'mace',
                 # 'ds',
                 #'best', 'worst',
-                # best_bac_wm,
+                best_bac_wm + '_integrate_BOF',
                 best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF'
 ]

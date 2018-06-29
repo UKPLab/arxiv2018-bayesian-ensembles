@@ -1894,9 +1894,11 @@ class LSTM:
                 sen_labels.append(self.IOB_label[labels[l]])
                 l += 1
 
-        # select a random subset of data to use for validation
+        # select a random subset of data to use for validation if the dataset is large
         if self.dev_sentences is None:
-            devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)))
+
+            devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)) )
+
             trainidxs = np.ones(self.Ndocs, dtype=bool)
             trainidxs[devidxs] = 0
             train_sentences = self.sentences[trainidxs]
