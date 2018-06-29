@@ -544,19 +544,19 @@ class Experiment(object):
 
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
-        lstm, f_eval, _ = lstm_wrapper.train_LSTM(all_sentences, train_sentences, dev_sentences,
-                                  ground_truth_val, IOB_map, IOB_label, self.num_classes, freq_eval=32,
-                                                  max_niter_no_imprv=self.max_iter)
+        lstm = lstm_wrapper.LSTMWrapper()
+
+        lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
+                                          IOB_label, self.num_classes, freq_eval=32, max_niter_no_imprv=self.max_iter)
 
         # now make predictions for all sentences
-        agg, probs = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval, self.num_classes, IOB_map)
+        agg, probs = lstm.predict_LSTM(labelled_sentences)
 
         if test_no_crowd:
             labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_nocrowd, text_nocrowd,
                                                           doc_start_nocrowd, np.ones(N_nocrowd), self.num_classes)
 
-            agg_nocrowd, probs_nocrowd = lstm_wrapper.predict_LSTM(lstm, labelled_sentences, f_eval,
-                                                                   self.num_classes, IOB_map)
+            agg_nocrowd, probs_nocrowd = lstm.predict_LSTM(labelled_sentences)
 
         else:
             agg_nocrowd = None
