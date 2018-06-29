@@ -22,7 +22,7 @@ import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 output_dir = '../../data/bayesian_annotator_combination/output/bio_workers/'
 
 # debug with subset -------
-s = 1000#None #100
+s = None #1000
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
