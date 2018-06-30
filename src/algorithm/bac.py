@@ -1951,7 +1951,7 @@ class LSTM:
                                                                 np.ones(N), self.nclasses)
 
         # now make predictions for all sentences
-        agg, probs = lstm_wrapper.predict_LSTM(self.lstm, test_sentences, self.f_eval, self.nclasses, self.IOB_map)
+        agg, probs = self.LSTMWrapper..predict_LSTM(test_sentences)
 
         print('LSTM assigned class labels %s' % str(np.unique(agg)))
 
