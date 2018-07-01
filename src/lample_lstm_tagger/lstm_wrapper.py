@@ -199,7 +199,7 @@ class LSTMWrapper(object):
 
         for epoch in range(n_epochs):
             niter_no_imprv, best_dev, last_score = self.run_epoch(epoch, niter_no_imprv, best_dev,
-                                                        last_score, (epoch % freq_eval) == 0)
+                                                        last_score, ((epoch % freq_eval) == 0) and (epoch < n_epochs))
 
             if niter_no_imprv >= max_niter_no_imprv:
                 print("- early stopping %i epochs without improvement" % niter_no_imprv)

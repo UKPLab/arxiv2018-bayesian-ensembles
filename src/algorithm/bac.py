@@ -27,6 +27,8 @@ Created on Jan 28, 2017
 
 @author: Melvin Laux
 '''
+import datetime
+
 import numpy as np
 from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
@@ -59,7 +61,7 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
-    max_data_updates_at_end = 6
+    max_data_updates_at_end = 1
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
@@ -586,6 +588,8 @@ class BAC(object):
 
         self.workers_converged = False
 
+        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
+
         # main inference loop
         with Parallel(n_jobs=-1) as parallel:
 
@@ -611,14 +615,6 @@ class BAC(object):
                 for model in self.data_model:
                     if type(model) != LSTM or not converge_workers_first or self.workers_converged:
 
-                        if np.any(model.C_data):
-                            model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
-                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
-                            model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
-
-                            if self.verbose:
-                                print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
-
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         model.C_data = model.fit_predict(self.q_t)
 
@@ -628,6 +624,16 @@ class BAC(object):
                         if self.verbose:
                             print("BAC iteration %i: updated feature-based predictions from %s" %
                                   (self.iter, type(model)))
+
+                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
+                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                        model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
+
+                        if self.verbose:
+                            print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
+
+                        if type(model) == LSTM:
+                            np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
 
                 # update E_lnpi
                 self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
