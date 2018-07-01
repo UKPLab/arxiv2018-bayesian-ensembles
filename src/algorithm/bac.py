@@ -1236,14 +1236,14 @@ class AccuracyWorker():
             alpha0 = np.ones((2, K))
             alpha0[1, :] += 1.0
         else:
-            alpha0 = alpha0
+            alpha0 = alpha0[:, None]
+            alpha0 = np.tile(alpha0, (1, K))
 
         if alpha0_data is None:
             alpha0_data = np.ones((2, 1))
             alpha0_data[1, :] += 1.0
-
-        alpha0 = alpha0[:, None]
-        alpha0 = np.tile(alpha0, (1, K))
+        elif alpha0_data.ndim == 1:
+            alpha0_data = alpha0_data[:, None]
 
         return alpha0, alpha0_data
 
@@ -1472,13 +1472,16 @@ class MACEWorker():
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
             alpha0 = np.ones((nscores + 2, K))
             alpha0[1, :] += 1.0
+        else:
+            alpha0 = alpha0[:, None]
+            alpha0 = np.tile(alpha0, (1, K))
 
         if alpha0_data is None:
             alpha0_data = np.ones((nscores + 2, 1))
             alpha0_data[1, :] += 1.0
+        elif alpha0_data.ndim == 1:
+            alpha0_data = alpha0_data[:, None]
 
-        alpha0 = alpha0[:, None]
-        alpha0 = np.tile(alpha0, (1, K))
 
         return alpha0, alpha0_data
 
@@ -1575,12 +1578,14 @@ class ConfusionMatrixWorker():
         if alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
             alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
+        else:
+            alpha0 = alpha0[:, :, None]
+            alpha0 = np.tile(alpha0, (1, 1, K))
 
         if alpha0_data is None:
             alpha0_data = np.ones((L, nscores, 1)) + 1.0 * np.eye(L)[:, :, None]
-
-        alpha0 = alpha0[:, :, None]
-        alpha0 = np.tile(alpha0, (1, 1, K))
+        elif alpha0_data.ndim == 2:
+            alpha0_data = alpha0_data[:, :, None]
 
         return alpha0, alpha0_data
 
@@ -1685,12 +1690,14 @@ class VectorWorker():
         if alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
             alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
+        else:
+            alpha0 = alpha0[:, :, None]
+            alpha0 = np.tile(alpha0, (1, 1, K))
 
         if alpha0_data is None:
             alpha0_data = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
-
-        alpha0 = alpha0[:, :, None]
-        alpha0 = np.tile(alpha0, (1, 1, K))
+        elif alpha0_data.ndim == 2:
+            alpha0_data = alpha0_data[:, :, None]
 
         return alpha0, alpha0_data
 
@@ -1811,12 +1818,15 @@ class SequentialWorker():
         if alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
             alpha0 = np.ones((L, nscores, nscores + 1, K)) + 1.0 * np.eye(L)[:, :, None, None]
+        else:
+            alpha0 = alpha0[:, :, None, None]
+            alpha0 = np.tile(alpha0, (1, 1, nscores + 1, K))
 
         if alpha0_data is None:
             alpha0_data = np.ones((L, L, L + 1, 1)) + 1.0 * np.eye(L)[:, :, None, None]
-
-        alpha0 = alpha0[:, :, None, None]
-        alpha0 = np.tile(alpha0, (1, 1, nscores + 1, K))
+        elif alpha0_data.ndim == 2:
+            alpha0_data = alpha0_data[:, :, None, None]
+            alpha0_data = np.tile(alpha0_data, (1, 1, L+1, 1))
 
         return alpha0, alpha0_data
 
