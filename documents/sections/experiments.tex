@@ -201,7 +201,7 @@ BSC-seq & \textbf{77.0} & \textbf{72.0} & \textbf{74.4} & \textbf{76.4} & .913 &
 \hline
 
 %BSC-seq$\rightarrow$LSTM & 76.6 & 70.9 & 73.6 & 75.6 & .906 & 12.71 & 0 & .1, 10, 1 \\ % old prior
-BSC-seq$\rightarrow$LSTM & 76.2 & 70.2 & 73.1 & 75.8 & .902 & 12.98 & 0 & .1, 10, 1 \\ 
+BSC-seq$\rightarrow$c  LSTM & 76.2 & 70.2 & 73.1 & 75.8 & .902 & 12.98 & 0 & .1, 10, 1 \\ 
 %BSC-seq+LSTM & 75.3 & 69.3 & 72.2 & 74.7 & .913 & 1.24 & 0 & .1, 10, 1 \\% old prior
 BSC-seq+LSTM & 74.9 & 68.3 & 71.4 & 74.1 & .910 & 1.99 & 0 & .1, 10, 1 \\
 BCC-seq+LSTM & 51.6 & 20.4 & 29.3 & 36.3 & .947 & 3.54 & 0 & .1, 10, 1 \\
@@ -354,9 +354,9 @@ BCC-seq+LSTM & 39.7 & 14.1 & 20.9 & 31.6 & .924 & 2.14 & 0 \\
 \hline
 PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{4}{|l|}{Token-level metrics (std.)} \\ \hline 
 & Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$ \\ \hline
-HMM-Crowd$\rightarrow$LSTM &\\ \hline
-BSC-seq$\rightarrow$LSTM &\\
-BSC-seq+LSTM &\\
+HMM-Crowd$\rightarrow$LSTM & \textbf{75.6} & 61.6 & 67.9 & \textbf{76.4} & .838 & 13.46 & 0\\ \hline
+BSC-seq$\rightarrow$LSTM & 74.0 & \textbf{66.1} & \textbf{70.0} & 58.2 & .835 & 19.6 & 0 \\
+BSC-seq+LSTM & 60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
 BCC-seq+LSTM &\\
 \hline
 \end{tabularx}

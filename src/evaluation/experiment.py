@@ -462,7 +462,7 @@ class Experiment(object):
 
         alg = bac.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
                       inside_labels=inside_labels, outside_labels=outside_labels,
-                      beginning_labels=begin_labels, alpha0=self.bac_alpha0,
+                      beginning_labels=begin_labels, alpha0=self.bac_alpha0, alpha0_data=self.bac_alpha0,
                       nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
                       exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
@@ -547,7 +547,7 @@ class Experiment(object):
         lstm = lstm_wrapper.LSTMWrapper()
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                                          IOB_label, self.num_classes, freq_eval=32, max_niter_no_imprv=self.max_iter)
+                                  IOB_label, self.num_classes, freq_eval=1, max_niter_no_imprv=self.max_iter)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)

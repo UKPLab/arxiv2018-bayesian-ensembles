@@ -1687,7 +1687,7 @@ class VectorWorker():
             alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
 
         if alpha0_data is None:
-            alpha0_data = np.ones((L, nscores, 1)) + 1.0 * np.eye(L)[:, :, None]
+            alpha0_data = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
 
         alpha0 = alpha0[:, :, None]
         alpha0 = np.tile(alpha0, (1, 1, K))
@@ -1921,7 +1921,7 @@ class LSTM:
             n_epochs = lstm_wrapper.MAX_NO_EPOCHS - ((self.max_vb_iters + 1) * self.n_epochs_per_vb_iter)
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
-                                                 dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs)
+                                 dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1)
         else:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 
