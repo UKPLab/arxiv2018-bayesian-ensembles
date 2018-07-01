@@ -596,26 +596,30 @@ class BAC(object):
                     print("BAC iteration %i in progress" % self.iter)
 
                 self.q_t_old = self.q_t
-
                 lnPi_data = [model.lnPi_data for model in self.data_model]
                 C_data = [model.C_data for model in self.data_model]
                 self._update_t(parallel, C, C_data, lnPi_data, doc_start)
-
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
                 # update E_lnA
                 self._calc_q_A()
-
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
 
                 for model in self.data_model:
-
-                    # Update the data model by retraining the integrated task classifier and obtaining its predictions
                     if type(model) != LSTM or not converge_workers_first or self.workers_converged:
 
+                        if np.any(model.C_data):
+                            model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
+                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                            model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
+
+                            if self.verbose:
+                                print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
+
+                        # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         model.C_data = model.fit_predict(self.q_t)
 
                         if type(model) == LSTM:
@@ -624,16 +628,6 @@ class BAC(object):
                         if self.verbose:
                             print("BAC iteration %i: updated feature-based predictions from %s" %
                                   (self.iter, type(model)))
-
-                for model in self.data_model:
-                    if type(model) != LSTM or self.iter > -1 and (not converge_workers_first or self.workers_converged):
-
-                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
-                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
-                        model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
-
-                    if self.verbose:
-                        print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
 
                 # update E_lnpi
                 self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
