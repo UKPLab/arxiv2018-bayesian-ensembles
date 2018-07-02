@@ -177,7 +177,8 @@ class BAC(object):
                 self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
+                #self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
+                self.alpha0_data[:, outside_label, outside_label, :] += disallowed_count
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount

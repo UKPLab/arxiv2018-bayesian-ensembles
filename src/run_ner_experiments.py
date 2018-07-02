@@ -1,8 +1,8 @@
 '''
 Created on April 27, 2018
 
-TODO: determine whether the confusion matrix for the LSTM is reasonable. -- currently running with atEnd computation,
-same priors as workers, to save conf mats as npy file.
+determine whether the confusion matrix for the LSTM is reasonable. -- currently running with atEnd computation,
+same priors as workers, to save conf mats as npy file -- now looks okay but results are still same.
 
 The performance drop when integrating the LSTM should not occur if the model is set up correctly,
 since the LSTM should reinforce the existing predictions in most cases. It may cause a problem if
@@ -27,9 +27,9 @@ Results with very informative, reliable prior should be like thenLSTM, but are s
 to the results with soft priors on the LSTM. Perhaps over-confidence in the label distributions is causing
 some of the sequence labels to change. E.g. O->I
 
-TODO: check results with moderate counts for a flat prior - tune on validation
-
+TODO: check results with moderate counts for a flat prior - tune on validation -- running now
 TODO: exclude the BOF part when using +LSTM because the text features shouldn't get used twice?
+TODO: try more iterations to allow proper convergence?
 
 @author: Edwin Simpson
 '''
@@ -123,7 +123,7 @@ for m, method in enumerate(methods_to_tune):
 
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=False,
                 ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
                 ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
                 text_nocrowd=text_nocrowd,
