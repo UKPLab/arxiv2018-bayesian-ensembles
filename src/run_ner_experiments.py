@@ -84,7 +84,7 @@ methods_to_tune = [
                    ]
 
 # tune with small dataset to save time
-s = 250
+s = 500
 idxs = np.argwhere(gt_task1_val != -1)[:, 0]
 ndocs = np.sum(doc_start[idxs])
 
@@ -116,8 +116,10 @@ for m, method in enumerate(methods_to_tune):
 
     best_idxs = best_scores[1:].astype(int)
     exp.nu0_factor = nu_factors[best_idxs[0]]
-    exp.alpha0_diags = diags[best_idxs[1]]
-    exp.alpha0_factor = factors[best_idxs[2]]
+    # exp.alpha0_diags = diags[best_idxs[1]]
+    # exp.alpha0_factor = factors[best_idxs[2]]
+    exp.alpha0_diags_lstm = diags[best_idxs[1]]
+    exp.alpha0_factor_lstm = factors[best_idxs[2]]
 
     print('Best values: %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
 
