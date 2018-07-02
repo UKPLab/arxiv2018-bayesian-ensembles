@@ -310,17 +310,17 @@ class Experiment(object):
                                                                  doc_start_val=doc_start_val,
                                                                  text_val=text_val,
                                                                  bootstrapping=False)
-                    scores[(h*len(nu0factor_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
+                    scores[(h*len(alpha0diag_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
                     print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor,
-                                                         scores[(h*len(nu0factor_proposals)) + i, j]))
+                                                         scores[(h*len(alpha0diag_proposals)) + i, j]))
 
                     if scores[i, j] > best_scores[0]:
-                        best_scores[0] = scores[(h*len(nu0factor_proposals)) + i, j]
+                        best_scores[0] = scores[(h*len(alpha0diag_proposals)) + i, j]
                         best_scores[1] = nu0factor
                         best_scores[2] = alpha0diag
                         best_scores[3] = alpha0factor
 
-                        best_idxs[0] = scores[(h*len(nu0factor_proposals)) + i, j]
+                        best_idxs[0] = scores[(h*len(alpha0diag_proposals)) + i, j]
                         best_idxs[1] = h
                         best_idxs[2] = i
                         best_idxs[3] = j
