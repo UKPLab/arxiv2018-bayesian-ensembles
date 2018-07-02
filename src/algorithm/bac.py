@@ -637,7 +637,8 @@ class BAC(object):
 
                         if type(model) == LSTM:
                             np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
-
+                    else: # model is switched off
+                        model.C_data[:] = 0
 
                 # update E_lnpi
                 self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
