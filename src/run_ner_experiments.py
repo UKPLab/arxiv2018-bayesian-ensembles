@@ -1,8 +1,39 @@
 '''
 Created on April 27, 2018
 
+TODO: determine whether the confusion matrix for the LSTM is reasonable. -- currently running with atEnd computation,
+same priors as workers, to save conf mats as npy file.
+
+The performance drop when integrating the LSTM should not occur if the model is set up correctly,
+since the LSTM should reinforce the existing predictions in most cases. It may cause a problem if
+its labels push the E_t values towards one for data points that were
+previously uncertain. This could, in turn, change the sequence.
+But it's not clear why that wouldn't simply tend toward the LSTM's predictions instead -- perhaps
+in cases where there are multiple possible sequences, we get a mishmash of both?
+TODO: error analysis to see what the differences between the integratedLSTM, thenLSTM, and BSC predictions are.
+A solution would be to soften all confusion matrices
+by increasing the alpha0 factor. This should be tuned on the validation set.
+
+Overfitting the LSTM should reinforce the existing predictions as mentioned above.
+However, underfitting should not be an issue as it was not an issue for thenLSTM.
+
+Another possible problem may be the confusion matrices -- is there something strange in there for some rare label
+transitions? Strong priors should help here -- use validation set to tune.
+
+Could also try the LSTM with totally flat prior (no disallowed counts etc).
+
+Using a flat prior with very high counts does stop the LSTM from affecting results much.
+Results with very informative, reliable prior should be like thenLSTM, but are still extremely similar
+to the results with soft priors on the LSTM. Perhaps over-confidence in the label distributions is causing
+some of the sequence labels to change. E.g. O->I
+
+TODO: check results with moderate counts for a flat prior - tune on validation
+
+TODO: exclude the BOF part when using +LSTM because the text features shouldn't get used twice?
+
 @author: Edwin Simpson
 '''
+
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
