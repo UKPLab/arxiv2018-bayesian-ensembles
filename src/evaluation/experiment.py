@@ -269,7 +269,8 @@ class Experiment(object):
 
     def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, nu0factor_proposals, method,
                     annotations, ground_truth, doc_start,
-                    outputdir, text, tune_lstm=False, anno_path=None, metric_idx_to_optimise=8):
+                    outputdir, text, tune_lstm=False, metric_idx_to_optimise=8,
+                    ground_truth_val=None, doc_start_val=None, text_val=None):
 
         self.methods = [method]
 
@@ -302,8 +303,13 @@ class Experiment(object):
                     else:
                         self.alpha0_factor = alpha0factor
 
-                    all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
-                                                                 anno_path, bootstrapping=False)
+                    all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start,
+                                                                 outputdir_ij,
+                                                                 text,
+                                                                 ground_truth_val=ground_truth_val,
+                                                                 doc_start_val=doc_start_val,
+                                                                 text_val=text_val,
+                                                                 bootstrapping=False)
                     scores[(h*len(nu0factor_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
                     print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor,
                                                          scores[(h*len(nu0factor_proposals)) + i, j]))

@@ -68,7 +68,7 @@ diags = [10]
 factors = [1]
 
 lstm_diags = [1, 10, 100]
-lstm_factors = [0.1, 1, 10, 100]
+lstm_factors = [1, 10, 100]
 
 methods_to_tune = [
                    # 'bac_mace_noHMM',
@@ -111,7 +111,8 @@ for m, method in enumerate(methods_to_tune):
     #                               output_dir, tune_text)
 
     best_scores = exp.tune_alpha0(lstm_diags, lstm_factors, nu_factors, method, tune_annos, tune_gt_task1_val, tune_doc_start,
-                                  output_dir, tune_text, tune_lstm=True)
+                                  output_dir, tune_text, tune_lstm=True,
+                                  ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
 
     best_idxs = best_scores[1:].astype(int)
     exp.nu0_factor = nu_factors[best_idxs[0]]
