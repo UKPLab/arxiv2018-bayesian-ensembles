@@ -31,6 +31,9 @@ Check results with moderate counts for a flat prior - tune on validation -- vali
 TODO: exclude the BOF part when using +LSTM because the text features shouldn't get used twice? -- running
 TODO: try more iterations to allow proper convergence?
 
+TODO: can we get LSTM to give us probabilities?
+TODO: Can we train LSTM on probabilities?
+
 @author: Edwin Simpson
 '''
 

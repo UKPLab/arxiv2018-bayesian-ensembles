@@ -435,6 +435,12 @@ class Experiment(object):
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
 
+
+        if not hasattr(self, 'alpha0_factor_lstm'):
+            self.alpha0_factor_lstm = self.alpha0_factor
+        if not hasattr(self, 'alpha0_diags_lstm'):
+            self.alpha0_diags_lstm = self.alpha0_diags
+
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
         if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc' or self.bac_worker_model == 'vec':
 
