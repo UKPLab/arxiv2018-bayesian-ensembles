@@ -267,14 +267,14 @@ class Experiment(object):
         self.save_plots = eval(parameters['save_plots'].split('#')[0].strip())
         self.show_plots = eval(parameters['show_plots'].split('#')[0].strip())
 
-    def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, nu0factor_proposals, method,
+    def tune_alpha0(self, alpha0diag_proposals, alpha0factor_proposals, nu0factor_proposals, method,
                     annotations, ground_truth, doc_start,
                     outputdir, text, tune_lstm=False, metric_idx_to_optimise=8,
                     ground_truth_val=None, doc_start_val=None, text_val=None):
 
         self.methods = [method]
 
-        scores = np.zeros((len(nu0factor_proposals) * len(alpha0diag_propsals), len(alpha0factor_proposals) ))
+        scores = np.zeros((len(nu0factor_proposals) * len(alpha0diag_proposals), len(alpha0factor_proposals)))
 
         best_scores = np.zeros(4)
         best_idxs = np.zeros(4)
@@ -283,7 +283,7 @@ class Experiment(object):
 
             self.nu0_factor = nu0factor
 
-            for i, alpha0diag in enumerate(alpha0diag_propsals):
+            for i, alpha0diag in enumerate(alpha0diag_proposals):
 
                 if tune_lstm:
                     self.alpha0_diags_lstm = alpha0diag
