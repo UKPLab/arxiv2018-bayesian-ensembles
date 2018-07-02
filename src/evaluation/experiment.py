@@ -280,17 +280,14 @@ class Experiment(object):
 
         for h, nu0factor in enumerate(nu0factor_proposals):
 
-            if tune_lstm:
-                self.nu0_factor_lstm = nu0factor
-            else:
-                self.nu0_factor = nu0factor
+            self.nu0_factor = nu0factor
 
             for i, alpha0diag in enumerate(alpha0diag_propsals):
 
                 if tune_lstm:
-                    self.alpha0_diags = alpha0diag
-                else:
                     self.alpha0_diags_lstm = alpha0diag
+                else:
+                    self.alpha0_diags = alpha0diag
 
                 for j, alpha0factor in enumerate(alpha0factor_proposals):
 
@@ -301,9 +298,9 @@ class Experiment(object):
                     outputdir_ij = outputdir + ('_%i_%i_%i_' % (h, i, j)) + method + '/'
 
                     if tune_lstm:
-                        self.alpha0_factor = alpha0factor
-                    else:
                         self.alpha0_factor_lstm = alpha0factor
+                    else:
+                        self.alpha0_factor = alpha0factor
 
                     all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
                                                                  anno_path, bootstrapping=False)
