@@ -441,14 +441,26 @@ class Experiment(object):
             self.bac_alpha0 = alpha0_factor * np.ones((L, L)) + \
                               alpha0_diags * np.eye(L)
 
+            self.bac_alpha0_data = np.copy(self.bac_alpha0)
+            self.bac_alpha0_data[:] = self.alpha0_factor_lstm / ((L-1)/2) + np.eye(L) * (
+                    self.alpha0_diags_lstm + self.alpha0_factor_lstm - (self.alpha0_factor_lstm / ((L-1)/2)))
+
         elif self.bac_worker_model == 'mace':
             alpha0_factor = self.alpha0_factor #/ ((L-1)/2)
             self.bac_alpha0 = alpha0_factor * np.ones((2 + L))
             self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
 
+            self.bac_alpha0_data = np.copy(self.bac_alpha0)
+            self.bac_alpha0_data[:] = self.alpha0_factor_lstm
+            self.bac_alpha0_data[1] += self.alpha0_diags_lstm
+
         elif self.bac_worker_model == 'acc':
             self.bac_alpha0 = self.alpha0_factor * np.ones((2))
             self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+
+            self.bac_alpha0_data = np.copy(self.bac_alpha0)
+            self.bac_alpha0_data[:] = self.alpha0_factor_lstm
+            self.bac_alpha0_data[1] += self.alpha0_diags_lstm
 
         num_types = (self.num_classes - 1) / 2
         outside_labels = [-1, 1]
@@ -471,7 +483,7 @@ class Experiment(object):
 
         alg = bac.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
                       inside_labels=inside_labels, outside_labels=outside_labels,
-                      beginning_labels=begin_labels, alpha0=self.bac_alpha0, alpha0_data=self.bac_alpha0,
+                      beginning_labels=begin_labels, alpha0=self.bac_alpha0, alpha0_data=self.bac_alpha0_data,
                       nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
                       exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
