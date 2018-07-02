@@ -152,7 +152,11 @@ for w, worker_model in enumerate(worker_models):
             # add the probability of being correct
             EPi_square[range(L), range(L)] += EPi[1, 0]
 
-        confmats[worker_model + ' + ' + data_model[d]] = EPi_square
+        if worker_model == 'seq':
+            for EPi_square_i in EPi_square:
+                confmats[worker_model + ' + ' + data_model[d] + ', prev label = %i' % i] = EPi_square_i
+        else:
+            confmats[worker_model + ' + ' + data_model[d]] = EPi_square
 
     # WORKERS
     EPi_list = []
@@ -192,7 +196,7 @@ for w, worker_model in enumerate(worker_models):
         nclusters = 5
 
         EPi = np.array(EPi)
-        if EPi.shape[2] < nclusters:
+        if EPi.shape[-1] < nclusters:
             nclusters = EPi.shape[-1]
 
         EPi_vec = np.swapaxes(EPi, 0, -1).reshape(EPi.shape[-1], int(EPi.size / EPi.shape[-1]))

@@ -269,7 +269,7 @@ class Experiment(object):
 
     def tune_alpha0(self, alpha0diag_propsals, alpha0factor_proposals, nu0factor_proposals, method,
                     annotations, ground_truth, doc_start,
-                    outputdir, text, anno_path=None, metric_idx_to_optimise=8):
+                    outputdir, text, tune_lstm=False, anno_path=None, metric_idx_to_optimise=8):
 
         self.methods = [method]
 
@@ -280,11 +280,17 @@ class Experiment(object):
 
         for h, nu0factor in enumerate(nu0factor_proposals):
 
-            self.nu0_factor = nu0factor
+            if tune_lstm:
+                self.nu0_factor_lstm = nu0factor
+            else:
+                self.nu0_factor = nu0factor
 
             for i, alpha0diag in enumerate(alpha0diag_propsals):
 
-                self.alpha0_diags = alpha0diag
+                if tune_lstm:
+                    self.alpha0_diags = alpha0diag
+                else:
+                    self.alpha0_diags_lstm = alpha0diag
 
                 for j, alpha0factor in enumerate(alpha0factor_proposals):
 
@@ -294,7 +300,10 @@ class Experiment(object):
 
                     outputdir_ij = outputdir + ('_%i_%i_%i_' % (h, i, j)) + method + '/'
 
-                    self.alpha0_factor = alpha0factor
+                    if tune_lstm:
+                        self.alpha0_factor = alpha0factor
+                    else:
+                        self.alpha0_factor_lstm = alpha0factor
 
                     all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start, outputdir_ij, text,
                                                                  anno_path, bootstrapping=False)
