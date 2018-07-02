@@ -614,7 +614,9 @@ class BAC(object):
 
 
                 for model in self.data_model:
-                    if type(model) != LSTM or not converge_workers_first or self.workers_converged:
+                    if (type(model) != LSTM and not self.workers_converged)\
+                            or not converge_workers_first \
+                            or (type(model) == LSTM and self.workers_converged):
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         model.C_data = model.fit_predict(self.q_t)
@@ -635,6 +637,7 @@ class BAC(object):
 
                         if type(model) == LSTM:
                             np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
+
 
                 # update E_lnpi
                 self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
