@@ -78,7 +78,7 @@ methods_to_tune = [
                    # 'bac_vec_integrateBOF',
                    # 'bac_ibcc_integrateBOF',
                    # 'bac_seq_integrateBOF',
-                   'bac_seq_integrateBOF_integrateLSTM',
+                   'bac_seq_integrateBOF_integrateLSTM_atEnd',
                    # 'bac_acc_integrateBOF',
                    # 'bac_mace_integrateBOF'
                    ]

@@ -1918,7 +1918,7 @@ class LSTM:
             else:
                 dev_sentences = self.sentences[devidxs]
 
-            dev_labels = np.array(labels_by_sen[devidxs]).flatten()
+            dev_labels = np.array(labels_by_sen)[devidxs].flatten()
 
         else:
             dev_sentences = self.dev_sentences
