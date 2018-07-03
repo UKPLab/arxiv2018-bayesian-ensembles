@@ -76,3 +76,26 @@ models/*
 tmpresults
 documents/related_work/MasterThesis_annotated.pdf
 evaluation/*
+libgpuarray
+libgpuarray/bin
+libgpuarray/Build
+libgpuarray/Build (Case Conflict)
+libgpuarray/CMakeLists.txt
+libgpuarray/CMakeModules
+libgpuarray/doc
+libgpuarray/INSTALL
+libgpuarray/lib
+libgpuarray/LICENSE
+libgpuarray/make.bat
+libgpuarray/Makefile
+libgpuarray/Makefile.conf.tmpl
+libgpuarray/pygpu
+libgpuarray/pygpu.egg-info
+libgpuarray/README.txt
+libgpuarray/release.txt
+libgpuarray/setup.py
+libgpuarray/src
+libgpuarray/tests
+LSTM_worker_model_started-2018-07-03-13-52-49.npy
+LSTM_worker_model_started-2018-07-03-15-10-06.npy
+LSTM_worker_model_started-2018-07-03-16-16-25.npy

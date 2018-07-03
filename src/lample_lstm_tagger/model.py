@@ -121,6 +121,7 @@ class Model(object):
               crf,
               cap_dim,
               training=True,
+              crf_probs = False,
               **kwargs
               ):
         """
@@ -384,6 +385,13 @@ class Model(object):
             f_eval = theano.function(
                 inputs=eval_inputs,
                 outputs=tags_scores,
+                givens=({is_train: np.cast['int32'](0)} if dropout else {})
+            )
+        elif crf_probs:
+            f_eval = theano.function(
+                inputs=eval_inputs,
+                outputs=forward(observations, transitions, viterbi=True,
+                                return_alpha=True, return_best_sequence=False),
                 givens=({is_train: np.cast['int32'](0)} if dropout else {})
             )
         else:

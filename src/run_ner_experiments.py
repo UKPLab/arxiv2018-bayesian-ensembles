@@ -82,7 +82,7 @@ exp.alpha0_acc_bias = best_acc_bias
 nu_factors = [0.1]
 diags = [10]
 factors = [1]
-acc_biases = [0, 1, 10, 100]
+acc_biases = [1, 10, 100]
 
 #
 # lstm_diags = [1, 10, 100]

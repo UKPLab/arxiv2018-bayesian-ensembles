@@ -13,6 +13,7 @@ from lample_lstm_tagger.loader import augment_with_pretrained
 from lample_lstm_tagger.model import Model
 
 import numpy as np
+from scipy.special import logsumexp
 
 MAX_NO_EPOCHS = 25 # number of epochs recommended to try before testing against dev set for the first time
 
@@ -113,7 +114,7 @@ class LSTMWrapper(object):
         return niter_no_imprv, best_dev, dev_score
 
     def train_LSTM(self, all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, IOB_label, nclasses,
-                   n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3):
+                   n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3, crf_probs=False):
 
         # parameters
         parameters = OrderedDict()
@@ -133,6 +134,8 @@ class LSTMWrapper(object):
         parameters['all_emb'] = 0
         parameters['cap_dim'] = 0
         parameters['crf'] = 1
+        parameters['crf_probs'] = crf_probs # output probability of most likely sequence or just sequence labels. Only
+        # applies if using crf already.
         parameters['dropout'] = 0.5
         parameters['lr_method'] = "adam-lr_.001"#"sgd-lr_.005"
 
@@ -235,14 +238,16 @@ class LSTMWrapper(object):
 
             # Decoding
             if parameters['crf']:
-                y_preds = np.array(self.f_eval(*input))[1:-1]
+                probs_sen = self.f_eval(*input)[:-1]
+                probs_sen = np.exp(probs_sen - logsumexp(probs_sen, axis=1)[:, None])
+                probs_sen = probs_sen[:, :self.nclasses] # there seem to be some additional classes. I think they are
+                # used by the CRF for transitions from the states before and after the sequence, so we skip them here.
             else:
-                y_preds = self.f_eval(*input).argmax(axis=1)
+                probs_sen = np.array(self.f_eval(*input))
+                probs_sen /= np.sum(probs_sen, 1)[:, None]
 
+            y_preds = probs_sen.argmax(axis=1)
             agg.extend(y_preds)
-
-            probs_sen = np.zeros((len(y_preds), self.nclasses))
-            probs_sen[range(len(y_preds)), y_preds] = 1
 
             probs = np.concatenate((probs, probs_sen), axis=0)
 
