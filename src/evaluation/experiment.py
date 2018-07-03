@@ -372,10 +372,7 @@ class Experiment(object):
                 best_idx = scores[i]
 
                 print('Saving scores for this setting to %s' % (outputdir + '/%s_scores.csv' % method))
-                np.savetxt(outputdir + '/%s_acc_bias_scores.csv' % method, scores[i], fmt='%s', delimiter=',',
-                               header=str(self.methods).strip('[]'))
-
-                np.savetxt(outputdir + '/%s_acc_bias_bestscores.csv' % method, best_score, fmt='%s', delimiter=',',
+                np.savetxt(outputdir + '/%s_acc_bias_scores.csv' % method, scores, fmt='%s', delimiter=',',
                                header=str(self.methods).strip('[]'))
 
         return best_score, best_idx
