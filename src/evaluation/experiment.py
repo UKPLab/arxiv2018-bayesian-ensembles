@@ -357,7 +357,7 @@ class Experiment(object):
             outputdir_i = outputdir + ('_acc_bias_%i' % (i)) + method + '/'
 
             all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start,
-                                                                 outputdir_ij,
+                                                                 outputdir_i,
                                                                  text,
                                                                  ground_truth_val=ground_truth_val,
                                                                  doc_start_val=doc_start_val,
