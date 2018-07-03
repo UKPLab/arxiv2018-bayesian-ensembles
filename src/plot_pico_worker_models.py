@@ -153,7 +153,7 @@ for w, worker_model in enumerate(worker_models):
             EPi_square[range(L), range(L)] += EPi[1, 0]
 
         if worker_model == 'seq':
-            for EPi_square_i in EPi_square:
+            for i, EPi_square_i in enumerate(EPi_square):
                 confmats[worker_model + ' + ' + data_model[d] + ', prev label = %i' % i] = EPi_square_i
         else:
             confmats[worker_model + ' + ' + data_model[d]] = EPi_square
