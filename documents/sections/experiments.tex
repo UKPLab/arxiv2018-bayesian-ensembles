@@ -285,13 +285,16 @@ showing the different representations of workers.
 
 \begin{figure}
 \centering
-\subfloat[NER dataset, BSCC-IBCC-IF+LSTM]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+\subfloat[prev. = I]{
+  \includegraphics[width=.31\columnwidth, clip=True, trim=20 47 10 25]{figures/worker_models/seq+LSTM_prev0}
 }
-\subfloat[PICO dataset, BSCC-seq-IF+LSTM]{
-  \includegraphics[width=.40\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
+\subfloat[prev. = O]{
+  \includegraphics[width=.31\columnwidth, clip=True, trim=20 47 10 25]{figures/worker_models/seq+LSTM_prev1}
 }
-\caption{Confusion matrices learned for the integrated LSTM using BSCC-***-IF+LSTm. }
+\subfloat[prev. = B]{
+  \includegraphics[width=.31\columnwidth, clip=True, trim=20 47 10 25]{figures/worker_models/seq+LSTM_prev2}
+}
+\caption{PICO dataset: confusion matrices inferred by BSC-Seq-IF+LSTM for the integrated LSTM. }
 \label{fig:conf_mat_lstm}
 \end{figure}
 

@@ -35,30 +35,34 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load
 nu0_factor = 0.1
 alpha0_diags = 0.1
 alpha0_factor = 0.1
-# worker_models = [
-#                     'acc',
-#                     'vec',
-#                     'ibcc',
-#                     'mace',
-#                     'seq',
-#                     ]
-worker_models = [
-    'seq'
-]
 
+plot_integrated=False
 
-# data_models = [
-#     ['IF'],
-#     ['IF'],
-#     ['IF'],
-#     ['IF'],
-#     ['IF'],
-# ]
+if plot_integrated:
+    worker_models = [
+        'seq'
+    ]
 
-# corresponding list of data models
-data_models = [
-    ['LSTM', 'IF']
-]
+    # corresponding list of data models
+    data_models = [
+        ['LSTM', 'IF']
+    ]
+else:
+    worker_models = [
+                    'acc',
+                    'vec',
+                    'ibcc',
+                    'mace',
+                    'seq',
+    ]
+
+    data_models = [
+        ['IF'],
+        ['IF'],
+        ['IF'],
+        ['IF'],
+        ['IF'],
+    ]
 
 inside_labels = [0]
 outside_labels = [1]
@@ -154,9 +158,9 @@ for w, worker_model in enumerate(worker_models):
 
         if worker_model == 'seq':
             for i, EPi_square_i in enumerate(EPi_square):
-                confmats[worker_model + ' + ' + data_model[d] + ', prev label = %i' % i] = EPi_square_i
+                confmats[worker_model + '+' + data_model[d] + ', prev label = %i' % i] = EPi_square_i
         else:
-            confmats[worker_model + ' + ' + data_model[d]] = EPi_square
+            confmats[worker_model + '+' + data_model[d]] = EPi_square
 
     # WORKERS
     EPi_list = []
