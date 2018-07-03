@@ -334,6 +334,52 @@ class Experiment(object):
 
         return best_idxs
 
+    def tune_acc_bias(self, acc_bias_proposals, method,
+                    annotations, ground_truth, doc_start,
+                    outputdir, text, tune_lstm=False, metric_idx_to_optimise=8,
+                    ground_truth_val=None, doc_start_val=None, text_val=None):
+
+        self.methods = [method]
+
+        scores = np.zeros(len(acc_bias_proposals))
+
+        best_score = -np.inf
+        best_idx = 0
+
+        for i, acc_bias in enumerate(acc_bias_proposals):
+
+            self.alpha0_acc_bias = acc_bias
+
+            # reset saved data so that models are run again.
+            self.aggs = {}
+            self.probs = {}
+
+            outputdir_i = outputdir + ('_acc_bias_%i' % (i)) + method + '/'
+
+            all_scores, _, _, _, _, _ = self.run_methods(annotations, ground_truth, doc_start,
+                                                                 outputdir_ij,
+                                                                 text,
+                                                                 ground_truth_val=ground_truth_val,
+                                                                 doc_start_val=doc_start_val,
+                                                                 text_val=text_val,
+                                                                 bootstrapping=False)
+            scores[i] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
+
+            print('Scores for %f: %f' % (acc_bias, scores[i]))
+
+            if scores[i] > best_score:
+                best_score = scores[i]
+                best_idx = scores[i]
+
+                print('Saving scores for this setting to %s' % (outputdir + '/%s_scores.csv' % method))
+                np.savetxt(outputdir + '/%s_acc_bias_scores.csv' % method, scores[i], fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+
+                np.savetxt(outputdir + '/%s_acc_bias_bestscores.csv' % method, best_score, fmt='%s', delimiter=',',
+                               header=str(self.methods).strip('[]'))
+
+        return best_score, best_idx
+
     def _run_best_worker(self, annos, gt, doc_start):
         # choose the best classifier by f1-score
         f1scores = np.zeros(annos.shape[1])
@@ -440,6 +486,8 @@ class Experiment(object):
             self.alpha0_factor_lstm = self.alpha0_factor
         if not hasattr(self, 'alpha0_diags_lstm'):
             self.alpha0_diags_lstm = self.alpha0_diags
+        if not hasattr(self, 'self.alpha0_acc_bias'):
+            self.alpha0_acc_bias = 0
 
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
         if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc' or self.bac_worker_model == 'vec':
@@ -451,13 +499,13 @@ class Experiment(object):
                               alpha0_diags * np.eye(L)
 
             # Acceptance bias -- should be tuned!
-            self.bac_alpha0[:, 1] += 1000 # add to the outside label to bias toward accepting more annotations
+            self.bac_alpha0[:, 1] += self.alpha0_acc_bias # add to the outside label to bias toward accepting more annotations
 
             self.bac_alpha0_data = np.copy(self.bac_alpha0)
             self.bac_alpha0_data[:] = self.alpha0_factor_lstm / ((L-1)/2) + np.eye(L) * (
                     self.alpha0_diags_lstm + self.alpha0_factor_lstm - (self.alpha0_factor_lstm / ((L-1)/2)))
 
-            self.bac_alpha0_data[:, 1] += 1000  # add to the outside label to bias toward accepting more annotations
+            self.bac_alpha0_data[:, 1] += self.alpha0_acc_bias  # add to the outside label to bias toward accepting more annotations
 
         elif self.bac_worker_model == 'mace':
             alpha0_factor = self.alpha0_factor #/ ((L-1)/2)
@@ -468,8 +516,8 @@ class Experiment(object):
             self.bac_alpha0_data[:] = self.alpha0_factor_lstm
             self.bac_alpha0_data[1] += self.alpha0_diags_lstm
 
-            self.bac_alpha0[3] += 1000
-            self.bac_alpha0_data[3] += 1000
+            self.bac_alpha0[3] += self.alpha0_acc_bias
+            self.bac_alpha0_data[3] += self.alpha0_acc_bias
 
         elif self.bac_worker_model == 'acc':
             self.bac_alpha0 = self.alpha0_factor * np.ones((2))
