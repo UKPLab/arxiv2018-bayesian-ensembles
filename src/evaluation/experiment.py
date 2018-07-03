@@ -483,7 +483,7 @@ class Experiment(object):
             self.alpha0_factor_lstm = self.alpha0_factor
         if not hasattr(self, 'alpha0_diags_lstm'):
             self.alpha0_diags_lstm = self.alpha0_diags
-        if not hasattr(self, 'self.alpha0_acc_bias'):
+        if not hasattr(self, 'alpha0_acc_bias'):
             self.alpha0_acc_bias = 0
 
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
