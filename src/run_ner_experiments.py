@@ -39,9 +39,11 @@ how priors were previously set.
 - However, on the test data, the performance has decreased further by just over one percent (may be due to priors again)
 - We aim to get better performance on the test data than with HMMCrowd or non-integrated method, even if no improvement on training data
 
-TODO: run with one iteration per VB iteration -- run after debugging the early stopping
-TODO: can we get LSTM to give us probabilities?
-TODO: Can we train LSTM on probabilities?
+TODO: run with prior biasing away from outside labels.
+
+Run with one iteration per VB iteration -- did very poorly
+TODO: can we get LSTM to give us probabilities when integrated?
+MaybeTODO: Can we train LSTM on probabilities?
 
 @author: Edwin Simpson
 '''

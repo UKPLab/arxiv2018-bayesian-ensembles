@@ -450,9 +450,14 @@ class Experiment(object):
             self.bac_alpha0 = alpha0_factor * np.ones((L, L)) + \
                               alpha0_diags * np.eye(L)
 
+            # Acceptance bias -- should be tuned!
+            self.bac_alpha0[:, 1] += 1000 # add to the outside label to bias toward accepting more annotations
+
             self.bac_alpha0_data = np.copy(self.bac_alpha0)
             self.bac_alpha0_data[:] = self.alpha0_factor_lstm / ((L-1)/2) + np.eye(L) * (
                     self.alpha0_diags_lstm + self.alpha0_factor_lstm - (self.alpha0_factor_lstm / ((L-1)/2)))
+
+            self.bac_alpha0_data[:, 1] += 1000  # add to the outside label to bias toward accepting more annotations
 
         elif self.bac_worker_model == 'mace':
             alpha0_factor = self.alpha0_factor #/ ((L-1)/2)
@@ -462,6 +467,9 @@ class Experiment(object):
             self.bac_alpha0_data = np.copy(self.bac_alpha0)
             self.bac_alpha0_data[:] = self.alpha0_factor_lstm
             self.bac_alpha0_data[1] += self.alpha0_diags_lstm
+
+            self.bac_alpha0[3] += 1000
+            self.bac_alpha0_data[3] += 1000
 
         elif self.bac_worker_model == 'acc':
             self.bac_alpha0 = self.alpha0_factor * np.ones((2))
