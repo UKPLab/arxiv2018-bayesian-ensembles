@@ -242,13 +242,13 @@ class LSTMWrapper(object):
                 probs_sen = np.exp(probs_sen - logsumexp(probs_sen, axis=1)[:, None])
                 probs_sen = probs_sen[:, :self.nclasses] # there seem to be some additional classes. I think they are
                 # used by the CRF for transitions from the states before and after the sequence, so we skip them here.
+                y_preds = probs_sen.argmax(axis=1)
             else:
-                probs_sen = np.array(self.f_eval(*input))
-                probs_sen /= np.sum(probs_sen, 1)[:, None]
+                y_preds = np.array(self.f_eval(*input))
+                probs_sen = np.zeros((len(y_preds), self.nclasses))
+                probs_sen[np.arange(len(y_preds)), y_preds] = 1
 
-            y_preds = probs_sen.argmax(axis=1)
             agg.extend(y_preds)
-
             probs = np.concatenate((probs, probs_sen), axis=0)
 
             count += 1

@@ -177,8 +177,8 @@ class BAC(object):
                 self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                #self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
-                self.alpha0_data[:, outside_label, outside_label, :] += disallowed_count
+                self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
+                # self.alpha0_data[:, outside_label, outside_label, :] += disallowed_count # this is bad because outside label can be -1 and late start to annotation likely to mean higher probability of a b label
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
@@ -199,7 +199,7 @@ class BAC(object):
                 self.alpha0[:, restricted_labels[typeid], other_restricted_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, self.outside_labels[0], other_restricted_label, :] += disallowed_count
+                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
@@ -220,7 +220,7 @@ class BAC(object):
                 self.alpha0[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, self.outside_labels[0], other_unrestricted_label, :] += disallowed_count
+                self.alpha0_data[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count # sticks to wrong type
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
