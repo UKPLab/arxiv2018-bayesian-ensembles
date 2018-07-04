@@ -6,13 +6,13 @@ Created on Nov 1, 2016
 
 #import matplotlib.pyplot as plt
 import logging
-logging.basicConfig(level=logging.DEBUG)
-
 import pandas as pd
 import glob
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+
+logging.basicConfig(level=logging.DEBUG)
 
 PARAM_NAMES = ['acc_bias',
                'miss_bias',
@@ -164,10 +164,6 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
         else:
             continue
 
-
-
-
-
     output_pool_dir = os.path.join(output_dir, 'pool/')
     output_test_dir = os.path.join(output_dir, 'test/')
 
@@ -184,5 +180,5 @@ if __name__ == '__main__':
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    plot_active_learning_results(results_dir, output_dir, result_str='recomputed_')
+    plot_active_learning_results(results_dir, output_dir)#, result_str='recomputed_')
 

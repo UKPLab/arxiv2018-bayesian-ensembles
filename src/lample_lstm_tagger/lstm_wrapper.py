@@ -237,7 +237,7 @@ class LSTMWrapper(object):
             input = create_input(test_data_sen, parameters, False)
 
             # Decoding
-            if parameters['crf']:
+            if parameters['crf'] and parameters['crf_probs']:
                 probs_sen = self.f_eval(*input)[:-1]
                 probs_sen = np.exp(probs_sen - logsumexp(probs_sen, axis=1)[:, None])
                 probs_sen = probs_sen[:, :self.nclasses] # there seem to be some additional classes. I think they are
