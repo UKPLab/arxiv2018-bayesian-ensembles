@@ -104,6 +104,8 @@ class LSTMWrapper(object):
                 print("New best score on dev.")
                 print("Saving model to disk...")
                 self.model.save()
+
+                niter_no_imprv = 0
             elif dev_score <= last_score:
                 niter_no_imprv += 1
         else:
@@ -208,6 +210,8 @@ class LSTMWrapper(object):
                 print("- early stopping %i epochs without improvement" % niter_no_imprv)
                 break
 
+        model.reload()
+
         return model, f_eval
 
     def predict_LSTM(self, test_sentences):
@@ -243,8 +247,13 @@ class LSTMWrapper(object):
                 probs_sen = probs_sen[:, :self.nclasses] # there seem to be some additional classes. I think they are
                 # used by the CRF for transitions from the states before and after the sequence, so we skip them here.
                 y_preds = probs_sen.argmax(axis=1)
+            elif parameters['crf']:
+                # CRF but outputs labels instead of log-probabilities
+                y_preds = np.array(self.f_eval(*input))[1:-1]
             else:
                 y_preds = np.array(self.f_eval(*input))
+
+            if not parameters['crf_probs']:
                 probs_sen = np.zeros((len(y_preds), self.nclasses))
                 probs_sen[np.arange(len(y_preds)), y_preds] = 1
 

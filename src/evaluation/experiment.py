@@ -552,6 +552,8 @@ class Experiment(object):
                       data_model=data_model, transition_model=transition_model)
         alg.verbose = True
 
+        np.random.seed(592) # for reproducibility
+
         if self.opt_hyper:
             probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences,
                                       converge_workers_first=use_LSTM==2, )
@@ -609,6 +611,8 @@ class Experiment(object):
         '''
         labelled_sentences, IOB_map, IOB_label = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
                                                                           train_labs.flatten(), self.num_classes)
+
+        np.random.seed(592) # for reproducibility
 
         if ground_truth_val is None or doc_start_val is None or text_val is None:
             # If validation set is unavailable, select a random subset of combined data to use for validation

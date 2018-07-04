@@ -1956,6 +1956,8 @@ class LSTM:
                     print("- early stopping %i epochs without improvement" % niter_no_imprv)
                     break
 
+            self.LSTMWrapper.model.reload()
+
         # now make predictions for all sentences
         agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
 
