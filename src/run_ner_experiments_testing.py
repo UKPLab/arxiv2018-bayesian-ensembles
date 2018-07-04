@@ -39,7 +39,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 #
 # -------------------------
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=50)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
 

@@ -558,8 +558,11 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     # line before...
                     # new_data[worker_str].iat[t - 1] = new_data[worker_str].iat[t]
 
-                    # assume that the first annotation was actually correct
-                    new_data[worker_str].iat[t] = new_data[worker_str].iat[last_accepted_idx]
+                    # assume that the first annotation was actually correct -- I don't think we want this because the
+                    # first token was sometimes erroneously applied to only a part of the string.
+                    #new_data[worker_str].iat[t] = new_data[worker_str].iat[last_accepted_idx]
+
+                    new_data['text'].iat[t] = last_accepted_tok
 
                     last_accepted_idx = t
 

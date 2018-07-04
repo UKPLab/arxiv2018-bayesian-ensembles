@@ -177,7 +177,7 @@ class BAC(object):
                 self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, self.beginning_labels[i], outside_label, :] += disallowed_count
+                self.alpha0_data[:, self.unrestricted_labels[i], outside_label, :] += disallowed_count
                 # self.alpha0_data[:, outside_label, outside_label, :] += disallowed_count # this is bad because outside label can be -1 and late start to annotation likely to mean higher probability of a b label
 
                 # set the disallowed transition to as close to zero as possible
@@ -196,7 +196,7 @@ class BAC(object):
 
                 disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, restricted_labels[typeid], other_restricted_label, :] += disallowed_count
+                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
                 self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
@@ -207,7 +207,7 @@ class BAC(object):
 
                 if self.nu0.ndim >= 2:
                     disallowed_count = self.nu0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.nu0[other_restricted_label, restricted_labels[typeid]] += disallowed_count
+                    self.nu0[other_restricted_label, other_restricted_label] += disallowed_count
                     self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
@@ -1802,12 +1802,13 @@ class SequentialWorker():
             result[:, C == -1] = 0
 
         else:
-            result = lnPi[l, C, Cprev, Krange]
-
             if np.isscalar(C):
                 if C == -1:
                     result = 0
+                else:
+                    result = lnPi[l, C, Cprev, Krange]
             else:
+                result = lnPi[l, C, Cprev, Krange]
                 result[C == -1] = 0
 
         return result
