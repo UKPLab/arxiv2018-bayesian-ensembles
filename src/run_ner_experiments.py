@@ -29,7 +29,7 @@ some of the sequence labels to change. E.g. O->I
 
 Check results with moderate counts for a flat prior - tune on validation -- validation didn't work well with the small training set.
 Exclude the BOF part when using +LSTM because the text features shouldn't get used twice? -- this does seem to help.
-TODO: try more iterations to allow proper convergence?
+TODO: try more iterations to allow proper convergence? -- running
 
 TODO: comparison between results on air and krusty -- still same? Numerical differences? Did our latest prior changes
 reduce performance from the values in the table? After this is dones, go through the ideas below.
@@ -39,10 +39,10 @@ how priors were previously set.
 - However, on the test data, the performance has decreased further by just over one percent (may be due to priors again)
 - We aim to get better performance on the test data than with HMMCrowd or non-integrated method, even if no improvement on training data
 
-TODO: run with prior biasing away from outside labels.
+run with prior biasing away from outside labels. -- ran, it caused big problems, except with bias set to one did little damage.
 
 Run with one iteration per VB iteration -- did very poorly
-TODO: can we get LSTM to give us probabilities when integrated?
+Can we get LSTM to give us probabilities when integrated? -- tried, didn't make much difference, maybe worse when running at end?
 MaybeTODO: Can we train LSTM on probabilities?
 
 @author: Edwin Simpson
