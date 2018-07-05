@@ -481,7 +481,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
         doc_str = f.split('.')[0]
         f = os.path.join(dir, f)
 
-        print('Processing %s' % f)
+        #print('Processing %s' % f)
 
         new_data = pd.read_csv(f, names=['text', worker_str], skip_blank_lines=False,
                                dtype={'text':str, worker_str:str}, na_filter=False, delim_whitespace=True)
@@ -546,7 +546,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                 if char_counter < gold_char_idx and \
                         (last_accepted_tok + tok) in gold_tokens[doc_str][gold_tok_idx-1]:
-                    print('Correcting misaligned annotations (split word in worker data): %i, %s' % (t, tok))
+                    #print('Correcting misaligned annotations (split word in worker data): %i, %s' % (t, tok))
 
                     skip_sentence = True
 
@@ -569,7 +569,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     char_counter += len(tok)
 
                 elif tok not in gold_tok or (tok == '' and gold_tok != ''):
-                    print('Correcting misaligned annotations (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
+                    #print('Correcting misaligned annotations (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
 
                     skip_sentence = True
 
@@ -582,7 +582,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                         skip_sentence = True
 
                     while char_counter > gold_char_idx:
-                        print('error in text alignment between worker and gold!')
+                        #print('error in text alignment between worker and gold!')
                         gold_to_keep[doc_str][gold_tok_idx-1] = False
 
                         len_to_skip = gold_chars[gold_tok_idx - 1] - gold_chars[gold_tok_idx - 2]
@@ -668,6 +668,8 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
 
         worker_data, gold_to_keep, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str,
                                                             char_idx_word_starts, chars, gold_sen_starts, skip_dirty)
+
+        print("Loaded a dataset of size %s" % str(worker_data))
 
         idxs_to_drop = []
         for doc in gold_to_keep:
