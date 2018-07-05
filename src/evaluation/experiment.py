@@ -384,7 +384,7 @@ class Experiment(object):
 
             valididxs = annos[:, w] != -1
             f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
-            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt)])
+            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt).astype(int)])
 
         best_idxs = np.argmax(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), best_idxs]
