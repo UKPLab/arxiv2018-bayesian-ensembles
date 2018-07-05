@@ -473,7 +473,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
     gold_to_keep = {}
 
-    for f in sorted(os.listdir(dir)):
+    for f in os.listdir(dir):
 
         if not f.endswith('.txt'):
             continue
@@ -563,7 +563,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     #new_data[worker_str].iat[t] = new_data[worker_str].iat[last_accepted_idx]
 
                     new_data['text'].iat[t] = last_accepted_tok
-                    new_data['doc_start'].iat[t] = new_data['doc_start'].iat[t-1]
+                    new_data['doc_start'].iat[t] = new_data['doc_start'].iat[last_accepted_idx]
 
                     last_accepted_idx = t
 
