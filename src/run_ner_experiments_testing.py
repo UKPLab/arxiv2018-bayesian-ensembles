@@ -72,18 +72,20 @@ best_bac_wm = 'bac_seq'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                #'majority',
-                # 'ds',
-                #'gt_then_LSTM',
-                #best_bac_wm
-                # best_bac_wm + '_integrateBOF',
-                # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                # best_bac_wm + '_integrateBOF_then_LSTM',
-                best_bac_wm + '_integrateBOF_integrateLSTM',
-                #best_bac_wm + '_integrateBOF_noHMM',
-                #best_bac_wm + '_noHMM'
-                'HMM_crowd',
-                'HMM_crowd_then_LSTM',
+                'best',
+                'worst',
+                # #'majority',
+                # # 'ds',
+                # #'gt_then_LSTM',
+                # #best_bac_wm
+                # # best_bac_wm + '_integrateBOF',
+                # # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+                # # best_bac_wm + '_integrateBOF_then_LSTM',
+                # best_bac_wm + '_integrateBOF_integrateLSTM',
+                # #best_bac_wm + '_integrateBOF_noHMM',
+                # #best_bac_wm + '_noHMM'
+                # 'HMM_crowd',
+                # 'HMM_crowd_then_LSTM',
 ]
 
 # should run both task 1 and 2.

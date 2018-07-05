@@ -379,13 +379,12 @@ class Experiment(object):
 
     def _run_best_worker(self, annos, gt, doc_start):
         # choose the best classifier by f1-score
-        f1scores = np.zeros(annos.shape[1])
+        f1scores = np.zeros_like(annos) - 1.0
         for w in range(annos.shape[1]):
-            f1scores[w] = skm.f1_score(gt.flatten(), annos[:, w], average='macro')
-        f1scores = f1scores[None, :]
-        f1scores = np.tile(f1scores, (annos.shape[0], 1))
 
-        f1scores[annos == -1] = -1  # remove the workers that did not label those particular annotations
+            valididxs = annos[:, w] != -1
+            f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
+            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt)])
 
         best_idxs = np.argmax(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), best_idxs]
@@ -397,13 +396,12 @@ class Experiment(object):
 
     def _run_worst_worker(self, annos, gt, doc_start):
         # choose the weakest classifier by f1-score
-        f1scores = np.zeros(annos.shape[1])
+        f1scores = np.zeros_like(annos) + np.inf
         for w in range(annos.shape[1]):
-            f1scores[w] = skm.f1_score(gt.flatten(), annos[:, w], average='macro')
-        f1scores = f1scores[None, :]
-        f1scores = np.tile(f1scores, (annos.shape[0], 1))
 
-        f1scores[annos == -1] = np.inf  # remove the workers that did not label those particular annotations
+            valididxs = annos[:, w] != -1
+            f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
+            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt)])
 
         worst_idxs = np.argmin(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), worst_idxs]
