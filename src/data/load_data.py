@@ -546,7 +546,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                 if char_counter < gold_char_idx and \
                         (last_accepted_tok + tok) in gold_tokens[doc_str][gold_tok_idx-1]:
-                    #print('Correcting misaligned annotations (split word in worker data): %i, %s' % (t, tok))
+                    print('Correcting misaligned annotations (split word in worker data): %i, %s' % (t, tok))
 
                     skip_sentence = True
 
@@ -563,17 +563,21 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     #new_data[worker_str].iat[t] = new_data[worker_str].iat[last_accepted_idx]
 
                     new_data['text'].iat[t] = last_accepted_tok
+                    new_data['doc_start'].iat[t] = new_data['doc_start'].iat[t-1]
 
                     last_accepted_idx = t
 
                     char_counter += len(tok)
 
                 elif tok not in gold_tok or (tok == '' and gold_tok != ''):
-                    #print('Correcting misaligned annotations (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
+                    print('Correcting misaligned annotations (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
 
                     skip_sentence = True
 
                     annos_to_keep[t] = False # skip the previous ones until the end
+
+                    if new_data['doc_start'].iat[t]: # now we are skipping this token but we don't want to lose the doc_start record.
+                        new_data['doc_start'].iat[t+1] = 1
 
                 elif tok == gold_tok[:len(tok)]: # needs to match the first characters in the string, not just be there somewhere
                     gold_tok_idx += 1
@@ -582,7 +586,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                         skip_sentence = True
 
                     while char_counter > gold_char_idx:
-                        #print('error in text alignment between worker and gold!')
+                        print('error in text alignment between worker and gold!')
                         gold_to_keep[doc_str][gold_tok_idx-1] = False
 
                         len_to_skip = gold_chars[gold_tok_idx - 1] - gold_chars[gold_tok_idx - 2]
@@ -602,6 +606,9 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     skip_sentence = True
 
                     annos_to_keep[t] = False
+
+                    if new_data['doc_start'].iat[t]: # now we are skipping this token but we don't want to lose the doc_start record.
+                        new_data['doc_start'].iat[t+1] = 1
 
             gold_char_idxs[doc_str] = gold_chars
 
@@ -690,6 +697,14 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
         if data is None:
             data = worker_data
         else:
+            # check for any mismatches
+            for d in np.unique(worker_data['doc_id']):
+                wrows = worker_data['doc_id'] == d
+                drows = data['doc_id'] == d
+
+                if (np.sum(wrows) != np.sum(drows)) and np.sum(drows):
+                    print('Warning: data for document %s did not match.' % d)
+
             data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True)
 
     return data, annotator_cols
