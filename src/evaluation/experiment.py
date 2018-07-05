@@ -399,7 +399,7 @@ class Experiment(object):
 
             f1scores[valididxs, w] = f1_w
 
-        print(individual_scores)
+        print(sorted(individual_scores))
 
         best_idxs = np.argmax(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), best_idxs]
