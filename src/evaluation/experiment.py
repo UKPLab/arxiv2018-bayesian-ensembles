@@ -380,6 +380,7 @@ class Experiment(object):
     def _run_best_worker(self, annos, gt, doc_start):
         # choose the best classifier by f1-score
         f1scores = np.zeros_like(annos) - 1.0
+        print('F1 scores for individual workers:')
         for w in range(annos.shape[1]):
 
             valididxs = annos[:, w] != -1
@@ -388,7 +389,11 @@ class Experiment(object):
                 continue
 
             f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
-            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt).astype(int)])
+            f1_w = np.mean(f1_by_class[np.unique(gt[valididxs]).astype(int)])
+
+            print(f1_w)
+
+            f1scores[valididxs, w] = f1_w
 
         best_idxs = np.argmax(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), best_idxs]
@@ -409,7 +414,7 @@ class Experiment(object):
                 continue
 
             f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
-            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt).astype(int)])
+            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt[valididxs]).astype(int)])
 
         worst_idxs = np.argmin(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), worst_idxs]
