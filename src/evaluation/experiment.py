@@ -381,6 +381,9 @@ class Experiment(object):
         # choose the best classifier by f1-score
         f1scores = np.zeros_like(annos) - 1.0
         print('F1 scores for individual workers:')
+
+        individual_scores = []
+
         for w in range(annos.shape[1]):
 
             valididxs = annos[:, w] != -1
@@ -392,8 +395,11 @@ class Experiment(object):
             f1_w = np.mean(f1_by_class[np.unique(gt[valididxs]).astype(int)])
 
             print(f1_w)
+            individual_scores.append(f1_w)
 
             f1scores[valididxs, w] = f1_w
+
+        print(individual_scores)
 
         best_idxs = np.argmax(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), best_idxs]

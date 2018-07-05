@@ -628,7 +628,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
 def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, skip_dirty=False):
 
-    worker_dirs = sorted(os.listdir(annotation_data_path))
+    worker_dirs = os.listdir(annotation_data_path)
 
     data = None
     annotator_cols = np.array([], dtype=str)
