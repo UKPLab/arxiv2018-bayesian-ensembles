@@ -669,7 +669,7 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
         worker_data, gold_to_keep, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str,
                                                             char_idx_word_starts, chars, gold_sen_starts, skip_dirty)
 
-        print("Loaded a dataset of size %s" % str(worker_data))
+        print("Loaded a dataset of size %s" % str(worker_data.shape))
 
         idxs_to_drop = []
         for doc in gold_to_keep:
