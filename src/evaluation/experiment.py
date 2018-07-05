@@ -37,9 +37,9 @@ def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     result[0] = skm.accuracy_score(gt, agg)
 
     # the results are undefined if some classes are not present in the gold labels
-    prec_by_class = skm.precision_score(gt, agg, average=None)
-    rec_by_class = skm.recall_score(gt, agg, average=None)
-    f1_by_class = skm.f1_score(gt, agg, average=None)
+    prec_by_class = skm.precision_score(gt, agg, average=None, labels=range(nclasses))
+    rec_by_class = skm.recall_score(gt, agg, average=None, labels=range(nclasses))
+    f1_by_class = skm.f1_score(gt, agg, average=None, labels=range(nclasses))
 
     result[1] = np.mean(prec_by_class[np.unique(gt)])
     result[2] = np.mean(rec_by_class[np.unique(gt)])
@@ -383,6 +383,10 @@ class Experiment(object):
         for w in range(annos.shape[1]):
 
             valididxs = annos[:, w] != -1
+
+            if not np.any(valididxs):
+                continue
+
             f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
             f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt).astype(int)])
 
@@ -400,8 +404,12 @@ class Experiment(object):
         for w in range(annos.shape[1]):
 
             valididxs = annos[:, w] != -1
+
+            if not np.any(valididxs):
+                continue
+
             f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
-            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt)])
+            f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt).astype(int)])
 
         worst_idxs = np.argmin(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), worst_idxs]

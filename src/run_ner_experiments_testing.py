@@ -19,23 +19,23 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
     load_data.load_ner_data(regen_data)
 
 # debug with subset -------
-s = 100
-idxs = np.argwhere(gt!=-1)[:s, 0]
+# s = 100
+# idxs = np.argwhere(gt!=-1)[:s, 0]
+#
+# # idxs = (gt != -1).flatten()
 
-# idxs = (gt != -1).flatten()
-
-gt = gt[idxs]
-annos = annos[idxs]
-doc_start = doc_start[idxs]
-print('No. documents:')
-print(np.sum(doc_start))
-text = text[idxs]
-gt_task1_val = gt_task1_val[idxs]
-
-ntest = 100
-doc_start_nocrowd = doc_start_nocrowd[:ntest]
-text_nocrowd = text_nocrowd[:ntest]
-gt_nocrowd = gt_nocrowd[:ntest]
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# print('No. documents:')
+# print(np.sum(doc_start))
+# text = text[idxs]
+# gt_task1_val = gt_task1_val[idxs]
+#
+# ntest = 100
+# doc_start_nocrowd = doc_start_nocrowd[:ntest]
+# text_nocrowd = text_nocrowd[:ntest]
+# gt_nocrowd = gt_nocrowd[:ntest]
 
 # -------------------------
 
