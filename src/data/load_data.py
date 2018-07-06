@@ -471,8 +471,6 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                                 skip_imperfect_matches=False):
     worker_data = None
 
-    gold_to_keep = {}
-
     for f in os.listdir(dir):
 
         if not f.endswith('.txt'):
@@ -516,8 +514,6 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
         sentence_start = 0
 
         if gold_char_idxs is not None:
-
-            gold_to_keep[doc_str] = np.ones(len(gold_char_idxs[doc_str]), dtype=bool)
 
             gold_chars = np.array(gold_char_idxs[doc_str])
 
@@ -587,8 +583,6 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                     while char_counter > gold_char_idx:
                         print('error in text alignment between worker and gold!')
-                        gold_to_keep[doc_str][gold_tok_idx-1] = False
-
                         len_to_skip = gold_chars[gold_tok_idx - 1] - gold_chars[gold_tok_idx - 2]
 
                         # move the gold counter along to the next token because gold is behind
@@ -631,7 +625,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
         else:
             worker_data = pd.concat([worker_data, new_data])
 
-    return worker_data, gold_to_keep, gold_char_idxs
+    return worker_data, gold_char_idxs
 
 def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, skip_dirty=False):
 
@@ -673,25 +667,10 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
 
         print('Processing dir for worker %s (%i of %i)' % (worker_str, widx, len(worker_dirs)))
 
-        worker_data, gold_to_keep, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str,
+        worker_data, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str,
                                                             char_idx_word_starts, chars, gold_sen_starts, skip_dirty)
 
         print("Loaded a dataset of size %s" % str(worker_data.shape))
-
-        idxs_to_drop = []
-        for doc in gold_to_keep:
-            doc_idxs_to_drop = np.argwhere(np.invert(gold_to_keep[doc])).flatten()
-            if len(doc_idxs_to_drop) > 0:
-                startidx = gold_doc_starts[doc]
-
-                idxs_to_drop = np.concatenate((idxs_to_drop, doc_idxs_to_drop + startidx)).astype(int)
-
-                doc_idxs_to_update = doc_idxs_to_drop + 1
-                char_idx_word_starts[doc] = np.array(char_idx_word_starts[doc])
-                char_idx_word_starts[doc][doc_idxs_to_update] += char_idx_word_starts[doc][doc_idxs_to_drop]
-
-        if len(idxs_to_drop) > 0:
-            gold_data = gold_data.drop(idxs_to_drop)
 
         # now need to join this to other workers' data
         if data is None:
@@ -792,11 +771,15 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
 
         # load the gold data in the same way as the worker data
-        gold_data, _, _ = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
+        gold_data, _ = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
 
         # load the validation data
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
                                                                        gold_data, skip_sen_with_dirty_data)
+
+        # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
+        # merge gold with the worker data
+        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
@@ -808,18 +791,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # save the doc starts
         data.to_csv(savepath + '/task1_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
-        # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
-        # merge gold with the worker data
-        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
-
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
-
-        for row in range(data.shape[0]):
-            nidenticals = np.sum((data['doc_id'] == data['doc_id'][row]) & (data['tok_idx'] == data['tok_idx'][row]))
-            if nidenticals > 1:
-                print('yikes!')
-
 
         # 3. Load worker annotations for test set.
         # load the gold data in the same way as the worker data
@@ -829,8 +802,11 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/',
                                                                        gold_data, skip_sen_with_dirty_data)
 
-        # convert the text to feature vectors
-        #data['text'], _ = build_feature_vectors(data['text'].values)
+
+        # 4. Create ground truth CSV for task1_test_path
+        # merge with the worker data
+
+        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
@@ -841,11 +817,6 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         # save the doc starts
         data.to_csv(savepath + '/task1_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
-
-        # 4. Create ground truth CSV for task1_test_path
-        # merge with the worker data
-
-        data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)
