@@ -15,8 +15,9 @@ exp = Experiment(None, 3, annos.shape[1], None)
 exp.save_results = True
 exp.opt_hyper = False #True
 
-exp.alpha0_diags = 100
-exp.alpha0_factor = 1
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 0.1
+exp.alpha0_factor = 0.1
 
 # ACITVE LEARNING WITH TASK 2 also needs to reload the optimised hyperparameters.
 
@@ -50,8 +51,9 @@ text_test = text[gold_labelled]
 exp = Experiment(None, 3, annos.shape[1], None)
 exp.methods = [
             'HMM_crowd_then_LSTM'
-            'bac_acc_integrateBOF_thenLSTM',
-            'bac_acc_integrateLSTM',
+            'bac_seq_integrateBOF_thenLSTM',
+            'bac_seq_integrateBOF_integrateLSTM_atEnd',
+            'bac_seq_integrateBOF_integrateLSTM',
                ]
 
 exp.save_results = True
