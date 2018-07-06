@@ -169,7 +169,8 @@ exp.methods =  [
                 'majority',
                 'mace',
                 'ds',
-                'best', 'worst',
+                'best',
+                'worst',
                 best_bac_wm,
 ]
 
