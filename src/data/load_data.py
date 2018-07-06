@@ -747,6 +747,29 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # merge gold with the worker data
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
+        num_annotations = np.zeros(data.shape[0]) # count annotations per token
+        for col in annotator_cols:
+            num_annotations += np.invert(data[col].isna())
+
+        for doc in np.unique(data['doc_id']):
+            # get tokens from this doc
+            drows = data['doc_id'] == doc
+
+            # get the annotation counts for this doc
+            counts = num_annotations[drows]
+
+            # check that all tokens have same number of annotations
+            if len(np.unique(counts)) > 1:
+                print('Validation data: we have some misaligned labels.')
+                print(counts)
+
+            if np.any(counts.values == 0):
+                print('Removing document %s with no annotations.' % doc)
+
+        # remove any lines with no annotations
+        annotated_idxs = num_annotations >= 1
+        data = data[annotated_idxs]
+
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, index=False,
                     float_format='%.f', na_rep=-1)
@@ -773,6 +796,29 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # merge with the worker data
 
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
+
+        num_annotations = np.zeros(data.shape[0]) # count annotations per token
+        for col in annotator_cols:
+            num_annotations += np.invert(data[col].isna())
+
+        for doc in np.unique(data['doc_id']):
+            # get tokens from this doc
+            drows = data['doc_id'] == doc
+
+            # get the annotation counts for this doc
+            counts = num_annotations[drows]
+
+            # check that all tokens have same number of annotations
+            if len(np.unique(counts)) > 1:
+                print('Test data: we have some misaligned labels.')
+                print(counts)
+
+            if np.any(counts.values == 0):
+                print('Removing document %s with no annotations.' % doc)
+
+        # remove any lines with no annotations
+        annotated_idxs = num_annotations >= 1
+        data = data[annotated_idxs]
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, index=False,
@@ -846,13 +892,6 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
     print('loading ground truth for task1 test...')
     gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
-
-    # remove any lines with no annotations
-    # annotated_idxs = np.argwhere(np.any(annos != -1, axis=1)).flatten()
-    # annos = annos.iloc[annotated_idxs, :]
-    # gt = gt.iloc[annotated_idxs]
-    # text = text.iloc[annotated_idxs]
-    # doc_start = doc_start.iloc[annotated_idxs]
 
     print('Unique labels: ')
     print(np.unique(gt))
