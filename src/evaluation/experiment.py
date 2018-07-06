@@ -205,7 +205,7 @@ class Experiment(object):
 
     opt_hyper = False
 
-    def __init__(self, generator, nclasses, nannotators, config=None,
+    def __init__(self, generator, nclasses=None, nannotators=None, config=None,
                  alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20):
 
         self.generator = generator
@@ -214,10 +214,9 @@ class Experiment(object):
             self.config_file = config
             self.read_config_file()
 
-        print('setting initial priors for Bayesian methods...')
-
-        self.num_classes = nclasses
-        self.nannotators = nannotators
+        else:
+            self.num_classes = nclasses
+            self.nannotators = nannotators
 
         self.alpha0_factor = alpha0_factor
         self.alpha0_diags = alpha0_diags

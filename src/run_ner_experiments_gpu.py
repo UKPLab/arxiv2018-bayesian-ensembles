@@ -21,7 +21,7 @@ best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the differ
 best_bac_wm_score = -np.inf
 
 best_nu0factor = 0.1
-best_diags = 10
+best_diags = 1
 best_factor = 1
 best_acc_bias = 0
 
