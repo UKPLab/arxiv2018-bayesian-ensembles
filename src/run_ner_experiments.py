@@ -75,8 +75,8 @@ exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
 
-# nu_factors = [0.1, 1, 10, 100]
-diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+nu_factors = [0.1, 1, 10, 100]
+diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]#, 100] #, 36]#[36, 49, 64]#[1, 4, 9, 16, 25]
 
 nu_factors = [0.1]
