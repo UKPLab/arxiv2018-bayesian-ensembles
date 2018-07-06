@@ -697,15 +697,34 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
         if data is None:
             data = worker_data
         else:
+
             # check for any mismatches
             for d in np.unique(worker_data['doc_id']):
                 wrows = worker_data['doc_id'] == d
                 drows = data['doc_id'] == d
-
                 if (np.sum(wrows) != np.sum(drows)) and np.sum(drows):
                     print('Warning: data for document %s did not match.' % d)
 
-            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True)
+                # if (np.sum(wrows) == np.sum(drows)) and np.sum(drows) and worker_data['text'][wrows] != data['text'][drows]:
+                #     print('Warning: data for document %s did not match.' % d)
+                #
+                # if (np.sum(wrows) != np.sum(drows)) and np.sum(drows) and worker_data['doc_start'][wrows] != data['doc_start'][drows]:
+                #     print('Warning: data for document %s did not match.' % d)
+                #
+                # if (np.sum(wrows) != np.sum(drows)) and np.sum(drows) and worker_data['tok_idx'][wrows] != data['tok_idx'][drows]:
+                #     print('Warning: data for document %s did not match.' % d)
+
+            data_merged = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True)
+
+            for d in np.unique(worker_data['doc_id']):
+                mrows = data_merged['doc_id'] == d
+                drows = data['doc_id'] == d
+                wrows = worker_data['doc_id'] == d
+
+                if (np.sum(wrows) != np.sum(mrows)) and np.sum(drows):
+                    print('Warning: data for document %s did not match.' % d)
+
+            data = data_merged
 
     return data, annotator_cols
 
@@ -779,9 +798,6 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
                                                                        gold_data, skip_sen_with_dirty_data)
 
-        # convert the text to feature vectors
-        #data['text'], _ = build_feature_vectors(data['text'].values)
-
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
                     float_format='%.f', na_rep=-1)
@@ -792,13 +808,17 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # save the doc starts
         data.to_csv(savepath + '/task1_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
-
         # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
         # merge gold with the worker data
         data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
+
+        for row in range(data.shape[0]):
+            nidenticals = np.sum((data['doc_id'] == data['doc_id'][row]) & (data['tok_idx'] == data['tok_idx'][row]))
+            if nidenticals > 1:
+                print('yikes!')
 
 
         # 3. Load worker annotations for test set.
@@ -824,6 +844,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         # 4. Create ground truth CSV for task1_test_path
         # merge with the worker data
+
         data = data.merge(gold_data, how='left', on=['doc_id', 'tok_idx'], sort=True)
 
         # save the annos.csv
