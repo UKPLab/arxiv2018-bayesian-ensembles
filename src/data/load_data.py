@@ -12,7 +12,6 @@ import pandas as pd
 import numpy as np
 import glob
 
-from pandas._libs.parsers import na_values
 from sklearn.feature_extraction.text import CountVectorizer
 
 from evaluation.experiment import Experiment
@@ -743,19 +742,13 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # load the validation data
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
                                                                        gold_data, skip_sen_with_dirty_data)
-        data.to_csv(savepath + '/all_anno_val.csv')
 
         # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
         # merge gold with the worker data
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
-        data.to_csv(savepath + '/all_anno_gold_val.csv')
-
-        data = data.sort_values(['doc_id', 'tok_idx'])
-        data = data.reindex_axis(sorted(data.columns), axis=1)
-
         # save the annos.csv
-        data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
+        data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, index=False,
                     float_format='%.f', na_rep=-1)
 
         # save the text in same order
@@ -781,11 +774,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
-        data = data.sort_values(['doc_id', 'tok_idx'])
-        data = data.reindex_axis(sorted(data.columns), axis=1)
-
         # save the annos.csv
-        data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
+        data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, index=False,
                     float_format='%.f', na_rep=-1)
 
         # save the text in same order
@@ -846,7 +836,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
     # 7. Reload the data for the current run...
     print('loading annos for task1 test...')
-    annos = pd.read_csv(savepath + '/task1_test_annos.csv', skip_blank_lines=False, header=None)
+    annos = pd.read_csv(savepath + '/task1_test_annos.csv', skip_blank_lines=False)
 
     print('loading text data for task1 test...')
     text = pd.read_csv(savepath + '/task1_test_text.csv', skip_blank_lines=False, header=None)
@@ -858,22 +848,22 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
 
     # remove any lines with no annotations
-    annotated_idxs = np.argwhere(np.any(annos != -1, axis=1)).flatten()
-    annos = annos.iloc[annotated_idxs, :]
-    gt = gt.iloc[annotated_idxs]
-    text = text.iloc[annotated_idxs]
-    doc_start = doc_start.iloc[annotated_idxs]
+    # annotated_idxs = np.argwhere(np.any(annos != -1, axis=1)).flatten()
+    # annos = annos.iloc[annotated_idxs, :]
+    # gt = gt.iloc[annotated_idxs]
+    # text = text.iloc[annotated_idxs]
+    # doc_start = doc_start.iloc[annotated_idxs]
 
     print('Unique labels: ')
     print(np.unique(gt))
     print(gt.shape)
 
     print('loading annos for task1 val...')
-    annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', header=None, skip_blank_lines=False)
+    annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', skip_blank_lines=False)
 
     # remove any lines with no annotations
-    annotated_idxs = np.argwhere(np.any(annos_v != -1, axis=1)).flatten()
-    annos_v = annos_v.iloc[annotated_idxs, :]
+    # annotated_idxs = np.argwhere(np.any(annos_v != -1, axis=1)).flatten()
+    # annos_v = annos_v.iloc[annotated_idxs, :]
 
     annos = pd.concat((annos, annos_v), axis=0)
     annos = annos.fillna(-1)
@@ -882,14 +872,14 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
     print('loading text data for task1 val...')
     text_v = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
-    text_v = text_v.iloc[annotated_idxs]
+    # text_v = text_v.iloc[annotated_idxs]
 
     text = pd.concat((text, text_v), axis=0)
     text = text.fillna(' ').values
 
     print('loading doc_starts for task1 val...')
     doc_start_v = pd.read_csv(savepath + '/task1_val_doc_start.csv', skip_blank_lines=False, header=None)
-    doc_start_v = doc_start_v.iloc[annotated_idxs]
+    # doc_start_v = doc_start_v.iloc[annotated_idxs]
 
     doc_start = pd.concat((doc_start, doc_start_v), axis=0).values
 
