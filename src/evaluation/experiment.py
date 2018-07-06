@@ -394,12 +394,12 @@ class Experiment(object):
             f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
             f1_w = np.mean(f1_by_class[np.unique(gt[valididxs]).astype(int)])
 
-            print(f1_w)
+            #print(f1_w)
             individual_scores.append(f1_w)
 
             f1scores[valididxs, w] = f1_w
 
-        print(sorted(individual_scores))
+        #print(sorted(individual_scores))
 
         best_idxs = np.argmax(f1scores, axis=1)
         agg = annos[np.arange(annos.shape[0]), best_idxs]
