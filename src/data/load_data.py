@@ -670,7 +670,7 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
         if data is None:
             data = worker_data
         else:
-            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True)
+            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True, validate='1:1')
 
     return data, annotator_cols
 
@@ -743,10 +743,13 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # load the validation data
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
                                                                        gold_data, skip_sen_with_dirty_data)
+        data.to_csv(savepath + '/all_anno_val.csv')
 
         # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
         # merge gold with the worker data
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
+
+        data.to_csv(savepath + '/all_anno_gold_val.csv')
 
         data = data.sort_values(['doc_id', 'tok_idx'])
         data = data.reindex_axis(sorted(data.columns), axis=1)
