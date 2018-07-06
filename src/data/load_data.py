@@ -754,7 +754,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # merge gold with the worker data
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
-        data = data.sort(['doc_id', 'tok_idx'])
+        data = data.sort_values(['doc_id', 'tok_idx'])
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
@@ -783,7 +783,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
-        data = data.sort(['doc_id', 'tok_idx'])
+        data = data.sort_values(['doc_id', 'tok_idx'])
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
