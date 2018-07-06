@@ -33,7 +33,7 @@ exp.save_results = True
 exp.opt_hyper = False#True
 
 exp.nu0_factor = 0.1
-exp.alpha0_diags = 10 # best_diags
+exp.alpha0_diags = 1 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
