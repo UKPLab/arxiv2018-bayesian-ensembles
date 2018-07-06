@@ -467,8 +467,7 @@ def _map_ner_str_to_labels(arr):
     return arr_ints
 
 
-def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_tokens=None, gold_sen_start=None,
-                                skip_imperfect_matches=False):
+def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_tokens=None, skip_imperfect_matches=False):
     worker_data = None
 
     for f in os.listdir(dir):
@@ -516,7 +515,6 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
         if gold_char_idxs is not None:
 
             gold_chars = np.array(gold_char_idxs[doc_str])
-
 
             last_accepted_tok = ''
             last_accepted_idx = -1
@@ -592,6 +590,8 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                         gold_char_idx = gold_chars[gold_tok_idx]
 
+                    gold_char_idxs[doc_str] = gold_chars
+
                     last_accepted_tok = tok
                     last_accepted_idx = t
 
@@ -603,8 +603,6 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                     if new_data['doc_start'].iat[t]: # now we are skipping this token but we don't want to lose the doc_start record.
                         new_data['doc_start'].iat[t+1] = 1
-
-            gold_char_idxs[doc_str] = gold_chars
 
         # no more text in this document, but the last sentence must be skipped
         if skip_imperfect_matches and skip_sentence:
@@ -625,7 +623,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
         else:
             worker_data = pd.concat([worker_data, new_data])
 
-    return worker_data, gold_char_idxs
+    return worker_data
 
 def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, skip_dirty=False):
 
@@ -635,8 +633,6 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
     annotator_cols = np.array([], dtype=str)
 
     char_idx_word_starts = {}
-    gold_sen_starts = {}
-    gold_doc_starts = {}
     chars = {}
 
     char_counter = 0
@@ -648,8 +644,6 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
             char_idx_word_starts[gold_data['doc_id'].iloc[t]] = starts
 
             chars[gold_data['doc_id'].iloc[t]] = toks
-            gold_doc_starts[gold_data['doc_id'].iloc[t]] = t
-            gold_sen_starts[gold_data['doc_id'].iloc[t]] = gold_data['doc_start'][gold_data['doc_id'] == gold_data['doc_id'].iloc[t]].values
 
         starts.append(char_counter)
         toks.append(tok)
@@ -667,8 +661,8 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
 
         print('Processing dir for worker %s (%i of %i)' % (worker_str, widx, len(worker_dirs)))
 
-        worker_data, char_idx_word_starts = _load_rodrigues_annotations(dir, worker_str,
-                                                            char_idx_word_starts, chars, gold_sen_starts, skip_dirty)
+        worker_data = _load_rodrigues_annotations(dir, worker_str,
+                                                            char_idx_word_starts, chars, skip_dirty)
 
         print("Loaded a dataset of size %s" % str(worker_data.shape))
 
@@ -744,7 +738,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
 
         # load the gold data in the same way as the worker data
-        gold_data, _ = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
+        gold_data = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
 
         # load the validation data
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
@@ -772,7 +766,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         # 3. Load worker annotations for test set.
         # load the gold data in the same way as the worker data
-        gold_data, _ = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
+        gold_data = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
 
         # load the test data
         data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/',
