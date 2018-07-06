@@ -755,7 +755,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
         data = data.sort_values(['doc_id', 'tok_idx'])
-        data = data.sort_values(list(data.columns), axis=1)
+        data = data.reindex_axis(sorted(data.columns), axis=1)
 
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, header=False, index=False,
@@ -785,8 +785,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
         data = data.sort_values(['doc_id', 'tok_idx'])
-        data = data.sort_values(list(data.columns), axis=1)
-        
+        data = data.reindex_axis(sorted(data.columns), axis=1)
+
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, header=False, index=False,
                     float_format='%.f', na_rep=-1)
