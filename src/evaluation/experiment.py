@@ -1041,7 +1041,11 @@ class Experiment(object):
 
             for i in range(annotations.shape[0]):
 
-                token_feature_vector = [features[i]]
+                if len(features):
+                    token_feature_vector = [features[i]]
+                else:
+                    token_feature_vector = []
+
                 label = 0
 
                 if doc_start[i]:
@@ -1150,7 +1154,7 @@ class Experiment(object):
                 # read data
                 doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
                 # run methods
-                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start, data_path + 'annotations.csv')
+                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start, data_path)
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities
