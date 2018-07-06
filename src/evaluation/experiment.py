@@ -1028,11 +1028,13 @@ class Experiment(object):
                         ufeats[tok] = len(ufeats)
 
                     features[t] = ufeats[tok]
+
+                features = features.astype(int)
+
             else:
                 features = []
                 ufeats = []
 
-            features = features.astype(int)
 
             sentences_inst = []
             crowd_labels = []
