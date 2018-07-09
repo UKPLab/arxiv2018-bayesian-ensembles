@@ -10,14 +10,17 @@ Created on April 27, 2018
 @author: Edwin Simpson
 '''
 
-from algorithm.bac import BAC
-import data.load_data as load_data
-import numpy as np
-from sklearn.cluster import MiniBatchKMeans
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
+
+from algorithm.bac import BAC
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
+import data.load_data as load_data
+import numpy as np
+from sklearn.cluster import MiniBatchKMeans
 
 output_dir = '../../data/bayesian_annotator_combination/output/bio_workers/'
 
