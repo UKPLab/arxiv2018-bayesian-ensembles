@@ -1087,7 +1087,7 @@ class Experiment(object):
             crowd_labels = np.array(crowd_labels)
             crowd_labels = crowd_labels[docsubsetidxs]
 
-        if len(features) and isinstance(sentences_inst[0][0].features[0], float):
+        if len(sentences_inst[0][0].features) and isinstance(sentences_inst[0][0].features[0], float):
             # the features need to be ints not floats!
             for s, sen in enumerate(sentences_inst):
                 for t, tok in enumerate(sen):
