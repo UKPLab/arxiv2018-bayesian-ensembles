@@ -16,10 +16,11 @@ def count_error(pred, target):
 '''
 Calculates the number of invalid labels in the given prediction, i.e. the number of 'I' tokens directly following an 'O' token.
 '''        
-def num_invalid_labels(pred, doc_start):  
+def num_invalid_labels(pred, doc_start, restricted=[0, 3, 5, 7], outside=1):
+
     docs = np.split(pred, np.where(doc_start==1)[0])[1:]
     try:
-        count_invalid = lambda doc: len(np.where(doc[np.r_[0, np.where(doc[:-1] == 1)[0] + 1]] == 0)[0])
+        count_invalid = lambda doc: len(np.where(np.in1d(doc[np.r_[0, np.where(doc[:-1] == outside)[0] + 1]], restricted))[0])
     except:
         print('Could not count any invalid labels because some classes were not present.')
         count_invalid = 0

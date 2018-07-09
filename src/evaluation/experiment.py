@@ -614,7 +614,7 @@ class Experiment(object):
         return agg.flatten(), probs, hc
 
     def _run_LSTM(self, N_withcrowd, text, doc_start, train_labs, test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd,
-                  ground_truth_nocrowd, text_val, doc_start_val, ground_truth_val):
+                  ground_truth_nocrowd, text_val, doc_start_val, ground_truth_val, timestamp):
         '''
         Reasons why we need the LSTM integration:
         - Could use a simpler model like hmm_crowd for task 1
@@ -644,7 +644,7 @@ class Experiment(object):
 
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
-        lstm = lstm_wrapper.LSTMWrapper()
+        lstm = lstm_wrapper.LSTMWrapper('./models_LSTM_%s' % timestamp)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
                                   IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter)
@@ -908,7 +908,7 @@ class Experiment(object):
                 if '_then_LSTM' in method:
                     agg2, probs2, agg_nocrowd, probs_nocrowd = self._run_LSTM(N_withcrowd, text, doc_start, agg,
                                 test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd, ground_truth_nocrowd,
-                                text_val, doc_start_val, ground_truth_val)
+                                text_val, doc_start_val, ground_truth_val, timestamp)
 
                     if not active_learning:
                         agg = agg2

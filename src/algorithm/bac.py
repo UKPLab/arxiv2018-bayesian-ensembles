@@ -1873,7 +1873,8 @@ class LSTM:
         self.sentences, self.IOB_map, self.IOB_label = lstm_wrapper.data_to_lstm_format(N, text, doc_start, labels,
                                                                                     nclasses)
 
-        self.LSTMWrapper = lstm_wrapper.LSTMWrapper()
+        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
+        self.LSTMWrapper = lstm_wrapper.LSTMWrapper('./models_bac_%s' % timestamp)
 
         self.Ndocs = self.sentences.shape[0]
 

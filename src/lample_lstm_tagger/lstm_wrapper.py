@@ -77,8 +77,13 @@ def split_train_to_dev(gold_sentences):
 
 class LSTMWrapper(object):
 
-    def __init__(self):
+    def __init__(self, models_path_alt=None):
         self.model = None
+
+        if models_path is None:
+            self.models_path = models_path
+        else:
+            self.models_path = models_path_alt
 
     def run_epoch(self, epoch, niter_no_imprv, best_dev, last_score, compute_dev=True):
         epoch_costs = []
@@ -143,11 +148,11 @@ class LSTMWrapper(object):
 
         #lr_decay = 0.9 # not currently used
 
-        if not os.path.exists(models_path):
-            os.makedirs(models_path)
+        if not os.path.exists(self.models_path):
+            os.makedirs(self.models_path)
 
         # Initialize model
-        model = Model(parameters=parameters, models_path=models_path)
+        model = Model(parameters=parameters, models_path=self.models_path)
         print("Model location: %s" % model.model_path)
 
         # Data parameters

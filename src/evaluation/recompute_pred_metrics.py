@@ -63,8 +63,8 @@ if __name__ == '__main__':
                 probfile = 'probs_nocrowd_' + timestamp[:-len('.csv')] + '.pkl'
                 outfile = 'recomputed_nocrowd_' + timestamp + '.tex'
 
-                gt_this_task = gt_val#gt_nocrowd
-                doc_start_this_task = doc_start_val#doc_start_nocrowd
+                gt_this_task = gt_nocrowd
+                doc_start_this_task = doc_start_nocrowd
             else:
                 timestamp = fname[len('pred_'):]
                 probfile = 'probs_' + timestamp[:-len('.csv')] + '.pkl'

@@ -10,7 +10,7 @@ import numpy as np
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=1)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 
 exp.save_results = True
 exp.opt_hyper = False #True
