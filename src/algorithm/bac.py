@@ -1939,7 +1939,7 @@ class LSTM:
                 n_epochs = 1
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
-                     dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=True)
+                     dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=False)#True)
         else:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 
