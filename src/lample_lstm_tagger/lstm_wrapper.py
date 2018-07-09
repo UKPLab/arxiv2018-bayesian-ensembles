@@ -147,7 +147,7 @@ class LSTMWrapper(object):
             os.makedirs(models_path)
 
         # Initialize model
-        model = Model(parameters=parameters, models_path=models_path)# + '/' + model_name)
+        model = Model(parameters=parameters, models_path=models_path)
         print("Model location: %s" % model.model_path)
 
         # Data parameters

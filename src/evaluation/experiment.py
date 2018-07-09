@@ -620,14 +620,12 @@ class Experiment(object):
         - Could use a simpler model like hmm_crowd for task 1
         - Performance may be better with LSTM
         - Active learning possible with simpler model, but how novel?
-        - Integrating LSTM shows a generalisation -- step forward over models that fix the data
-        representation
+        - Integrating LSTM shows a generalisation -- step forward over models that fix the data representation
         - Can do task 2 better than a simple model like Hmm_crowd
         - Can do task 2 better than training on HMM_crowd then LSTM, or using LSTM-crowd.s
         '''
         labelled_sentences, IOB_map, IOB_label = lstm_wrapper.data_to_lstm_format(N_withcrowd, text, doc_start,
                                                                           train_labs.flatten(), self.num_classes)
-
         np.random.seed(592) # for reproducibility
 
         if ground_truth_val is None or doc_start_val is None or text_val is None:
@@ -644,13 +642,12 @@ class Experiment(object):
             dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
                                                                    doc_start_val, ground_truth_val)
 
-
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
         lstm = lstm_wrapper.LSTMWrapper()
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                                  IOB_label, self.num_classes, freq_eval=1, max_niter_no_imprv=self.max_iter)
+                                  IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
@@ -1132,7 +1129,7 @@ class Experiment(object):
                 self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length,
                                                 group_sizes=self.group_sizes, save_to_file=True, output_dir=path)
     
-    def run_exp(self):
+    def run_synth_exp(self):
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
         # read experiment directory
@@ -1154,7 +1151,8 @@ class Experiment(object):
                 # read data
                 doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
                 # run methods
-                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start, data_path)
+                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start,
+                                                                                        data_path, new_data=True)
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities
@@ -1240,6 +1238,6 @@ class Experiment(object):
             print('No data found at specified path! Exiting!')
             return
         else:
-            return self.run_exp()
+            return self.run_synth_exp()
 
 
