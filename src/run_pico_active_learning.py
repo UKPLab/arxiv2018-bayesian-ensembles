@@ -48,7 +48,6 @@ gt_test = gt[gold_labelled]
 doc_start_test = doc_start[gold_labelled]
 text_test = text[gold_labelled]
 
-exp = Experiment(None, 3, annos.shape[1], None)
 exp.methods = [
             'HMM_crowd_then_LSTM'
             'bac_seq_integrateBOF_thenLSTM',

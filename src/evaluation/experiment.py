@@ -1151,7 +1151,7 @@ class Experiment(object):
                 # read data
                 doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
                 # run methods
-                results[param_idx,:,:,run_idx], preds, probabilities = self.run_methods(annos, gt, doc_start,
+                results[param_idx,:,:,run_idx], preds, probabilities, _, _, _ = self.run_methods(annos, gt, doc_start,
                                                                                         data_path, new_data=True)
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
