@@ -152,7 +152,7 @@ class BAC(object):
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
         
-        self.max_iter = max_iter - self.max_data_updates_at_end  # maximum number of iterations
+        self.max_iter = max_iter #- self.max_data_updates_at_end  # maximum number of iterations
         self.eps = eps  # threshold for convergence 
         
         self.verbose = False  # can change this if you want progress updates to be printed
@@ -1863,7 +1863,7 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters):
 
-        self.n_epochs_per_vb_iter = 1
+        self.n_epochs_per_vb_iter = 3
         self.max_vb_iters = max_vb_iters
 
         self.N = N
@@ -1935,12 +1935,12 @@ class LSTM:
 
         if self.LSTMWrapper.model is None:
             # the first update needs more epochs to reach a useful level
-            n_epochs = lstm_wrapper.MAX_NO_EPOCHS - ((self.max_vb_iters + 1) * self.n_epochs_per_vb_iter)
-            if n_epochs < 1:
-                n_epochs = 1
+            n_epochs = lstm_wrapper.MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
+            if n_epochs < self.n_epochs_per_vb_iter:
+                n_epochs = self.n_epochs_per_vb_iter
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
-                     dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=False)#True)
+                     dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=True)
         else:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 

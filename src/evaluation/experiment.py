@@ -647,7 +647,7 @@ class Experiment(object):
         lstm = lstm_wrapper.LSTMWrapper('./models_LSTM_%s' % timestamp)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                                  IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter)
+                                  IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter, crf_probs=True)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
