@@ -31,12 +31,12 @@ nu_factors = [0.1, 1, 10, 100]
 diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]
 methods_to_tune = [
-                   # 'ibcc',
-                   # 'bac_vec_integrateBOF',
+                   'ibcc',
+                   'bac_vec_integrateBOF',
                    'bac_seq_integrateBOF',
-                   # 'bac_ibcc_integrateBOF',
-                   # 'bac_acc_integrateBOF',
-                   # 'bac_mace_integrateBOF'
+                   'bac_ibcc_integrateBOF',
+                   'bac_acc_integrateBOF',
+                   'bac_mace_integrateBOF'
                    ]
 
 best_bac_wm_score = -np.inf
