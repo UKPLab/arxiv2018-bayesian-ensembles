@@ -313,7 +313,7 @@ class Experiment(object):
                     print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor,
                                                          scores[(h*len(alpha0diag_proposals)) + i, j]))
 
-                    if scores[i, j] > best_scores[0]:
+                    if scores[(h*len(alpha0diag_proposals)) + i, j] > best_scores[0]:
                         best_scores[0] = scores[(h*len(alpha0diag_proposals)) + i, j]
                         best_scores[1] = nu0factor
                         best_scores[2] = alpha0diag
@@ -1152,7 +1152,7 @@ class Experiment(object):
                 doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
                 # run methods
                 results[param_idx,:,:,run_idx], preds, probabilities, _, _, _ = self.run_methods(annos, gt, doc_start,
-                                                                                        data_path, new_data=True)
+                                                                        data_path, new_data=True, bootstrapping=False)
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities

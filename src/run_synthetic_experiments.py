@@ -19,6 +19,3 @@ Experiment(dataGen, config='./config/short_bias_experiment.ini').run_synth()
 Experiment(dataGen, config='./config/doc_length_experiment.ini').run_synth()
 Experiment(dataGen, config='./config/group_ratio_experiment.ini').run_synth()
 Experiment(dataGen, config='./config/acc_bias_experiment.ini').run_synth()
-
-if __name__ == '__main__':
-    pass

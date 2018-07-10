@@ -159,11 +159,13 @@ for w, worker_model in enumerate(worker_models):
             # add the probability of being correct
             EPi_square[range(L), range(L)] += EPi[1, 0]
 
+        # Add a list of conf matrices to the dictionary, i.e. one per cluster,
+        # except we do not cluster the data models here but plot them separately.
         if worker_model == 'seq':
             for i, EPi_square_i in enumerate(EPi_square):
-                confmats[worker_model + '+' + data_model[d] + ', prev label = %i' % i] = EPi_square_i
+                confmats[worker_model + '+' + data_model[d] + ', prev label = %i' % i] = [EPi_square_i]
         else:
-            confmats[worker_model + '+' + data_model[d]] = EPi_square
+            confmats[worker_model + '+' + data_model[d]] = [EPi_square]
 
     # WORKERS
     EPi_list = []
