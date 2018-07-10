@@ -227,6 +227,9 @@ class Experiment(object):
         self.aggs = {}
         self.probs = {}
 
+        self.bac_pretrained = None
+        self.bac_iterative_learning = False
+
         self.max_iter = max_iter # allow all methods to use a maximum no. iterations
             
     def read_config_file(self):
@@ -489,7 +492,8 @@ class Experiment(object):
 
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
-                 ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM'):
+                 ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM',
+                 bac_model=None):
 
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
@@ -559,28 +563,32 @@ class Experiment(object):
         if use_BOF:
             data_model.append('IF')
 
-        alg = bac.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+        if bac_model is None:
+            bac_model = bac.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
                       inside_labels=inside_labels, outside_labels=outside_labels,
                       beginning_labels=begin_labels, alpha0=self.bac_alpha0, alpha0_data=self.bac_alpha0_data,
                       nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
                       exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
-        alg.verbose = True
+        else:
+            bac_model.data_model_updated = 0 # update only the data model without resetting everything.
+
+        bac_model.verbose = True
 
         np.random.seed(592) # for reproducibility
 
         if self.opt_hyper:
-            probs, agg = alg.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences,
+            probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences,
                                       converge_workers_first=use_LSTM==2, )
         else:
-            probs, agg = alg.run(annotations, doc_start, text, dev_data=dev_sentences,
+            probs, agg = bac_model.run(annotations, doc_start, text, dev_data=dev_sentences,
                                  converge_workers_first=use_LSTM==2, )
 
-        model = alg
+        model = bac_model
 
         if ground_truth_nocrowd is not None and '_thenLSTM' not in method:
-            probs_nocrowd, agg_nocrowd = alg.predict(doc_start_nocrowd, text_nocrowd)
+            probs_nocrowd, agg_nocrowd = bac_model.predict(doc_start_nocrowd, text_nocrowd)
         else:
             probs_nocrowd = None
             agg_nocrowd = None
@@ -880,9 +888,13 @@ class Experiment(object):
                                     method, use_LSTM=use_LSTM, use_BOF=use_BOF,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
                                     ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                                    text_nocrowd=text_nocrowd, transition_model=trans_model)
+                                    text_nocrowd=text_nocrowd, transition_model=trans_model,
+                                    bac_model=self.bac_pretrained)
                         self.aggs[method] = agg
                         self.probs[method] = probs
+
+                        if self.bac_iterative_learning:
+                            self.bac_pretrained = model
                     else:
                         agg = self.aggs[method]
                         probs = self.probs[method]

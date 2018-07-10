@@ -81,7 +81,7 @@ factors = [0.1, 1, 10]
 # acc_biases = [1, 10, 100]
 
 methods_to_tune = [
-                   'ibcc',
+                   #'ibcc',
                    'bac_vec_integrateBOF',
                    'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',

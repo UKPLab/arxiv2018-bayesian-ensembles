@@ -26,47 +26,29 @@ exp.alpha0_factor = 1
 exp.alpha0_acc_bias = 0
 
 nu_factors = [0.1]
-lstm_diags = [0.1, 1, 10, 100]
-lstm_factors = [0.1, 1, 10, 100]
+lstm_diags = [1, 10, 100, 1000]
+lstm_factors = [0.1, 100]
 # acc_biases = [1, 10, 100]
 
 methods_to_tune = [
                    'bac_seq_integrateBOF_integrateLSTM_atEnd',
                    ]
-
-# tune with small dataset to save time
-s = 250
-idxs = np.argwhere(gt_task1_val != -1)[:, 0]
-ndocs = np.sum(doc_start[idxs])
-
-if ndocs > s:
-    idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
-elif ndocs < s:  # not enough validation data
-    moreidxs = np.argwhere(gt != -1)[:, 0]
-    deficit = s - ndocs
-    ndocs = np.sum(doc_start[moreidxs])
-    if ndocs > deficit:
-        moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
-    idxs = np.concatenate((idxs, moreidxs))
-
-tune_gt = gt[idxs]
-tune_annos = annos[idxs]
-tune_doc_start = doc_start[idxs]
-tune_text = text[idxs]
-tune_gt_task1_val = gt_task1_val[idxs]
+# in this case, tune with the full dataset because LSTM doesn't work otherwise
 
 for m, method in enumerate(methods_to_tune):
     print('TUNING %s' % method)
+
+    exp.bac_iterative_learning = True  # don't reset BAC each iteration as we only need to change the LSTM component.
 
     best_scores = exp.tune_alpha0(lstm_diags,
                                   lstm_factors,
                                   nu_factors,
                                   method,
-                                  tune_annos,
-                                  tune_gt_task1_val,
-                                  tune_doc_start,
+                                  annos,
+                                  gt_task1_val,
+                                  doc_start,
                                   output_dir,
-                                  tune_text,
+                                  text,
                                   tune_lstm=True,
                                   ground_truth_val=gt_val,
                                   doc_start_val=doc_start_val,
