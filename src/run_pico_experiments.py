@@ -30,6 +30,10 @@ best_factor = 0.1
 nu_factors = [0.1, 1, 10, 100]
 diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]
+
+exp.alpha0_diags_lstm = 0.1
+exp.alpha0_factor_lstm = 0.1
+
 methods_to_tune = [
                    'ibcc',
                    'bac_vec_integrateBOF',
@@ -61,7 +65,7 @@ for m, method in enumerate(methods_to_tune):
     exp.alpha0_diags = diags[best_idxs[1]]
     exp.alpha0_factor = factors[best_idxs[2]]
 
-    print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+    print('Best values: %f, %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
 
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
