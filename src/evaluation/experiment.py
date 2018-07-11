@@ -68,7 +68,7 @@ def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
         # print 'AUC for class %i: %f' % (i, auc_i)
         auc_score += auc_i * np.sum(gt == i)
         total_weights += np.sum(gt == i)
-    result[4] = auc_score / float(total_weights)
+    result[4] = auc_score / float(total_weights) if total_weights > 0 else 0
 
     result[5] = skm.log_loss(gt, probs, eps=1e-100, labels=np.arange(nclasses))
 
