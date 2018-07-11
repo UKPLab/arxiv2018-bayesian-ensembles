@@ -81,7 +81,7 @@ factors = [0.1, 1, 10]
 # acc_biases = [1, 10, 100]
 
 methods_to_tune = [
-                   'ibcc',
+                   #'ibcc',
                    'bac_vec_integrateBOF',
                    'bac_ibcc_integrateBOF',
                    'bac_seq_integrateBOF',
@@ -128,7 +128,7 @@ for m, method in enumerate(methods_to_tune):
     # exp.alpha0_diags_lstm = diags[best_idxs[1]]
     # exp.alpha0_factor_lstm = factors[best_idxs[2]]
 
-    print('Best values: %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
+    print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
     # best_score, best_idx = exp.tune_acc_bias(acc_biases, method, tune_annos, tune_gt_task1_val, tune_doc_start,
     #                               output_dir, tune_text)

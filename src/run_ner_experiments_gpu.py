@@ -20,52 +20,111 @@ exp.opt_hyper = False#True
 best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
 
-best_nu0factor = 0.1
-best_diags = 1
-best_factor = 1
-best_acc_bias = 0
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 1
+exp.alpha0_factor = 1
+exp.alpha0_acc_bias = 0
 
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-exp.alpha0_acc_bias = best_acc_bias
+nu_factors = [0.1]
+lstm_diags = [1, 10, 100, 1000]
+lstm_factors = [0.1, 100]
+# acc_biases = [1, 10, 100]
 
-# run all the methods that don't require tuning here
-exp.methods =  [
-                best_bac_wm + '_integrateBOF_then_LSTM',
-]
+methods_to_tune = [
+                   'bac_seq_integrateBOF_integrateLSTM_atEnd',
+                   ]
+# in this case, tune with the full dataset because LSTM doesn't work otherwise
 
-# should run both task 1 and 2.
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data
-)
+for m, method in enumerate(methods_to_tune):
+    print('TUNING %s' % method)
 
-# reset to free memory? ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
-exp.save_results = True
-exp.opt_hyper = False#True
+    exp.bac_iterative_learning = True  # don't reset BAC each iteration as we only need to change the LSTM component.
 
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-exp.alpha0_acc_bias = best_acc_bias
+    best_scores = exp.tune_alpha0(lstm_diags,
+                                  lstm_factors,
+                                  nu_factors,
+                                  method,
+                                  annos,
+                                  gt_task1_val,
+                                  doc_start,
+                                  output_dir,
+                                  text,
+                                  tune_lstm=True,
+                                  ground_truth_val=gt_val,
+                                  doc_start_val=doc_start_val,
+                                  text_val=text_val)
 
-# run all the methods that don't require tuning here
-exp.methods =  [
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-]
+    best_idxs = best_scores[1:].astype(int)
+    exp.alpha0_diags_lstm = lstm_diags[best_idxs[1]]
+    exp.alpha0_factor_lstm = lstm_factors[best_idxs[2]]
 
-# should run both task 1 and 2.
+    print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data
-)
+    exp.methods = [method]
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=False,
+                ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
+                text_nocrowd=text_nocrowd,
+                new_data=regen_data
+                )
+
+    best_score = best_scores[0]
+    if 'bac_seq' in method and best_score > best_bac_wm_score:
+        best_bac_wm = 'bac_' + method.split('_')[1]
+        best_bac_wm_score = best_score
+        best_diags = exp.alpha0_diags
+        best_factor = exp.alpha0_factor
+        best_nu0factor = exp.nu0_factor
+    #
+    # if 'bac_seq' in method and best_score > best_bac_wm_score:
+    #     best_bac_wm_score = best_score
+    #     best_acc_bias = exp.alpha0_acc_bias
+    #     best_bac_wm = 'bac_' + method.split('_')[1]
+
+print('best BAC method tested here = %s' % best_bac_wm)
+
+
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+# exp.alpha0_acc_bias = best_acc_bias
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 best_bac_wm + '_integrateBOF_then_LSTM',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     new_data=regen_data
+# )
+#
+# # reset to free memory? ------------------------------------------------------------------------------------------------
+# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+# exp.save_results = True
+# exp.opt_hyper = False#True
+#
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+# exp.alpha0_acc_bias = best_acc_bias
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+# ]
+#
+# # should run both task 1 and 2.
+#
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     new_data=regen_data
+# )
 
 # reset to free memory? ------------------------------------------------------------------------------------------------
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)

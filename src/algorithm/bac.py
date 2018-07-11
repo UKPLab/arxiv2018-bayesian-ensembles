@@ -154,7 +154,8 @@ class BAC(object):
         
         self.max_iter = max_iter #- self.max_data_updates_at_end  # maximum number of iterations
         self.eps = eps  # threshold for convergence 
-        
+        self.iter = 0
+
         self.verbose = False  # can change this if you want progress updates to be printed
 
     def _set_transition_constraints_seqalpha(self):
@@ -544,37 +545,38 @@ class BAC(object):
         Runs the BAC algorithm with the given annotations and list of document starts.
 
         '''
-
         # initialise the hyperparameters to correct sizes
         self.alpha0, self.alpha0_data = self.worker_model._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
                                                                          self.nscores)
-        self._set_transition_constraints()
 
-        # initialise transition and confusion matrices
-        self._initA()
-        self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
+        # validate input data
+        assert C.shape[0] == doc_start.shape[0]
 
+        # transform input data to desired format: unannotated tokens represented as zeros
+        C = C.astype(int) + 1
+        doc_start = doc_start.astype(bool)
+
+        if self.iter == 0:
+            self._set_transition_constraints()
+
+            # initialise transition and confusion matrices
+            self._initA()
+            self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
+
+            # initialise variables
+            self.q_t_old = np.zeros((C.shape[0], self.L))
+            self.q_t = np.ones((C.shape[0], self.L))
+
+            #oldlb = -np.inf
+
+            self.doc_start = doc_start
+            self.C = C
+
+        # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L, dev_data,
                                           self.max_data_updates_at_end if converge_workers_first else self.max_iter)
             model.lnPi_data  = self.worker_model._calc_q_pi(model.alpha_data)
-
-        # validate input data
-        assert C.shape[0] == doc_start.shape[0]
-        
-        # transform input data to desired format: unannotated tokens represented as zeros
-        C = C.astype(int) + 1
-        doc_start = doc_start.astype(bool)
-        
-        # initialise variables
-        self.iter = 0
-        self.q_t_old = np.zeros((C.shape[0], self.L))
-        self.q_t = np.ones((C.shape[0], self.L))
-        
-        oldlb = -np.inf
-        
-        self.doc_start = doc_start
-        self.C = C
 
         for model in self.data_model:
             model.C_data = np.zeros((self.C.shape[0], self.nscores)) + (1.0 / self.nscores)
@@ -611,7 +613,6 @@ class BAC(object):
                 self._calc_q_A()
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
-
 
                 for model in self.data_model:
                     if (type(model) != LSTM and not self.workers_converged)\
@@ -2011,13 +2012,14 @@ class IndependentFeatures:
         self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
 
         # set this to trust the model completely
-        alpha0_data = np.ones_like(alpha0_data)
-        alpha0_data[:] = 0.001
-        if alpha0_data.ndim == 2:
-            alpha0_data *= (nclasses - 1)
-            alpha0_data[1, 0] = 1000
-        elif alpha0_data.ndim >= 3:
-            alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
+        alpha0_data = np.copy(alpha0_data) #np.ones_like(alpha0_data)
+
+        # alpha0_data[:] = 0.001
+        # if alpha0_data.ndim == 2:
+        #     alpha0_data *= (nclasses - 1)
+        #     alpha0_data[1, 0] = 1000
+        # elif alpha0_data.ndim >= 3:
+        #     alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
 
         alpha_data = np.copy(alpha0_data)
 
