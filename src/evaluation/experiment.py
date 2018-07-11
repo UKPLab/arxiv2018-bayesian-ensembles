@@ -60,7 +60,7 @@ def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     total_weights = 0
     for i in range(probs.shape[1]):
 
-        if not np.any(gt == i) or np.all(gt == i):
+        if not np.any(gt == i) or np.all(gt == i) or np.any(np.isnan(probs[:, i])) or np.any(np.isinf(probs[:, i])):
             print('Could not evaluate AUC for class %i -- all data points have same value.' % i)
             continue
 
@@ -572,6 +572,9 @@ class Experiment(object):
                       tagging_scheme='IOB2',
                       data_model=data_model, transition_model=transition_model)
         else:
+            bac_model.alpha0 = self.bac_alpha0
+            bac_model.alpha0_data = self.bac_alpha0_data
+            bac_model.nu0 = self.bac_nu0
             bac_model.data_model_updated = 0 # update only the data model without resetting everything.
 
         bac_model.verbose = True

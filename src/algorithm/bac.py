@@ -545,22 +545,23 @@ class BAC(object):
         Runs the BAC algorithm with the given annotations and list of document starts.
 
         '''
+        # initialise the hyperparameters to correct sizes
+        self.alpha0, self.alpha0_data = self.worker_model._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
+                                                                         self.nscores)
+
+        # validate input data
+        assert C.shape[0] == doc_start.shape[0]
+
+        # transform input data to desired format: unannotated tokens represented as zeros
+        C = C.astype(int) + 1
+        doc_start = doc_start.astype(bool)
+
         if self.iter == 0:
-            # initialise the hyperparameters to correct sizes
-            self.alpha0, self.alpha0_data = self.worker_model._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
-                                                                             self.nscores)
             self._set_transition_constraints()
 
             # initialise transition and confusion matrices
             self._initA()
             self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
-
-            # validate input data
-            assert C.shape[0] == doc_start.shape[0]
-
-            # transform input data to desired format: unannotated tokens represented as zeros
-            C = C.astype(int) + 1
-            doc_start = doc_start.astype(bool)
 
             # initialise variables
             self.q_t_old = np.zeros((C.shape[0], self.L))
