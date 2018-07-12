@@ -33,6 +33,9 @@ def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
 
     gt = gt.astype(int)
 
+    probs[np.isnan(probs)] = 0
+    probs[np.isinf(probs)] = 0
+
     # token-level metrics
     result[0] = skm.accuracy_score(gt, agg)
 

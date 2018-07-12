@@ -65,7 +65,7 @@ for m, method in enumerate(methods_to_tune):
     exp.alpha0_diags = diags[best_idxs[1]]
     exp.alpha0_factor = factors[best_idxs[2]]
 
-    print('Best values: %f, %f, %f' % (exp.alpha0_diags, exp.alpha0_factor))
+    print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
