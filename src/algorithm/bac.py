@@ -1864,7 +1864,7 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters):
 
-        self.n_epochs_per_vb_iter = 3
+        self.n_epochs_per_vb_iter = 3 # this may be too much?
         self.max_vb_iters = max_vb_iters
 
         self.N = N
