@@ -169,7 +169,7 @@ class DataGenerator(object):
             np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
             
         doc_start = np.zeros((num_docs*int(doc_length),1))
-        doc_start[list(range(0,num_docs*doc_length,doc_length))] = 1
+        doc_start[np.array(range(0, int(num_docs*doc_length), doc_length))] = 1
         
         np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
         

@@ -1185,7 +1185,8 @@ class Experiment(object):
             results.dump(self.output_dir + 'results')
 
         if self.show_plots or self.save_plots:
-            self.plot_results(results, self.show_plots, self.save_plots, self.output_dir)
+            plot_results(self.param_values, self.methods, self.param_idx, results, self.show_plots,
+                         self.save_plots, self.output_dir)
         
         return results
 

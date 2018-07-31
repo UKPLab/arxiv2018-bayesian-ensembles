@@ -75,6 +75,7 @@ for m, method in enumerate(methods_to_tune):
         best_diags = exp.alpha0_diags
         best_factor = exp.alpha0_factor
         best_nu0factor = exp.nu0_factor
+        best_acc_bias = exp.alpha0_acc_bias
     #
     # if 'bac_seq' in method and best_score > best_bac_wm_score:
     #     best_bac_wm_score = best_score
