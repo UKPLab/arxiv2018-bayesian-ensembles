@@ -894,8 +894,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     gt_t = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
 
     print('Unique labels: ')
-    print(np.unique(gt))
-    print(gt.shape)
+    print(np.unique(gt_t))
+    print(gt_t.shape)
 
     print('loading annos for task1 val...')
     annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', skip_blank_lines=False)
@@ -923,7 +923,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     doc_start = pd.concat((doc_start, doc_start_v), axis=0).values
 
     print('Loading a gold valdation set for task 1')
-    gt_blanks = pd.DataFrame(np.zeros(gt.shape[0]) - 1)
+    gt_blanks = pd.DataFrame(np.zeros(gt_t.shape[0]) - 1)
     gt_val_task1_orig = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None)
     gt_val_task1 = pd.concat((gt_blanks, gt_val_task1_orig), axis=0).values
 
