@@ -10,7 +10,7 @@ import numpy as np
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
 regen_data = False
-gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val = \
+gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, gt_all = \
     load_data.load_ner_data(regen_data)
 
 # Defaults ---------
@@ -46,7 +46,7 @@ exp.run_methods(
     annos, gt, doc_start, output_dir, text,
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data
+    new_data=regen_data, ground_truth_all_points=gt_all
 )
 
 # --------------------
