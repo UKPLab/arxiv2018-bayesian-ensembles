@@ -28,7 +28,7 @@ from algorithm import bac
 from data import data_utils
 from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
 
-crf_probs = True
+crf_probs = False
 
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     result = -np.ones(len(SCORE_NAMES) - 3)
@@ -925,7 +925,7 @@ class Experiment(object):
                         agg = ground_truth_all_points.flatten()
                     else:
                         agg = ground_truth.flatten()
-                        
+
                     probs = np.zeros((len(ground_truth), self.num_classes))
                     probs[range(len(agg)), agg.astype(int)] = 1.0
 
