@@ -1863,7 +1863,7 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters):
 
-        self.n_epochs_per_vb_iter = 3 # this may be too much?
+        self.n_epochs_per_vb_iter = 1#3 # this may be too much?
         self.max_vb_iters = max_vb_iters
 
         self.N = N
@@ -1936,6 +1936,7 @@ class LSTM:
 
         if self.LSTMWrapper.model is None:
             from lample_lstm_tagger.lstm_wrapper import MAX_NO_EPOCHS
+            from evaluation.experiment import crf_probs
 
             # the first update needs more epochs to reach a useful level
             n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
@@ -1943,7 +1944,7 @@ class LSTM:
                 n_epochs = self.n_epochs_per_vb_iter
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
-                     dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=True)
+             dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=crf_probs)
         else:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 

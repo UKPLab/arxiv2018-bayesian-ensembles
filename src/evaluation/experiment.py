@@ -28,6 +28,8 @@ from algorithm import bac
 from data import data_utils
 from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
 
+crf_probs = True
+
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     result = -np.ones(len(SCORE_NAMES) - 3)
 
@@ -589,7 +591,7 @@ class Experiment(object):
                                       converge_workers_first=use_LSTM==2, )
         else:
             probs, agg = bac_model.run(annotations, doc_start, text, dev_data=dev_sentences,
-                                 converge_workers_first=use_LSTM==2, )
+                                 converge_workers_first=use_LSTM==2)
 
         model = bac_model
 
@@ -661,7 +663,7 @@ class Experiment(object):
         lstm = lstm_wrapper.LSTMWrapper('./models_LSTM_%s' % timestamp)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                                  IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter, crf_probs=True)
+                                  IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter, crf_probs=crf_probs)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
