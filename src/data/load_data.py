@@ -891,7 +891,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     doc_start = pd.read_csv(savepath + '/task1_test_doc_start.csv', skip_blank_lines=False, header=None)
 
     print('loading ground truth for task1 test...')
-    gt = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
+    gt_t = pd.read_csv(savepath + '/task1_test_gt.csv', skip_blank_lines=False, header=None)
 
     print('Unique labels: ')
     print(np.unique(gt))
@@ -933,8 +933,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     gt_v_real = pd.read_csv(savepath + '/task1_val_gt.csv', skip_blank_lines=False, header=None)
     #gt_v = gt_v.iloc[annotated_idxs]
 
-    gt = pd.concat((gt, gt_v), axis=0).values
-    gt_all = pd.concat((gt, gt_v_real), axis=0).values
+    gt = pd.concat((gt_t, gt_v), axis=0).values
+    gt_all = pd.concat((gt_t, gt_v_real), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
 
     print('loading text data for task 2 test')
