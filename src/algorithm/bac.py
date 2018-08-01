@@ -60,7 +60,7 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
-    max_data_updates_at_end = 20
+    max_data_updates_at_end = 20 - 2 # the first iteration uses 3 instead of 1 epoch
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
@@ -1935,13 +1935,14 @@ class LSTM:
             dev_labels = self.dev_labels
 
         if self.LSTMWrapper.model is None:
-            from lample_lstm_tagger.lstm_wrapper import MAX_NO_EPOCHS
+            #from lample_lstm_tagger.lstm_wrapper import MAX_NO_EPOCHS
             from evaluation.experiment import crf_probs
 
             # the first update needs more epochs to reach a useful level
-            n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
-            if n_epochs < self.n_epochs_per_vb_iter:
-                n_epochs = self.n_epochs_per_vb_iter
+            # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
+            # if n_epochs < self.n_epochs_per_vb_iter:
+            #     n_epochs = self.n_epochs_per_vb_iter
+            n_epochs = 3
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
              dev_labels, self.IOB_map, self.IOB_label, self.nclasses, n_epochs, freq_eval=1, crf_probs=crf_probs)
