@@ -19,19 +19,19 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
     load_data.load_ner_data(regen_data)
 
 # debug with subset -------
-# s = 100
-# idxs = np.argwhere(gt!=-1)[:s, 0]
-#
-# # idxs = (gt != -1).flatten()
+s = 100
+idxs = np.argwhere(gt!=-1)[:s, 0]
 
-# gt = gt[idxs]
-# annos = annos[idxs]
-# doc_start = doc_start[idxs]
-# print('No. documents:')
-# print(np.sum(doc_start))
-# text = text[idxs]
-# gt_task1_val = gt_task1_val[idxs]
-#
+# idxs = (gt != -1).flatten()
+
+gt = gt[idxs]
+annos = annos[idxs]
+doc_start = doc_start[idxs]
+print('No. documents:')
+print(np.sum(doc_start))
+text = text[idxs]
+gt_task1_val = gt_task1_val[idxs]
+
 # ntest = 100
 # doc_start_nocrowd = doc_start_nocrowd[:ntest]
 # text_nocrowd = text_nocrowd[:ntest]
@@ -50,7 +50,7 @@ exp.opt_hyper = False#True
 exp.nu0_factor = 0.1
 exp.alpha0_acc_bias = 0
 
-exp.alpha0_diags = 10
+exp.alpha0_diags = 1
 exp.alpha0_factor = 1
 best_bac_wm = 'bac_seq'
 
@@ -79,7 +79,7 @@ exp.methods =  [
                 # #'gt_then_LSTM',
                 # #best_bac_wm
                 # # best_bac_wm + '_integrateBOF',
-                # # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 # # best_bac_wm + '_integrateBOF_then_LSTM',
                 # best_bac_wm + '_integrateBOF_integrateLSTM',
                 # #best_bac_wm + '_integrateBOF_noHMM',
