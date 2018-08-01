@@ -35,7 +35,7 @@ from scipy.optimize.optimize import fmin
 from joblib import Parallel, delayed, cpu_count, effective_n_jobs
 import warnings
 
-from lample_lstm_tagger.loader import tag_mapping
+#from lample_lstm_tagger.loader import tag_mapping
 from scipy.sparse.coo import coo_matrix
 
 
