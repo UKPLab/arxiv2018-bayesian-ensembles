@@ -26,28 +26,28 @@ best_bac_wm_score = -np.inf
 # ------------------
 
 # reset to free memory? ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=200) # !!!!!!! TESTING WHETHER MORE EPOCHS HELPS LSTM
-exp.save_results = True
-exp.opt_hyper = False#True
-
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-exp.alpha0_acc_bias = best_acc_bias
-
-# run all the methods that don't require tuning here
-exp.methods =  [
-                'gt_then_LSTM',
-]
-
-# should run both task 1 and 2.
-
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data, ground_truth_all_points=gt_all
-)
+# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+# exp.save_results = True
+# exp.opt_hyper = False#True
+#
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+# exp.alpha0_acc_bias = best_acc_bias
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 'gt_then_LSTM',
+# ]
+#
+# # should run both task 1 and 2.
+#
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     new_data=regen_data, ground_truth_all_points=gt_all
+# )
 
 # --------------------
 #
@@ -73,6 +73,9 @@ exp.run_methods(
 #     new_data=regen_data
 # )
 
+# --------------------
+
+# In this case, combine the crowd labels using an LSTM, then use outputs to train a separate LSTM method.
 
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
 exp.save_results = True
@@ -85,7 +88,7 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                best_bac_wm + '_integrateBOF_then_LSTM',
+                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd_then_LSTM',
 ]
 
 # should run both task 1 and 2.
@@ -95,6 +98,79 @@ exp.run_methods(
     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
     new_data=regen_data
 )
+
+# --------------------
+
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+exp.alpha0_acc_bias = best_acc_bias
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+                'majority_then_LSTM',
+]
+
+# should run both task 1 and 2.
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
+
+
+# --------------------
+
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.alpha0_diags = 0.1
+exp.alpha0_factor = 1
+exp.nu0_factor = 0.1
+exp.alpha0_acc_bias = best_acc_bias
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+                'ibcc_then_LSTM',
+]
+
+# should run both task 1 and 2.
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
+
+
+
+# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+# exp.save_results = True
+# exp.opt_hyper = False#True
+#
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+# exp.alpha0_acc_bias = best_acc_bias
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 best_bac_wm + '_integrateBOF_then_LSTM',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     new_data=regen_data
+# )
 
 
 # # -----------------------
