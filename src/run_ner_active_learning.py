@@ -59,7 +59,7 @@ exp.alpha0_factor = 1#9 # best_factor
 
 exp.methods =  [
     #'HMM_crowd_then_LSTM',
-    'bac_seq_integrateBOF_integrateLSTM_atEnd_then_LSTM',
+    'bac_seq_integrateBOF_integrateLSTM_atEnd',
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
