@@ -54,12 +54,12 @@ exp.save_results = True
 exp.opt_hyper = False#True
 
 exp.nu0_factor = 0.1
-exp.alpha0_diags = 10 # best_diags
+exp.alpha0_diags = 1 # best_diags
 exp.alpha0_factor = 1#9 # best_factor
 
 exp.methods =  [
     #'HMM_crowd_then_LSTM',
-    'bac_seq_integrateBOF_integrateLSTM_atEnd',
+    'bac_seq_integrateBOF_integrateLSTM_atEnd_then_LSTM',
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -70,21 +70,21 @@ results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_m
 )
 
 
-# exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-#
-# exp.nu0_factor = 0.1
-# exp.alpha0_diags = 10 # best_diags
-# exp.alpha0_factor = 1#9 # best_factor
-#
-# exp.methods =  [
-#     'HMM_crowd_then_LSTM',
-#                 ]
-#
-# results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
-#                     annos, gt, doc_start, output_dir, text,
-#                     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#                     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#                     active_learning=True
-# )
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 1 # best_diags
+exp.alpha0_factor = 1#9 # best_factor
+
+exp.methods =  [
+    'HMM_crowd_then_LSTM',
+                ]
+
+results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+                    annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+                    active_learning=True
+)
