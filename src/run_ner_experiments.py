@@ -78,7 +78,7 @@ exp.alpha0_acc_bias = best_acc_bias
 exp.alpha0_diags_lstm = 0.1
 exp.alpha0_factor_lstm = 0.1
 
-nu_factors = [0.1, 1, 10, 100]
+nu_factors = [0.1, 10, 100]
 diags = [0.1, 1, 10, 100]
 factors = [0.1, 1, 10]
 # acc_biases = [1, 10, 100]

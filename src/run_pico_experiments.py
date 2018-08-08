@@ -27,8 +27,8 @@ best_nu0factor = 0.1
 best_diags = 0.1
 best_factor = 0.1
 
-nu_factors = [0.1, 1, 10, 100]
-diags = [0.1, 1, 10]#, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+nu_factors = [0.1, 10, 100]
+diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]
 
 exp.alpha0_diags_lstm = 0.1
@@ -84,31 +84,31 @@ for m, method in enumerate(methods_to_tune):
 
 print('best BAC method = %s' % best_bac_wm)
 #
-# exp.alpha0_diags = best_diags
-# exp.alpha0_factor = best_factor
-# exp.nu0_factor = best_nu0factor
-#
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+
 # # exp.nu0_factor = .1
 # # exp.alpha0_diags = .1
 # # exp.alpha0_factor = .1
 #
 # # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 # 'majority',
-#                 # 'mace',
-#                 # 'ds',
-#                 # #'best',
-#                 # #'worst',
-#                 # best_bac_wm,
-#                 best_bac_wm + '_integrateBOF_then_LSTM',
-#                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-# ]
-#
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-# exp.run_methods(annos, gt, doc_start, output_dir, text,
-#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-#                 new_data=regen_data
-#                 )
+exp.methods =  [
+                # 'majority',
+                # 'mace',
+                # 'ds',
+                # #'best',
+                # #'worst',
+                best_bac_wm,
+                # best_bac_wm + '_integrateBOF_then_LSTM',
+                # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+]
+
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(annos, gt, doc_start, output_dir, text,
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+                )
 
 
 # # reset to free memory? ------------------------------------------------------------------------------------------------
