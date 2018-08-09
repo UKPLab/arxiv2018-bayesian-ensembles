@@ -732,10 +732,19 @@ class Experiment(object):
 
         docids_by_tok = np.cumsum(doc_start_all) - 1
 
+        print(len(unseen_toks))
+        print(len(negentropy))
+        print(np.max(docids_by_tok))
+        print(len(negentropy_docs))
+
         # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
         for i, unseen_toks in enumerate(unseen_toks):
             # find doc ID for this tok
             docid = docids_by_tok[i]
+
+            print(negentropy_docs[docid])
+            print(negentropy[i])
+
             negentropy_docs[docid] += negentropy[i]
             nunseen_toks += 1
 
