@@ -213,9 +213,8 @@ class LSTMWrapper(object):
 
             if niter_no_imprv >= max_niter_no_imprv:
                 print("- early stopping %i epochs without improvement" % niter_no_imprv)
+                model.reload()
                 break
-
-        model.reload()
 
         return model, f_eval
 
