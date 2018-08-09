@@ -289,7 +289,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None):
     if not os.path.isdir(savepath):
         os.mkdir(savepath)
 
-    if regen_data_files:
+    if regen_data_files or not os.path.isfile(savepath + '/annos.csv'):
         anno_path_root = '../../data/bayesian_annotator_combination/data/bio-PICO/'
 
         # There are four folders here:
