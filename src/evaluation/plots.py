@@ -109,7 +109,10 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
 
 def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 
-    ndocs = np.array([605, 1210, 1815, 2420, 3025, 3630, 4235, 4840, 5445, 6045]) # NER dataset
+    #ndocs = np.array([605, 1210, 1815, 2420, 3025, 3630, 4235, 4840, 5445, 6045]) # NER dataset
+    ndocs = np.array([606, 1212, 1818, 2424, 3030, 3636, 4242, 4848, 5454, 6056])
+    #ndocs = np.array([929, 1858, 2787])
+
     methods = np.array([
         'HMM_crowd_then_LSTM',
         'bac_seq_integrateBOF_then_LSTM',
@@ -133,6 +136,7 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
             continue
 
         ndocsidx = int(resfile.split('.csv')[0].split('Nseen')[-1])
+        print(ndocsidx)
         ndocsidx = np.argwhere(ndocs == ndocsidx)[0][0]
 
         if resfile.split('.')[-1] == 'csv':
@@ -175,8 +179,12 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 if __name__ == '__main__':
     print('Plotting active learning results...')
 
-    results_dir = '../../data/bayesian_annotator_combination/output/good_results/ner_al/'
+    results_dir = '../../data/bayesian_annotator_combination/output/ner_al_krusty2/ner_al/'
     output_dir = './documents/figures/NER_AL/'
+
+    # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_krusty/bio_al/'
+    # output_dir = './documents/figures/BIO_AL/'
+
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 

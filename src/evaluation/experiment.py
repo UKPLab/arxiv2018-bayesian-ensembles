@@ -721,12 +721,27 @@ class Experiment(object):
         # random selection
         #new_selection = np.random.choice(unseen_docs, batch_size, replace=False)
 
-        probs = probs[unseen_docs, :]
+        unseen_toks = np.in1d(np.cumsum(doc_start_all) - 1, unseen_docs)
+        probs = probs[unseen_toks, :]
         negentropy = np.log(probs) * probs
         negentropy[probs == 0] = 0
         negentropy = np.sum(negentropy, axis=1)
 
-        most_uncertain = np.argsort(negentropy)[:batch_size]
+        negentropy_docs = np.zeros(Ndocs, dtype=float)
+        nunseen_toks = np.zeros(Ndocs, dtype=float)
+
+        docids_by_tok = np.cumsum(doc_start_all) - 1
+
+        # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
+        for i, unseen_toks in enumerate(unseen_toks):
+            # find doc ID for this tok
+            docid = docids_by_tok[i]
+            negentropy_docs[docid] += negentropy[i]
+            nunseen_toks += 1
+
+        negentropy_docs /= nunseen_toks
+
+        most_uncertain = np.argsort(negentropy_docs)[:batch_size]
         new_selection = unseen_docs[most_uncertain]
 
         selected_docs = np.concatenate((selected_docs, new_selection))
