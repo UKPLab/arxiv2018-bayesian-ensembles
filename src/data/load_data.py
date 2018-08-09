@@ -350,6 +350,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None):
 
     print('loading doc starts...')
     doc_start = pd.read_csv(savepath + '/doc_start.csv', header=None, nrows=debug_subset_size).values #np.genfromtxt(savepath + '/doc_start.csv')
+    print('Loaded %i documents' % np.sum(doc_start))
 
     print('loading ground truth labels...')
     gt = pd.read_csv(savepath + '/gt.csv', header=None, nrows=debug_subset_size).values # np.genfromtxt(savepath + '/gt.csv')
