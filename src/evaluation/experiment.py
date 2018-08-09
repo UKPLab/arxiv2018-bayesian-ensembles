@@ -663,8 +663,8 @@ class Experiment(object):
         lstm = lstm_wrapper.LSTMWrapper('./models_LSTM_%s' % timestamp)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter,
-                        crf_probs=crf_probs, max_niter_no_imprv=self.max_iter)
+                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
+                        crf_probs=crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
@@ -797,6 +797,7 @@ class Experiment(object):
         model = None # pass out to other functions if required
 
         Ndocs = np.sum(doc_start)
+        print('Size of training set = %i documents' % Ndocs)
 
         annotations_all = annotations
         doc_start_all = doc_start
