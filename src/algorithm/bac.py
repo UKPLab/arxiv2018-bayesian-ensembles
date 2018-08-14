@@ -551,6 +551,9 @@ class BAC(object):
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
 
+        # set the correct number of iterations with the LSTM
+        self.max_data_updates_at_end = self.max_iter - 2
+
         # transform input data to desired format: unannotated tokens represented as zeros
         C = C.astype(int) + 1
         doc_start = doc_start.astype(bool)
