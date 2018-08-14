@@ -722,6 +722,8 @@ class Experiment(object):
         #new_selection = np.random.choice(unseen_docs, batch_size, replace=False)
 
         unseen_toks = np.in1d(np.cumsum(doc_start_all) - 1, unseen_docs)
+        unseen_toks = np.argwhere(unseen_toks).flatten()
+        
         probs = probs[unseen_toks, :]
         negentropy = np.log(probs) * probs
         negentropy[probs == 0] = 0
