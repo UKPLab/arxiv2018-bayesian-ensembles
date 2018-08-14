@@ -750,9 +750,9 @@ class Experiment(object):
             print(negentropy[i])
 
             negentropy_docs[docid] += negentropy[i]
-            count_nunseen_toks[docid] += 1
+            count_unseen_toks[docid] += 1
 
-        negentropy_docs /= nunseen_toks
+        negentropy_docs /= count_unseen_toks
 
         most_uncertain = np.argsort(negentropy_docs)[:batch_size]
         new_selection = unseen_docs[most_uncertain]
