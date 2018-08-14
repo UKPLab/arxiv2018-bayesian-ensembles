@@ -734,7 +734,7 @@ class Experiment(object):
         negentropy_docs = np.zeros(Nunseen, dtype=float)
         count_unseen_toks = np.zeros(Nunseen, dtype=float)
 
-        docids_by_tok = np.cumsum(unseen_toks) - 1
+        docids_by_tok = np.cumsum(doc_start_all[unseen_toks]) - 1
 
         print(len(unseen_toks))
         print(len(negentropy))

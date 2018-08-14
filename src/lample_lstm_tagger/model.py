@@ -387,18 +387,11 @@ class Model(object):
                 outputs=tags_scores,
                 givens=({is_train: np.cast['int32'](0)} if dropout else {})
             )
-        elif crf_probs:
-            f_eval = theano.function(
-                inputs=eval_inputs,
-                outputs=forward(observations, transitions, viterbi=True,
-                                return_alpha=True, return_best_sequence=False),
-                givens=({is_train: np.cast['int32'](0)} if dropout else {})
-            )
         else:
             f_eval = theano.function(
                 inputs=eval_inputs,
                 outputs=forward(observations, transitions, viterbi=True,
-                                return_alpha=False, return_best_sequence=True),
+                                return_alpha=crf_probs, return_best_sequence=False),
                 givens=({is_train: np.cast['int32'](0)} if dropout else {})
             )
 
