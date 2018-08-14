@@ -723,16 +723,18 @@ class Experiment(object):
 
         unseen_toks = np.in1d(np.cumsum(doc_start_all) - 1, unseen_docs)
         unseen_toks = np.argwhere(unseen_toks).flatten()
-        
+
         probs = probs[unseen_toks, :]
         negentropy = np.log(probs) * probs
         negentropy[probs == 0] = 0
         negentropy = np.sum(negentropy, axis=1)
 
-        negentropy_docs = np.zeros(Ndocs, dtype=float)
-        nunseen_toks = np.zeros(Ndocs, dtype=float)
+        Nunseen = len(unseen_docs)
 
-        docids_by_tok = np.cumsum(doc_start_all) - 1
+        negentropy_docs = np.zeros(Nunseen, dtype=float)
+        count_unseen_toks = np.zeros(Nunseen, dtype=float)
+
+        docids_by_tok = np.cumsum(unseen_toks) - 1
 
         print(len(unseen_toks))
         print(len(negentropy))
@@ -748,7 +750,7 @@ class Experiment(object):
             print(negentropy[i])
 
             negentropy_docs[docid] += negentropy[i]
-            nunseen_toks += 1
+            count_nunseen_toks[docid] += 1
 
         negentropy_docs /= nunseen_toks
 
