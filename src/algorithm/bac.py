@@ -1947,6 +1947,8 @@ class LSTM:
             last_score = best_dev
             niter_no_imprv = 0
 
+            self.LSTMWrapper.model.best_model_saved = False
+
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
                                     best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
@@ -1954,8 +1956,9 @@ class LSTM:
                 if niter_no_imprv >= max_niter_no_imprv:
                     print("- early stopping %i epochs without improvement" % niter_no_imprv)
                     break
-
-            self.LSTMWrapper.model.reload()
+                    
+            if self.LSTMWrapper.model.best_model_saved:
+                self.LSTMWrapper.model.reload()
 
         # now make predictions for all sentences
         agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)

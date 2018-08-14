@@ -79,6 +79,7 @@ class LSTMWrapper(object):
 
     def __init__(self, models_path_alt=None):
         self.model = None
+        self.best_model_saved = False # flag to tell us whether the best model on dev was saved to disk
 
         if models_path is None:
             self.models_path = models_path
@@ -109,6 +110,7 @@ class LSTMWrapper(object):
                 print("New best score on dev.")
                 print("Saving model to disk...")
                 self.model.save()
+                self.best_model_saved = True
 
                 niter_no_imprv = 0
             elif dev_score <= last_score:
@@ -207,14 +209,18 @@ class LSTMWrapper(object):
         self.model = model
         self.nclasses = nclasses
 
+        self.best_model_saved = False # reset the flag so we don't load old models
+
         for epoch in range(n_epochs):
             niter_no_imprv, best_dev, last_score = self.run_epoch(epoch, niter_no_imprv, best_dev,
                                                         last_score, (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
 
             if niter_no_imprv >= max_niter_no_imprv:
                 print("- early stopping %i epochs without improvement" % niter_no_imprv)
-                model.reload()
                 break
+
+        if self.best_model_saved:
+            model.reload()
 
         return model, f_eval
 
