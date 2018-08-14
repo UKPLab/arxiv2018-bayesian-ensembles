@@ -1893,6 +1893,9 @@ class LSTM:
 
     def fit_predict(self, labels, compute_dev_score=False):
 
+        if self.train_type == 'Bayes':
+            labels = np.argmax(labels, axis=1)
+
         l = 0
         labels_by_sen = []
         for s, sen in enumerate(self.sentences):
