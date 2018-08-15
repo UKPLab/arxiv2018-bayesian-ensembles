@@ -83,13 +83,16 @@ if __name__ == '__main__':
 
             for m, method in enumerate(agg.columns):
 
+                print(agg[method].values.shape)
+
                 result, std_result = calculate_scores(nclasses,
                                                       False,
                                                       agg[method].values,
                                                       gt_this_task.flatten().astype(int),
                                                       probs[:, :, m],
                                                       doc_start_this_task,
-                                                      bootstrapping=True, )
+                                                      bootstrapping=True,
+                                                      print_per_class_results=True)
 
                 result_to_print += method.strip("# '") + ' & '
 
