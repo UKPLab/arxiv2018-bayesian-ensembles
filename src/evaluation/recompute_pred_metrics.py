@@ -56,6 +56,10 @@ if __name__ == '__main__':
             pred_path = os.path.join(args.dir, fname)
             agg = pd.read_csv(pred_path)
 
+            if agg.shape[0] == 0:
+                print('skipping as no predictions.')
+                continue
+
             # use the pred files to get the timestamps from the name. We need this to load the matching probabilities
             # and output a file with same timestamp.
             if 'pred_nocrowd_' in fname:
