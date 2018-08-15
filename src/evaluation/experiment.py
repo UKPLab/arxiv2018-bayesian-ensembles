@@ -662,6 +662,8 @@ class Experiment(object):
 
         lstm = lstm_wrapper.LSTMWrapper('./models_LSTM_%s' % timestamp)
 
+        print('Running LSTM with crf probs = %s' % crf_probs)
+
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
                         IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
                         crf_probs=crf_probs, max_niter_no_imprv=2)
@@ -842,6 +844,9 @@ class Experiment(object):
 
             seed_docs = np.random.choice(Ndocs, batch_size, replace=False)
             seed_toks = np.in1d(np.cumsum(doc_start_all) - 1, seed_docs)
+
+            #print('Setting crf_probs=True because active learning requires probabilistic outputs.')
+            #crf_probs = True
 
         for method_idx in range(len(self.methods)):
             

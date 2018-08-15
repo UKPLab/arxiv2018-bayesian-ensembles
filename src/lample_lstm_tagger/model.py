@@ -391,7 +391,7 @@ class Model(object):
             f_eval = theano.function(
                 inputs=eval_inputs,
                 outputs=forward(observations, transitions, viterbi=True,
-                                return_alpha=crf_probs, return_best_sequence=False),
+                                return_alpha=crf_probs, return_best_sequence=not crf_probs),
                 givens=({is_train: np.cast['int32'](0)} if dropout else {})
             )
 
