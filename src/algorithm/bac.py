@@ -559,7 +559,8 @@ class BAC(object):
         doc_start = doc_start.astype(bool)
 
         if self.iter == 0:
-            self._set_transition_constraints()
+            # try without any transition constraints
+            #self._set_transition_constraints()
 
             # initialise transition and confusion matrices
             self._initA()
