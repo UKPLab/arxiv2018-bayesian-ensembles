@@ -89,7 +89,7 @@ if __name__ == '__main__':
                                                       gt_this_task.flatten().astype(int),
                                                       probs[:, :, m],
                                                       doc_start_this_task,
-                                                      bootstrapping=True)
+                                                      bootstrapping=True, )
 
                 result_to_print += method.strip("# '") + ' & '
 

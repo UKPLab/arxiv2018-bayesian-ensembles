@@ -30,7 +30,7 @@ from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_
 
 crf_probs = False
 
-def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
+def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts, print_per_class_results=False):
     result = -np.ones(len(SCORE_NAMES) - 3)
 
     gt = gt.astype(int)
@@ -45,6 +45,16 @@ def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
     prec_by_class = skm.precision_score(gt, agg, average=None, labels=range(nclasses))
     rec_by_class = skm.recall_score(gt, agg, average=None, labels=range(nclasses))
     f1_by_class = skm.f1_score(gt, agg, average=None, labels=range(nclasses))
+
+    if print_per_class_results:
+        print('Token Precision:')
+        print(prec_by_class)
+
+        print('Token Recall:')
+        print(rec_by_class)
+
+        print('Token F1:')
+        print(f1_by_class)
 
     result[1] = np.mean(prec_by_class[np.unique(gt)])
     result[2] = np.mean(rec_by_class[np.unique(gt)])
@@ -73,13 +83,17 @@ def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts):
         # print 'AUC for class %i: %f' % (i, auc_i)
         auc_score += auc_i * np.sum(gt == i)
         total_weights += np.sum(gt == i)
+
+        if print_per_class_results:
+            print('AUC for class %i = %f' % (i, auc_i))
+
     result[4] = auc_score / float(total_weights) if total_weights > 0 else 0
 
     result[5] = skm.log_loss(gt, probs, eps=1e-100, labels=np.arange(nclasses))
 
     return result
 
-def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrapping=True):
+def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrapping=True, print_per_class_results=False):
     result = -np.ones((len(SCORE_NAMES), 1))
 
     # exclude data points with missing ground truth
@@ -141,7 +155,8 @@ def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrap
                                                                   agg[sampleidxs],
                                                                   gt[sampleidxs],
                                                                   probs[sampleidxs],
-                                                                  doc_start[sampleidxs])
+                                                                  doc_start[sampleidxs],
+                                                                  print_per_class_results)
             else:  # can't find enough valid samples for the bootstrap, let's just use what we got so far.
                 resample_results = resample_results[:, :i]
                 break
@@ -151,7 +166,7 @@ def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrap
         std_result = np.std(resample_results, axis=1)
 
     else:
-        sample_res = calculate_sample_metrics(nclasses, agg, gt, probs, doc_start)
+        sample_res = calculate_sample_metrics(nclasses, agg, gt, probs, doc_start, print_per_class_results)
         result[:len(sample_res), 0] = sample_res
 
         std_result = None
