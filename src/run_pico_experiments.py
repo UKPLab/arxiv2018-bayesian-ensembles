@@ -35,12 +35,12 @@ exp.alpha0_diags_lstm = 0.1
 exp.alpha0_factor_lstm = 0.1
 
 methods_to_tune = [
-                   'ibcc',
-                   'bac_vec_integrateBOF',
+                   #'ibcc',
+                   #'bac_vec_integrateBOF',
                    'bac_seq_integrateBOF',
-                   'bac_ibcc_integrateBOF',
-                   'bac_acc_integrateBOF',
-                   'bac_mace_integrateBOF'
+                   #'bac_ibcc_integrateBOF',
+                   #'bac_acc_integrateBOF',
+                   #'bac_mace_integrateBOF'
                    ]
 
 best_bac_wm_score = -np.inf
