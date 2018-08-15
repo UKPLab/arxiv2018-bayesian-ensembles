@@ -28,8 +28,6 @@ from algorithm import bac
 from data import data_utils
 from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
 
-crf_probs = False
-
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts, print_per_class_results=False):
     result = -np.ones(len(SCORE_NAMES) - 3)
 
@@ -225,8 +223,12 @@ class Experiment(object):
 
     opt_hyper = False
 
+    crf_probs = False
+
     def __init__(self, generator, nclasses=None, nannotators=None, config=None,
-                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20):
+                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20, crf_probs=False):
+
+        self.crf_probs = crf_probs
 
         self.generator = generator
         
@@ -677,11 +679,11 @@ class Experiment(object):
 
         lstm = lstm_wrapper.LSTMWrapper('./models_LSTM_%s' % timestamp)
 
-        print('Running LSTM with crf probs = %s' % crf_probs)
+        print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
                         IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
-                        crf_probs=crf_probs, max_niter_no_imprv=2)
+                        crf_probs=self.crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
@@ -856,6 +858,8 @@ class Experiment(object):
             rerun_all = True
 
             batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
+
+            np.random.seed(351893) # for repeating with different methods with same initial set
 
             seed_docs = np.random.choice(Ndocs, batch_size, replace=False)
             seed_toks = np.in1d(np.cumsum(doc_start_all) - 1, seed_docs)

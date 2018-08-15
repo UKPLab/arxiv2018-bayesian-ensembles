@@ -22,51 +22,28 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 # gt_task1_val = gt_task1_val[idxs]
 # -------------------------
 
-best_bac_wm = 'bac_ibcc' #'unknown' # choose model with best score for the different BAC worker models
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=True)
+exp.save_results = True
+exp.opt_hyper = False#True
 
-# exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-#
-# exp.nu0_factor = 0.1
-# exp.alpha0_diags = 1 # best_diags
-# exp.alpha0_factor = 1#9 # best_factor
-#
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#     #'HMM_crowd_then_LSTM',
-#     'bac_seq_integrateBOF_then_LSTM',
-#                 ]
-#
-# results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
-#                     annos, gt, doc_start, output_dir, text,
-#                     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#                     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#                     active_learning=True
-# )
-#
-# exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-#
-# exp.nu0_factor = 0.1
-# exp.alpha0_diags = 1 # best_diags
-# exp.alpha0_factor = 1#9 # best_factor
-#
-# exp.methods =  [
-#     #'HMM_crowd_then_LSTM',
-#     'bac_seq_integrateBOF_integrateLSTM_atEnd',
-#                 ]
-#
-# results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
-#                     annos, gt, doc_start, output_dir, text,
-#                     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#                     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#                     active_learning=True
-# )
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 1 # best_diags
+exp.alpha0_factor = 1#9 # best_factor
 
+# run all the methods that don't require tuning here
+exp.methods =  [
+    #'HMM_crowd_then_LSTM',
+    'bac_seq_integrateBOF_then_LSTM',
+                ]
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
+results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+                    annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+                    active_learning=True
+)
+
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=10)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -76,7 +53,27 @@ exp.alpha0_factor = 1#9 # best_factor
 
 exp.methods =  [
     'HMM_crowd_then_LSTM',
-    # 'HMM_crowd'
+    'bac_seq_integrateBOF_integrateLSTM_atEnd',
+                ]
+
+results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+                    annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+                    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+                    active_learning=True
+)
+
+
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=10)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.nu0_factor = 0.1
+exp.alpha0_diags = 1 # best_diags
+exp.alpha0_factor = 1#9 # best_factor
+
+exp.methods =  [
+    'HMM_crowd'
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
