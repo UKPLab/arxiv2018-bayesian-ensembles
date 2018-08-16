@@ -539,7 +539,7 @@ class BAC(object):
         if np.any(np.isnan(self.lnA)):
             print('_calc_q_A: nan value encountered!')
 
-    def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False):
+    def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False, crf_probs=False):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
 
@@ -578,7 +578,7 @@ class BAC(object):
         # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L, dev_data,
-                                          self.max_data_updates_at_end if converge_workers_first else self.max_iter)
+                                  self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs)
             model.lnPi_data  = self.worker_model._calc_q_pi(model.alpha_data)
 
         for model in self.data_model:
@@ -1854,7 +1854,9 @@ class LSTM:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters, crf_probs):
+
+        self.crf_probs = crf_probs
 
         self.n_epochs_per_vb_iter = 1#3 # this may be too much?
         self.max_vb_iters = max_vb_iters
@@ -1938,7 +1940,6 @@ class LSTM:
 
         if self.LSTMWrapper.model is None:
             #from lample_lstm_tagger.lstm_wrapper import MAX_NO_EPOCHS
-            from evaluation.experiment import crf_probs
 
             # the first update needs more epochs to reach a useful level
             # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
@@ -1949,7 +1950,7 @@ class LSTM:
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
                                                                  dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=freq_eval,
-                                                                 crf_probs=crf_probs,
+                                                                 crf_probs=self.crf_probs,
                                                                  max_niter_no_imprv=max_niter_no_imprv)
         else:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
@@ -2001,7 +2002,7 @@ class IndependentFeatures:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_iters_after_workers_converge):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_iters_after_workers_converge, crf_probs):
 
         self.N = N
 
