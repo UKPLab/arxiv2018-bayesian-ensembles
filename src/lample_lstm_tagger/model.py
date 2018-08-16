@@ -121,6 +121,7 @@ class Model(object):
               crf,
               cap_dim,
               training=True,
+              hard_training_labels=True,
               crf_probs = False,
               **kwargs
               ):
@@ -142,7 +143,12 @@ class Model(object):
         char_for_ids = T.imatrix(name='char_for_ids')
         char_rev_ids = T.imatrix(name='char_rev_ids')
         char_pos_ids = T.ivector(name='char_pos_ids')
-        tag_ids = T.ivector(name='tag_ids')
+
+        if hard_training_labels:
+            tag_ids = T.ivector(name='tag_ids')
+        else:
+            tag_dist = T.imatrix(name='tag_dist')
+
         if cap_dim:
             cap_ids = T.ivector(name='cap_ids')
 
@@ -280,7 +286,12 @@ class Model(object):
 
         # No CRF
         if not crf:
-            cost = T.nnet.categorical_crossentropy(tags_scores, tag_ids).mean()
+            # Here we pass in hard labels as 'tag_ids'. We can also pass in a matrix in this place where each row is
+            # a categorical distribution to provide a soft label.
+            if hard_training_labels:
+                cost = T.nnet.categorical_crossentropy(tags_scores, tag_ids).mean()
+            else:
+                cost = T.nnet.categorical_crossentropy(tags_scores, tag_dist).mean()
         # CRF
         else:
             transitions = shared((n_tags + 2, n_tags + 2), 'transitions')
@@ -297,17 +308,11 @@ class Model(object):
                 axis=0
             )
 
-            # Score from tags
-            real_path_score = tags_scores[T.arange(s_len), tag_ids].sum()
-
-            # Score from transitions
-            b_id = theano.shared(value=np.array([n_tags], dtype=np.int32))
-            e_id = theano.shared(value=np.array([n_tags + 1], dtype=np.int32))
-            padded_tags_ids = T.concatenate([b_id, tag_ids, e_id], axis=0)
-            real_path_score += transitions[
-                padded_tags_ids[T.arange(s_len + 1)],
-                padded_tags_ids[T.arange(s_len + 1) + 1]
-            ].sum()
+            # Score from tags -- uses tag_ids as hard labels here.
+            if hard_training_labels:
+                real_path_score = tags_scores[T.arange(s_len), tag_ids].sum()
+            else: # soft training labels (probabilities)
+                real_path_score = (tags_scores * tag_dist).sum()
 
             all_paths_scores = forward(observations, transitions)
             cost = - (real_path_score - all_paths_scores)
@@ -353,7 +358,11 @@ class Model(object):
             eval_inputs.append(char_pos_ids)
         if cap_dim:
             eval_inputs.append(cap_ids)
-        train_inputs = eval_inputs + [tag_ids]
+
+        if hard_training_labels:
+            train_inputs = eval_inputs + [tag_ids]
+        else:
+            train_inputs = eval_inputs + [tag_dist]
 
         # Parse optimization method parameters
         if "-" in lr_method:

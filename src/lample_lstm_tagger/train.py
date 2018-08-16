@@ -64,7 +64,6 @@ zeros = parameters['zeros']
 tag_scheme = parameters['tag_scheme']
 
 # Load sentences
-# TODO replace this with the sentences from experiment.py
 train_sentences = loader.load_sentences(opts.train, lower, zeros)
 #dev_sentences = loader.load_sentences(opts.dev, lower, zeros)
 test_sentences = loader.load_sentences(opts.test, lower, zeros)

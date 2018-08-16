@@ -15,7 +15,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 
 # Defaults ---------
 
-niter = 100
+niter = 20
 
 best_nu0factor = 0.1
 best_diags = 1

@@ -130,7 +130,7 @@ def prepare_sentence(str_words, word_to_id, char_to_id, lower=False):
     }
 
 
-def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False, include_tags=True):
+def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False, include_tags=True, hard_labels=True):
     """
     Prepare the dataset. Return a list of lists of dictionaries containing:
         - word indexes
@@ -140,6 +140,10 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False, i
     def f(x): return x.lower() if lower else x
     data = []
     tag_data = []
+
+    if hard_labels:
+        id_to_tag = []
+
     for i, s in enumerate(sentences):
 
         # print('sentences %i' % i)
@@ -157,16 +161,27 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False, i
         # print('done caps')
 
         if include_tags:
-            tags = [tag_to_id[w[-1]] for w in s]
-        # print('done tags')
+            if hard_labels:
+                tags = [tag_to_id[w[-1]] for w in s]
 
-            data.append({
-                'str_words': str_words,
-                'words': words,
-                'chars': chars,
-                'caps': caps,
-                'tags': tags,
-            })
+                data.append({
+                    'str_words': str_words,
+                    'words': words,
+                    'chars': chars,
+                    'caps': caps,
+                    'tags': tags,
+                })
+            else:
+                # change the order of probabilities from ordered by tag to ordered by id
+                tag_dists = [ [w[-1][tag] for tag, _ in sorted(tag_to_id.items(), key=lambda item: item[1] )] for w in s]
+
+                data.append({
+                    'str_words': str_words,
+                    'words': words,
+                    'chars': chars,
+                    'caps': caps,
+                    'tag_dists': tag_dists,
+                })
 
             tag_data.append(tags)
         else:

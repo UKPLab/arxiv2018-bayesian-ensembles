@@ -210,7 +210,7 @@ def pad_word_chars(words):
     return char_for, char_rev, char_pos
 
 
-def create_input(data, parameters, add_label, singletons=None):
+def create_input(data, parameters, add_label, singletons=None, hard_training_labels=True):
     """
     Take sentence data and return an input for
     the training or the evaluation function.
@@ -233,7 +233,10 @@ def create_input(data, parameters, add_label, singletons=None):
     if parameters['cap_dim']:
         input.append(caps)
     if add_label:
-        input.append(data['tags'])
+        if hard_training_labels:
+            input.append(data['tags'])
+        else:
+            input.append(data['tag_dists'])
     return input
 
 

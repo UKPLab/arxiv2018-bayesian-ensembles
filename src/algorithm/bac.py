@@ -1895,7 +1895,11 @@ class LSTM:
     def fit_predict(self, labels, compute_dev_score=False):
 
         if self.train_type == 'Bayes':
-            labels = np.argmax(labels, axis=1)
+            #labels = np.argmax(labels, axis=1) # uses the mode
+
+            # try sampling the posterior distribution. With enough iterations, this should work...
+            rvsunif = np.random.rand(labels.shape[0], 1)
+            labels = (rvsunif < np.cumsum(labels, axis=1)).argmax(1)
 
         l = 0
         labels_by_sen = []
