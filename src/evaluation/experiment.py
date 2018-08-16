@@ -1055,7 +1055,7 @@ class Experiment(object):
                         with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
                             pickle.dump(model, fh)
 
-                if active_learning:
+                if active_learning and Nseen < Ndocs:
                     annotations, doc_start, text, selected_docs, selected_toks = self._uncertainty_sampling(
                             annotations_all,
                             doc_start_all,
