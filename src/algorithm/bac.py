@@ -560,7 +560,7 @@ class BAC(object):
 
         if self.iter == 0:
             # try without any transition constraints
-            #self._set_transition_constraints()
+            self._set_transition_constraints()
 
             # initialise transition and confusion matrices
             self._initA()
