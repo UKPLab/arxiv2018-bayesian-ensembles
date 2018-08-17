@@ -24,8 +24,8 @@ exp.alpha0_factor = 9
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 best_nu0factor = 100
-best_diags = 100
-best_factor = 10
+best_diags = 1
+best_factor = 1
 
 nu_factors = [0.1, 10, 100]
 diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
@@ -34,16 +34,16 @@ factors = [0.1, 1, 10]
 exp.alpha0_diags_lstm = 0.1
 exp.alpha0_factor_lstm = 0.1
 
-methods_to_tune = [
+# methods_to_tune = [
                    #'ibcc',
                    #'bac_vec_integrateBOF',
-                   'bac_seq_integrateBOF',
+                   # 'bac_seq_integrateBOF',
                    #'bac_ibcc_integrateBOF',
                    #'bac_acc_integrateBOF',
                    #'bac_mace_integrateBOF'
-                   ]
+                   # ]
 
-best_bac_wm_score = -np.inf
+# best_bac_wm_score = -np.inf
 
 # # tune with small dataset to save time
 # idxs = np.argwhere(gt_task1_dev != -1)[:, 0]
@@ -116,9 +116,9 @@ exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False
 
-exp.alpha0_diags = 0.1#best_diags
-exp.alpha0_factor = 0.1#best_factor
-exp.nu0_factor = 0.1#best_nu0factor
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
