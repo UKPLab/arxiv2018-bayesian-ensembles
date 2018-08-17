@@ -39,7 +39,7 @@ nu0_factor = 0.1
 alpha0_diags = 0.1
 alpha0_factor = 0.1
 
-plot_integrated=False
+plot_integrated=True
 
 if plot_integrated:
     worker_models = [
