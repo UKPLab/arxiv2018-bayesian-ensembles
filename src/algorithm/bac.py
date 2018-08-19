@@ -216,7 +216,7 @@ class BAC(object):
 
                     if self.alpha0.shape[0] == 3:
 
-                        
+
                         disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
                         self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
                         self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5

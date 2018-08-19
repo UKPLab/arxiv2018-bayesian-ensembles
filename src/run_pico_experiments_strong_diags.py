@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/bio_task1_strong_diags/'
+output_dir = '../../data/bayesian_annotator_combination/output/bio_task1_rectified_priors/'
 
 regen_data = False
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
@@ -24,7 +24,7 @@ exp.alpha0_factor = 9
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 best_nu0factor = 100
-best_diags = 100
+best_diags = 1
 best_factor = 1
 
 nu_factors = [0.1, 10, 100]
