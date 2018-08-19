@@ -213,6 +213,17 @@ class BAC(object):
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
                 if typeid == i:  # same type is allowed
+
+                    if self.alpha0.shape[0] == 3:
+
+                        
+                        disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
+                        self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
+                        self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
+
+                        disallowed_count = self.nu0[restricted_label, other_unrestricted_label] * 0.5
+                        self.nu0[restricted_label, other_unrestricted_label] *= 0.5
+                        self.nu0[restricted_label, restricted_label] += disallowed_count
                     continue
 
                 disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
