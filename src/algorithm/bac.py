@@ -2028,7 +2028,7 @@ class IndependentFeatures:
 
         self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
 
-        alpha0_data = np.copy(alpha0_data) #
+        #alpha0_data = np.copy(alpha0_data)
 
         # set this to trust the model completely -- we find this makes no noticeable difference to the NER and PICO datasets.
         alpha0_data = np.ones_like(alpha0_data)
@@ -2039,6 +2039,8 @@ class IndependentFeatures:
         #     alpha0_data[1, 0] = 1000
         # elif alpha0_data.ndim >= 3:
         #     alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
+
+        self.alpha0_data = alpha0_data
 
         alpha_data = np.copy(alpha0_data)
 
