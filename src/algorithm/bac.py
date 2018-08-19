@@ -2042,7 +2042,7 @@ class IndependentFeatures:
         #alpha0_data = np.copy(alpha0_data)
 
         # set this to trust the model completely -- we find this makes no noticeable difference to the NER and PICO datasets.
-        alpha0_data = np.ones_like(alpha0_data)
+        alpha0_data = np.copy(alpha0_data) #np.ones_like(alpha0_data)
         #
         # alpha0_data[:] = 0.001
         # if alpha0_data.ndim == 2:
