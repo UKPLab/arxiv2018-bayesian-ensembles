@@ -1967,10 +1967,13 @@ class LSTM:
 
                 if niter_no_imprv >= max_niter_no_imprv:
                     print("- early stopping %i epochs without improvement" % niter_no_imprv)
-                    break
 
-            if self.LSTMWrapper.model.best_model_saved:
-                self.LSTMWrapper.model.reload()
+                    # Commented out because we're not sure what happens if we load a model from earlier iterations.
+                    # reload if something better was saved already.
+                    # if self.LSTMWrapper.model.best_model_saved:
+                    #     self.LSTMWrapper.model.reload()
+
+                    break
 
         # now make predictions for all sentences
         agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
@@ -2028,7 +2031,7 @@ class IndependentFeatures:
         alpha0_data = np.copy(alpha0_data) #
 
         # set this to trust the model completely -- we find this makes no noticeable difference to the NER and PICO datasets.
-        # alpha0_data = np.ones_like(alpha0_data)
+        alpha0_data = np.ones_like(alpha0_data)
         #
         # alpha0_data[:] = 0.001
         # if alpha0_data.ndim == 2:
@@ -2038,8 +2041,6 @@ class IndependentFeatures:
         #     alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
 
         alpha_data = np.copy(alpha0_data)
-
-        self.alpha0_data = alpha0_data
 
         return alpha_data
 

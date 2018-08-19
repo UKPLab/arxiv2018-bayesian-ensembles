@@ -314,6 +314,14 @@ class Model(object):
             else: # soft training labels (probabilities)
                 real_path_score = (tags_scores * tag_dist).sum()
 
+            b_id = theano.shared(value=np.array([n_tags], dtype=np.int32))
+            e_id = theano.shared(value=np.array([n_tags + 1], dtype=np.int32))
+            padded_tags_ids = T.concatenate([b_id, tag_ids, e_id], axis=0)
+            real_path_score += transitions[
+                padded_tags_ids[T.arange(s_len + 1)],
+                padded_tags_ids[T.arange(s_len + 1) + 1]
+            ].sum()
+
             all_paths_scores = forward(observations, transitions)
             cost = - (real_path_score - all_paths_scores)
 
