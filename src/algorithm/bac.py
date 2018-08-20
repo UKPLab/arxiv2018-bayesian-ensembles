@@ -216,14 +216,20 @@ class BAC(object):
 
                     if self.alpha0.shape[0] == 3:
 
-
+                        # reduce likelihood of I->I | B, increase I->B | B
                         disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
                         self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
                         self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
 
+                        # reduce prevalence of I->B transitions, increase I->I
                         disallowed_count = self.nu0[restricted_label, other_unrestricted_label] * 0.5
                         self.nu0[restricted_label, other_unrestricted_label] *= 0.5
                         self.nu0[restricted_label, restricted_label] += disallowed_count
+
+                        # reduce prevalence of B->B transitions, increase B->I
+                        disallowed_count = self.nu0[other_unrestricted_label, other_unrestricted_label] * 0.5
+                        self.nu0[other_unrestricted_label, other_unrestricted_label] *= 0.5
+                        self.nu0[other_unrestricted_label, restricted_label] += disallowed_count
                     continue
 
                 disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
@@ -682,6 +688,9 @@ class BAC(object):
             seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
         if self.verbose:
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
+
+            print('BAC final transition matrix: ')
+            print(np.exp(self.lnA))
 
         return self.q_t, seq
 
