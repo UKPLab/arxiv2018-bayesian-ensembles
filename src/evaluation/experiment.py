@@ -183,41 +183,41 @@ class Experiment(object):
     '''
     classdocs
     '''
-    
+
     generator = None
-    
+
     config_file = None
-    
+
     param_values = None
     param_idx = None
     param_fixed = None
-    
+
     acc_bias = None
     miss_bias = None
     short_bias = None
-    
+
     generate_data= False
-    
+
     methods = None
 
     alpha0 = None
     nu0 = None
-    
+
     exclusions = {}
 
     num_runs = None
     doc_length = None
     group_sizes = None
     num_docs = None
-    
+
     num_classes = None
-    
+
     output_dir = '/output/'
-    
+
     save_results = False
     save_plots = False
     show_plots = False
-    
+
     postprocess = False # previous papers did not use this so we leave out to make results comparable.
     # Only simple IOB2 is implemented so far.
 
@@ -231,7 +231,7 @@ class Experiment(object):
         self.crf_probs = crf_probs
 
         self.generator = generator
-        
+
         if not (config == None):
             self.config_file = config
             self.read_config_file()
@@ -253,37 +253,37 @@ class Experiment(object):
         self.bac_iterative_learning = False
 
         self.max_iter = max_iter # allow all methods to use a maximum no. iterations
-            
+
     def read_config_file(self):
-        
+
         print('Reading experiment config file...')
-        
+
         parser = configparser.ConfigParser()
         parser.read(self.config_file)
-    
+
         # set up parameters
         parameters = dict(parser.items('parameters'))
         self.param_idx = int(parameters['idx'].split('#')[0].strip())
         self.param_values = np.array(eval(parameters['values'].split('#')[0].strip()))
-        
+
         self.acc_bias = np.array(eval(parameters['acc_bias'].split('#')[0].strip()))
         self.miss_bias = np.array(eval(parameters['miss_bias'].split('#')[0].strip()))
         self.short_bias = np.array(eval(parameters['short_bias'].split('#')[0].strip()))
-        
-        
+
+
         self.methods = eval(parameters['methods'].split('#')[0].strip())
-        
+
         self.postprocess = eval(parameters['postprocess'].split('#')[0].strip())
-        
+
         print(self.methods)
-                
+
         self.num_runs = int(parameters['num_runs'].split('#')[0].strip())
         self.doc_length = int(parameters['doc_length'].split('#')[0].strip())
         self.group_sizes = np.array(eval(parameters['group_sizes'].split('#')[0].strip()))
         self.num_classes = int(parameters['num_classes'].split('#')[0].strip())
         self.num_docs = int(parameters['num_docs'].split('#')[0].strip())
         self.generate_data = eval(parameters['generate_data'].split('#')[0].strip())
-        
+
         # set up output
         parameters = dict(parser.items('output'))
         self.output_dir = parameters['output_dir']
@@ -515,7 +515,7 @@ class Experiment(object):
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM',
-                 bac_model=None):
+                 bac_model=None, doc_start_unseen=None, text_unseen=None):
 
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
@@ -618,11 +618,20 @@ class Experiment(object):
             probs_nocrowd = None
             agg_nocrowd = None
 
-        return agg, probs, model, agg_nocrowd, probs_nocrowd
+        if doc_start_unseen is not None and '_thenLSTM' not in method:
+            probs_unseen, agg_unseen = bac_model.predict(doc_start_unseen, text_unseen)
+        else:
+            probs_unseen = None
+            agg_unseen = None
 
-    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir, doc_subset, overwrite_data_file=False):
+        return agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
+
+    def _run_hmmcrowd(self, annotations, text, doc_start, outputdir, doc_subset, nselected_by_doc,
+                      overwrite_data_file=False):
+
         sentences, crowd_labels, nfeats = self.data_to_hmm_crowd_format(annotations, text, doc_start, outputdir,
-                                                                        doc_subset, overwrite=overwrite_data_file)
+                                                                        doc_subset, nselected_by_doc,
+                                                                        overwrite=overwrite_data_file)
 
         data = crowd_data(sentences, crowd_labels)
         hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
@@ -647,7 +656,8 @@ class Experiment(object):
         return agg.flatten(), probs, hc
 
     def _run_LSTM(self, N_withcrowd, text, doc_start, train_labs, test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd,
-                  ground_truth_nocrowd, text_val, doc_start_val, ground_truth_val, timestamp):
+                  ground_truth_nocrowd, text_val, doc_start_val, ground_truth_val, timestamp,
+                  doc_start_unseen=None, text_unseen=None):
         '''
         Reasons why we need the LSTM integration:
         - Could use a simpler model like hmm_crowd for task 1
@@ -698,7 +708,19 @@ class Experiment(object):
             agg_nocrowd = None
             probs_nocrowd = None
 
-        return agg, probs, agg_nocrowd, probs_nocrowd
+        if doc_start_unseen is not None:
+            N_unseen = len(doc_start_unseen)
+            labelled_sentences, IOB_map, _ = lstm_wrapper.data_to_lstm_format(N_unseen, text_unseen,
+                                                                              doc_start_unseen, np.ones(N_unseen),
+                                                                              self.num_classes)
+
+            agg_unseen, probs_unseen = lstm.predict_LSTM(labelled_sentences)
+
+        else:
+            agg_unseen = None
+            probs_unseen = None
+
+        return agg, probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
 
     def _get_nocrowd_test_data(self, annotations, doc_start, ground_truth, text):
 
@@ -731,66 +753,76 @@ class Experiment(object):
         return doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, \
                doc_start, ground_truth, text, N_withcrowd
 
-    def _uncertainty_sampling(self, annotations_all, doc_start_all, text_all, batch_size, probs, selected_docs, Ndocs):
+    def _uncertainty_sampling(self, annos_all, doc_start_all, text_all, batch_size, probs, annos_sofar, Ndocs):
 
-        unseen_docs = np.ones(Ndocs, dtype=bool)
-        unseen_docs[selected_docs] = False
-        unseen_docs = np.argwhere(unseen_docs).flatten()
+        if annos_sofar is None:
+            unfinished_toks = np.ones(annos_all.shape[0], dtype=bool)
+        else:
+            unfinished_toks = np.sum(annos_all != -1, axis=1) - np.sum(annos_sofar != -1, axis=1) > 0
+        unfinished_toks = np.sort(np.argwhere(unfinished_toks).flatten())
 
         # random selection
         #new_selection = np.random.choice(unseen_docs, batch_size, replace=False)
 
-        unseen_toks = np.in1d(np.cumsum(doc_start_all) - 1, unseen_docs)
-        unseen_toks = np.argwhere(unseen_toks).flatten()
-
-        probs = probs[unseen_toks, :]
+        probs = probs[unfinished_toks, :]
         negentropy = np.log(probs) * probs
         negentropy[probs == 0] = 0
         negentropy = np.sum(negentropy, axis=1)
 
-        Nunseen = len(unseen_docs)
+        docids_by_tok = (np.cumsum(doc_start_all) - 1)[unfinished_toks]
 
-        negentropy_docs = np.zeros(Nunseen, dtype=float)
-        count_unseen_toks = np.zeros(Nunseen, dtype=float)
-
-        docids_by_tok = np.cumsum(doc_start_all[unseen_toks]) - 1
-
-        print(len(unseen_toks))
-        print(len(negentropy))
-        print(np.max(docids_by_tok))
-        print(len(negentropy_docs))
+        Ndocs = np.max(docids_by_tok) + 1
+        negentropy_docs = np.zeros(Ndocs, dtype=float)
+        count_unseen_toks = np.zeros(Ndocs, dtype=float)
 
         # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
-        for i, unseen_toks in enumerate(unseen_toks):
+        for i, _ in enumerate(unfinished_toks):
             # find doc ID for this tok
             docid = docids_by_tok[i]
-
-            print(negentropy_docs[docid])
-            print(negentropy[i])
 
             negentropy_docs[docid] += negentropy[i]
             count_unseen_toks[docid] += 1
 
         negentropy_docs /= count_unseen_toks
 
-        most_uncertain = np.argsort(negentropy_docs)[:batch_size]
-        new_selection = unseen_docs[most_uncertain]
-
-        selected_docs = np.concatenate((selected_docs, new_selection))
-
+        # assume that batch size is less than number of docs...
+        selected_docs = np.argsort(negentropy_docs)[:batch_size]
         selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
 
-        annotations = annotations_all[selected_toks, :]
+        # add to previously selected toks and docs
+        if annos_sofar is not None:
+            selected_toks = np.any(annos_sofar != 1, axis=1) | selected_toks
+            selected_docs = (np.cumsum(doc_start_all) - 1)[selected_toks]
+
+            # how many labels do we have for these tokens so far?
+            current_label_count = np.sum(annos_sofar[selected_toks] != -1, axis=1)
+            # add one for the new round
+            new_label_count = (current_label_count + 1)[:, None]
+            label_count_by_doc = new_label_count[doc_start_all[selected_toks] == 1]
+        else:
+            new_label_count = 1
+            label_count_by_doc = np.ones(batch_size)
+
+        # find the columns for each token that we should get from the full set of crowdsource annos
+        mask = np.cumsum(annos_all[selected_toks] != -1, axis=1) <= new_label_count
+
+        # make a new label set
+        annotations = np.zeros((np.sum(selected_toks), annos_all.shape[1])) - 1
+
+        # copy in the data from annos_all
+        annotations[mask] = annos_all[selected_toks, :][mask]
+
         doc_start = doc_start_all[selected_toks]
         text = text_all[selected_toks]
 
-        return annotations, doc_start, text, selected_docs, selected_toks
+        return annotations, doc_start, text, selected_docs, np.argwhere(selected_toks).flatten(), \
+               label_count_by_doc
 
     def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
-                    active_learning=False, AL_batch_fraction=0.1,
+                    active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
                     bootstrapping=True, ground_truth_all_points=None):
         '''
         Run the aggregation methods and evaluate them.
@@ -857,42 +889,68 @@ class Experiment(object):
 
             rerun_all = True
 
-            batch_size = int(np.ceil(AL_batch_fraction * Ndocs))
+            # indicates presence of annotations for each document from each annotator
+            annos_indicator = annotations_all[(doc_start_all == 1).flatten(), :] != -1
+            # get total annotation count
+            Nannos = np.sum(annos_indicator)
+            # get the number of labels to select each iteration
+            batch_size = int(np.ceil(AL_batch_fraction * Nannos))
 
             np.random.seed(351893) # for repeating with different methods with same initial set
 
-            seed_docs = np.random.choice(Ndocs, batch_size, replace=False)
-            seed_toks = np.in1d(np.cumsum(doc_start_all) - 1, seed_docs)
+            annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
+                annotations_all,
+                doc_start_all,
+                text_all,
+                batch_size,
+                np.ones((annotations_all.shape[0], self.num_classes), dtype=float) / self.num_classes,
+                None,
+                Ndocs
+            )
 
-            #print('Setting crf_probs=True because active learning requires probabilistic outputs.')
-            #crf_probs = True
+            N_withcrowd = annotations.shape[0]
+        else:
+            selected_docs = None
 
         for method_idx in range(len(self.methods)):
-            
+
             print('running method: %s' % self.methods[method_idx])
             method = self.methods[method_idx]
 
-            if active_learning:
-
-                selected_docs = seed_docs
-                selected_toks = seed_toks
-
-                # reset to the same original sample for the next method to be tested
-                annotations = annotations_all[seed_toks, :]
-                doc_start = doc_start_all[seed_toks]
-                text = text_all[seed_toks]
-                N_withcrowd = annotations.shape[0]
-
-            else:
-                selected_docs = None
-
             Nseen = 0
-            while Nseen < Ndocs:
+            niter = 0
+            while Nseen < Nannos and niter < max_AL_iters:
+
+                niter += 1
+
                 # the active learning loop -- loop until no more labels
                 # Initialise the results because not all methods will fill these in
                 if test_no_crowd:
                     agg_nocrowd = np.zeros(N_nocrowd)
                     probs_nocrowd = np.ones((N_nocrowd, self.num_classes))
+
+                if active_learning: # treat the unseen instances similarly to the no crowd instances -- get their posterior probabilities
+
+                    unseen_docs = np.arange(Ndocs)
+                    unseen_docs = unseen_docs[np.invert(np.in1d(unseen_docs, selected_docs))]
+
+                    unselected_toks = np.argwhere(np.invert(np.in1d(np.cumsum(doc_start_all), unseen_docs))).flatten()
+                    N_unseentoks = len(unselected_toks)
+
+                    agg_unseen = np.zeros(N_unseentoks)
+                    # default maximum entropy situation
+                    probs_unseen = np.ones((N_unseentoks, self.num_classes), dtype=float) / self.num_classes
+
+                    doc_start_unseen = doc_start_all[unselected_toks]
+                    text_unseen = text_all[unselected_toks]
+                else:
+                    unseen_docs = []
+                    unselected_toks = []
+                    agg_unseen = None
+                    probs_unseen = None
+                    annotations_unseen = None
+                    doc_start_unseen = None
+                    text_unseen = None
 
                 if  method.split('_')[0] == 'best':
                     agg, probs = self._run_best_worker(annotations, ground_truth, doc_start)
@@ -946,12 +1004,18 @@ class Experiment(object):
                         use_BOF = False
 
                     if method not in self.aggs or rerun_all:
-                        agg, probs, model, agg_nocrowd, probs_nocrowd = self._run_bac(annotations, doc_start, text,
+                        agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_bac(
+                                    annotations, doc_start, text,
                                     method, use_LSTM=use_LSTM, use_BOF=use_BOF,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
-                                    ground_truth_nocrowd=ground_truth_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                                    text_nocrowd=text_nocrowd, transition_model=trans_model,
-                                    bac_model=self.bac_pretrained)
+                                    ground_truth_nocrowd=ground_truth_nocrowd,
+                                    doc_start_nocrowd=doc_start_nocrowd,
+                                    text_nocrowd=text_nocrowd,
+                                    transition_model=trans_model,
+                                    bac_model=self.bac_pretrained,
+                                    doc_start_unseen=doc_start_unseen,
+                                    text_unseen=text_unseen)
+
                         self.aggs[method] = agg
                         self.probs[method] = probs
 
@@ -966,7 +1030,8 @@ class Experiment(object):
                         # we pass all annotations here so they can be saved and reloaded from a single file in HMMCrowd
                         # format, then the relevant subset selected from that.
                         agg, probs, model = self._run_hmmcrowd(annotations_all, text_all, doc_start_all, outputdir,
-                                                               selected_docs, overwrite_data_file=new_data)
+                                                               selected_docs, unseen_docs, nselected_by_doc,
+                                                               overwrite_data_file=new_data)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
                     else:
@@ -984,11 +1049,11 @@ class Experiment(object):
                     probs[range(len(agg)), agg.astype(int)] = 1.0
 
                 if '_then_LSTM' in method:
-                    agg2, probs2, agg_nocrowd, probs_nocrowd = self._run_LSTM(N_withcrowd, text, doc_start, agg,
+                    agg2, probs2, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_LSTM(N_withcrowd, text, doc_start, agg,
                                 test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd, ground_truth_nocrowd,
                                 text_val, doc_start_val, ground_truth_val, timestamp)
 
-                    if not active_learning:
+                    if not active_learning: # reuse the probs from the probabilistic aggregation methods for active learning
                         agg = agg2
                         probs = probs2
 
@@ -1001,6 +1066,10 @@ class Experiment(object):
 
                         probs_all = np.zeros((len(ground_truth), self.num_classes))
                         probs_all[selected_toks, :] = probs
+
+                        agg_all[unselected_toks] = agg_unseen.flatten()
+                        probs_all[unselected_toks, :] = probs_unseen
+
                         probs = probs_all
 
                     scores_allmethods[:,method_idx][:,None], \
@@ -1020,7 +1089,7 @@ class Experiment(object):
                 print('...done')
 
                 # Save the results so far after each method has completed.
-                Nseen = np.sum(doc_start) # update the number of documents processed so far
+                Nseen = np.sum(annotations[doc_start, :] != -1) # update the number of documents processed so far
 
                 # change the timestamps to include AL loop numbers
                 file_identifier = timestamp + ('-Nseen%i' % Nseen)
@@ -1056,7 +1125,7 @@ class Experiment(object):
                             pickle.dump(model, fh)
 
                 if active_learning and Nseen < Ndocs:
-                    annotations, doc_start, text, selected_docs, selected_toks = self._uncertainty_sampling(
+                    annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
                             annotations_all,
                             doc_start_all,
                             text_all,
@@ -1085,7 +1154,7 @@ class Experiment(object):
             else:
                 return scores_allmethods, preds_allmethods, probs_allmethods, None, None, None
 
-    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir, docsubsetidxs, overwrite=False):
+    def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir, docsubsetidxs, nselected_by_doc, overwrite=False):
 
         filename = outputdir + '/hmm_crowd_text_data.pkl'
 
@@ -1165,6 +1234,9 @@ class Experiment(object):
             crowd_labels = np.array(crowd_labels)
             crowd_labels = crowd_labels[docsubsetidxs]
 
+            for d, crowd_labels_d in enumerate(crowd_labels):
+                crowd_labels[d] = crowd_labels_d[:nselected_by_doc[d]]
+
         if len(sentences_inst[0][0].features) and isinstance(sentences_inst[0][0].features[0], float):
             # the features need to be ints not floats!
             for s, sen in enumerate(sentences_inst):
@@ -1198,36 +1270,36 @@ class Experiment(object):
                 self.group_sizes = self.param_values[param_idx]
             else:
                 print('Encountered invalid test index!')
-                
+
             param_path = self.output_dir + 'data/param' + str(param_idx) + '/'
-        
+
             for i in range(self.num_runs):
                 path = param_path + 'set' + str(i) + '/'
                 self.generator.init_crowd_models(self.acc_bias, self.miss_bias, self.short_bias, self.group_sizes)
                 self.generator.generate_dataset(num_docs=self.num_docs, doc_length=self.doc_length,
                                                 group_sizes=self.group_sizes, save_to_file=True, output_dir=path)
-    
+
     def run_synth_exp(self):
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
         # read experiment directory
         param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
-       
+
         # iterate through parameter settings
         for param_idx in range(len(param_dirs)):
-            
+
             print('parameter setting: {0}'.format(param_idx))
-            
-            # read parameter directory 
+
+            # read parameter directory
             path_pattern = self.output_dir + 'data/param{0}/set{1}/'
 
             # iterate through data sets
             for run_idx in range(self.num_runs):
                 print('data set number: {0}'.format(run_idx))
-                
+
                 data_path = path_pattern.format(*(param_idx,run_idx))
                 # read data
-                doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')                
+                doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')
                 # run methods
                 results[param_idx,:,:,run_idx], preds, probabilities, _, _, _ = self.run_methods(annos, gt, doc_start,
                                                                         data_path, new_data=True, bootstrapping=False)
@@ -1235,11 +1307,11 @@ class Experiment(object):
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities
                 probabilities.dump(data_path + 'probabilities')
-                
+
         if self.save_results:
             if not os.path.exists(self.output_dir):
                 os.makedirs(self.output_dir)
-                
+
             print('Saving results...')
             #np.savetxt(self.output_dir + 'results.csv', np.mean(results, 3)[:, :, 0])
             results.dump(self.output_dir + 'results')
@@ -1247,7 +1319,7 @@ class Experiment(object):
         if self.show_plots or self.save_plots:
             plot_results(self.param_values, self.methods, self.param_idx, results, self.show_plots,
                          self.save_plots, self.output_dir)
-        
+
         return results
 
     def replot_results(self):
@@ -1307,12 +1379,12 @@ class Experiment(object):
                          self.show_plots, self.save_plots, self.output_dir)
 
         return results
-    
+
     def run_synth(self):
-        
+
         if self.generate_data:
             self.create_experiment_data()
-        
+
         if not glob.glob(os.path.join(self.output_dir, 'data/*')):
             print('No data found at specified path! Exiting!')
             return

@@ -227,9 +227,9 @@ class BAC(object):
                         self.nu0[restricted_label, restricted_label] += disallowed_count
 
                         # reduce prevalence of B->B transitions, increase B->I
-                        disallowed_count = self.nu0[other_unrestricted_label, other_unrestricted_label] * 0.5
-                        self.nu0[other_unrestricted_label, other_unrestricted_label] *= 0.5
-                        self.nu0[other_unrestricted_label, restricted_label] += disallowed_count
+                        #disallowed_count = self.nu0[other_unrestricted_label, other_unrestricted_label] * 0.5
+                        #self.nu0[other_unrestricted_label, other_unrestricted_label] *= 0.5
+                        #self.nu0[other_unrestricted_label, restricted_label] += disallowed_count
                     continue
 
                 disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
@@ -1965,25 +1965,25 @@ class LSTM:
             # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
             # if n_epochs < self.n_epochs_per_vb_iter:
             #     n_epochs = self.n_epochs_per_vb_iter
-            n_epochs = 3
+            n_epochs = 20
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
                                                                  dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=freq_eval,
                                                                  crf_probs=self.crf_probs,
                                                                  max_niter_no_imprv=max_niter_no_imprv)
-        else:
-            n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
-
-            best_dev = -np.inf
-            last_score = best_dev
-            niter_no_imprv = 0
-
-            self.LSTMWrapper.model.best_model_saved = False
-
-            for epoch in range(n_epochs):
-                niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-                                    best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
+        # else:
+            # n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
+            #
+            # best_dev = -np.inf
+            # last_score = best_dev
+            # niter_no_imprv = 0
+            #
+            # self.LSTMWrapper.model.best_model_saved = False
+            #
+            # for epoch in range(n_epochs):
+            #     niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
+            #                         best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
 
                 # if niter_no_imprv >= max_niter_no_imprv:
                 #     print("- early stopping %i epochs without improvement" % niter_no_imprv)
@@ -2049,16 +2049,16 @@ class IndependentFeatures:
         self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
 
         # set this to trust the model completely
-        # alpha0_data = np.copy(alpha0_data) #
+        alpha0_data = np.copy(alpha0_data) #
 
-        alpha0_data = np.ones_like(alpha0_data)
-
-        alpha0_data[:] = 0.001
-        if alpha0_data.ndim == 2:
-            alpha0_data *= (nclasses - 1)
-            alpha0_data[1, 0] = 1000
-        elif alpha0_data.ndim >= 3:
-            alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
+        # alpha0_data = np.ones_like(alpha0_data)
+        #
+        # alpha0_data[:] = 0.001
+        # if alpha0_data.ndim == 2:
+        #     alpha0_data *= (nclasses - 1)
+        #     alpha0_data[1, 0] = 1000
+        # elif alpha0_data.ndim >= 3:
+        #     alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
 
         alpha_data = np.copy(alpha0_data)
 

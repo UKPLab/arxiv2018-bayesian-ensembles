@@ -114,6 +114,7 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
     #ndocs = np.array([929, 1858, 2787])
 
     methods = np.array([
+        'HMM_crowd',
         'HMM_crowd_then_LSTM',
         'bac_seq_integrateBOF_then_LSTM',
         'bac_seq_integrateBOF_integrateLSTM_atEnd',
@@ -143,6 +144,7 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
             res = pd.read_csv(os.path.join(results_dir, resfile))
 
             for col in res.columns:
+                print('plotting method "%s"' % col.strip("\\# '"))
                 methodidx = np.argwhere(methods == col.strip("\\# '"))[0][0]
 
                 if result_str + 'started' in resfile:
@@ -179,7 +181,7 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 if __name__ == '__main__':
     print('Plotting active learning results...')
 
-    results_dir = '../../data/bayesian_annotator_combination/output/ner_al_krusty2/ner_al/'
+    results_dir = '../../data/bayesian_annotator_combination/output/ner_al_krusty3/'
     output_dir = './documents/figures/NER_AL/'
 
     # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_krusty/bio_al/'
