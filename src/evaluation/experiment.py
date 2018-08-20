@@ -885,14 +885,15 @@ class Experiment(object):
         self.bac_nu0 = np.ones((self.num_classes + 1, self.num_classes)) * self.nu0_factor
         self.ibcc_nu0 = np.ones(self.num_classes) * self.nu0_factor
 
+        # indicates presence of annotations for each document from each annotator
+        annos_indicator = annotations_all[(doc_start_all == 1).flatten(), :] != -1
+        # get total annotation count
+        Nannos = np.sum(annos_indicator)
+
         if active_learning:
 
             rerun_all = True
 
-            # indicates presence of annotations for each document from each annotator
-            annos_indicator = annotations_all[(doc_start_all == 1).flatten(), :] != -1
-            # get total annotation count
-            Nannos = np.sum(annos_indicator)
             # get the number of labels to select each iteration
             batch_size = int(np.ceil(AL_batch_fraction * Nannos))
 
