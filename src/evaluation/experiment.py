@@ -906,30 +906,6 @@ class Experiment(object):
         # get total annotation count
         Nannos = np.sum(annos_indicator)
 
-        if active_learning:
-
-            rerun_all = True
-
-            # get the number of labels to select each iteration
-            batch_size = int(np.ceil(AL_batch_fraction * Nannos))
-
-            np.random.seed(351893) # for repeating with different methods with same initial set
-
-            annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
-                annotations_all,
-                doc_start_all,
-                text_all,
-                batch_size,
-                np.ones((annotations_all.shape[0], self.num_classes), dtype=float) / self.num_classes,
-                None,
-                None,
-                None
-            )
-
-            N_withcrowd = annotations.shape[0]
-        else:
-            selected_docs = None
-
         for method_idx in range(len(self.methods)):
 
             print('running method: %s' % self.methods[method_idx])
@@ -937,6 +913,31 @@ class Experiment(object):
 
             Nseen = 0
             niter = 0
+
+            if active_learning:
+
+                rerun_all = True
+
+                # get the number of labels to select each iteration
+                batch_size = int(np.ceil(AL_batch_fraction * Nannos))
+
+                np.random.seed(351893)  # for repeating with different methods with same initial set
+
+                annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
+                    annotations_all,
+                    doc_start_all,
+                    text_all,
+                    batch_size,
+                    np.ones((annotations_all.shape[0], self.num_classes), dtype=float) / self.num_classes,
+                    None,
+                    None,
+                    None
+                )
+
+                N_withcrowd = annotations.shape[0]
+            else:
+                selected_docs = None
+
             while Nseen < Nannos and niter < max_AL_iters:
 
                 niter += 1
