@@ -225,6 +225,8 @@ class Experiment(object):
 
     crf_probs = False
 
+    random_sampling = False
+
     def __init__(self, generator, nclasses=None, nannotators=None, config=None,
                  alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20, crf_probs=False):
 
@@ -772,21 +774,27 @@ class Experiment(object):
         docids_by_tok = (np.cumsum(doc_start_all) - 1)[unfinished_toks]
 
         Ndocs = np.max(docids_by_tok) + 1
-        negentropy_docs = np.zeros(Ndocs, dtype=float)
-        count_unseen_toks = np.zeros(Ndocs, dtype=float)
 
-        # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
-        for i, _ in enumerate(unfinished_toks):
-            # find doc ID for this tok
-            docid = docids_by_tok[i]
+        if self.random_sampling:
+            selected_docs = np.random.choice(np.unique(docids_by_tok), batch_size, replace=False)
 
-            negentropy_docs[docid] += negentropy[i]
-            count_unseen_toks[docid] += 1
+        else:
+            negentropy_docs = np.zeros(Ndocs, dtype=float)
+            count_unseen_toks = np.zeros(Ndocs, dtype=float)
 
-        negentropy_docs /= count_unseen_toks
+            # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
+            for i, _ in enumerate(unfinished_toks):
+                # find doc ID for this tok
+                docid = docids_by_tok[i]
 
-        # assume that batch size is less than number of docs...
-        selected_docs = np.argsort(negentropy_docs)[:batch_size]
+                negentropy_docs[docid] += negentropy[i]
+                count_unseen_toks[docid] += 1
+
+            negentropy_docs /= count_unseen_toks
+
+            # assume that batch size is less than number of docs...
+            selected_docs = np.argsort(negentropy_docs)[:batch_size]
+
         selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
 
         # add to previously selected toks and docs
@@ -911,6 +919,7 @@ class Experiment(object):
 
             N_withcrowd = annotations.shape[0]
         else:
+            nselected_by_doc = None
             selected_docs = None
 
         for method_idx in range(len(self.methods)):
