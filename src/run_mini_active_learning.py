@@ -32,9 +32,13 @@ exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    #'HMM_crowd_then_LSTM',
-    'bac_seq_integrateBOF_then_LSTM',
+    #'HMM_crowd'
+    #'bac_seq_integrateBOF',
+    'HMM_crowd_then_LSTM',
+    #'bac_seq_integrateBOF_then_LSTM',
                 ]
+
+#exp.random_sampling = True
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
                     annos, gt, doc_start, output_dir, text,

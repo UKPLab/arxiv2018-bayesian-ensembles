@@ -620,7 +620,7 @@ class Experiment(object):
             probs_nocrowd = None
             agg_nocrowd = None
 
-        if doc_start_unseen is not None and '_thenLSTM' not in method:
+        if '_thenLSTM' not in method and doc_start_unseen is not None and len(doc_start_unseen) > 0:
             probs_unseen, agg_unseen = bac_model.predict(doc_start_unseen, text_unseen)
         else:
             probs_unseen = None
@@ -755,12 +755,13 @@ class Experiment(object):
         return doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, \
                doc_start, ground_truth, text, N_withcrowd
 
-    def _uncertainty_sampling(self, annos_all, doc_start_all, text_all, batch_size, probs, annos_sofar, Ndocs):
+    def _uncertainty_sampling(self, annos_all, doc_start_all, text_all, batch_size, probs, annos_sofar, selected_toks, selected_docs):
 
-        if annos_sofar is None:
-            unfinished_toks = np.ones(annos_all.shape[0], dtype=bool)
-        else:
-            unfinished_toks = np.sum(annos_all != -1, axis=1) - np.sum(annos_sofar != -1, axis=1) > 0
+        unfinished_toks = np.ones(annos_all.shape[0], dtype=bool)
+
+        if annos_sofar is not None:
+            unfinished_toks[selected_toks] = (np.sum(annos_all[selected_toks] != -1, axis=1) - np.sum(annos_sofar != -1, axis=1)) > 0
+
         unfinished_toks = np.sort(np.argwhere(unfinished_toks).flatten())
 
         # random selection
@@ -776,7 +777,7 @@ class Experiment(object):
         Ndocs = np.max(docids_by_tok) + 1
 
         if self.random_sampling:
-            selected_docs = np.random.choice(np.unique(docids_by_tok), batch_size, replace=False)
+            new_selected_docs = np.random.choice(np.unique(docids_by_tok), batch_size, replace=False)
 
         else:
             negentropy_docs = np.zeros(Ndocs, dtype=float)
@@ -793,26 +794,34 @@ class Experiment(object):
             negentropy_docs /= count_unseen_toks
 
             # assume that batch size is less than number of docs...
-            selected_docs = np.argsort(negentropy_docs)[:batch_size]
+            new_selected_docs = np.argsort(negentropy_docs)[:batch_size]
 
-        selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, selected_docs)
+        new_selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, new_selected_docs)
+
+        new_label_count = np.zeros(annos_all.shape[0])
+        new_label_count[new_selected_toks] += 1
 
         # add to previously selected toks and docs
         if annos_sofar is not None:
-            selected_toks = np.any(annos_sofar != 1, axis=1) | selected_toks
-            selected_docs = (np.cumsum(doc_start_all) - 1)[selected_toks]
-
             # how many labels do we have for these tokens so far?
-            current_label_count = np.sum(annos_sofar[selected_toks] != -1, axis=1)
+            current_label_count = np.sum(annos_sofar != -1, axis=1)
+
             # add one for the new round
-            new_label_count = (current_label_count + 1)[:, None]
-            label_count_by_doc = new_label_count[doc_start_all[selected_toks] == 1]
+            new_label_count[selected_toks] += current_label_count
+
+            selected_docs = np.sort(np.unique(np.concatenate((selected_docs, new_selected_docs)) ))
+
+            new_selected_toks[selected_toks] = True
+            selected_toks = new_selected_toks
         else:
-            new_label_count = 1
-            label_count_by_doc = np.ones(batch_size)
+            selected_toks = new_selected_toks
+            selected_docs = new_selected_docs
+
+        nselected_by_doc = new_label_count[selected_toks]
+        nselected_by_doc = nselected_by_doc[doc_start_all[selected_toks].flatten() == 1]
 
         # find the columns for each token that we should get from the full set of crowdsource annos
-        mask = np.cumsum(annos_all[selected_toks] != -1, axis=1) <= new_label_count
+        mask = np.cumsum(annos_all[selected_toks] != -1, axis=1) <= new_label_count[selected_toks][:, None]
 
         # make a new label set
         annotations = np.zeros((np.sum(selected_toks), annos_all.shape[1])) - 1
@@ -823,8 +832,7 @@ class Experiment(object):
         doc_start = doc_start_all[selected_toks]
         text = text_all[selected_toks]
 
-        return annotations, doc_start, text, selected_docs, np.argwhere(selected_toks).flatten(), \
-               label_count_by_doc
+        return annotations, doc_start, text, selected_docs, np.argwhere(selected_toks).flatten(), nselected_by_doc
 
     def run_methods(self, annotations, ground_truth, doc_start, outputdir=None, text=None,
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
@@ -914,12 +922,12 @@ class Experiment(object):
                 batch_size,
                 np.ones((annotations_all.shape[0], self.num_classes), dtype=float) / self.num_classes,
                 None,
-                Ndocs
+                None,
+                None
             )
 
             N_withcrowd = annotations.shape[0]
         else:
-            nselected_by_doc = None
             selected_docs = None
 
         for method_idx in range(len(self.methods)):
@@ -944,7 +952,7 @@ class Experiment(object):
                     unseen_docs = np.arange(Ndocs)
                     unseen_docs = unseen_docs[np.invert(np.in1d(unseen_docs, selected_docs))]
 
-                    unselected_toks = np.argwhere(np.invert(np.in1d(np.cumsum(doc_start_all), unseen_docs))).flatten()
+                    unselected_toks = np.argwhere(np.in1d(np.cumsum(doc_start_all) - 1, unseen_docs)).flatten()
                     N_unseentoks = len(unselected_toks)
 
                     agg_unseen = np.zeros(N_unseentoks)
@@ -1040,7 +1048,7 @@ class Experiment(object):
                         # we pass all annotations here so they can be saved and reloaded from a single file in HMMCrowd
                         # format, then the relevant subset selected from that.
                         agg, probs, model = self._run_hmmcrowd(annotations_all, text_all, doc_start_all, outputdir,
-                                                               selected_docs, unseen_docs, nselected_by_doc,
+                                                               selected_docs, nselected_by_doc,
                                                                overwrite_data_file=new_data)
                         self.aggs['HMM_crowd'] = agg
                         self.probs['HMM_crowd'] = probs
@@ -1059,20 +1067,15 @@ class Experiment(object):
                     probs[range(len(agg)), agg.astype(int)] = 1.0
 
                 if '_then_LSTM' in method:
-                    agg2, probs2, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_LSTM(N_withcrowd, text, doc_start, agg,
+                    agg, probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_LSTM(N_withcrowd, text, doc_start, agg,
                                 test_no_crowd, N_nocrowd, text_nocrowd, doc_start_nocrowd, ground_truth_nocrowd,
-                                text_val, doc_start_val, ground_truth_val, timestamp)
-
-                    if not active_learning: # reuse the probs from the probabilistic aggregation methods for active learning
-                        agg = agg2
-                        probs = probs2
+                                text_val, doc_start_val, ground_truth_val, timestamp, doc_start_unseen, text_unseen)
 
                 if np.any(ground_truth != -1): # don't run this in the case that crowd-labelled data has no gold labels
 
                     if active_learning and len(agg) < len(ground_truth):
                         agg_all = np.ones(len(ground_truth))
                         agg_all[selected_toks] = agg.flatten()
-                        agg = agg_all
 
                         probs_all = np.zeros((len(ground_truth), self.num_classes))
                         probs_all[selected_toks, :] = probs
@@ -1080,6 +1083,7 @@ class Experiment(object):
                         agg_all[unselected_toks] = agg_unseen.flatten()
                         probs_all[unselected_toks, :] = probs_unseen
 
+                        agg = agg_all
                         probs = probs_all
 
                     scores_allmethods[:,method_idx][:,None], \
@@ -1134,15 +1138,16 @@ class Experiment(object):
                         with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
                             pickle.dump(model, fh)
 
-                if active_learning and Nseen < Ndocs:
+                if active_learning and Nseen < Nannos:
                     annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
                             annotations_all,
                             doc_start_all,
                             text_all,
                             batch_size,
                             probs,
-                            selected_docs,
-                            Ndocs
+                            annotations,
+                            selected_toks,
+                            selected_docs
                         )
 
                     N_withcrowd = annotations.shape[0]
@@ -1241,11 +1246,11 @@ class Experiment(object):
             sentences_inst = np.array(sentences_inst)
             sentences_inst = sentences_inst[docsubsetidxs]
 
-            crowd_labels = np.array(crowd_labels)
-            crowd_labels = crowd_labels[docsubsetidxs]
+            crowd_labels = [crowd_labels[d] for d in docsubsetidxs]
 
             for d, crowd_labels_d in enumerate(crowd_labels):
-                crowd_labels[d] = crowd_labels_d[:nselected_by_doc[d]]
+                crowd_labels[d] = crowd_labels_d[:int(nselected_by_doc[d])]
+            crowd_labels = np.array(crowd_labels)
 
         if len(sentences_inst[0][0].features) and isinstance(sentences_inst[0][0].features[0], float):
             # the features need to be ints not floats!
