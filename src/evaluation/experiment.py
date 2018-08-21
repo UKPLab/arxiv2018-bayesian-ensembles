@@ -940,6 +940,7 @@ class Experiment(object):
 
             while Nseen < Nannos and niter < max_AL_iters:
 
+                print('Learning round %i' % niter)
                 niter += 1
 
                 # the active learning loop -- loop until no more labels
