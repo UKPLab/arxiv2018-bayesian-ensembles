@@ -22,7 +22,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 # -------------------------
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
-if os.path.isdir(output_dir):
+if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=False)
@@ -50,7 +50,7 @@ results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_m
 # Random Sampling ------------------------------------------------------------------------------
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new/'
-if os.path.isdir(output_dir):
+if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=True)
