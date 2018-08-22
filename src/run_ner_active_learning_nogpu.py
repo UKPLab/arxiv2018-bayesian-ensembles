@@ -30,14 +30,15 @@ exp.save_results = True
 exp.opt_hyper = False#True
 
 exp.nu0_factor = 0.1
-exp.alpha0_diags = 1 # best_diags
-exp.alpha0_factor = 1#9 # best_factor
+exp.alpha0_diags = 100 # best_diags
+exp.alpha0_factor = 0.1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    'majority',
-    'bac_seq_integrateBOF',
-    'HMM_crowd'
+    #'majority',
+    'bac_ibcc_integrateBOF',
+    #'bac_seq_integrateBOF',
+    #'HMM_crowd'
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -58,14 +59,15 @@ exp.save_results = True
 exp.opt_hyper = False#True
 
 exp.nu0_factor = 0.1
-exp.alpha0_diags = 1 # best_diags
-exp.alpha0_factor = 1#9 # best_factor
+exp.alpha0_diags = 100 # best_diags
+exp.alpha0_factor = 0.1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    'majority',
-    'bac_seq_integrateBOF',
-    'HMM_crowd'
+    #'majority',
+    'bac_ibcc_integrateBOF',
+    #'bac_seq_integrateBOF',
+    #'HMM_crowd'
                 ]
 
 exp.random_sampling = True

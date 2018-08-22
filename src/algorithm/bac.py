@@ -214,17 +214,17 @@ class BAC(object):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
                 if typeid == i:  # same type is allowed
 
-                    if self.alpha0.shape[0] == 3:
-
-                        # reduce likelihood of I->I | B, increase I->B | B
-                        disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
-                        self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
-                        self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
-
-                        # reduce prevalence of I->B transitions, increase I->I
-                        disallowed_count = self.nu0[restricted_label, other_unrestricted_label] * 0.5
-                        self.nu0[restricted_label, other_unrestricted_label] *= 0.5
-                        self.nu0[restricted_label, restricted_label] += disallowed_count
+                    # if self.alpha0.shape[0] == 3:
+                    #
+                    #     # reduce likelihood of I->I | B, increase I->B | B
+                    #     disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
+                    #     self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
+                    #     self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
+                    #
+                    #     # reduce prevalence of I->B transitions, increase I->I
+                    #     disallowed_count = self.nu0[restricted_label, other_unrestricted_label] * 0.5
+                    #     self.nu0[restricted_label, other_unrestricted_label] *= 0.5
+                    #     self.nu0[restricted_label, restricted_label] += disallowed_count
 
                         # reduce prevalence of B->B transitions, increase B->I
                         #disallowed_count = self.nu0[other_unrestricted_label, other_unrestricted_label] * 0.5
@@ -1881,6 +1881,8 @@ class LSTM:
         self.n_epochs_per_vb_iter = 1#3 # this may be too much?
         self.max_vb_iters = max_vb_iters
 
+        self.probs = None
+
         self.N = N
 
         labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
@@ -1955,7 +1957,7 @@ class LSTM:
 
             dev_labels = self.dev_labels
 
-        freq_eval = 5
+        freq_eval = 1#5
         max_niter_no_imprv = 2
 
         if self.LSTMWrapper.model is None:
@@ -1965,42 +1967,43 @@ class LSTM:
             # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
             # if n_epochs < self.n_epochs_per_vb_iter:
             #     n_epochs = self.n_epochs_per_vb_iter
-            n_epochs = 20
+            n_epochs = 3#20
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
                                                                  dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=freq_eval,
                                                                  crf_probs=self.crf_probs,
                                                                  max_niter_no_imprv=max_niter_no_imprv)
-        # else:
-            # n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
-            #
-            # best_dev = -np.inf
-            # last_score = best_dev
-            # niter_no_imprv = 0
-            #
-            # self.LSTMWrapper.model.best_model_saved = False
-            #
-            # for epoch in range(n_epochs):
-            #     niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-            #                         best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
+        else:
+            n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
+
+            best_dev = -np.inf
+            last_score = best_dev
+            niter_no_imprv = 0
+
+            self.LSTMWrapper.model.best_model_saved = False
+
+            for epoch in range(n_epochs):
+                niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
+                                    best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
 
                 # if niter_no_imprv >= max_niter_no_imprv:
                 #     print("- early stopping %i epochs without improvement" % niter_no_imprv)
                 #
-                #     Commented out because we're not sure what happens if we load a model from earlier iterations.
-                #     reload if something better was saved already.
+                #     # Commented out because we're not sure what happens if we load a model from earlier iterations.
+                #     # reload if something better was saved already.
                 #         self.LSTMWrapper.model.reload()
                 #     if self.LSTMWrapper.model.best_model_saved:
                 #
                 #     break
 
         # now make predictions for all sentences
-        agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+        if self.probs is None:
+            agg, self.probs = self.LSTMWrapper.predict_LSTM(self.sentences)
 
         print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
-        return probs
+        return self.probs
 
     def predict(self, doc_start, text):
         from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
