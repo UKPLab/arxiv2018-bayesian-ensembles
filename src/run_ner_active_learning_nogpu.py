@@ -35,6 +35,7 @@ exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
+    'majority',
     'bac_seq_integrateBOF',
     'HMM_crowd'
                 ]
@@ -62,6 +63,7 @@ exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
+    'majority',
     'bac_seq_integrateBOF',
     'HMM_crowd'
                 ]
