@@ -1105,7 +1105,8 @@ class Experiment(object):
                 print('...done')
 
                 # Save the results so far after each method has completed.
-                Nseen = np.sum(annotations[doc_start, :] != -1) # update the number of documents processed so far
+                Nseen = np.sum(annotations[doc_start.flatten()==1] != -1) # update the number of documents processed so far
+                print('Nseen = %i' % Nseen)
 
                 # change the timestamps to include AL loop numbers
                 file_identifier = timestamp + ('-Nseen%i' % Nseen)

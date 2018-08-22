@@ -25,7 +25,7 @@ output_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=False)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=1, crf_probs=False)
 exp.save_results = True
 exp.opt_hyper = False#True
 
