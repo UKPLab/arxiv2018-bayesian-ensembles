@@ -2001,7 +2001,7 @@ class LSTM:
         if self.probs is None:
             agg, self.probs = self.LSTMWrapper.predict_LSTM(self.sentences)
 
-        print('LSTM assigned class labels %s' % str(np.unique(agg)) )
+            print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
         return self.probs
 
