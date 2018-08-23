@@ -1967,7 +1967,7 @@ class LSTM:
             # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
             # if n_epochs < self.n_epochs_per_vb_iter:
             #     n_epochs = self.n_epochs_per_vb_iter
-            n_epochs = 3#20
+            n_epochs = 20
 
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
                                                                  dev_labels, self.IOB_map, self.IOB_label,
@@ -1983,9 +1983,9 @@ class LSTM:
 
             self.LSTMWrapper.model.best_model_saved = False
 
-            for epoch in range(n_epochs):
-                niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-                                    best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
+            # for epoch in range(n_epochs):
+            #     niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
+            #                         best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
 
                 # if niter_no_imprv >= max_niter_no_imprv:
                 #     print("- early stopping %i epochs without improvement" % niter_no_imprv)
