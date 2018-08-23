@@ -838,7 +838,7 @@ class Experiment(object):
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
-                    active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
+                    active_learning=False, AL_batch_fraction=0.05, max_AL_iters=2,#10,
                     bootstrapping=True, ground_truth_all_points=None):
         '''
         Run the aggregation methods and evaluate them.
@@ -1112,28 +1112,23 @@ class Experiment(object):
                 file_identifier = timestamp + ('-Nseen%i' % Nseen)
 
                 if outputdir is not None:
-                    np.savetxt(outputdir + 'result_%s.csv' % file_identifier, scores_allmethods, fmt='%s', delimiter=',',
-                               header=str(self.methods).strip('[]'))
-                    np.savetxt(outputdir + 'result_std_%s.csv' % file_identifier, score_std_allmethods, fmt='%s',
-                               delimiter=',',
-                               header=str(self.methods).strip('[]'))
 
-                    np.savetxt(outputdir + 'pred_%s.csv' % file_identifier, preds_allmethods, fmt='%s',
-                               delimiter=',',
-                               header=str(self.methods).strip('[]'))
+                    self.append_method_result_to_csv(outputdir, method_idx, scores_allmethods,
+                                                     'result', file_identifier)
+                    self.append_method_result_to_csv(outputdir, method_idx, score_std_allmethods,
+                                                     'result_std', file_identifier)
+                    self.append_method_result_to_csv(outputdir, method_idx, preds_allmethods,
+                                                     'pred', file_identifier)
+                    self.append_method_result_to_csv(outputdir, method_idx, scores_nocrowd,
+                                                     'result_nocrowd', file_identifier)
+                    self.append_method_result_to_csv(outputdir, method_idx, score_std_nocrowd,
+                                                     'result_std_nocrowd', file_identifier)
+                    self.append_method_result_to_csv(outputdir, method_idx, preds_allmethods_nocrowd,
+                                                     'pred_nocrowd', file_identifier)
+
                     with open(outputdir + 'probs_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods, fh)
 
-                    np.savetxt(outputdir + 'result_nocrowd_%s.csv' % file_identifier, scores_nocrowd, fmt='%s',
-                               delimiter=',',
-                               header=str(self.methods).strip('[]'))
-                    np.savetxt(outputdir + 'result_std_nocrowd_%s.csv' % file_identifier, score_std_nocrowd, fmt='%s',
-                               delimiter=',',
-                               header=str(self.methods).strip('[]'))
-
-                    np.savetxt(outputdir + 'pred_nocrowd_%s.csv' % file_identifier, preds_allmethods_nocrowd, fmt='%s',
-                               delimiter=',',
-                               header=str(self.methods).strip('[]'))
                     with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
@@ -1171,6 +1166,20 @@ class Experiment(object):
                 return scores_allmethods, preds_allmethods, probs_allmethods, model, None, None, None
             else:
                 return scores_allmethods, preds_allmethods, probs_allmethods, None, None, None
+
+    def append_method_result_to_csv(self, outputdir, method_idx, new_data, filename, file_identifier):
+
+        filename = outputdir + '%s_%s.csv' % (filename, file_identifier)
+
+        new_data = pd.DataFrame(new_data[:, method_idx], columns=[str(self.methods[method_idx]).strip('[]')])
+
+        if os.path.isfile(filename):
+            data = pd.read_csv(filename, delimiter=',')
+            expanded_data = pd.concat((data, new_data), axis=1)
+        else:
+            expanded_data = new_data
+
+        expanded_data.to_csv(filename, index=False)
 
     def data_to_hmm_crowd_format(self, annotations, text, doc_start, outputdir, docsubsetidxs, nselected_by_doc, overwrite=False):
 

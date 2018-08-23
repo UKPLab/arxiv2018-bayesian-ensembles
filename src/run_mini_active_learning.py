@@ -7,7 +7,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/mini_al/'
+output_dir = '../../data/bayesian_annotator_combination/output/mini_al2/'
 
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, _ = \
     load_data.load_ner_data(False)
@@ -32,8 +32,10 @@ exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
+    'majority',
+    'majority',
     #'HMM_crowd'
-    'bac_seq_integrateBOF',
+    #'bac_seq_integrateBOF',
     #'HMM_crowd_then_LSTM',
     #'bac_seq_integrateBOF_then_LSTM',
                 ]

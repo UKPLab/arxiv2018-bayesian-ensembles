@@ -185,12 +185,12 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 if __name__ == '__main__':
     print('Plotting active learning results...')
 
-    # results_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
-    # output_dir = './documents/figures/NER_AL/'
+    results_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
+    output_dir = './documents/figures/NER_AL/'
 
-    results_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new/'
-    output_dir = './documents/figures/NER_RAND/'
-
+    # results_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new/'
+    # output_dir = './documents/figures/NER_RAND/'
+    #
     # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_krusty/bio_al/'
     # output_dir = './documents/figures/BIO_AL/'
 
