@@ -119,6 +119,7 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
         'majority',
         'HMM_crowd',
         'HMM_crowd_then_LSTM',
+        'bac_ibcc_integrateBOF',
         'bac_seq_integrateBOF',
         'bac_seq_integrateBOF_then_LSTM',
         'bac_seq_integrateBOF_integrateLSTM_atEnd',
@@ -142,14 +143,23 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 
         ndocsidx = int(resfile.split('.csv')[0].split('Nseen')[-1])
         print(ndocsidx)
+        if ndocsidx not in ndocs:
+            print('skipping this value of ndocs=%i' % ndocsidx)
+            continue
+
         ndocsidx = np.argwhere(ndocs == ndocsidx)[0][0]
 
         if resfile.split('.')[-1] == 'csv':
             res = pd.read_csv(os.path.join(results_dir, resfile))
 
             for col in res.columns:
-                print('plotting method "%s"' % col.strip("\\# '"))
-                methodidx = np.argwhere(methods == col.strip("\\# '"))[0][0]
+                thismethod = col.strip("\\# '")
+                print('plotting method "%s"' % thismethod)
+                if thismethod in methods:
+                    methodidx = np.argwhere(methods == thismethod)[0][0]
+                else:
+                    methodidx = len(methods)
+                    methods = methods.append(thismethod)
 
                 if result_str + 'started' in resfile:
                     results[ndocsidx, :, methodidx, 0] = res[col]
