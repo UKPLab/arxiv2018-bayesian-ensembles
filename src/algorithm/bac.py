@@ -660,8 +660,8 @@ class BAC(object):
                         if self.verbose:
                             print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
 
-                        #if type(model) == LSTM:
-                        #    np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
+                        if type(model) == LSTM:
+                           np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
                     else: # model is switched off
                         model.C_data[:] = 0
 
