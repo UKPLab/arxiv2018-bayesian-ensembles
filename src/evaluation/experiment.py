@@ -838,7 +838,7 @@ class Experiment(object):
                     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
-                    active_learning=False, AL_batch_fraction=0.05, max_AL_iters=2,#10,
+                    active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
                     bootstrapping=True, ground_truth_all_points=None):
         '''
         Run the aggregation methods and evaluate them.

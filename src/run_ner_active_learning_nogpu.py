@@ -35,10 +35,10 @@ exp.alpha0_factor = 0.1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    #'majority',
+    'majority',
     #'bac_ibcc_integrateBOF',
     'bac_seq_integrateBOF',
-    #'HMM_crowd'
+    'HMM_crowd'
                 ]
 
 results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -64,10 +64,10 @@ exp.alpha0_factor = 1#9 # best_factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    #'majority',
+    'majority',
     #'bac_ibcc_integrateBOF',
     'bac_seq_integrateBOF',
-    #'HMM_crowd'
+    'HMM_crowd'
                 ]
 
 exp.random_sampling = True
