@@ -924,7 +924,7 @@ class Experiment(object):
                 # get the number of labels to select each iteration
                 batch_size = int(np.ceil(AL_batch_fraction * Nannos))
 
-                np.random.seed(self.seeds[rep])  # for repeating with different methods with same initial set
+                np.random.seed(self.seed)  # for repeating with different methods with same initial set
 
                 annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
                     annotations_all,
