@@ -53,8 +53,10 @@ for rep in range(num_reps):
     exp.alpha0_factor = 1
 
     exp.methods = [
-        'bac_seq_integrateBOF_integrateLSTM_atEnd'
-                   ]
+        'majority',
+        'bac_seq_integrateBOF',
+        'HMM_crowd'
+    ]
 
     exp.save_results = True
     exp.opt_hyper = False #True
@@ -80,8 +82,10 @@ for rep in range(num_reps):
     exp.alpha0_factor = 1
 
     exp.methods = [
-        'bac_seq_integrateBOF_integrateLSTM_atEnd',
-                   ]
+        'majority',
+        'bac_seq_integrateBOF',
+        'HMM_crowd'
+    ]
 
     exp.save_results = True
     exp.opt_hyper = False #True
@@ -101,13 +105,12 @@ for rep in range(num_reps):
     exp.save_results = True
     exp.opt_hyper = False  # True
 
-    exp.nu0_factor = 100
-    exp.alpha0_diags = 1
-    exp.alpha0_factor = 1
+    exp.nu0_factor = 0.1
+    exp.alpha0_diags = 10
+    exp.alpha0_factor = 0.1
 
     exp.methods = [
-        'bac_seq_integrateBOF_then_LSTM',
-        'HMM_crowd_then_LSTM'
+        'bac_ibcc_integrateBOF',
     ]
 
     exp.save_results = True
@@ -128,13 +131,12 @@ for rep in range(num_reps):
     exp.save_results = True
     exp.opt_hyper = False  # True
 
-    exp.nu0_factor = 100
-    exp.alpha0_diags = 1
-    exp.alpha0_factor = 1
+    exp.nu0_factor = 0.1
+    exp.alpha0_diags = 10
+    exp.alpha0_factor = 0.1
 
     exp.methods = [
-        'bac_seq_integrateBOF_then_LSTM',
-        'HMM_crowd_then_LSTM'
+        'bac_ibcc_integrateBOF',
     ]
 
     exp.save_results = True

@@ -129,6 +129,9 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
     results = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
     results_nocrowd = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
 
+    run_counts = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
+    run_counts_nocrowd = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
+
     resfiles = os.listdir(results_dir)
 
     for resfile in resfiles:
@@ -162,9 +165,14 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
                     methods = methods.append(thismethod)
 
                 if result_str + 'started' in resfile:
-                    results[ndocsidx, :, methodidx, 0] = res[col]
+                    results[ndocsidx, :, methodidx, 0] = (res[col] + run_counts[ndocsidx, :, methodidx, 0] * \
+                        results[ndocsidx, :, methodidx, 0]) / (run_counts[ndocsidx, :, methodidx, 0] + 1)
+                    run_counts[ndocsidx, :, methodidx, 0] += 1
                 elif result_str + 'nocrowd_started' in resfile:
-                    results_nocrowd[ndocsidx, :, methodidx, 0] = res[col]
+                    results_nocrowd[ndocsidx, :, methodidx, 0] = (res[col] + run_counts_nocrowd[
+                        ndocsidx, :, methodidx, 0] * results_nocrowd[ndocsidx, :, methodidx, 0]) / (
+                            run_counts_nocrowd[ndocsidx, :, methodidx, 0] + 1)
+                    run_counts_nocrowd[ndocsidx, :, methodidx, 0] += 1
 
         elif resfile.split('.')[-1] == 'tex':
             res = pd.read_csv(os.path.join(results_dir, resfile), sep='&', header=None)
@@ -192,15 +200,18 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
     plot_results(ndocs, methods, 6, results_nocrowd, False, True, output_test_dir, SCORE_NAMES,
                  title='Active Learning: Test Data')
 
+    print(run_counts[0, 0, :, 0])
+    print(run_counts_nocrowd[0, 0, :, 0])
+
 if __name__ == '__main__':
     print('Plotting active learning results...')
 
-    results_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
-    output_dir = './documents/figures/NER_AL/'
+    # results_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
+    # output_dir = './documents/figures/NER_AL/'
 
-    # results_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new/'
-    # output_dir = './documents/figures/NER_RAND/'
-    #
+    results_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new/'
+    output_dir = './documents/figures/NER_RAND/'
+
     # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_krusty/bio_al/'
     # output_dir = './documents/figures/BIO_AL/'
 

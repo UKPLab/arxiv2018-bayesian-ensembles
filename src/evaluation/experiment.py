@@ -256,6 +256,9 @@ class Experiment(object):
 
         self.max_iter = max_iter # allow all methods to use a maximum no. iterations
 
+        np.random.seed(3849)
+        self.seeds = np.random.randint(1, 1000, 100) # seeds for AL
+
     def read_config_file(self):
 
         print('Reading experiment config file...')
@@ -839,7 +842,7 @@ class Experiment(object):
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
                     active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
-                    bootstrapping=True, ground_truth_all_points=None):
+                    bootstrapping=True, ground_truth_all_points=None, rep=0):
         '''
         Run the aggregation methods and evaluate them.
         :param annotations:
@@ -921,7 +924,7 @@ class Experiment(object):
                 # get the number of labels to select each iteration
                 batch_size = int(np.ceil(AL_batch_fraction * Nannos))
 
-                np.random.seed(3893)  # for repeating with different methods with same initial set
+                np.random.seed(self.seeds[rep])  # for repeating with different methods with same initial set
 
                 annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
                     annotations_all,
