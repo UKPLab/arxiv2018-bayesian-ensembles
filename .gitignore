@@ -1,3 +1,6 @@
+models_*
+documents/figures/*_OLD*
+documents/figures/*_old*
 *.pkl
 *.pyc
 *.bak

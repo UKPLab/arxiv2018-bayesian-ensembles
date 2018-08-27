@@ -41,9 +41,11 @@
 \DeclareMathOperator*{\argmax}{\arg\!\max\!} %argmax operator
 \newcommand{\wrtd}{\mathrm{d}}
 
+\newcommand{\rough}[0]{\color{purple}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{A Bayesian Method for Combining Crowds and Ensembles for Annotating Text Sequences}%Multiple Unreliable Text Annotators}
+\title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}%Multiple Unreliable Text Annotators}
 
 \author{First Author \\
   Affiliation / Address line 1 \\
@@ -72,41 +74,58 @@
 % make sure that these are also anonymized.
 
 \begin{abstract}
-VERSION 1:
-A common task in NLP is sequence labelling, which is performed by both human annotators to 
-produce training data and by automatic classifiers that extract information from text.
-However, different annotators can often disagree and may have highly varying levels of reliability,
-particularly when crowdsourcing is used to annotate spans of text. 
-High error rates can be mitigated by combining annotations from multiple annotators,
-a technique that is also used by ensembles of classifiers to boost performance.
-Existing approaches that model the biases and error rates of annotators have been shown to 
-improve over simple heuristics such as majority voting. However, existing methods
-ignore the sequential nature of text span annotations and may therefore underperform.
-We propose a new Bayesian technique to combined multiple annotators of differing reliability 
-and make the software available publicly. 
-Using a series of simulations, we show how several different probabilistic
-and heuristic approaches perform under different conditions. 
-We illustrate how our approach can improve sequential classification performance on a 
-real-world argumentation mining task by using it to combine both human annotators and 
-an ensemble of automated classifiers.
+Current methods for sequence tagging, a core task in NLP, are data hungry.
+Crowdsourcing is often used as a relatively cheap solution to obtain labeled data, but
+the annotators are unreliable, so noise must be mitigated through redundant labeling
+and aggregation techniques.
+Building on previous Bayesian approaches that have been shown to perform strongly 
+on other crowdsourcing tasks,
+we develop a new model for combining unreliable sequence labels from multiple annotators.
+Typically, the process of data collection, aggregation and training a sequence tagger 
+is a pipeline of discrete steps.
+We integrate these steps by introducing
+a Bayesian wrapper for black-box sequence taggers that enables them to be trained with
+crowdsourced data and accounts for the unreliability of the black-box method as well as the crowd of annotators.
+We evaluate our model on named entity recognition and information extraction tasks,
+showing that our method improves on previous work. 
+Our experiments show that by integrating the training and aggregation steps into a Bayesian framework, 
+we can use active learning techniques to obtain data more efficiently without modifying the black-box method.
+A modular implementation of our method is published along with experimental code to encourage adaptation and reuse.
 
-VERSION 2:
-We present a Bayesian method for combining sequence classifications from multiple annotators with different levels of noise and class bias. Sequential classification is an important problem in fields such as NLP, where many tasks involve annotating spans of text. 
-In such tasks, crowdsourcing is often used to obtain training data for automated classifiers. However, individual human annotators have highly variable error rates and different automated classifiers often produce different patterns of errors. In both cases, errors can be reduced by combining multiple annotators.
-However, while Bayesian methods have proved effective in combining unreliable classifiers, they have not previously taken into account the sequence of classifications and are therefore unable to incorporate rules that restrict which labels may follow each other, such as with BIO encoding. We propose a new method that incorporates sequence information using hidden Markov models, and show how the priors can be set to capture sequence rules. We analyse performance against established classifier combination methods on synthetic data to show the effects of annotator accuracy, bias and crowd size on performance. We further evaluate the methods on two NLP datasets: crowdsourced annotations of argument components; and predictions of argument components from an ensemble of neural network classifiers. The results show the advantage of modelling sequential dependencies between labels. We make our source code and data available online.
-
-VERSION 3:
-Despite sequences being core to NLP, scant work has considered how to handle noisy sequence labels from multiple anno- tators for the same text. Given such anno- tations, we consider two complementary tasks: (1) aggregating sequential crowd la- bels to infer a best single set of consen- sus annotations; and (2) using crowd an- notations as training data for a model that can predict sequences in unannotated text. For aggregation, we propose a novel Hid- den Markov Model variant. To predict se- quences in unannotated text, we propose a neural approach using Long Short Term Memory. We evaluate a suite of meth- ods across two different applications and text genres: Named-Entity Recognition in news articles and Information Extraction from biomedical abstracts. Results show improvement over strong baselines. Our source code and data are available online1. 
-
-VERSION 4:
-We present a Bayesian method for combining sequence classifications from multiple annotators with different levels of noise and class bias. Sequential classification is an important problem in fields such as NLP, where many tasks involve annotating spans of text. 
-In such tasks, crowdsourcing is often used to obtain training data for automated classifiers. However, individual human annotators have highly variable error rates and different automated classifiers often produce different patterns of errors. In both cases, errors can be reduced by combining multiple annotators.
-However, while Bayesian methods have proved effective in combining unreliable classifiers, they have not previously taken into account the sequence of classifications and are therefore unable to incorporate rules that restrict which labels may follow each other, such as with BIO encoding. We propose a new method that incorporates sequence information using hidden Markov models, and show how the priors can be set to capture sequence rules. We analyse performance against established classifier combination methods on synthetic data to show the effects of annotator accuracy, bias and crowd size on performance. We further evaluate the methods on two NLP datasets: crowdsourced annotations of argument components; and predictions of argument components from an ensemble of neural network classifiers. The results show the advantage of modelling sequential dependencies between labels. We make our source code and data available online.
-
-Bayesian classifier combination methods can be used both to obtain reliable classifications from crowdsourced annotations and to combine an ensemble of automated classifiers to reduce overall error rates. 
+% \rough
+% VERSION 1:
+% A common task in NLP is sequence labelling, which is performed by both human annotators to 
+% produce training data and by automatic classifiers that extract information from text.
+% However, different annotators can often disagree and may have highly varying levels of reliability,
+% particularly when crowdsourcing is used to annotate spans of text. 
+% High error rates can be mitigated by combining annotations from multiple annotators,
+% a technique that is also used by ensembles of classifiers to boost performance.
+% Existing approaches that model the biases and error rates of annotators have been shown to 
+% improve over simple heuristics such as majority voting. However, existing methods
+% ignore the sequential nature of text span annotations and may therefore underperform.
+% We propose a new Bayesian technique to combined multiple annotators of differing reliability 
+% and make the software available publicly. 
+% Using a series of simulations, we show how several different probabilistic
+% and heuristic approaches perform under different conditions. 
+% We illustrate how our approach can improve sequential classification performance on a 
+% real-world argumentation mining task by using it to combine both human annotators and 
+% an ensemble of automated classifiers.
+%
+% VERSION 2:
+% We present a Bayesian method for combining sequence classifications from multiple annotators with different levels of noise and class bias. Sequential classification is an important problem in fields such as NLP, where many tasks involve annotating spans of text. 
+% In such tasks, crowdsourcing is often used to obtain training data for automated classifiers. However, individual human annotators have highly variable error rates and different automated classifiers often produce different patterns of errors. In both cases, errors can be reduced by combining multiple annotators.
+% However, while Bayesian methods have proved effective in combining unreliable classifiers, they have not previously taken into account the sequence of classifications and are therefore unable to incorporate rules that restrict which labels may follow each other, such as with BIO encoding. We propose a new method that incorporates sequence information using hidden Markov models, and show how the priors can be set to capture sequence rules. We analyse performance against established classifier combination methods on synthetic data to show the effects of annotator accuracy, bias and crowd size on performance. We further evaluate the methods on two NLP datasets: crowdsourced annotations of argument components; and predictions of argument components from an ensemble of neural network classifiers. The results show the advantage of modelling sequential dependencies between labels. We make our source code and data available online.
+%
+% VERSION 3:
+% Despite sequences being core to NLP, scant work has considered how to handle noisy sequence labels from multiple anno- tators for the same text. Given such anno- tations, we consider two complementary tasks: (1) aggregating sequential crowd la- bels to infer a best single set of consen- sus annotations; and (2) using crowd an- notations as training data for a model that can predict sequences in unannotated text. For aggregation, we propose a novel Hid- den Markov Model variant. To predict se- quences in unannotated text, we propose a neural approach using Long Short Term Memory. We evaluate a suite of meth- ods across two different applications and text genres: Named-Entity Recognition in news articles and Information Extraction from biomedical abstracts. Results show improvement over strong baselines. Our source code and data are available online1. 
+%
+% VERSION 4:
+% We present a Bayesian method for combining sequence classifications from multiple annotators with different levels of noise and class bias. Sequential classification is an important problem in fields such as NLP, where many tasks involve annotating spans of text. 
+% In such tasks, crowdsourcing is often used to obtain training data for automated classifiers. However, individual human annotators have highly variable error rates and different automated classifiers often produce different patterns of errors. In both cases, errors can be reduced by combining multiple annotators.
+% However, while Bayesian methods have proved effective in combining unreliable classifiers, they have not previously taken into account the sequence of classifications and are therefore unable to incorporate rules that restrict which labels may follow each other, such as with BIO encoding. We propose a new method that incorporates sequence information using hidden Markov models, and show how the priors can be set to capture sequence rules. We analyse performance against established classifier combination methods on synthetic data to show the effects of annotator accuracy, bias and crowd size on performance. We further evaluate the methods on two NLP datasets: crowdsourced annotations of argument components; and predictions of argument components from an ensemble of neural network classifiers. The results show the advantage of modelling sequential dependencies between labels. We make our source code and data available online.
+%
+% Bayesian classifier combination methods can be used both to obtain reliable classifications from crowdsourced annotations and to combine an ensemble of automated classifiers to reduce overall error rates. 
 \end{abstract}
-
-TODO LIST: see notes.txt
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

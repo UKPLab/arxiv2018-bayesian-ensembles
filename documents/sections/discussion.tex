@@ -1,20 +1,32 @@
-\section{Future Work}
+\section{Conclusions}
 
-The model can also be applied to other sequential classification tasks beside span annotation.
-For example, the order of tasks that are intended to be exchangeable may affect the likelihood
-of the labels provided by the annotators\cite{mathur2017}. Seq-BCC could be applied to model the 
-propensity of the workers to choose certain labels given their previous labels, while the 
-ground truth sequence may be ignored.
+Previous work has demonstrated the benefits of modeling annotator reliability when aggregating noisy data, 
+such as crowdsourced labels. 
+We proposed a sequential annotator model for sequence tagging, BSC-Seq,
+and showed how it improves the state-of-the-art. 
+%To enable more efficient training data collection,
+To further improve the quality of aggregated labels,
+we design a Bayesian wrapper that allows developers to integrate existing sequence taggers, 
+such as deep neural networks, into BSC-Seq while
+treating them as black boxes.
+Our results show that integrating an LSTM in this manner can outperform an LSTM trained 
+using labels that were aggregated in a separate pre-processing step. 
+However, for active learning from crowds or learning with small datasets, 
+we find that our purely Bayesian aggregation method, i.e. BSC-Seq without integrating the LSTM,
+outperforms both LSTM-based approaches. This hints at the value of uncertainty information
+in text models when data-efficient learning is required. 
 
-It may be possible to improve the performance of BLSTM by refining the model through attention layers. However,  similar refinements could also be applied to the Bayesian approach, 
-although it remains to be seen whether more complex models would be suitable for scenarios with limited data. 
-It may be possible to take advantage of neural network models in combination with a Bayesian approach
-by learning argument embeddings in domains using neural networks trained in domains with sufficient data, then 
-using them to embed arguments in new domains to produce input data for a GP. This could be more successful than
-simply using word or sentence embeddings, as the embeddings would be tailored to the task of modelling 
-arguments. At the same time, these embeddings would be at a low level so that the GP could learn an appropriate model over the target domain.
+Future work will investigate the integration of approximate Bayesian variants of neural network
+sequence taggers, which may address the need for uncertainty information during active learning.
+We will also consider
+%  improving robustness of the active learning process with very small datasets by investigating 
+alternative data selection strategies, and how to include %reduce over-confidence in predictions by including
+prior information about the reliability of black-box classifiers on a given training set size.
 
-In our experiments we used a single type of kernel for each feature and combined the kernels using a simple product or sum function.
-While this makes it feasible to include thousands of features, in future work we plan to investigate other 
-ways to incorporate textual features, such as string kernels, which map strings of varying lengths to vectors 
-and may be used to improve semantic representation of word embeddings\cite{lodhi_text_2002}.
+%how to adapt hyper-parameters of the NN automatically in low-resource state?
+
+% % In future, BSC-Seq could be applied to other sequential classification tasks beside span annotation.
+% For example, the order of tasks that are intended to be exchangeable may affect the likelihood
+% of the labels provided by the annotators\cite{mathur2017}. Seq-BCC could be applied to model the 
+% propensity of the workers to choose certain labels given their previous labels, while the 
+% ground truth sequence may be ignored.

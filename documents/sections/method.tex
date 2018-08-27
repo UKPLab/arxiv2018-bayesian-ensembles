@@ -1,297 +1,477 @@
-\section{Modelling Text Span Annotations}\label{sec:model}
+\section{ Modeling Sequential Annotators }\label{sec:annomodels}
 
-% \begin{itemize}
-% \item model description, VB equations, algorithm summary... 
-% \item ...How to set priors for IOB – incorporating sequence knowledge
-% \item If we find that MACE and HMM_Crowd outperform IBCC and BAC, then the 
-% confusion matrix model may have too many parameters. We can also test variants of BAC, therefore, that use (a) BAC confusion matrix, (b) IBCC confusion matrix, (c) MACE spamming patterns, (d) an adaptation of MACE model to sequential data. The purpose
-% of (d) is to allow for constraints in the sequence of labels and detect any sequential patterns such as late starts or short spans. A naive solution to this would be to make the spamming model depend on the previous label, but this removes the advantage of having few parameters when the number of labels is large. Instead, we could make a single MACE spamming pattern, apply constraints that simply zero out disallowed transitions and re-normalise. This would remove any modelling of overly long/short or late/early annotations and could underweight B annotations that start late.   Alternatively, allow separate spamming models or BAC confusion matrices depending on I, O and B but any more specific annotation types share common I, O and B models.
-% \item It's unclear whether BAC is correctly measuring early/late starts/ends. Think this through...
-% \item Late starts: worker labels O when ground truth is B or I if their previous label was O. 
-% This would also be modelled by IBCC.  Worker then labels B when ground truth is I and previous label was O. 
-% BAC models the relevance of the B label to indicating an I or a B if the previous label was O. 
-% But IBCC would also be able to model this because it is not clear that it really matters what the previous label was. 
-% \item split annotations: worker labels B when ground truth is I and previous label was I. IBCC would need to model this in the same way as a late starter and cannot distinguish the cases. How often we need to distinguish these cases is hard to say.
-% \item Early starts: worker labels B then I when ground truth is O and previous label was  O. We down-weight their I votes because they follow B or I. This is bad when we reach the actual annotation. Again not clear how the previous label helps here...
-% \item Erroneous annotation span: worker labels B then I when ground truth is O. We down-weight their i votes because they follow a B or I, but their next B vote still carries weight if it follows an O vote. The B votes become the relevant ones which is bad if workers disagree on the starting token.
-% \item Late finishes: worker labels I when ground truth is O because they already labelled I. This is modelled by BAC but means that the I votes carry less weight. The result is that shorter spans will be recognised by BAC when annotators disagree (the conjunction), 
-% rather than a kind of average of the workers' spans.
-% \item Not splitting spans when they should be: worker labels I when B is true label and I or B is previous label. Since I can only follow I or B, it's not clear why splitting these cases is useful.
-% \item Short finishes: worker labels O when ground truth is I and previous label was I. This is modelled by BAC and would cancel out the point before.
-% \item Early starts/late finishes could better be modelled by a dependency on the true labels several steps away? While other problems are reasonably captured by IBCC anyway.
-% \end{itemize}
-%
+When combining multiple annotators with varying skill levels, we can improve performance by modeling the reliability of individuals. Several models have previously been applied that do not consider dependencies between a sequence of annotations. In this section, we describe these existing models and provide an extension that captures sequential dependencies.
 
-We model annotations using the IOB schema, in which each token in a document is labelled as either I (in), O (out), or B (begin). The IOB schema requires that the label I cannot directly follow a label O, since a B token must precede the first I in any span. The IOB schema allows us to identify whether a token forms part of an annotation or not, and the use of the B label enables us to separate annotations when one annotation span begins immediately after another without any gap. This schema does not permit overlapping annotations, which are typically undesirable in crowdsourcing tasks where the crowd is instructed to provide one type of annotation. The schema also does not consider different types of annotation, although it is trivial to extend both the schema and our model to permit this case. Using a single model for different types of annotation may be desirable if the annotators are likely to have consistent confusion patterns betweeen different annotation types. 
-
-We propose an extension of the independent Bayesian classifier combination (IBCC) 
-model~\cite{kim2012bayesian} for combining annotations provided by a crowd of unreliable annotators. We refer to our model as Sequential Bayesian classifier combination or Seq-BCC. In Seq-BCC, we model the text annotation task as a sequential classification problem, where the true class, $t_i$, of token $i$ may be I, O, or B, and is dependent on the class of the previous token, $t_{i-1}$. This dependency is modelled by a transition matrix, $A$, as used in a hidden markov model. Rows of the transition matrix correspond to the class of the previous token, $t_{i-1}$, while columns correspond to values of $t_i$. Each row is therefore a categorical distribution. Seq-BCC also extends IBCC by incorporating an arbitrary classifier to model the relationship between text features and the true class labels,
-providing a generalisation of the method proposed by Simpson et al. ~\shortcite{simpson2015language}. In this case,
-we assume that the integrated classifier can be used to model the likelihood of the text features, $\bs V$, of a document (a sequence of words or word embedding vectors) given its sequence of true labels: $p(\bs V | t_0, ..., t_N)$. % the index for the document should be in here too?
-
-We model the annotators using a confusion matrix similar to that used in \cite{simpsonlong}, which captures the likelihood that annotator $k$ labels token $i$ with class $c_i^{(k)}$, given the true class label, $t_i$, and the previous annotation from $k$, $c_{i-1}^{(k)}$. The dependency between $c_i^{(k)}$ and $t_i$ allows us to infer the ground truth from noisy or biased crowdsourced annotations. There is also a dependency on the previous worker annotation, since these are constrained in a similar way to the true labels, i.e. the class I cannot follow immediately from class O. Furthermore, mistakes in the class labels are likely to be correlated across several neighbouring tokens, since annotations cover continuous
-spans of text. The confusion matrix, $\bs\pi^{(k)}$, is therefore expanded in our model to a three dimensional transition-confusion mtrax, where the element $\pi_{j,l,m}^{(k)} = p(c_i^{(k)} = m | c_{i-1}^{(k)}=l, t_i=j)$. Within $\bs\pi^{(k)}$, the vector $\bs\pi_{j,l}^{(k)} = \{ \pi_{j,l,1}^{(k)},...,\pi_{j,l,L}^{(k)}\} $, where $L$ is the number of class labels, represents a categorical distribution over the worker's annotations conditioned on the ground truth and their previous annotation.
-
-\subsection{Generative Model}
-
-In the Seq-BCC approach, the model described above is given a Bayesian treatment by placing prior distributions over the state transition matrix $A$ and worker confusion matrices $\bs\pi^{(k)}$. The generative process is as follows. 
-
-\textbf{Ground truth:} For each class label $j=\{I, O, B\}$, we draw a row of the transition matrix, $A_j \sim \mathrm{Dir}(\bs\beta_j)$, where $\mathrm{Dir}$ is the Dirichlet distribution. 
-%We also draw an initial state distribution, $\bs\kappa=\{\kappa_1, ..., \kappa_L\} \sim \mathrm{Dir}(\bs
-%\nu)$, where $\kappa_j=p(t_1=j)$. 
-For each document $i$ in a set of $N$ documents, we now draw a sequence of class labels $\bs t_i = [t_{i,1}, ..., t_{i, T_i}]$ of length $T_i$. For $\tau=1$, we draw the first label in each sequence from 
-$t_{i,\tau} \sim \mathrm{Categorical}(\bs A_{O})$, 
-%$t_{i,\tau} \sim \mathrm{Categorical}(\bs \kappa)$, 
-then for $\tau > 1$, we draw subsequent labels from $t_{i,\tau} \sim \mathrm{Categorical}(\bs A_{t_{i,\tau-1}})$. The first label in each sequence uses hyperparameters $\bs A_{O}$ because there is no previous annotation, so we assume that the state $t_{i,0}$ prior to the document start is not part of an annotation, and therefore $t_{i,0}=O$ is an outside or $O$ token. 
-
-\textbf{Worker annotations:} For each worker $k\in\{1,...,K\}$, true label $j\in\{1,...,L\}$, and previous worker label $l=\{1,...,L\}$, we draw vectors $\bs\pi_{j,l}^{(k)} \sim \mathrm{Dir}(\bs\alpha^{(k)}_{j,l})$, which make up the three-dimensional transition-confusion matrix. We now draw annotations for each worker $k$ for each document $i$, starting with the first token, $c_{i,1}^{(k)} \sim \mathrm{Categorical}( \bs\pi^{(k)}_{t_{i,1}, O} )$ (assuming that the annotation prior to token $1$ is equivalent to an $O$ annotation), then for subsequent tokens, $\tau$, we draw $c_{i,\tau}^{(k)} \sim \mathrm{Categorical}( \bs\pi^{(k)}_{t_{i,\tau}, c_{i,\tau-1}^{(k)}} )$.
-
-\textbf{Text features:} 
-we model the relationship between the true class labels $\bs t_i$ of document $i$, 
-and its sequence of text tokens, $\bs V_i$,
-using a text classifier chosen for the specific task in hand. 
-In the generative process, we treat the text classifier in a similar way to the workers,
-assuming it produces annotations $c_{i,\tau}^{(b)} \sim \mathrm{Categorical}( \bs\pi^{(b)}_{t_{i,1}, c_{i,\tau-1}^{(b)}})$,
-where $b$ is the index of the black-box classifier. 
-We assume that the sequence of text tokens are drawn from $v_{i,\tau} \sim f(c_{i,\tau}^{(b)}, \bs \theta_v)$,
-where $f$ is an arbitrary likelihood determined by the text classifier that is parametrised by $\bs \theta_v$.
-Modelling the text classifier in a similar way to the workers allows us to integrate classifiers that
-output either discrete predictions or probabilities, 
-and to ignore the internal details of the classifier by treating it as a black-box.
-In practice, the text classifier need not implement a generative model, as discriminative methods can also be used
-to estimates the terms we need for approximate inference, as we show in the next section.
-
-\subsection{Variational Bayes (VB) Algorithm}
-
-We propose a mean-field variational Bayes (VB) algorithm for approximate inference,
-with an expectation-maximisation (EM) step used to integrate an arbitrary text classifier.
-%proposed by \cite{simpsonlong},
-The VB algorithm assumes an approximate posterior distribution that factorises between the parameters and 
-latent variables, given by:
+\textbf{Accuracy model (Acc)}: one of the simplest ways to model the reliability of an annotator
+is simply to learn their accuracy, $\pi$, as follows: 
 \begin{flalign}
-  & q(\bs t, \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)} | \hat{\bs c}^{(b)}) = \prod_{d=1}^D q(\bs t_d) & \nonumber \\
-  & \prod_{j=1}^L \left\{ q(\bs A_j)\prod_{l=1}^L q(\bs\pi_{j,l}^{(b)})  \prod_{k=1}^K  q(\bs\pi_{j,l}^{(k)}) \right\}, & 
+ & p( c_{\tau} = j | t_{\tau} = \iota, \pi ) = \left.
+\begin{cases}
+  \pi  \!&\text{ where } j = \iota \\
+  \frac{1 - \pi}{J} \!&\text{ otherwise}
+\end{cases} 
+\right\} , &&
 \end{flalign}
-where $\bs t$ contains ground truth labels for all documents,
-and $\hat{\bs c}^{(b)}$ contains the text classifier's current predictions
-for all tokens in all documents.
-We optimise this distribution using Algorithm \ref{al:vb_bac} to obtain approximate posterior
-distributions over $\bs t$, $\bs\pi^{(k)}, \forall k$ and $\bs A_j, \forall j$.
-The algorithm iteratively increases the lower bound on the model evidence, $\mathcal{L}$, 
-by optimising one variational factor given the current estimates of the others.  
-Convergence can be checked cheaply by comparing values of $\mathbb{E}[t_{i,\tau}]$ between iterations. 
-However, a more reliable method is to check $\mathcal{L}$ for convergence. 
+where $c_{\tau}$ is the label given by the annotator for token $\tau$, $t_{\tau}$ is its true label
+and $J$ is the number of classes.
+This is the basis of several previous methods~\cite{donmez2010probabilistic,rodrigues2013learning}. 
+The limitation of this approach is that it assumes reliability is constant,
+which means that when one class label is far more common than others, 
+a spammer who always selects the most common label will have a high $\pi$.
+%despite their labels being uninformative.
 
-Depending on the implementation of the text classifier, the training step of the text classifier 
-may correspond to the maximisation step in an EM-algorithm, 
-if the parameters of the classifier, $\theta_v$, are optimised to their maximum likelihood 
-or maximum a-posteriori solution, as is typical of neural network methods.
-In this case, our complete algorithm would incorporate a non-Bayesian text classification step.
-In contrast, a Bayesian classifier integrates out the parameters $\theta_v$ and outputs
-marginal probabilities over class labels. If a Bayesian classifier is integrated, 
-retraining the text classifier becomes a VB step, in which a variational factor, $q(\bs c^{(b)}$, is updated,
-making the complete algorithm a fully Bayesian approximation.
-We now present equations for the variational factors and expectation terms required by the algorithm, followed by the lower bound, $\mathcal{L}$. 
+\textbf{MACE spamming model}: proposed by Hovy et al.~\shortcite{hovy2013learning} as part of
+the \emph{MACE} aggregation method, this method again assumes a constant annotator accuracy,
+but also models the case where annotators are incorrect by assuming they label according to 
+a spamming distribution that is independent of the true label.
+\begin{flalign}
+& p( c_{\tau} = j | t_{\tau} = \iota, \pi, \xi) && \nonumber \\
+& = \left.
+\begin{cases}
+  \pi + (1 - \pi) \xi_j  &\text{ where } j = \iota \\
+  (1 - \pi) \xi_j &\text{ otherwise}
+\end{cases} 
+\right\}.
+\end{flalign}
+While MACE can capture spamming patterns, it does not explicitly model different 
+different rates of errors per class. This could be an issue for sequence tagging using the 
+BIO encoding: annotators who start labeling spans one or two tokens early more frequently
+mis-label the `B' tokens than the `I' or `O' tokens,  but this cannot be modeled by MACE. 
 
+\textbf{Confusion vector (CV)}: learn separate accuracies for each class label\cite{nguyen2017aggregating}
+by assuming that $\bs\pi$ is a vector of likelihoods of size $J$:
+\begin{flalign}
+& p( c_{\tau} \!\!=\! j | t_{\tau} \!=\! \iota, \bs\pi ) = \left.
+\begin{cases}
+  \pi_j  \!\!\!\!\!\!&\text{ where } j \!=\! \iota \\
+  \frac{1 \!- \!\pi_j}{J} \!\!\!\!\!\!&\text{ otherwise}
+\end{cases} 
+\! \right\} \!.&&
+\end{flalign}
+For the incorrect label case where $j \!=\! \iota$,
+ $p( c_{\tau} \!\!=\! j | t_{\tau} \!=\! \iota, \bs\pi )$ is constant for all values of $j$.
+ Therefore, this model does not explicitly capture spamming
+patterns where one of the incorrect labels has a much higher likelihood than the others.
 
-% \begin{enumerate}
-%  \item \label{step:1} Initialise variational factors for parameters
-%     $\bs A_j$, $\forall j$
-%     and $\bs\pi_{j,l}^{(k)}, \forall j, \forall l, \forall k$ to random values or 
-%     to the prior for the corresponding parameter (we use this latter approach in our experiments).
-%  \item Initialise $\hat{\bs c}^{(b)}$ to random values.
-%  \item \label{step:2} Calculate 
-%     $\mathbb{E}\left[\ln \bs A \right]$,
-%     $\mathbb{E}\left[\ln\bs\pi^{(b)} \right]$
-%     and $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$ 
-%     given the current factors $q(\bs A_j)$, $q(\bs\pi_j^{(b)})$ and $q(\bs\pi_j^{(k)})$.
-%  \item Update %the variational factor for the ground truth labels, 
-%     $q(\bs t)$ given %the expectations 
-%     $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$,
-%     $\mathbb{E}\left[\ln\bs\pi^{(b)} \right]$,
-%     $\mathbb{E}\left[\ln \bs A \right]$, 
-%     and $\hat{\bs c}^{(b)}$
-%     using the forward-backward algorithm~\cite{ghahramani2001introduction} (detailed below).
-%  \item \label{step:5} Retrain the integrated text classifier
-%     using the current values of $\mathbb{E}\left[\bs t\right]$ as training data. 
-%     If discrete training labels are required by the integrated classifier, 
-%     approximate this step by taking the most probable class labels given $\mathbb{E}\left[\bs t\right]$.
-%  \item Use retrained text classifier to update $\hat{\bs c}^{(b)}$ by predicting labels for all tokens in all documents.
-%  \item Update $q(\bs\pi_j^{(b)})$ given current estimate for $q(\bs t)$ and $\hat{\bs c}^{(b)}$.
-%  \item Update $q(\bs\pi_j^{(k)}), \forall j, \forall k$ given current estimate for $q(\bs t)$ 
-%     and the worker annotations, $\bs c$.
-%  \item \label{step:4} Update $q(\bs A_j), \forall j$ given the current estimate for $q(\bs t)$.
-%  \item Check for convergence of the ground truth label predictions, $\mathbb{E}\left[\bs t\right]$ 
-%     \label{step:6} or the variational lower bound. 
-%     The latter may be more expensive to compute but gives stronger guarantees of convergence. 
-%     If not converged, repeat from step \ref{step:2}.
-% \item \label{step:7} Output the predictions for the true labels, $\mathbb{E}\left[\bs t\right]$ given the converged estimates of the variational factors and optimised text classifier.
-% \end{enumerate}
-%
+\textbf{Confusion matrix (CM)}: first proposed by Dawid and Skene~\shortcite{dawid_maximum_1979},
+this model can be seen as an expansion of the confusion vector so that $\bs\pi$ becomes a 
+$JxJ$ matrix with values given by:
+\begin{flalign}
+& p( c_{\tau} \!\!=\! j | t_{\tau} \!=\! \iota, \bs\pi ) = 
+  \pi_{j,\iota} \!.&&
+\end{flalign}
+This requires a larger number of parameters, $JxJ$, compared to the $J+1$ parameters of MACE or $J$ parameters
+of the confusion vector.
+The confusion matrix therefore represents the probability of each individual mistake,
+so can model spammers who frequently chose one label regardless
+of the ground truth.
+It can also model annotators in sequence tagging tasks who have different error rates for `B-x', `I-x' and `O' labels, for example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently mis-label the start of a span as `O' when the true label is `B-x', but are otherwise accurate.
+However, the confusion matrix ignores the dependencies between annotations in a sequence that affect these probabilities.
+For instance, it is usually not possible for an annotator to assign an `I' label that is preceded by `O'.
+% Consider the following example where this may be a problem: three annotators produce sequences of labels as follows:
+% O-B-I-I-I-O
+% O-O-B-I-O-O
+% O-O-O-O-O-O
+% We can see that the first two annotators agree that the third token is part of the span, 
+
+\textbf{Sequential Confusion Matrix (Seq)}: we introduce a new extension to the confusion matrix to model the dependency 
+of each label in a sequence on its predecessor. The likelihood of a label can now be written as follows:
+\begin{flalign}
+& p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi ) = 
+  \pi_{j,c_{i-1},\iota} ,&&
+\end{flalign}
+where $\bs\pi$ is now three-dimensional with size $JxJxJ$.
+In the case of diasllowed transitions, e.g. from $c_{i-1}=$`O' to $c_{\tau}=$`I', the value $\pi_{j,c_{i-1},c_{\tau}}=0$, $\forall j$
+need not be learned. 
+The sequential model can capture phenomena such as a tendency toward overly long sequences, by learning that
+$\pi_{O,O,O} > \pi_{O,I,O}$,
+or a tendency to split spans by inserting `B' in place of `I' by increasing the value of
+$\pi_{I,I,B}$ without affecting $\pi_{I,B,B}$ and $\pi_{I,O,B}$.
+
+The annotator models described above can be seen as extensions of one another, which can be used as 
+part of a complete model for aggregating sequential annotations as described in the next section.
+
+\section{Bayesian Sequence Combination}\label{sec:model}
+
+The generative story for our approach, \emph{Bayesian sequence combination (BSC)}, is as follows.
+We assume a transition matrix, $\bs B$, where each entry $B_{j,\iota} = p(t_{\tau} = \iota | t_{\tau-1} = j)$.
+We draw each row of the transition matrix, $B_j \sim \mathrm{Dir}(\bs\beta_j)$, where $\mathrm{Dir}$ is the Dirichlet distribution. 
+For each document, $i$, in a set of $N$ documents, we draw a sequence of class labels, 
+$\bs t_i = [t_{i,1}, ..., t_{i, T_i}]$, of length $T_i$, from $t_{i,\tau} \sim \mathrm{Categorical}(\bs B_{t_{i,\tau-1}})$.
+
+Given $K$ annotators and a choice of the models defined in Section \ref{sec:annomodels}, we draw an annotator model for each annotator, $k$.
+All of the annotator models are parametrized by probabilites that we draw from Dirichlet distributions.
+For the Acc model, only one parameter, $\pi^{(k)}$ is drawn for annotator $k$, for MACE we draw a single value $\pi^{(k)}$ and a vector $\xi^{(k)}$, for CV we draw $J$ independent values of $\pi_j^{(k)}$, for CM  
+we draw a vector $\bs\pi^{(k)}_j$ of size $J$ for each true label value $t_{\tau}=j$. In the case of Seq, 
+we draw vectors $\bs\pi^{(k)}_{j,\iota}$ for each true label and each previous label value, $\iota$.
+We hereon refer to the set of all parameters for the chosen annotator models as $\bs A$, whose prior is parametrized
+by hyperparameters $\bs\alpha$.
+
+In contrast to the Hidden Markov Model (HMM) approach used by Nguyen et al, \shortcite{nguyen2017aggregating},
+we do not explicitly consider text features in our observation model. Instead,
+we defer to existing black-box methods to make use of text features. 
+The next section describes how we learn the parameters of the model and
+integrate the existing methods into the model to boost performance.
+The experiments in Sections \ref{sec:synexpts} and \ref{sec:expts} then test whether the more expressive Seq annotator model,
+which has more parameters to learn, is beneficial in a realistic setting.
+
+\section{Variational Wrapper for Black-Box Sequence Taggers} \label{sec:vb}
+ 
+We learn the model parameters, $\bs\theta=\{\bs A, \bs B\}$ and sequence labels $\bs t$
+given a set of annotations, $\bs c$, using \emph{variational Bayes (VB)}\cite{attias_advances_2000}.
+VB is an approximate inference method that avoids the need for expensive sampling steps,
+while considering prior distributions and accounting for uncertainty over parameters in a Bayesian manner.
 \begin{algorithm}
- \KwIn{ Crowdsourced annotations, $\bs c$}
- Initialise $\mathbb{E}\left[\ln \bs A \right]$,
- $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$\,
- $\mathbb{E}\left[\ln\bs\pi^{(b)} \right]$ 
- $\hat{\bs c}^{(b)}$ randomly or to prior means\;
- \While{not converged}%$\mathbb{E}\left[\bs t\right]$
+ \KwIn{ Annotations, $\bs c$}
+ \nl Initialise $\mathbb{E}\left[\ln \bs B \right]$,
+ $\mathbb{E}\left[\ln A \right]$\, and 
+ $\hat{\bs d}$ randomly or to prior means\;
+ \While{$\mathbb{E}\left[\bs t\right]$ not converged}
  {
- Update $q^*(t_{i,\tau}=j)$ and $q^*(t_{i,\tau-1}=j, t_{i,\tau}=j')$, $\forall i,\forall \tau,\forall j$,
- given $\mathbb{E}\left[\ln \bs A \right]$ and 
- $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$
- using the forward-backward algorithm\;
- Retrain text classifier using $\mathbb{E}\left[\bs t\right]$ as training labels\;
- Update predictions $\hat{\bs c}^{(b)}$\;
- Update $q^*\left(\bs\pi_j^{(k)}\right), \forall j, \forall k$ given current $q^*(t_{i,\tau-1}=j, t_{i,\tau}=j')$\;
- Update $q^*(\bs A_j), \forall j$ given current $q^*(t_{i,\tau}=j)$\; 
- Recompute $\mathbb{E}\left[\ln \bs A \right]$ 
- and $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$ given current estimates of
- $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$\; 
+ \nl Update $q(t_{i,\tau}=j)$ and $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$, $\forall i,\forall \tau,\forall j$,
+ given $\mathbb{E}\left[\ln \bs B \right]$ and 
+ $\mathbb{E}\left[\ln\bs A \right]$
+ using the forward-backward algorithm~\cite{ghahramani2001introduction}\;
+ \nl Set true label predictions $\mathbb{E}\left[t_{i,\tau}=j\right] = q(t_{i,\tau}=j)$ \;
+ \nl Retrain sequence taggers using $\mathbb{E}\left[\bs t\right]$ as training labels\;
+ \nl Use sequence taggers to predict $\hat{\bs d}$\;
+ \nl Update $q\left(\bs A\right)$ and recompute $\mathbb{E}[p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi )]$ given current $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$\;
+ \nl Update $q(\bs B)$ and recompute $\mathbb{E}\left[\ln\bs B \right]$ given current $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$\;
  }
-\KwOut{ Predictions for the true labels, $\mathbb{E}[\bs t]$. }
+\KwOut{ Posterior predictions for the true labels, $\mathbb{E}[\bs t]$. }
 \caption{The VB algorithm for Seq-BCC.}
 \label{al:vb_bac}
 \end{algorithm}
+Each latent variable in the generative model, $z$, has a variational distribution $q(z)$,
+that is of the same form as its prior distribution (Dirichlet for $\bs B_j$, Categorical for $t_{i,\tau}$, etc.),
+as defined in Section \ref{sec:model}.
+The parameters of each $q(z)$ are functions of expectations over the other variables in the model.
+For reasons of space, we do not provide all variational update equations in this paper, 
+however, they can be derived given the generative model stated above.
+The VB procedure for BSC is detailed in Algorithm \ref{al:vb_bac}, 
+and includes an extension to integrate black-box sequence taggers using  
+an additional expectation-maximization (EM) step.
 
-\subsection{Variational Factors}
-
-For the sequence of true labels, $\bs t$, the optimal variational factor given the current estimates of $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$, is:
-%\ln\pi^{(k)}_{t_{i,\tau},c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}}
+We integrate each sequence tagger, $s$, by modeling it as an additional annotator
+that predicts a sequence of labels, $\bs d_{i}^{(s)}$, for document $i$. 
+We treat these predictions as random variables whose
+ joint distribution with the sequence of text tokens, $\bs\phi_i$, in document $i$
+ is given by:
 \begin{flalign}
-  &\ln q^*(\bs t) = \mathbb{E}_{q} \left[ \sum_{i=1}^N \sum_{\tau=1}^{T_i} \bigg\{ \ln p(t_{i,\tau} | t_{i,\tau-1}, \bs A ) \right. &&\nonumber \\
-  &\left. + \sum_{k=1}^K p(c_{i,\tau}^{(k)} | t_{i,\tau}, c_{i,\tau-1}^{(k)}, \bs\pi^{(k)})
-  \bigg\} \right] + \mathrm{const}, && \nonumber\\
-   \label{eq:qstar_t}
-   &=  \sum_{i=1}^N \sum_{\tau=1}^{T_i} %\sum_{j=1}^L \mathbb{E}_q[p(t_{i,\tau-1}=j | \bs c_{i,1:\tau})] 
- \mathbb{E}[\ln A_{j,t_{i,\tau}}] 
- %\sum_{j'=1}^L p(t_{i,\tau}=j') % \sum_{i=1}^N \sum_{\tau=1}^{T_i}
-  + \sum_{k=1}^K \ln \tilde{\pi}^{(k)}_{i,\tau,t_{i,\tau}}
-   + \mathrm{const}, &&  %+  p(\bs c_{i,\tau+1:T_i} | t_{i,\tau}) 
+p \left(d_{i,\tau}^{(s)} , \bs\phi_i | \bs t, \bs\theta^{(s)} \right) 
+%q \left(d_{i,\tau}^{(s)} \right) 
+= &
+%\mathbb{E}_{\bs\theta^{(s)}}\left[
+p\left(d_{i,\tau}^{(s)} | \bs t, d_{i,\tau-1}^{(s)}, \bs A^{(s)} \right) & \nonumber\\
+& p \left(\bs\phi_i | d_{i,\tau}^{(s)}, \bs\theta^{(s)} \right) 
+%\right]
+,  &
 \end{flalign}
-where for notational convenience we define $\ln\tilde{\pi}^{(k)}_{i,\tau,j} = \mathbb{E}\left[\ln\pi^{(k)}_{j,c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}} \right]$. 
-In the VB algorithm, the parameters updates to $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$
-require expectations for the individual true labels and transitions from one each label to the next:
-\begin{align}
- r_{i,\tau,j} & = q^*(t_{i,\tau}=j) = \mathbb{E}_q[p(t_{i,\tau}=j | \bs c)], &\\
- s_{i,\tau,j,j'} & = q^*(t_{i,\tau-1}=j, t_{i,\tau}=j') & \nonumber\\ 
- & = \mathbb{E}_q[p(t_{i,\tau-1}=j, t_{i,\tau}=j' | \bs c)].&
-\end{align}
-These terms can be computed using the forward-backward algorithm~\cite{ghahramani2001introduction},
-which consists of two passes. 
-The forward pass starts from $\tau=1$ and computes for each value of $\tau$ the posterior given crowdsourced annotations for tokens up to and including $\tau$. 
-\begin{flalign}
-  & \ln r^{-}_{i,\tau,j} = \mathbb{E}\left[ \ln p(t_{i,\tau}=j | \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right] &
-  %\frac{1}{\sum_{j'=1}^L \mathbb{E}_q\left[ \ln p(t_{i,\tau}=j', \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right]} &
-  \nonumber\\
-  & = \sum_{j'=1}^L \left\{ \ln r^{-}_{i,\tau-1,j'} + \mathbb{E}[\ln A_{j',j}] \right\}  + \sum_{k=1}^K \ln\tilde{\pi}^{(k)}_{i,\tau,j}, & 
-\end{flalign}
-where $\bs c_{i,1:\tau}^{(k)}$ is the set of labels from 1 to $\tau$ in document $i$. 
-For the first token in each sequence, we compute $\ln r^{-}_{i,1,j}$ as follows:
-\begin{flalign}
-  & \ln r^{-}_{i,1,j} = \mathbb{E}[\ln p(t_{i,1})] + \sum_{k=1}^K \ln\tilde{\pi}^{(k)}_{i,1,j}, & 
-\end{flalign}
-where $p(t_{i,1})$ gives the class probability for the first token in the sequence.
-%We assume that the label at position, $t_{i,0} = O$, is always an 'outside' label.
-The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the likelihood of the annotations at positions from $\tau+1$ to $T_i$ given the true label $t_{i, \tau}$, as follows:
-\begin{flalign}
-  & \ln \lambda_{i,T_i,j} = 0 & \nonumber\\
-  & \ln \lambda_{i,\tau,j} = \mathbb{E}_q  \! \left[ \ln p(\bs c_{i,\tau+1:T_i}^{(1)},...,\bs c_{i,\tau+1:T_i}^{(K)} | t_{i,\tau}=j) \right]
-  & \!\!\!\!\nonumber\\
-  & = \ln\sum_{j'=1}^L \exp \! \left\{ \ln \lambda_{i,\tau+1,j'} + \mathbb{E}[\ln A_{j,j'}] + \sum_{k=1}^K \ln \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
-\end{flalign}
-$\forall\tau<T_i$.
-Since the terms may become small over a long sequence, 
-$\ln r^{-}_{i,\tau,j}$ and $ln \lambda_{i,\tau,j}$ 
-can be normalised by subtracting the corresponding sum over $j$.
-By taking the exponents and applying Bayes' rule we arrive at the terms $r_{i,\tau,j}$ and $s_{i,\tau,j,j'}$:
-\begin{flalign}
- & r_{i,\tau,j} = \mathbb{E}\left[p(t_{i,\tau}=j)\right] = \frac{1}{Z} r^{-}_{i,\tau,j}\lambda_{i,\tau,j} &\\%\frac{r^{-}_{i,\tau,j}\lambda_{i,\tau,j}}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} &\\%}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} \\
- & s_{i,\tau,j,j'} = \frac{1}{Z} r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \exp(\mathbb{E}[\ln A_{j,j'}] 
-+ \ln \tilde{\pi}^{(k)}_{i,\tau,j'}) & %\frac{ r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \mathrm{e}^{\mathbb{E}[\ln A_{j,j'}] 
-%+ \ln \tilde{\pi}^{(k)}_{i,\tau,j'}}} {\sum_{j'=1}^L \sum_{j''=1}^L  
-% r^{-}_{i,\tau-1,j'}\lambda_{i,\tau,j''} \mathrm{e}^{\mathbb{E}[\ln A_{j',j''}] 
-%+ \ln \tilde{\pi}^{(k)}_{i,\tau,j''}  }} . \!\!\!\! &
-\end{flalign}
-The $r_{i,\tau,j}$ terms are normalised by a sum, $Z$, over $j$, and the  $s_{i,\tau,j,j'}$ terms are 
-normalised by a sum, $Z$, over $j$ and $j'$.
-The $r_{i,\tau,j}$ terms provide the output predictions of the class labels.
+where the first term on the right-hand side is defined by the annotator model
+with parameters $\bs A^{(s)}$, and 
+$\bs\theta^{(s)}$ are the parameters of the sequence tagger, $s$.
+Marginalizing $\bs d_i^{(s)},\forall i$ permits us to train the sequence tagger on 
+$\mathbb{E}[\bs t]$ given $\bs\phi_i$ to obtain a prediction function for sequences of labels, 
+ $\hat{\bs d}^{(s)}_{i} = f(\bs\phi_i)$,
+ where 
+ $\hat{\bs d}^{(s)}_{i}$ is either the variational distribution 
+ $\hat{\bs d}^{(s)}_{i} = q(\bs d^{(s)}_{i})$ 
+ or the sequence of most likely values
+ of $\hat{\bs d}^{(s)}_{i} = \argmax_{\bs{d}^{(s)}_{i}} p\left(\bs\phi_i | \bs{d}^{(s)}_{i}, \hat{\bs\theta^{(s)}}\right) $,
+and training may either marginalize $\bs\theta^{(s)}$
+or optimize it using maximum likelihood.
+Since we require only $f$ to perform variational updates for $\bs d^{(s)}_i$, $\bs A^{(s)}$ and $\bs t$, 
+we can treat $s$ as a black box inside a variational wrapper,
+ignoring its internal details. Therefore, the sequence tagger need not implement 
+a generative model but can be discriminative, as is the case for many neural networks. 
+%that outputs either discrete predictions or probabilities
+Note, however, that 
+if $f(\bs\phi_i)$ approximates $\hat{\bs d}^{(s)}_{i}$, convergence may not be guaranteed.
+Where the sequence tagger uses a maximum likelihood rather than Bayesian training 
+procedure, the complete model also does not account for uncertainty in the model of the text sequence. 
 
-The optimal variational factor for each row of the ground truth transition matrix is:
-\begin{flalign}
-  & \ln q^*(\bs A_{j}) & \nonumber\\ 
-  & = \sum_{i=1}^N\sum_{\tau=1}^{T_i} \sum_{j'=1}^L s_{i,\tau,j,j'}\ln\bs A_{j,j'} 
- + \ln p(\bs A_j | \bs\beta_j) + \mathrm{const} &\nonumber\\
- & = \sum_{j'=1}^L N_{j,j'}\ln\bs A_{j,j'} 
-  + \ln p(\bs A_j | \bs\beta_j) + \mathrm{const},&
-\end{flalign}
-where $N_{j,j'} = \sum_{i=1}^N \sum_{\tau=1}^{T_i} s_{i,\tau,j,j'}$ are pseudo-counts of the 
-number of times that class $j$ follows class $j'$. Since we assumed Dirichlet priors over $\bs A_j$, the variational factor for $\bs A_j$ is Dirichlet distribution with parameters $\bs b_j = \bs\beta_j + \bs N_{j}$, where $\bs N_{j} = \left\{ N_{j,j'} , \forall j' \right\}$.
-The class probability for the first token in each sequence, $p(t_i,1)$, can be treated as an additional
- row of the transition matrix, $\bs A_{0}$. Dirichlet priors can then be applied in the same manner, and
- the posterior parameters can also by computed by adding pseudo-counts of the initial class labels.
+This variational wrapper allows us to potentially exploit multiple existing sequence taggers,
+or indeed other existing classifiers useful for recognising tag types,
+with only the requirement that they provide training and prediction functions.
+Our approach learns the reliability of each sequence tagger, hence does not require them 
+to be optimized for the current domain, 
+and provides confidence estimates based on their reliability.
+ As with the annotators, we assume the taggers to be conditionally independent of one another given the true labels. 
+ While this assumption has not proven a large drawback in previous works on 
+ combining annotators~\cite{dawid_maximum_1979,kim2012bayesian,simpson2015bayesian},
+it remains a strong assumption when multiple taggers depend on the same text features.
+ 
+\section{Modular Implementation of Variational Inference} \label{seq:modular}
+ 
+The variational inference method described in Section  \ref{sec:vb}
+is naturally suited to a modular implementation. We divide the model into 
+three modules: (a) the true label model, (b) the annotator model, and (c) black-box sequence taggers.
+The true label model defines the distribution over sequences of labels, $q(\bs t_i)$, 
+and implements lines 2, 3 and 7 in Algorithm \ref{al:vb_bac}. The annotator model 
+may be one of those described in Section \ref{sec:annomodels} and implements line 6.
+The black-box sequence taggers are existing implementations that provide training and prediction functions
+to predict true labels given text features, and are used in lines 4 and 5.
 
-The VB algorithm requires a term $\mathbb{E}[\ln A]$ to update the variational factors for the ground truth labels. We can compute each element using:
-\begin{align}
-  \mathbb{E}[\ln A_{j,j'}] = \Psi\left(b_{j,j'}\right) - \Psi\left(\sum_{j'=1}^L b_{j,j'} \right),
-\end{align}
-where $\Psi$ is the digamma function.
+The true label model exposes methods to compute 
+$q(t_{i,\tau}=j)$ and $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$, $\forall i,\forall \tau,\forall j$
+given $\bs c$ and $\mathbb{E}[p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi )]$.
+In our implementation of BSC, the true label model contains methods for learning a transition matrix over labels,
+$\bs B$, which assumes first-order Markov chain. Other underlying models could also be used, such as a model with longer memory. 
 
-For the three-dimensional worker transition-confusion matrices, $\bs\pi^{(k)}$, 
-the optimal variational factors are given by:
-\begin{flalign}
- \ln q^*\left(\bs\pi_{j,l}^{(k)}\right) = &  \sum_{m=1}^J N_{j,l,m}^{(k)}\ln\pi_{j,l,m}^{(k)} & \nonumber\\
- & + \ln p\left(\bs\pi_{j,l}^{(k)} | \alpha_{j,l}^{(k)} \right) + \mathrm{const}, &
-\end{flalign}
-where $N^{(k)}_{j,l,m} = \sum_{i=1}^N\sum_{\tau=1}^{T_i} r_{i,\tau,j} \delta_{m,c^{(k)}_{i,\tau}}$ are
-pseudo-counts and $\delta$ is the Kronecker delta. The variational 
-factor is also a Dirichlet distribution with parameters $\bs a_{j,l}^{(k)} = \bs\alpha_{j,l}^{(k)} + \bs N_{j}^{(k)}$, where $\bs N_j^{(k)}=\left\{ N_{j,l,m}^{(k)}, \forall m \right\}$. 
+The worker models must provide methods to initialise the variational distribution $q(\bs A)$,
+update $q(\bs A)$ given $\bs c$, $\hat{\bs{d}}$, and $\mathbb{E}[\bs t]$, and
+compute $\mathbb{E}[p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi )]$.
 
-To update the variational factor for the true class, the VB algorithm requires a three-dimensional expectation term, $\mathbb{E}[\ln \pi^{(k)}]$, whose elements are computed using the following:
-\begin{align}
-  \mathbb{E}\left[\ln \pi_{j,l,m}^{(k)}\right] = \Psi\left(a^{(k)}_{j,l,m}\right) - \Psi\left(\sum_{m=1}^L a^{(k)}_{j,l} \right).
-\end{align}
+By allowing individual functions to be replaced without rewriting the inference
+method, the modular implementation makes it easier to adapt the model to different types of annotations, 
+such as continuous values or pairwise preferences,
+to evaluate annotator or true label models, incorporate existing taggers,
+and even tailor the model to tasks other than sequence tagging, 
+such as regression.
 
-\subsection{Variational Lower Bound}
+% \rough
+% \section{Modelling Text Span Annotations}\label{sec:model}
+%
+% % \begin{itemize}
+% % \item model description, VB equations, algorithm summary... 
+% % \item ...How to set priors for IOB – incorporating sequence knowledge
+% % \item If we find that MACE and HMM_Crowd outperform IBCC and BAC, then the 
+% % confusion matrix model may have too many parameters. We can also test variants of BAC, therefore, that use (a) BAC confusion matrix, (b) IBCC confusion matrix, (c) MACE spamming patterns, (d) an adaptation of MACE model to sequential data. The purpose
+% % of (d) is to allow for constraints in the sequence of labels and detect any sequential patterns such as late starts or short spans. A naive solution to this would be to make the spamming model depend on the previous label, but this removes the advantage of having few parameters when the number of labels is large. Instead, we could make a single MACE spamming pattern, apply constraints that simply zero out disallowed transitions and re-normalise. This would remove any modelling of overly long/short or late/early annotations and could underweight B annotations that start late.   Alternatively, allow separate spamming models or BAC confusion matrices depending on I, O and B but any more specific annotation types share common I, O and B models.
+% % \item It's unclear whether BAC is correctly measuring early/late starts/ends. Think this through...
+% % \item Late starts: worker labels O when ground truth is B or I if their previous label was O. 
+% % This would also be modelled by IBCC.  Worker then labels B when ground truth is I and previous label was O. 
+% % BAC models the relevance of the B label to indicating an I or a B if the previous label was O. 
+% % But IBCC would also be able to model this because it is not clear that it really matters what the previous label was. 
+% % \item split annotations: worker labels B when ground truth is I and previous label was I. IBCC would need to model this in the same way as a late starter and cannot distinguish the cases. How often we need to distinguish these cases is hard to say.
+% % \item Early starts: worker labels B then I when ground truth is O and previous label was  O. We down-weight their I votes because they follow B or I. This is bad when we reach the actual annotation. Again not clear how the previous label helps here...
+% % \item Erroneous annotation span: worker labels B then I when ground truth is O. We down-weight their i votes because they follow a B or I, but their next B vote still carries weight if it follows an O vote. The B votes become the relevant ones which is bad if workers disagree on the starting token.
+% % \item Late finishes: worker labels I when ground truth is O because they already labelled I. This is modelled by BAC but means that the I votes carry less weight. The result is that shorter spans will be recognised by BAC when annotators disagree (the conjunction), 
+% % rather than a kind of average of the workers' spans.
+% % \item Not splitting spans when they should be: worker labels I when B is true label and I or B is previous label. Since I can only follow I or B, it's not clear why splitting these cases is useful.
+% % \item Short finishes: worker labels O when ground truth is I and previous label was I. This is modelled by BAC and would cancel out the point before.
+% % \item Early starts/late finishes could better be modelled by a dependency on the true labels several steps away? While other problems are reasonably captured by IBCC anyway.
+% % \end{itemize}
+% %
+%
+% We model annotations using the IOB schema, in which each token in a document is labelled as either I (in), O (out), or B (begin). The IOB schema requires that the label I cannot directly follow a label O, since a B token must precede the first I in any span. The IOB schema allows us to identify whether a token forms part of an annotation or not, and the use of the B label enables us to separate annotations when one annotation span begins immediately after another without any gap. This schema does not permit overlapping annotations, which are typically undesirable in crowdsourcing tasks where the crowd is instructed to provide one type of annotation. The schema also does not consider different types of annotation, although it is trivial to extend both the schema and our model to permit this case. Using a single model for different types of annotation may be desirable if the annotators are likely to have consistent confusion patterns betweeen different annotation types. 
+%
+% We propose an extension of the independent Bayesian classifier combination (IBCC) 
+% model~\cite{kim2012bayesian} for combining annotations provided by a crowd of unreliable annotators. We refer to our model as Sequential Bayesian classifier combination or Seq-BCC. In Seq-BCC, we model the text annotation task as a sequential classification problem, where the true class, $t_i$, of token $i$ may be I, O, or B, and is dependent on the class of the previous token, $t_{i-1}$. This dependency is modelled by a transition matrix, $A$, as used in a hidden markov model. Rows of the transition matrix correspond to the class of the previous token, $t_{i-1}$, while columns correspond to values of $t_i$. Each row is therefore a categorical distribution. Seq-BCC also extends IBCC by incorporating an arbitrary classifier to model the relationship between text features and the true class labels,
+% providing a generalisation of the method proposed by Simpson et al. ~\shortcite{simpson2015language}. In this case,
+% we assume that the integrated classifier can be used to model the likelihood of the text features, $\bs V$, of a document (a sequence of words or word embedding vectors) given its sequence of true labels: $p(\bs V | t_0, ..., t_N)$. % the index for the document should be in here too?
+%
+% We model the annotators using a confusion matrix similar to that used in \cite{simpsonlong}, which captures the likelihood that annotator $k$ labels token $i$ with class $c_i^{(k)}$, given the true class label, $t_i$, and the previous annotation from $k$, $c_{i-1}^{(k)}$. The dependency between $c_i^{(k)}$ and $t_i$ allows us to infer the ground truth from noisy or biased crowdsourced annotations. There is also a dependency on the previous worker annotation, since these are constrained in a similar way to the true labels, i.e. the class I cannot follow immediately from class O. Furthermore, mistakes in the class labels are likely to be correlated across several neighbouring tokens, since annotations cover continuous
+% spans of text. The confusion matrix, $\bs\pi^{(k)}$, is therefore expanded in our model to a three dimensional transition-confusion mtrax, where the element $\pi_{j,l,m}^{(k)} = p(c_i^{(k)} = m | c_{i-1}^{(k)}=l, t_i=j)$. Within $\bs\pi^{(k)}$, the vector $\bs\pi_{j,l}^{(k)} = \{ \pi_{j,l,1}^{(k)},...,\pi_{j,l,L}^{(k)}\} $, where $L$ is the number of class labels, represents a categorical distribution over the worker's annotations conditioned on the ground truth and their previous annotation.
+%
+% \subsection{Variational Bayes (VB) Algorithm}
+%
+%
+% %proposed by \cite{simpsonlong},
+% The VB algorithm assumes an approximate posterior distribution that factorises between the parameters and 
+% latent variables, given by:
+% \begin{flalign}
+%   & q(\bs t, \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)} | \hat{\bs c}^{(b)}) = \prod_{d=1}^D q(\bs t_d) & \nonumber \\
+%   & \prod_{j=1}^L \left\{ q(\bs A_j)\prod_{l=1}^L q(\bs\pi_{j,l}^{(b)})  \prod_{k=1}^K  q(\bs\pi_{j,l}^{(k)}) \right\}, & 
+% \end{flalign}
+% where $\bs t$ contains ground truth labels for all documents,
+% and $\hat{\bs c}^{(b)}$ contains the text classifier's current predictions
+% for all tokens in all documents.
+% We optimise this distribution using Algorithm \ref{al:vb_bac} to obtain approximate posterior
+% distributions over $\bs t$, $\bs\pi^{(k)}, \forall k$ and $\bs A_j, \forall j$.
+% The algorithm iteratively increases the lower bound on the model evidence, $\mathcal{L}$, 
+% by optimising one variational factor given the current estimates of the others.  
+% Convergence can be checked cheaply by comparing values of $\mathbb{E}[t_{i,\tau}]$ between iterations. 
+% However, a more reliable method is to check $\mathcal{L}$ for convergence. 
+%
+% Depending on the implementation of the text classifier, the training step of the text classifier 
+% may correspond to the maximisation step in an EM-algorithm, 
+% if the parameters of the classifier, $\theta_v$, are optimised to their maximum likelihood 
+% or maximum a-posteriori solution, as is typical of neural network methods.
+% In this case, our complete algorithm would incorporate a non-Bayesian text classification step.
+% In contrast, a Bayesian classifier integrates out the parameters $\theta_v$ and outputs
+% marginal probabilities over class labels. If a Bayesian classifier is integrated, 
+% retraining the text classifier becomes a VB step, in which a variational factor, $q(\bs c^{(b)}$, is updated,
+% making the complete algorithm a fully Bayesian approximation.
+% We now present equations for the variational factors and expectation terms required by the algorithm, followed by the lower bound, $\mathcal{L}$. 
+%
+%
+% % \begin{enumerate}
+% %  \item \label{step:1} Initialise variational factors for parameters
+% %     $\bs A_j$, $\forall j$
+% %     and $\bs\pi_{j,l}^{(k)}, \forall j, \forall l, \forall k$ to random values or 
+% %     to the prior for the corresponding parameter (we use this latter approach in our experiments).
+% %  \item Initialise $\hat{\bs c}^{(b)}$ to random values.
+% %  \item \label{step:2} Calculate 
+% %     $\mathbb{E}\left[\ln \bs A \right]$,
+% %     $\mathbb{E}\left[\ln\bs\pi^{(b)} \right]$
+% %     and $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$ 
+% %     given the current factors $q(\bs A_j)$, $q(\bs\pi_j^{(b)})$ and $q(\bs\pi_j^{(k)})$.
+% %  \item Update %the variational factor for the ground truth labels, 
+% %     $q(\bs t)$ given %the expectations 
+% %     $\mathbb{E}\left[\ln\bs\pi^{(k)} \right], \forall k$,
+% %     $\mathbb{E}\left[\ln\bs\pi^{(b)} \right]$,
+% %     $\mathbb{E}\left[\ln \bs A \right]$, 
+% %     and $\hat{\bs c}^{(b)}$
+% %     using the forward-backward algorithm~\cite{ghahramani2001introduction} (detailed below).
+% %  \item \label{step:5} Retrain the integrated text classifier
+% %     using the current values of $\mathbb{E}\left[\bs t\right]$ as training data. 
+% %     If discrete training labels are required by the integrated classifier, 
+% %     approximate this step by taking the most probable class labels given $\mathbb{E}\left[\bs t\right]$.
+% %  \item Use retrained text classifier to update $\hat{\bs c}^{(b)}$ by predicting labels for all tokens in all documents.
+% %  \item Update $q(\bs\pi_j^{(b)})$ given current estimate for $q(\bs t)$ and $\hat{\bs c}^{(b)}$.
+% %  \item Update $q(\bs\pi_j^{(k)}), \forall j, \forall k$ given current estimate for $q(\bs t)$ 
+% %     and the worker annotations, $\bs c$.
+% %  \item \label{step:4} Update $q(\bs A_j), \forall j$ given the current estimate for $q(\bs t)$.
+% %  \item Check for convergence of the ground truth label predictions, $\mathbb{E}\left[\bs t\right]$ 
+% %     \label{step:6} or the variational lower bound. 
+% %     The latter may be more expensive to compute but gives stronger guarantees of convergence. 
+% %     If not converged, repeat from step \ref{step:2}.
+% % \item \label{step:7} Output the predictions for the true labels, $\mathbb{E}\left[\bs t\right]$ given the converged estimates of the variational factors and optimised text classifier.
+% % \end{enumerate}
+% %
+%
+%
+% \subsection{Variational Factors}
+%
+% For the sequence of true labels, $\bs t$, the optimal variational factor given the current estimates of $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$, is:
+% %\ln\pi^{(k)}_{t_{i,\tau},c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}}
+% \begin{flalign}
+%   &\ln q^*(\bs t) = \mathbb{E}_{q} \left[ \sum_{i=1}^N \sum_{\tau=1}^{T_i} \bigg\{ \ln p(t_{i,\tau} | t_{i,\tau-1}, \bs A ) \right. &&\nonumber \\
+%   &\left. + \sum_{k=1}^K p(c_{i,\tau}^{(k)} | t_{i,\tau}, c_{i,\tau-1}^{(k)}, \bs\pi^{(k)})
+%   \bigg\} \right] + \mathrm{const}, && \nonumber\\
+%    \label{eq:qstar_t}
+%    &=  \sum_{i=1}^N \sum_{\tau=1}^{T_i} %\sum_{j=1}^L \mathbb{E}_q[p(t_{i,\tau-1}=j | \bs c_{i,1:\tau})] 
+%  \mathbb{E}[\ln A_{j,t_{i,\tau}}] 
+%  %\sum_{j'=1}^L p(t_{i,\tau}=j') % \sum_{i=1}^N \sum_{\tau=1}^{T_i}
+%   + \sum_{k=1}^K \ln \tilde{\pi}^{(k)}_{i,\tau,t_{i,\tau}}
+%    + \mathrm{const}, &&  %+  p(\bs c_{i,\tau+1:T_i} | t_{i,\tau}) 
+% \end{flalign}
+% where for notational convenience we define $\ln\tilde{\pi}^{(k)}_{i,\tau,j} = \mathbb{E}\left[\ln\pi^{(k)}_{j,c^{(k)}_{i,\tau-1},c^{(k)}_{i,\tau}} \right]$. 
+% In the VB algorithm, the parameters updates to $q(\bs A_j)$ and $q(\bs\pi_j^{(k)})$
+% require expectations for the individual true labels and transitions from one each label to the next:
+% \begin{align}
+%  r_{i,\tau,j} & = q^*(t_{i,\tau}=j) = \mathbb{E}_q[p(t_{i,\tau}=j | \bs c)], &\\
+%  s_{i,\tau,j,j'} & = q^*(t_{i,\tau-1}=j, t_{i,\tau}=j') & \nonumber\\ 
+%  & = \mathbb{E}_q[p(t_{i,\tau-1}=j, t_{i,\tau}=j' | \bs c)].&
+% \end{align}
+% These terms can be computed using the forward-backward algorithm~\cite{ghahramani2001introduction},
+% which consists of two passes. 
+% The forward pass starts from $\tau=1$ and computes for each value of $\tau$ the posterior given crowdsourced annotations for tokens up to and including $\tau$. 
+% \begin{flalign}
+%   & \ln r^{-}_{i,\tau,j} = \mathbb{E}\left[ \ln p(t_{i,\tau}=j | \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right] &
+%   %\frac{1}{\sum_{j'=1}^L \mathbb{E}_q\left[ \ln p(t_{i,\tau}=j', \bs c_{i,1:\tau}^{(1)},...,\bs c_{i,1:\tau}^{(K)}) \right]} &
+%   \nonumber\\
+%   & = \sum_{j'=1}^L \left\{ \ln r^{-}_{i,\tau-1,j'} + \mathbb{E}[\ln A_{j',j}] \right\}  + \sum_{k=1}^K \ln\tilde{\pi}^{(k)}_{i,\tau,j}, & 
+% \end{flalign}
+% where $\bs c_{i,1:\tau}^{(k)}$ is the set of labels from 1 to $\tau$ in document $i$. 
+% For the first token in each sequence, we compute $\ln r^{-}_{i,1,j}$ as follows:
+% \begin{flalign}
+%   & \ln r^{-}_{i,1,j} = \mathbb{E}[\ln p(t_{i,1})] + \sum_{k=1}^K \ln\tilde{\pi}^{(k)}_{i,1,j}, & 
+% \end{flalign}
+% where $p(t_{i,1})$ gives the class probability for the first token in the sequence.
+% %We assume that the label at position, $t_{i,0} = O$, is always an 'outside' label.
+% The backwards pass starts from $\tau=T_i$ and scrolls backwards, computing the likelihood of the annotations at positions from $\tau+1$ to $T_i$ given the true label $t_{i, \tau}$, as follows:
+% \begin{flalign}
+%   & \ln \lambda_{i,T_i,j} = 0 & \nonumber\\
+%   & \ln \lambda_{i,\tau,j} = \mathbb{E}_q  \! \left[ \ln p(\bs c_{i,\tau+1:T_i}^{(1)},...,\bs c_{i,\tau+1:T_i}^{(K)} | t_{i,\tau}=j) \right]
+%   & \!\!\!\!\nonumber\\
+%   & = \ln\sum_{j'=1}^L \exp \! \left\{ \ln \lambda_{i,\tau+1,j'} + \mathbb{E}[\ln A_{j,j'}] + \sum_{k=1}^K \ln \tilde{\pi}^{(k)}_{i,\tau+1,j'} \right\} \!\!\!\!\! &
+% \end{flalign}
+% $\forall\tau<T_i$.
+% Since the terms may become small over a long sequence, 
+% $\ln r^{-}_{i,\tau,j}$ and $ln \lambda_{i,\tau,j}$ 
+% can be normalised by subtracting the corresponding sum over $j$.
+% By taking the exponents and applying Bayes' rule we arrive at the terms $r_{i,\tau,j}$ and $s_{i,\tau,j,j'}$:
+% \begin{flalign}
+%  & r_{i,\tau,j} = \mathbb{E}\left[p(t_{i,\tau}=j)\right] = \frac{1}{Z} r^{-}_{i,\tau,j}\lambda_{i,\tau,j} &\\%\frac{r^{-}_{i,\tau,j}\lambda_{i,\tau,j}}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} &\\%}{\sum_{j'=1}^L r^{-}_{i,\tau,j'}\lambda_{i,\tau,j'}} \\
+%  & s_{i,\tau,j,j'} = \frac{1}{Z} r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \exp(\mathbb{E}[\ln A_{j,j'}] 
+% + \ln \tilde{\pi}^{(k)}_{i,\tau,j'}) & %\frac{ r^{-}_{i,\tau-1,j}\lambda_{i,\tau,j'} \mathrm{e}^{\mathbb{E}[\ln A_{j,j'}] 
+% %+ \ln \tilde{\pi}^{(k)}_{i,\tau,j'}}} {\sum_{j'=1}^L \sum_{j''=1}^L  
+% % r^{-}_{i,\tau-1,j'}\lambda_{i,\tau,j''} \mathrm{e}^{\mathbb{E}[\ln A_{j',j''}] 
+% %+ \ln \tilde{\pi}^{(k)}_{i,\tau,j''}  }} . \!\!\!\! &
+% \end{flalign}
+% The $r_{i,\tau,j}$ terms are normalised by a sum, $Z$, over $j$, and the  $s_{i,\tau,j,j'}$ terms are 
+% normalised by a sum, $Z$, over $j$ and $j'$.
+% The $r_{i,\tau,j}$ terms provide the output predictions of the class labels.
+%
+% The optimal variational factor for each row of the ground truth transition matrix is:
+% \begin{flalign}
+%   & \ln q^*(\bs A_{j}) & \nonumber\\ 
+%   & = \sum_{i=1}^N\sum_{\tau=1}^{T_i} \sum_{j'=1}^L s_{i,\tau,j,j'}\ln\bs A_{j,j'} 
+%  + \ln p(\bs A_j | \bs\beta_j) + \mathrm{const} &\nonumber\\
+%  & = \sum_{j'=1}^L N_{j,j'}\ln\bs A_{j,j'} 
+%   + \ln p(\bs A_j | \bs\beta_j) + \mathrm{const},&
+% \end{flalign}
+% where $N_{j,j'} = \sum_{i=1}^N \sum_{\tau=1}^{T_i} s_{i,\tau,j,j'}$ are pseudo-counts of the 
+% number of times that class $j$ follows class $j'$. Since we assumed Dirichlet priors over $\bs A_j$, the variational factor for $\bs A_j$ is Dirichlet distribution with parameters $\bs b_j = \bs\beta_j + \bs N_{j}$, where $\bs N_{j} = \left\{ N_{j,j'} , \forall j' \right\}$.
+% The class probability for the first token in each sequence, $p(t_i,1)$, can be treated as an additional
+%  row of the transition matrix, $\bs A_{0}$. Dirichlet priors can then be applied in the same manner, and
+%  the posterior parameters can also by computed by adding pseudo-counts of the initial class labels.
+%
+% The VB algorithm requires a term $\mathbb{E}[\ln A]$ to update the variational factors for the ground truth labels. We can compute each element using:
+% \begin{align}
+%   \mathbb{E}[\ln A_{j,j'}] = \Psi\left(b_{j,j'}\right) - \Psi\left(\sum_{j'=1}^L b_{j,j'} \right),
+% \end{align}
+% where $\Psi$ is the digamma function.
+%
+% For the three-dimensional worker transition-confusion matrices, $\bs\pi^{(k)}$, 
+% the optimal variational factors are given by:
+% \begin{flalign}
+%  \ln q^*\left(\bs\pi_{j,l}^{(k)}\right) = &  \sum_{m=1}^J N_{j,l,m}^{(k)}\ln\pi_{j,l,m}^{(k)} & \nonumber\\
+%  & + \ln p\left(\bs\pi_{j,l}^{(k)} | \alpha_{j,l}^{(k)} \right) + \mathrm{const}, &
+% \end{flalign}
+% where $N^{(k)}_{j,l,m} = \sum_{i=1}^N\sum_{\tau=1}^{T_i} r_{i,\tau,j} \delta_{m,c^{(k)}_{i,\tau}}$ are
+% pseudo-counts and $\delta$ is the Kronecker delta. The variational 
+% factor is also a Dirichlet distribution with parameters $\bs a_{j,l}^{(k)} = \bs\alpha_{j,l}^{(k)} + \bs N_{j}^{(k)}$, where $\bs N_j^{(k)}=\left\{ N_{j,l,m}^{(k)}, \forall m \right\}$. 
+%
+% To update the variational factor for the true class, the VB algorithm requires a three-dimensional expectation term, $\mathbb{E}[\ln \pi^{(k)}]$, whose elements are computed using the following:
+% \begin{align}
+%   \mathbb{E}\left[\ln \pi_{j,l,m}^{(k)}\right] = \Psi\left(a^{(k)}_{j,l,m}\right) - \Psi\left(\sum_{m=1}^L a^{(k)}_{j,l} \right).
+% \end{align}
+%
+% \subsection{Variational Lower Bound}
+%
+% The VB algorithm optimises the lower bound on model evidence, so it is useful to compute the lower bound
+% to check for convergence, or to compare models with different hyperparameters when performing model selection. The lower bound for Bayesian annotator combination is:
+% \begin{flalign}
+%  &\mathcal{L}  = \mathbb{E}_{q} \left[ \ln p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)}\right)
+%  - \ln q(\bs t) \right] & \nonumber \\
+%  & + \sum_{j=1}^L \bigg\{ \mathbb{E}_{q} \left[ \ln p\left(\bs A_j | \bs\beta_j\right)  -  \ln q(\bs A_j ) \right] & \nonumber\\
+%  & + \sum_{l=1}^J \sum_{k=1}^K 
+%  \mathbb{E}_{q}
+%  \left[ \ln p \left( \bs\pi_{j,l}^{(k)} | \bs\alpha_{j,l}^{(k)} \right)
+%  - \ln q \left( \bs\pi_{j,l}^{(k)} \right) \right]  \&& nonumer\\
+% &  + \mathcal{L}_v \left(\bs\theta_v; \bs V, \bs c^{(b)} \right) \bigg\},&&
+% \end{flalign}
+% where $\mathcal{L}_v$ is provided by the text classifier implementation and 
+% is the marginal log-likelihood of the text data $\bs V$, either given the maximum likelihood estimate of parameters $\theta_v$, or, in the case of a Bayesian classifier, an expectation over $\theta$.
+% The lower bound computation uses the equations described in the previous section for the variational
+% factors, $q(\bs A_j)$ and $q \left( \bs\pi_{j,l}^{(k)} \right)$, and the prior distributions for the parameters, 
+% and inserts the expectations $\mathbb{E}\left[\ln \bs A_j \right]$ and $\mathbb{E}\left[\ln\bs\pi_{j,l}^{(k)} \right]$. The first term of $\mathcal{L}$ makes use of auxiliary variables from the 
+% forward-backward algorithm:
+% \begin{align}
+%  && \mathbb{E}_q \left[ \ln p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},..,\bs\pi^{(K)}\right)\right] = 
+%  \nonumber\\
+%  && \sum_{i=1}^N \sum_{\tau=1}^{T_i} \sum_{j=1}^L r_{i,\tau,j} \ln r^{-}_{i,\tau,j} &
+% \end{align}
 
-The VB algorithm optimises the lower bound on model evidence, so it is useful to compute the lower bound
-to check for convergence, or to compare models with different hyperparameters when performing model selection. The lower bound for Bayesian annotator combination is:
-\begin{flalign}
- &\mathcal{L}  = \mathbb{E}_{q} \left[ \ln p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)}\right)
- - \ln q(\bs t) \right] & \nonumber \\
- & + \sum_{j=1}^L \bigg\{ \mathbb{E}_{q} \left[ \ln p\left(\bs A_j | \bs\beta_j\right)  -  \ln q(\bs A_j ) \right] & \nonumber\\
- & + \sum_{l=1}^J \sum_{k=1}^K 
- \mathbb{E}_{q}
- \left[ \ln p \left( \bs\pi_{j,l}^{(k)} | \bs\alpha_{j,l}^{(k)} \right)
- - \ln q \left( \bs\pi_{j,l}^{(k)} \right) \right]  \&& nonumer\\
-&  + \mathcal{L}_v \left(\bs\theta_v; \bs V, \bs c^{(b)} \right) \bigg\},&&
-\end{flalign}
-where $\mathcal{L}_v$ is provided by the text classifier implementation and 
-is the marginal log-likelihood of the text data $\bs V$, either given the maximum likelihood estimate of parameters $\theta_v$, or, in the case of a Bayesian classifier, an expectation over $\theta$.
-The lower bound computation uses the equations described in the previous section for the variational
-factors, $q(\bs A_j)$ and $q \left( \bs\pi_{j,l}^{(k)} \right)$, and the prior distributions for the parameters, 
-and inserts the expectations $\mathbb{E}\left[\ln \bs A_j \right]$ and $\mathbb{E}\left[\ln\bs\pi_{j,l}^{(k)} \right]$. The first term of $\mathcal{L}$ makes use of auxiliary variables from the 
-forward-backward algorithm:
-\begin{align}
- && \mathbb{E}_q \left[ \ln p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},..,\bs\pi^{(K)}\right)\right] = 
- \nonumber\\
- && \sum_{i=1}^N \sum_{\tau=1}^{T_i} \sum_{j=1}^L r_{i,\tau,j} \ln r^{-}_{i,\tau,j} &
-\end{align}
-
-\section{Alternative Methods}\label{sec:alt}
-
-To date, a number of methods have been used to reduce annotations from multiple workers to a single gold-standard set. These approaches make use of both heuristic and statistical techniques. This section outlines commonly-used baselines and state-of-the-art methods that we later compare against our method.
-
-\subsection{Majority/Plurality Voting}
-
-For classifications, a simple heuristic is to take the majority label, or for multi-class problems, the most popular label. Examples for NLP classification problems include sentiment analysis\cite{sayeed2011crowdsourcing},.... With text spans, we can use the IOB classes and choose the most popular label for each word, but there are a number of cases where the resulting spans would not follow the constraints of the schema, and an additional step is required to resolve these issues. The problems occur when annotators disagree about the starting and ending points of an annotation:
-\begin{itemize}
-  \item The votes for a token being inside a span can be split between the classes I and B, which could lead to tokens being excluded from spans even when most have marked them as inside. 
-  \item The voting process can lead to spans of I tokens with no preceding B token if there is only a minority of annotators who marked did not agree on the first token. 
-  \item The spans from different annotators could partly overlap, causing the overlap area itself to be marked as a separate span. In some cases, this may be a valid annotation, while in others it would be obvious to anyone reviewing the annotation that it is an artefact of the aggregation method. There does not seem to be a simple fix here, except for requesting more annotations from other workers. With a sufficient number of annotations, we expect the problem to be resolved.
-\end{itemize}
-In our experiments, we define a baseline \emph{majority voting} method, which addresses the problems described above as follows. We resolve the first problem using a two-stage voting process. First, we combine the I and B votes and determine whether each token should be labelled as O or not. Then, for each token marked as I or B, we and perform another voting step to determine the correct label. This resolves cases where annotators disagree about whether a span should be split into two annotations. To resolve the second problem of aggregated spans without a B token at the start, we mark the first I token in any aggregate span as B.  
-
-The voting procedure outlined above produces annotations where the annotations of at least 50\% of workers intersect. A stricter approach can be used, which requires that all the annotators mark a token for it to be included (e.g. \cite{farra2015annotating}). We refer to this approach as the \emph{intersect} method. For tasks where workers are likely to miss many spans, it is also possible to lower the threshold so that we do not require a majority of workers to mark a token as I/B before we accept it as such during aggregation.
+% \rough
+% \section{Alternative Methods}\label{sec:alt}
+%
+% To date, a number of methods have been used to reduce annotations from multiple workers to a single gold-standard set. These approaches make use of both heuristic and statistical techniques. This section outlines commonly-used baselines and state-of-the-art methods that we later compare against our method.
+%
+% \subsection{Majority/Plurality Voting}
+%
+% For classifications, a simple heuristic is to take the majority label, or for multi-class problems, the most popular label. Examples for NLP classification problems include sentiment analysis\cite{sayeed2011crowdsourcing},.... With text spans, we can use the IOB classes and choose the most popular label for each word, but there are a number of cases where the resulting spans would not follow the constraints of the schema, and an additional step is required to resolve these issues. The problems occur when annotators disagree about the starting and ending points of an annotation:
+% \begin{itemize}
+%   \item The votes for a token being inside a span can be split between the classes I and B, which could lead to tokens being excluded from spans even when most have marked them as inside. 
+%   \item The voting process can lead to spans of I tokens with no preceding B token if there is only a minority of annotators who marked did not agree on the first token. 
+%   \item The spans from different annotators could partly overlap, causing the overlap area itself to be marked as a separate span. In some cases, this may be a valid annotation, while in others it would be obvious to anyone reviewing the annotation that it is an artefact of the aggregation method. There does not seem to be a simple fix here, except for requesting more annotations from other workers. With a sufficient number of annotations, we expect the problem to be resolved.
+% \end{itemize}
+% In our experiments, we define a baseline \emph{majority voting} method, which addresses the problems described above as follows. We resolve the first problem using a two-stage voting process. First, we combine the I and B votes and determine whether each token should be labelled as O or not. Then, for each token marked as I or B, we and perform another voting step to determine the correct label. This resolves cases where annotators disagree about whether a span should be split into two annotations. To resolve the second problem of aggregated spans without a B token at the start, we mark the first I token in any aggregate span as B.  
+%
+% The voting procedure outlined above produces annotations where the annotations of at least 50\% of workers intersect. A stricter approach can be used, which requires that all the annotators mark a token for it to be included (e.g. \cite{farra2015annotating}). We refer to this approach as the \emph{intersect} method. For tasks where workers are likely to miss many spans, it is also possible to lower the threshold so that we do not require a majority of workers to mark a token as I/B before we accept it as such during aggregation.
 
 % \subsection{Worker Accuracy-Based Methods}
 % 
@@ -301,57 +481,57 @@ The voting procedure outlined above produces annotations where the annotations o
 % 
 % The weights can also be obtained using unsupervised and semi-supervised learning. In this case we use an EM algorithm, in which we initialise the true annotations using the majority voting method, then use these to compute worker accuracies. The true annotations are then re-estimated using a weighted majority vote. The process repeats until convergence. This method is labelled \emph{weighted majority voting (EM)}. 
 
-\subsection{Item-response Methods}
+% \subsection{Item-response Methods}
+%
+% *this should be moved to an earlier section and used to build up to the proposed method*
+%
+% The current state-of-the-art methods are termed \emph{Item-response} models \cite{Felt2016SemanticAA},
+% which are based on the approach by \cite{dawid_maximum_1979}. These approaches use a confusion matrix
+% to model the likelihood that annotator $k$ gives response $c$ to an item $i$. 
+% This approach naturally accounts for bias toward a particular answer and varying accuracy 
+% depending on the true class, and has been 
+% shown to outperform techniques such as majority voting and weighted sums\cite{simpsonlong,raykar12,kim2003}.
+% Recent extensions follow the Bayesian treatment of \cite{kim2003}, called IBCC,
+% to deal with specific problems in crowdsourcing with large numbers of workers:
+% \cite{moreno_bayesian_2015,venanzi2014community} identify clusters of crowd workers
+% with shared confusion matrices to improve performance when information about individual workers is sparse;
+% \cite{venanzi2016time} account for the time each worker takes to complete a task;
+% \cite{Felt2016SemanticAA, simpson2015language} additionally model language features in text classification tasks
+% to improve performance when data is sparse.
+% However, none of these methods consider the sequential nature of classifications and treat each item as i.i.d.
+% Therefore, they cannot take advantage of the dependencies between each token's annotation to improve
+% predictions and ensure valid sequences. 
+% In this paper, we propose and evaluate a method that resolves this problem. 
+% The modular nature of graphical models means that the extensions described above could in future be combined
+% with our approach in suitable situations.
+%
+% A method that simplifies the confusion matrix, \emph{MACE}, was proposed by \cite{hovy2013learning}
+% to reduce the cost of learning. This is particularly suitable for tasks with a large number of classes
+% since the number of parameters in the confusion matrix typically grows $\mathcal{O}(J^2)$, where $J$ is the number of classes.
+%
+% * show mathematically how this method is related to IBCC *
+%
+% However, there are some potential downsides to this simplification. Bias toward a particular class is fixed,
+% and skill level no longer depends on the ground-truth class. The class proportions distribution is also omitted
+% in both \cite{hovy2013learning} and the accompanying published software implementation, which
+% could lead to reduced performance when classes are highly imbalanced. 
+% In our experiments, we compare MACE to both standard IBCC and our proposed method, Seq-BCC to illustrate the 
+% types of situation where each approach may be advantageous. 
 
-*this should be moved to an earlier section and used to build up to the proposed method*
-
-The current state-of-the-art methods are termed \emph{Item-response} models \cite{Felt2016SemanticAA},
-which are based on the approach by \cite{dawid_maximum_1979}. These approaches use a confusion matrix
-to model the likelihood that annotator $k$ gives response $c$ to an item $i$. 
-This approach naturally accounts for bias toward a particular answer and varying accuracy 
-depending on the true class, and has been 
-shown to outperform techniques such as majority voting and weighted sums\cite{simpsonlong,raykar12,kim2003}.
-Recent extensions follow the Bayesian treatment of \cite{kim2003}, called IBCC,
-to deal with specific problems in crowdsourcing with large numbers of workers:
-\cite{moreno_bayesian_2015,venanzi2014community} identify clusters of crowd workers
-with shared confusion matrices to improve performance when information about individual workers is sparse;
-\cite{venanzi2016time} account for the time each worker takes to complete a task;
-\cite{Felt2016SemanticAA, simpson2015language} additionally model language features in text classification tasks
-to improve performance when data is sparse.
-However, none of these methods consider the sequential nature of classifications and treat each item as i.i.d.
-Therefore, they cannot take advantage of the dependencies between each token's annotation to improve
-predictions and ensure valid sequences. 
-In this paper, we propose and evaluate a method that resolves this problem. 
-The modular nature of graphical models means that the extensions described above could in future be combined
-with our approach in suitable situations.
-
-A method that simplifies the confusion matrix, \emph{MACE}, was proposed by \cite{hovy2013learning}
-to reduce the cost of learning. This is particularly suitable for tasks with a large number of classes
-since the number of parameters in the confusion matrix typically grows $\mathcal{O}(J^2)$, where $J$ is the number of classes.
-
-* show mathematically how this method is related to IBCC *
-
-However, there are some potential downsides to this simplification. Bias toward a particular class is fixed,
-and skill level no longer depends on the ground-truth class. The class proportions distribution is also omitted
-in both \cite{hovy2013learning} and the accompanying published software implementation, which
-could lead to reduced performance when classes are highly imbalanced. 
-In our experiments, we compare MACE to both standard IBCC and our proposed method, Seq-BCC to illustrate the 
-types of situation where each approach may be advantageous. 
-
-\subsection{Clustering Methods}
-
-Cluster the annotations, e.g. using a mixture model with annotation centre and spread, or by merging the boundaries somehow. See Zooniverse annotation work -- could discretize this?
-
-\subsection{Other Solutions}
-
-The level of disagreement in annotations for a particular piece of text can be used to determine whether an annotation is of a insufficient quality to keep (e.g. \cite{sayeed2011crowdsourcing,hsueh2009data}. This can be achieved using the majority voting method, but adjusting the threshold for classifying a token as I/B from 50\% to something higher. 
-
-\emph{Human resolution}: an additional worker selects the correct answer from the annotations provided by the initial set of workers, e.g. \cite{dagan2016specifying}. To reduce costs, the human resolution step could be applied only to text with large amounts of disagreement.
-
-\subsection{How to Include Text Features into the Crowdsourcing Model}
-
-Modelling the text features as part of the aggregation method has been shown to improve classification performance, particularly when few labels are available, allows classification of unlabelled items without training a separate classifier, and provides a basis for active selection of documents for further labelling \cite{settles2010active}.
-
-The difficulty of modelling text features is that it requires a suitable classifier for the task at hand, and so it may not be effective to design a generic crowdsourcing model that describes the relationship between text features and class labels. Instead, we propose a solution that allows us to include task-specific classifiers, e.g. if the task at hand is NER, we show how to integrate a neural network designed specifically for NER.
-
-The modular nature of variational Bayesian inference allows us to reusing the existing inference steps when extending the graphical model. This means that we can add additional components to the model to model the relationship between text features and classifications. This section shows how we can treat task-specific classifiers as black-box extensions to the graphical model, and integrate them into the VB inference procedure. 
+% \subsection{Clustering Methods}
+%
+% Cluster the annotations, e.g. using a mixture model with annotation centre and spread, or by merging the boundaries somehow. See Zooniverse annotation work -- could discretize this?
+%
+% \subsection{Other Solutions}
+%
+% The level of disagreement in annotations for a particular piece of text can be used to determine whether an annotation is of a insufficient quality to keep (e.g. \cite{sayeed2011crowdsourcing,hsueh2009data}. This can be achieved using the majority voting method, but adjusting the threshold for classifying a token as I/B from 50\% to something higher. 
+%
+% \emph{Human resolution}: an additional worker selects the correct answer from the annotations provided by the initial set of workers, e.g. \cite{dagan2016specifying}. To reduce costs, the human resolution step could be applied only to text with large amounts of disagreement.
+%
+% \subsection{How to Include Text Features into the Crowdsourcing Model}
+%
+% Modelling the text features as part of the aggregation method has been shown to improve classification performance, particularly when few labels are available, allows classification of unlabelled items without training a separate classifier, and provides a basis for active selection of documents for further labelling \cite{settles2010active}.
+%
+% The difficulty of modelling text features is that it requires a suitable classifier for the task at hand, and so it may not be effective to design a generic crowdsourcing model that describes the relationship between text features and class labels. Instead, we propose a solution that allows us to include task-specific classifiers, e.g. if the task at hand is NER, we show how to integrate a neural network designed specifically for NER.
+%
+% The modular nature of variational Bayesian inference allows us to reusing the existing inference steps when extending the graphical model. This means that we can add additional components to the model to model the relationship between text features and classifications. This section shows how we can treat task-specific classifiers as black-box extensions to the graphical model, and integrate them into the VB inference procedure. 
