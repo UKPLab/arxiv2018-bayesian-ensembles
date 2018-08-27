@@ -228,7 +228,7 @@ class Experiment(object):
     random_sampling = False
 
     def __init__(self, generator, nclasses=None, nannotators=None, config=None,
-                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20, crf_probs=False):
+                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20, crf_probs=False, rep=0):
 
         self.crf_probs = crf_probs
 
@@ -257,7 +257,7 @@ class Experiment(object):
         self.max_iter = max_iter # allow all methods to use a maximum no. iterations
 
         np.random.seed(3849)
-        self.seeds = np.random.randint(1, 1000, 100) # seeds for AL
+        self.seed = np.random.randint(1, 1000, 100)[rep] # seeds for AL
 
     def read_config_file(self):
 
@@ -842,7 +842,7 @@ class Experiment(object):
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
                     active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
-                    bootstrapping=True, ground_truth_all_points=None, rep=0):
+                    bootstrapping=True, ground_truth_all_points=None):
         '''
         Run the aggregation methods and evaluate them.
         :param annotations:
