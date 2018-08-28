@@ -4,7 +4,6 @@ Created on Nov 1, 2016
 @author: Melvin Laux
 '''
 
-#import matplotlib.pyplot as plt
 import logging
 import pickle
 import pandas as pd
@@ -14,7 +13,6 @@ import os, subprocess
 import sklearn.metrics as skm
 import numpy as np
 import glob
-import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.DEBUG)
 # things needed for the LSTM
@@ -212,8 +210,6 @@ class Experiment(object):
 
     num_classes = None
 
-    output_dir = '/output/'
-
     save_results = False
     save_plots = False
     show_plots = False
@@ -228,7 +224,9 @@ class Experiment(object):
     random_sampling = False
 
     def __init__(self, generator, nclasses=None, nannotators=None, config=None,
-                 alpha0_factor=16.0, alpha0_diags = 1.0, nu0_factor = 100.0, max_iter=20, crf_probs=False, rep=0):
+                 alpha0_factor=1.0, alpha0_diags = 1.0, nu0_factor = 0.1, max_iter=20, crf_probs=False, rep=0):
+
+        self.output_dir = '~/data/bayesian_annotator_combination/output/'
 
         self.crf_probs = crf_probs
 
@@ -241,6 +239,8 @@ class Experiment(object):
         else:
             self.num_classes = nclasses
             self.nannotators = nannotators
+
+        self.output_dir = os.path.expanduser(self.output_dir)
 
         self.alpha0_factor = alpha0_factor
         self.alpha0_diags = alpha0_diags
@@ -1313,11 +1313,9 @@ class Experiment(object):
     def run_synth_exp(self):
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
-        # read experiment directory
-        param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
 
         # iterate through parameter settings
-        for param_idx in range(len(param_dirs)):
+        for param_idx in range(self.param_values.shape[0]):
 
             print('parameter setting: {0}'.format(param_idx))
 
@@ -1333,7 +1331,7 @@ class Experiment(object):
                 doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')
                 # run methods
                 results[param_idx,:,:,run_idx], preds, probabilities, _, _, _ = self.run_methods(annos, gt, doc_start,
-                                                                        data_path, new_data=True, bootstrapping=False)
+                                                        data_path, new_data=True, bootstrapping=False, rerun_all=True)
                 # save predictions
                 np.savetxt(data_path + 'predictions.csv', preds)
                 # save probabilities
@@ -1359,11 +1357,9 @@ class Experiment(object):
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
         std_results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES)-3, len(self.methods), self.num_runs))
-        # read experiment directory
-        param_dirs = glob.glob(os.path.join(self.output_dir, "data/*"))
 
         # iterate through parameter settings
-        for param_idx in range(len(param_dirs)):
+        for param_idx in range(self.param_values.shape[0]):
 
             print('parameter setting: {0}'.format(param_idx))
 

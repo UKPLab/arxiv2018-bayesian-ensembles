@@ -7,9 +7,10 @@ Created on Nov 1, 2016
 #import matplotlib.pyplot as plt
 import logging
 import pandas as pd
-import glob
 import numpy as np
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 logging.basicConfig(level=logging.DEBUG)
@@ -40,20 +41,24 @@ SCORE_NAMES = ['accuracy',
                'mean length error'
                ]
 
-def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title='parameter influence'):
+def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=None):
 
     styles = ['-', '--', '-.', ':']
     markers = ['o', 'v', 's', 'p', '*']
+
+    matplotlib.rcParams.update({'font.size': 12})
 
     for j in range(len(methods)):
         plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%4], marker=markers[j%5])
 
     plt.legend(loc='best')
 
-    plt.title(title)
+    if title is not None:
+        plt.title(title)
+
     plt.ylabel(ylabel)
     plt.xlabel(PARAM_NAMES[param_idx])
-    plt.xticks(x_vals, x_ticks_labels)
+    #plt.xticks(x_vals, x_ticks_labels)
     plt.grid(True)
     plt.grid(True, which='Minor', axis='y')
 
@@ -202,21 +207,4 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 
     print(run_counts[0, 0, :, 0])
     print(run_counts_nocrowd[0, 0, :, 0])
-
-if __name__ == '__main__':
-    print('Plotting active learning results...')
-
-    # results_dir = '../../data/bayesian_annotator_combination/output/ner_al_new/'
-    # output_dir = './documents/figures/NER_AL/'
-
-    results_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new/'
-    output_dir = './documents/figures/NER_RAND/'
-
-    # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_krusty/bio_al/'
-    # output_dir = './documents/figures/BIO_AL/'
-
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-
-    plot_active_learning_results(results_dir, output_dir)#, result_str='recomputed_')
 
