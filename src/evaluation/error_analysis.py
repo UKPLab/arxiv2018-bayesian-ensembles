@@ -12,8 +12,8 @@ from itertools import groupby
 from pip._vendor.distro import os_release_attr
 
 
-def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, prediction_path2, output_path,
-                   output_counts_path, main_method, baselines_to_skip):
+def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_path,
+                   output_counts_path, main_method, baselines_to_skip=None, compare_to_gold_only=True, prediction_path2=None):
     
     # load data
     gt = np.genfromtxt(gt_path, delimiter=',')
@@ -23,7 +23,9 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, predict
 
     doc_start = np.genfromtxt(doc_start_path, delimiter=',').astype(int)
     preds1 = np.genfromtxt(prediction_path1, delimiter=',', skip_header=1) # the main set of predictions
-    preds2 = np.genfromtxt(prediction_path2, delimiter=',', skip_header=1) # the baselines to compare with
+
+    if not compare_to_gold_only:
+        preds2 = np.genfromtxt(prediction_path2, delimiter=',', skip_header=1) # the baselines to compare with
 
     # for the bio data we need to exclude the validation and unlabelled data
     ndocs = np.sum(doc_start & (gt != -1))
@@ -35,22 +37,23 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, predict
     doc_start = doc_start[gt != -1]
     gt = gt[gt != -1]
 
-    # count errors of baseline predictions (methods with idx > 1 are baselines)
-    num_base_errs = np.zeros_like(gt)
-    for i in range(0, preds2.shape[1]):
-        if i in baselines_to_skip:
-            continue
-
-        num_base_errs[np.where(preds2[:, i] != gt)] += 1
-
-    # find all tokens correctly classified by all baselines
-    base_correct = np.where(num_base_errs == 0)[0]
-
     # find misclassfied tokens by the main method 0
-    error_idxs = np.where(preds1[:, main_method] != gt)[0]
+    error_idxs = list(sorted(set(np.where(preds1[:, main_method] != gt)[0])))
 
-    # find errors where the baselines were correct
-    error_idxs = list(sorted(set(error_idxs).intersection(set(base_correct))))
+    # count errors of baseline predictions (methods with idx > 1 are baselines)
+    if not compare_to_gold_only:
+        num_base_errs = np.zeros_like(gt)
+        for i in range(0, preds2.shape[1]):
+            if i in baselines_to_skip:
+                continue
+
+            num_base_errs[np.where(preds2[:, i] != gt)] += 1
+
+        # find all tokens correctly classified by all baselines
+        base_correct = np.where(num_base_errs == 0)[0]
+
+        # find errors where the baselines were correct
+        error_idxs = list(sorted(set(error_idxs).intersection(set(base_correct))))
 
     if annos is None:
         analysis = np.zeros((0, 4))
@@ -78,8 +81,16 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, predict
     for gidx, g in groupby(enumerate(error_idxs), lambda i_x:i_x[0] - i_x[1]):
         # for each error, get the predictions +/- windowsize additional tokens
         idxs = list(map(itemgetter(1), g))
-        slice_ = np.s_[idxs[0] - windowsize:idxs[-1] + windowsize]
-        err = np.stack((np.arange(idxs[0] - windowsize, idxs[-1] + windowsize),
+        start = idxs[0] - windowsize
+        if start < 0:
+            start = 0
+
+        fin = idxs[-1] + windowsize
+        if fin > len(gt):
+            fin = len(gt)
+
+        slice_ = np.s_[start:fin]
+        err = np.stack((np.arange(start, fin),
                         preds1[slice_, main_method],
                         gt[slice_],
                         doc_start[slice_])).T
@@ -120,7 +131,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, predict
 
             if ptok == 0:
                 span_end = i
-                g_spans.append((span_start, span_end))
+                p_spans.append((span_start, span_end))
                 span_start = i
 
         # didn't finish inside the tokens
@@ -219,23 +230,80 @@ if __name__ == '__main__':
     dataroot = os.path.expanduser('~/data/bayesian_annotator_combination/')
 
     # Analyse the errors introduced by our method that the baselines did not make.
-    prior_str = 'Krusty_task2_plainpriors_proposederrors'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
+    # prior_str = 'Krusty_task2_plainpriors_proposederrors'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+    #                dataroot + '/output/bio_task2/analysis_%s' % prior_str,
+    #                dataroot + '/output/bio_task2/analysis_counts_%s' % prior_str,
+    #                0, [0])
+
+    outroot = os.path.expanduser('./data/error_analysis/')
+
+    # NER ----------------------------------------------------------------------
+
+    prior_str = 'ner_task1_bac_seq_IF'
+    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+                   dataroot + '/data/ner/task1_test_annos.csv',
+                   dataroot + '/data/ner/task1_test_doc_start.csv',
                    dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
                    dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/analysis_%s' % prior_str,
-                   dataroot + '/output/bio_task2/analysis_counts_%s' % prior_str,
-                   0, [0])
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
 
     # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'Krusty_task2_plainpriors_baselineerrors'
+    prior_str = 'ner_task1_HMMCrowd'
+    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+                   dataroot + '/data/ner/task1_test_annos.csv',
+                   dataroot + '/data/ner/task1_test_doc_start.csv',
+                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
+
+    # Analyse the errors that our method did not make but the baselines did.
+    prior_str = 'ner_task1_bac_ibcc_IF'
+    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+                   dataroot + '/data/ner/task1_test_annos.csv',
+                   dataroot + '/data/ner/task1_test_doc_start.csv',
+                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
+
+    # PICO --------------------------------------------------------------------
+
+    prior_str = 'pico_task1_bac_seq_IF'
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
                    dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
                    dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/analysis_%s' % prior_str,
-                   dataroot + '/output/bio_task2/analysis_counts_%s' % prior_str,
-                   1, [1])
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
+
+    # Analyse the errors that our method did not make but the baselines did.
+    prior_str = 'pico_task1_HMMCrowd'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   dataroot + '/output/bio_task1/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
+
+    # Analyse the errors that our method did not make but the baselines did.
+    prior_str = 'pico_task1_bac_ibcc_IF'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
