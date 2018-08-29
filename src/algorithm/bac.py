@@ -64,7 +64,7 @@ class BAC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1,   exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
+                 before_doc_idx=1, exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
                  data_model=None, alpha0_data=None, tagging_scheme='IOB2', transition_model='HMM'):
         '''
         Constructor
@@ -187,7 +187,10 @@ class BAC(object):
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.nu0.ndim >= 2:
                 disallowed_count = self.nu0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                #self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                self.nu0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
+                self.nu0[restricted_label, restricted_label] += disallowed_count / 2.0
+
                 self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_restricted_label in enumerate(restricted_labels):

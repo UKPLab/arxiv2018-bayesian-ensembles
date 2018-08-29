@@ -142,9 +142,9 @@ exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 
 exp.methods =  [
-                'HMM_crowd',
+                #'HMM_crowd',
                 best_bac_wm + '_integrateBOF_then_LSTM',
-                'HMM_crowd_then_LSTM',
+                #'HMM_crowd_then_LSTM',
                 best_bac_wm,
 ]
 

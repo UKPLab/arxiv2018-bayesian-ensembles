@@ -14,7 +14,7 @@ from evaluation.experiment import Experiment
 dataGen = DataGenerator('./config/data.ini', seed=42)
 
 #Experiment(dataGen, config='./config/class_bias_experiment.ini').run_synth()
-Experiment(dataGen, config='./config/short_bias_experiment.ini').run_synth()
+#Experiment(dataGen, config='./config/short_bias_experiment.ini').run_synth()
 Experiment(dataGen, config='./config/group_ratio_experiment.ini').run_synth()
 Experiment(dataGen, config='./config/acc_bias_experiment.ini').run_synth()
 

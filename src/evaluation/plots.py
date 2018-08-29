@@ -64,7 +64,7 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
 
     if np.min(y_vals) < 0:
         plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
-    else:
+    elif not np.isinf(np.max(y_vals)) and not np.isnan(np.max(y_vals)):
         plt.ylim([0, np.max([1, np.max(y_vals)])])
 
 

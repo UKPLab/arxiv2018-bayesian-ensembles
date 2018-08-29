@@ -1390,7 +1390,7 @@ class Experiment(object):
 
                     results[param_idx, :, method_idx, run_idx][:, None], \
                     std_results[param_idx, :, method_idx, run_idx] = self.calculate_scores(
-                        agg, gt.flatten(), probs, doc_start)
+                        agg, gt.flatten(), probs, doc_start, bootstrapping=False)
 
         if self.save_results:
             if not os.path.exists(self.output_dir):

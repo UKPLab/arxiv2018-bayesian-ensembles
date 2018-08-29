@@ -2,7 +2,7 @@ import numpy as np
 import os
 import glob
 
-L = 9
+L = 3
 IOB_idx = [0, 1, 2, 0, 2, 0, 2, 0, 2]
 ntypes = [4, 1, 4]
 
@@ -26,4 +26,4 @@ for f in files:
 
     accs.append(acc_by_class)
 
-np.savetxt('./LSTM_accuracy_summary.csv', np.array(accs), fmt='%.3f')
+np.savetxt('./LSTM_accuracy_summary_PICO_task2.csv', np.array(accs), fmt='%.3f')

@@ -13,13 +13,13 @@ output_dir = '../../data/bayesian_annotator_combination/output/bio_task1_mini/'
 # debug with subset -------
 s = 1000
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
-# gt = gt[:s]
-# annos = annos[:s]
-# doc_start = doc_start[:s]
-# text = text[:s]
-# gt_dev = gt_dev[:s]
-# doc_start_dev = doc_start_dev[:s]
-# text_dev = text_dev[:s]
+gt = gt[:s]
+annos = annos[:s]
+doc_start = doc_start[:s]
+text = text[:s]
+gt_dev = gt_dev[:s]
+doc_start_dev = doc_start_dev[:s]
+text_dev = text_dev[:s]
 # -------------------------
 
 exp = Experiment(None, 3, annos.shape[1], None)
@@ -28,19 +28,19 @@ exp.save_results = True
 exp.opt_hyper = False #True
 
 
-exp.nu0_factor = 0.1
-exp.alpha0_diags = 0.1
-exp.alpha0_factor = 0.1
+exp.nu0_factor = 100 #0.1
+exp.alpha0_diags = 1 # 0.1
+exp.alpha0_factor = 1 # 0.1
 best_bac_wm = 'bac_seq'
 
 # run all the methods that don't require tuning here
-exp.methods =  ['majority',
+exp.methods =  [#'majority',
                 # 'best', 'worst',
                 #'ibcc', 'bac_acc', 'bac_mace', 'bac_ibcc', 'bac_seq',
                 #'HMM_crowd', 'HMM_crowd_then_LSTM', 'bac_ibcc_then_LSTM',
-                'bac_mace_integrateBOF',
+                # 'bac_mace_integrateBOF',
                 #'bac_ibcc_integrateLSTM'
-                #best_bac_wm + '_integrateBOF_noHMM',
+                best_bac_wm + '_integrateBOF',
                ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
