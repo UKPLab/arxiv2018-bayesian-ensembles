@@ -94,7 +94,7 @@ exp.nu0_factor = best_nu0factor
 #
 # # run all the methods that don't require tuning here
 exp.methods =  [
-                # 'majority',
+                'majority',
                 # 'mace',
                 # 'ds',
                 # #'best',
