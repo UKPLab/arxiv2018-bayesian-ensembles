@@ -63,6 +63,8 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     windowsize = 10
 
     error_count_labels = np.array([
+        'exact match'
+        'partial match',
         'missed',
         'not a span',
         'late start',
@@ -167,6 +169,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
         for i, (span_start, span_end) in enumerate(g_spans):
             # is there an exact match in p_spans?
             if (span_start, span_end) in p_spans:
+                error_counts[error_count_labels == 'exact match'] += 1
                 continue # not a mistake
 
             span_matched = False
@@ -203,6 +206,8 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
             if not span_matched:
                 error_counts[error_count_labels == 'missed'] += 1
                 missed += 1
+            else:
+                error_counts[error_count_labels == 'partial match'] += 1
 
         for i, (span_start, span_end) in enumerate(p_spans):
                 # is there an exact match in p_spans?
@@ -247,8 +252,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/ner/pred_started-2018-08-09-02-19-46-Nseen6056.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
@@ -258,19 +262,17 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/ner/pred_started-2018-07-06-22-24-18-Nseen6056.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
 
     # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'ner_task1_bac_ibcc_IF'
+    prior_str = 'ner_task1_majority'
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/ner/pred_nocrowd_started-2018-07-06-21-57-08-Nseen6056.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
@@ -281,8 +283,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/pico/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
@@ -292,18 +293,17 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   dataroot + '/output/bio_task1/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/pico/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
 
     # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'pico_task1_bac_ibcc_IF'
+    prior_str = 'pico_task1_majority'
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-                   dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/pico/nerpred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
