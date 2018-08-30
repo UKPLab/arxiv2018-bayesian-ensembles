@@ -40,7 +40,7 @@ num_reps = 10
 for rep in range(num_reps):
 
     if rep == 0:
-        output_dir = '../../data/bayesian_annotator_combination/output/bio_al_new/'
+        output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
 
@@ -50,8 +50,8 @@ for rep in range(num_reps):
         exp.opt_hyper = False #True
 
         exp.nu0_factor = 100
-        exp.alpha0_diags = 1
-        exp.alpha0_factor = 1
+        exp.alpha0_diags = 10
+        exp.alpha0_factor = 10
 
         exp.methods = [
             'majority',
@@ -69,7 +69,7 @@ for rep in range(num_reps):
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -79,8 +79,8 @@ for rep in range(num_reps):
     exp.opt_hyper = False #True
 
     exp.nu0_factor = 100
-    exp.alpha0_diags = 1
-    exp.alpha0_factor = 1
+    exp.alpha0_diags = 10
+    exp.alpha0_factor = 10
 
     exp.methods = [
         'majority',
@@ -93,11 +93,11 @@ for rep in range(num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True)
+                    active_learning=True, AL_batch_fraction=0.02)
 
     # ------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -119,11 +119,11 @@ for rep in range(num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True)
+                    active_learning=True, AL_batch_fraction=0.02)
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -145,4 +145,4 @@ for rep in range(num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True)
+                    active_learning=True, AL_batch_fraction=0.02)

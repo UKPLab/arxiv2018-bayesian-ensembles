@@ -51,7 +51,7 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
     for j in range(len(methods)):
         plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%4], marker=markers[j%5])
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.41, 1.5)) #loc='best')
+    plt.legend(loc='bottom right') #loc='best')
 
     if title is not None:
         plt.title(title)
@@ -64,14 +64,14 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
 
     if np.min(y_vals) < 0:
         plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
-    elif not np.isinf(np.max(y_vals)) and not np.isnan(np.max(y_vals)):
-        plt.ylim([0, np.max([1, np.max(y_vals)])])
+    #elif not np.isinf(np.max(y_vals)) and not np.isnan(np.max(y_vals)):
+    #    plt.ylim([0, np.max([1, np.max(y_vals)])])
 
-    plt.tight_layout()
+    #plt.tight_layout()
 
 
 def plot_results(param_values, methods, param_idx, results, show_plot=False, save_plot=False, output_dir='/output/',
-                 score_names=None, title='parameter influence'):
+                 score_names=None, title=None):
     # Plots the results for varying the parameter specified by param_idx
 
     param_values = np.array(param_values)
@@ -117,10 +117,16 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
 
 def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
 
+    # old setups
     #ndocs = np.array([605, 1210, 1815, 2420, 3025, 3630, 4235, 4840, 5445, 6045]) # NER dataset
     #ndocs = np.array([606, 1212, 1818, 2424, 3030, 3636, 4242, 4848, 5454, 6056])
     #ndocs = np.array([929, 1858, 2787])
-    ndocs = np.array([1486, 2972, 4458, 5944, 7430, 8916, 10402, 11888, 13374, 14860])
+
+    # for NER
+    # ndocs = np.array([1486, 2972, 4458, 5944, 7430, 8916, 10402, 11888, 13374, 14860])
+
+    # for PICO
+    ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
 
     methods = np.array([
         'majority',
@@ -130,6 +136,16 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
         'bac_seq_integrateBOF',
         'bac_seq_integrateBOF_then_LSTM',
         'bac_seq_integrateBOF_integrateLSTM_atEnd',
+    ])
+
+    method_names = np.array([
+        'MV',
+        'HMMcrowd',
+        'HMMcrowd->LSTM',
+        'BSC-CM',
+        'BSC-seq',
+        'BSC-seq->LSTM',
+        'BSC-seq+LSTM',
     ])
 
     # results: y-value, metric, methods, runs
@@ -202,10 +218,10 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
     output_pool_dir = os.path.join(output_dir, 'pool/')
     output_test_dir = os.path.join(output_dir, 'test/')
 
-    plot_results(ndocs, methods, 6, results, False, True, output_pool_dir, SCORE_NAMES,
-                 title='Active Learning: Pool Data')
-    plot_results(ndocs, methods, 6, results_nocrowd, False, True, output_test_dir, SCORE_NAMES,
-                 title='Active Learning: Test Data')
+    plot_results(ndocs, method_names, 6, results, False, True, output_pool_dir, SCORE_NAMES)#,
+                 #title='Active Learning: Pool Data')
+    plot_results(ndocs, method_names, 6, results_nocrowd, False, True, output_test_dir, SCORE_NAMES)#,
+                 #title='Active Learning: Test Data')
 
     print(run_counts[0, 0, :, 0])
     print(run_counts_nocrowd[0, 0, :, 0])
