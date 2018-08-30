@@ -52,6 +52,7 @@ exp.alpha0_factor_lstm = 0.1
 exp.methods =  [
                 # best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateBOF_then_LSTM',
+                'gt_then_LSTM',
                 'HMM_crowd_then_LSTM',
                 ]
 
