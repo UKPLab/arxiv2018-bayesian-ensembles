@@ -13,7 +13,8 @@ from pip._vendor.distro import os_release_attr
 
 
 def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_path,
-                   output_counts_path, main_method, baselines_to_skip=None, compare_to_gold_only=True, prediction_path2=None):
+                   output_counts_path, main_method, baselines_to_skip=None, compare_to_gold_only=True,
+                   prediction_path2=None, remove_val=False):
     
     # load data
     gt = np.genfromtxt(gt_path, delimiter=',')
@@ -23,22 +24,39 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
 
     doc_start = np.genfromtxt(doc_start_path, delimiter=',').astype(int)
     preds1 = np.genfromtxt(prediction_path1, delimiter=',', skip_header=1) # the main set of predictions
+    if preds1.ndim > 1:
+        preds1 = preds1[:, main_method]
+    if len(preds1) > len(gt):
+        print('Using only the first predictions to match length of gold standard labels...')
+        preds1 = preds1[:len(gt)]
 
     if not compare_to_gold_only:
         preds2 = np.genfromtxt(prediction_path2, delimiter=',', skip_header=1) # the baselines to compare with
 
     # for the bio data we need to exclude the validation and unlabelled data
-    ndocs = np.sum(doc_start & (gt != -1))
-    ntestdocs = int(np.floor(ndocs * 0.5))
-    docidxs = np.cumsum(doc_start & (gt != -1))
-    ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
-    gt = gt[:ntestidxs]
-    doc_start = doc_start[:ntestidxs]
-    doc_start = doc_start[gt != -1]
-    gt = gt[gt != -1]
+    if remove_val:
+        ndocs = np.sum(doc_start & (gt != -1))
+        ntestdocs = int(np.floor(ndocs * 0.5))
+        docidxs = np.cumsum(doc_start & (gt != -1))
+        ntestidxs = np.argwhere(docidxs == (ntestdocs+1))[0][0]
+
+        gt = gt[:ntestidxs]
+
+        doc_start = doc_start[:ntestidxs]
+        doc_start = doc_start[gt != -1]
+
+        preds1 = preds1[:ntestidxs]
+        preds1 = preds1[gt != -1]
+
+        gt = gt[gt != -1]
+
+
+    print('Are the datasets the same shape?')
+    print(preds1.shape)
+    print(gt.shape)
 
     # find misclassfied tokens by the main method 0
-    error_idxs = list(sorted(set(np.where(preds1[:, main_method] != gt)[0])))
+    error_idxs = np.where(preds1 != gt)[0]
 
     # count errors of baseline predictions (methods with idx > 1 are baselines)
     if not compare_to_gold_only:
@@ -63,7 +81,8 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     windowsize = 10
 
     error_count_labels = np.array([
-        'exact match'
+        'exact match',
+        'wrong type',
         'partial match',
         'missed',
         'not a span',
@@ -76,9 +95,38 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     ])
     error_counts = np.zeros(len(error_count_labels))
 
+    g_spans = []
+    span_start = -1
+    for i, gtok in enumerate(gt):
+
+        if i in error_idxs:
+            # exclude this span
+            span_start = -1
+
+        if gtok in [2, 4, 6, 8]:
+            if span_start > -1:
+                span_end = i
+                g_spans.append((span_start, span_end))
+            span_start = i
+
+        if gtok == 1 and span_start > -1:
+            span_end = i
+            g_spans.append((span_start, span_end))
+            span_start = -1
+
+    # didn't finish inside the tokens
+    if span_start > -1:
+        span_end = i + 1
+        g_spans.append((span_start, span_end))
+
+    error_counts[0] += len(g_spans)
+    print('No. gold spans with no errors = %i' % error_counts[0])
+
     analysis_header = 'tok_idx, proposed_pred, gold, doc_start'
     if annos != None:
         analysis_header += ', crowd_labels'
+
+    count_gspans = 0
 
     for gidx, g in groupby(enumerate(error_idxs), lambda i_x:i_x[0] - i_x[1]):
         # for each error, get the predictions +/- windowsize additional tokens
@@ -93,7 +141,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
 
         slice_ = np.s_[start:fin]
         err = np.stack((np.arange(start, fin),
-                        preds1[slice_, main_method],
+                        preds1[slice_],
                         gt[slice_],
                         doc_start[slice_])).T
 
@@ -111,30 +159,29 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
             analysis = np.concatenate((analysis, -np.ones((1, 4 + annos.shape[1]))), axis=0)
 
         # categorise the error
-        toks1 = preds1[idxs[0]:idxs[-1]+1, main_method]
-        toks2 = gt[idxs[0]:idxs[-1]+1]
+        toks1 = preds1[idxs[0]:idxs[-1]+1].copy()
+        toks2 = gt[idxs[0]:idxs[-1]+1].copy()
 
-        start_displacement = 0 # positive means early, neg means late
-        end_displacement = 0
-        additional_splits = 0 # positive means extra, neg means missing
+        toks1[np.in1d(toks1, [0, 3, 5, 7])] = 0
+        toks1[np.in1d(toks1, [2, 4, 6, 8])] = 2
+        toks2[np.in1d(toks2, [0, 3, 5, 7])] = 0
+        toks2[np.in1d(toks2, [2, 4, 6, 8])] = 2
 
         p_spans = []
         span_start = -np.inf
         for i, ptok in enumerate(toks1):
 
             if ptok == 2:
-                if span_start < -1: # else we merge the consecutive spans
+                if span_start < -1: # else we merge the consecutive spans to avoid miscounting early finishes
                     span_start = i
 
             if ptok == 1 and span_start > -1:
                 span_end = i
                 p_spans.append((span_start, span_end))
-                span_start = -1
+                span_start = -np.inf
 
-            if ptok == 0:
-                span_end = i
-                p_spans.append((span_start, span_end))
-                span_start = i
+            if ptok == 0 and span_start < -1:
+                    span_start = i-1
 
         # didn't finish inside the tokens
         if span_start >= -1:
@@ -167,9 +214,15 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
         missed = 0
 
         for i, (span_start, span_end) in enumerate(g_spans):
+
+            count_gspans += 1
+
             # is there an exact match in p_spans?
             if (span_start, span_end) in p_spans:
-                error_counts[error_count_labels == 'exact match'] += 1
+                error_counts[error_count_labels == 'wrong type'] += 1
+                print('Span right, type wrong! ')
+                print(preds1[idxs[0]:idxs[-1]+1])
+                print(gt[idxs[0]:idxs[-1]+1])
                 continue # not a mistake
 
             span_matched = False
@@ -179,23 +232,24 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
                     break
 
                 if pstart > span_start and pstart < span_end:
-                    if span_start > -1:
-                        # overlaps but starts late
-                        error_counts[error_count_labels == 'late start'] += 1
-                        span_matched = True
+                    if pstart == 0 and span_start < 0 and preds1[idxs[0]-1] != 1:
+                        # it had already started the span
+                        error_counts[error_count_labels == 'extra splits'] += 1
                     else:
                         # overlaps but starts late
-                        error_counts[error_count_labels == 'extra splits'] += 1
-                        span_matched = True
-
+                        error_counts[error_count_labels == 'late start'] += 1
+                    span_matched = True
                 elif pstart < span_start and pend > span_start:
-                    error_counts[error_count_labels == 'early start'] += 1
+                    if pstart == -1 and span_start >= 0 and gt[idxs[0]-1] != 1:
+                        # the predicted span also covers a different gold span
+                        error_counts[error_count_labels == 'fused together'] += 1
+                    else:
+                        error_counts[error_count_labels == 'early start'] += 1
                     span_matched = True
 
                 if pend < span_end and pend > span_start:
                     error_counts[error_count_labels == 'early finish'] += 1
                     span_matched = True
-
                 elif pend > span_end and pstart < span_end:
                     error_counts[error_count_labels == 'late finish'] += 1
                     span_matched = True
@@ -228,6 +282,8 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
         error_counts[error_count_labels == 'fused together'] += (span_count_diff > 0)
         error_counts[error_count_labels == 'extra splits'] += (span_count_diff < 0)
 
+    print('No. gold spans with errors = %i' % count_gspans)
+
     np.savetxt(output_path, analysis, delimiter=',', fmt='%i', header=analysis_header)
     np.savetxt(output_counts_path, error_counts[None, :], delimiter=',', fmt='%i', header=', '.join(error_count_labels))
     
@@ -247,35 +303,35 @@ if __name__ == '__main__':
     outroot = os.path.expanduser('./data/error_analysis/')
 
     # NER ----------------------------------------------------------------------
-
-    prior_str = 'ner_task1_bac_seq_IF'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2018-08-09-02-19-46-Nseen6056.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
-
-    # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'ner_task1_HMMCrowd'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2018-07-06-22-24-18-Nseen6056.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
-
-    # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'ner_task1_majority'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_nocrowd_started-2018-07-06-21-57-08-Nseen6056.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
+    #
+    # prior_str = 'ner_task1_bac_seq_IF'
+    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+    #                dataroot + '/data/ner/task1_test_annos.csv',
+    #                dataroot + '/data/ner/task1_test_doc_start.csv',
+    #                outroot + '/ner/pred_started-2018-08-09-02-19-46-Nseen6056.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0)
+    #
+    # # Analyse the errors that our method did not make but the baselines did.
+    # prior_str = 'ner_task1_HMMCrowd'
+    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+    #                dataroot + '/data/ner/task1_test_annos.csv',
+    #                dataroot + '/data/ner/task1_test_doc_start.csv',
+    #                outroot + '/ner/pred_started-2018-07-06-22-24-18-Nseen6056.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0)
+    #
+    # # Analyse the errors that our method did not make but the baselines did.
+    # prior_str = 'ner_task1_majority'
+    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+    #                dataroot + '/data/ner/task1_test_annos.csv',
+    #                dataroot + '/data/ner/task1_test_doc_start.csv',
+    #                outroot + '/ner/pred_started-2018-07-06-21-57-08-Nseen6056.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0)
 
     # PICO --------------------------------------------------------------------
 
@@ -283,27 +339,27 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/pico/pred_started-2018-08-25-18-08-57-Nseen56858.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
-                   0)
+                   0, remove_val=True)
 
     # Analyse the errors that our method did not make but the baselines did.
     prior_str = 'pico_task1_HMMCrowd'
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/pico/pred_started-2018-08-25-23-55-53-Nseen56858.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
-                   0)
+                   0, remove_val=True)
 
     # Analyse the errors that our method did not make but the baselines did.
     prior_str = 'pico_task1_majority'
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/nerpred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
+                   outroot + '/pico/pred_started-2018-08-29-20-26-38-Nseen56858.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
-                   0)
+                   0, remove_val=True)

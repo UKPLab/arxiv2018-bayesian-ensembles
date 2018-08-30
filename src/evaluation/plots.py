@@ -51,7 +51,7 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
     for j in range(len(methods)):
         plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%4], marker=markers[j%5])
 
-    plt.legend(loc='best')
+    plt.legend(loc='upper center', bbox_to_anchor=(0.41, 1.5)) #loc='best')
 
     if title is not None:
         plt.title(title)
@@ -66,6 +66,8 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
         plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
     elif not np.isinf(np.max(y_vals)) and not np.isnan(np.max(y_vals)):
         plt.ylim([0, np.max([1, np.max(y_vals)])])
+
+    plt.tight_layout()
 
 
 def plot_results(param_values, methods, param_idx, results, show_plot=False, save_plot=False, output_dir='/output/',
