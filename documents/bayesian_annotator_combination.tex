@@ -1,36 +1,49 @@
 % Copied from EMNLP 2018 template
 \documentclass[11pt,a4paper]{article}
-\usepackage[hyperref]{emnlp2018}
+\usepackage[hyperref]{tacl2018}
 \usepackage{times}
 \usepackage{latexsym}
-\usepackage{calculator}
 \usepackage{url}
-
-%\aclfinalcopy % Uncomment this line for the final submission
-%\def\aclpaperid{***} %  Enter the acl Paper ID here
-
-%\setlength\titlebox{5cm}
-% You can expand the titlebox if you need extra space
-% to show all the authors. Please do not make the titlebox
-% smaller than 5cm (the original size); we will check this
-% in the camera-ready version and ask you to change it back.
+\usepackage[T1]{fontenc}
 
 %Additional commands added by ES
 
-\newcommand\BibTeX{B{\sc ib}\TeX}
-\newcommand\confname{EMNLP 2018}
-\newcommand\conforg{SIGDAT}
+\taclfinalfalse % For camera-ready, replace "\taclfinalfalse" with
+% "\taclfinalcopy"
+
+%%%%
+%%%% Material in this block can be removed by TACL authors.
+% It consists of things specific to generating TACL instructions
+\usepackage{xspace,mfirstuc,tabulary}
+
+\newcommand{\ex}[1]{{\sf #1}}
+
+%
+\iftaclfinal
+\newcommand{\taclpaper}{camera-ready\xspace}
+\newcommand{\taclpapers}{camera-readies\xspace}
+\newcommand{\Taclpaper}{Camera-ready\xspace}
+\newcommand{\Taclpapers}{Camera-readies\xspace}
+\else
+\newcommand{\taclpaper}{submission\xspace}
+\newcommand{\taclpapers}{{\taclpaper}s\xspace}
+\newcommand{\Taclpaper}{Submission\xspace}
+\newcommand{\Taclpapers}{{\Taclpaper}s\xspace}
+\fi
 
 \usepackage{graphicx}
 \usepackage{tabularx}
 
+\usepackage{array}
+\newcolumntype{P}[1]{>{\raggedleft\arraybackslash}p{#1}}
 \newcolumntype{Y}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{?}{!{\vrule width 1pt}}
 
 \usepackage[fleqn]{amsmath}
 \usepackage{amsfonts}
 \usepackage{algorithm2e}
 
-\usepackage{numprint}
+\usepackage[boldmath]{numprint}
 \usepackage{url}
 \usepackage[caption=false,font=footnotesize]{subfig}
 

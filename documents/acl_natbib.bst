@@ -9,6 +9,11 @@
 %%% Original headers follow...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% - fixed a bug with format.chapter - error given in chapter is empty
+%   with inbook.
+% Shay Cohen 2018/02/16
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % BibTeX style file acl_natbib.bst
 %
@@ -1085,7 +1090,8 @@ FUNCTION {format.vol.num.pages}
 
 FUNCTION {format.chapter}
 { chapter empty$
-    'skip$
+    %'skip$  %% SC
+    { "" }
     { type empty$
         { bbl.chapter }
         { type "l" change.case$

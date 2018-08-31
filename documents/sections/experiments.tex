@@ -1,5 +1,5 @@
 
-\section{Experiments with Synthetic Data}\label{sec:synexpts}
+\section{Experiments with Simulated Annotators}\label{sec:synexpts}
 
 %
 %\subsection{Synthetic Data}
@@ -51,6 +51,26 @@ improved by (a) the more sophisticated worker models described in Section \ref{s
 (b) the inclusion of text features into the graphical model or (c) a Bayesian approach. 
 We further test whether Bayesian approach facilitates more efficient active learning of sequential annotations from crowds and whether integrating the LSTM into the ensemble of annotators improves performance further.
 Our experiments consist of three tasks: (1) aggregating crowdsourced labels, (2) training the LSTM sequence tagger of Lample et al. ~\shortcite{lample2016neural} using aggregated labels, and (3) actively selecting batches of documents for crowdsourced annotation.
+\begin{figure}
+\centering
+\subfloat[Annotator accuracy]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 15 40 38]{figures/synthetic/acc_bias_exp/plot_f1-score-tokens}
+}\\
+\subfloat[Short span bias]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 38]{figures/synthetic/short_bias_exp/plot_f1-score-tokens}
+}\\
+\subfloat[Missed span bias]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 38]{figures/synthetic/class_bias_exp/plot_f1-score-tokens}
+}\\
+% \subfloat[Crowd size]{
+%   \includegraphics[width=0.2\textwidth, clip=True, trim=0 10 0 27]{figures/synthetic/acc_bias_exp/plot_f1-score.png}
+% }
+\subfloat[Good workers out of a crowd of 10, where the rest are random.]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 38]{figures/synthetic/group_ratio_exp/plot_f1-score-tokens}
+}
+\caption{F1 scores with simulated annotators. Each plot shows the effect of varying one characteristic.}
+\label{fig:simulated}
+\end{figure}
  
 \section{Experiments with Real Data}\label{sec:expts}
  
@@ -62,6 +82,21 @@ The \emph{NER} dataset contains $1,393$ English documents from the CoNLL 2003 na
 We also test on the \emph{PICO} dataset, introduced by Nguyen et al. ~\cite{nguyen2017aggregating},
 containing $4,740$ medical paper abstracts, all of which have been 
 annotated by a crowd to indicate text spans that identify the population enrolled in a clinical trial. There are gold labels for $191$ documents.
+\begin{table*}
+\small
+\begin{tabular}{| l || r | r | r | r || l | r | r | r || r | r |} \hline
+Dataset & Docs & Gold & Sentences & Tokens & Span type & Gold & \multicolumn{2}{c||}{Span length} & Workers & Workers \\
+ & & docs &  & &  & spans & mean & std. & & /doc \\
+\hline
+NER & 1393 & 1393 & 6503 & 179323 & PER & 6282 & 1.19 & 0.49 & 47 & 4.9  \\
+       & & & & & LOC  & 6482 & 1.73 & 0.57 & & \\
+       & & & & & ORG  & 5789 & 1.55 & 0.92 & & \\
+       & & & & & MISC & 3059 & 1.44 & 0.80 & & \\ \hline
+PICO & 4740 & 191 & 9480 & 1424721 & trial population & 700 & 7.74 & 7.38 & 312 & 6.0  \\ \hline
+\end{tabular}
+\label{tab:datasets}
+\caption{Numbers of documents, spans, annotators, tokens and sentences for our test datasets.}
+\end{table*}
 
 \subsection{Evaluation metrics}
 
@@ -90,8 +125,7 @@ Secondly, integrating different text models:
 \item Integrated LSTM (\emph{+LSTM}): the LSTM is integrated into the variational inference loop as described in Section \ref{sec:model}.
 \end{enumerate}
 
-
-\subsection{Aggregating Crowdsourced Labels}
+\subsection{Aggregating Crowdsourced Labels}\label{sec:task1}
 
 In this task, we use the aggregation methods to combine crowdsourced labels and evaluate their outputs against the gold standard.
 For NER, we split the $415$ crowd-labelled documents into 50\% validation and test sets as in Nguyen et al. ~\shortcite{nguyen2017aggregating}. We run the methods on crowd labels from all $415$ documents, then evaluate on either the
@@ -108,165 +142,90 @@ and they appear to have used a subset of the publicly-available dataset with on 
 % same priors, BSCC-Vec-IF for NER? For BSCC, it may be due to different conf mat for the IF data model.
 % For DS, I think it was still using the priors chosen for IBCC, so results changed when nu0 changed.
 
-% TODO: re-run NER task 2 with BSCC-seq. -- running
-% TODO: run BSCC-seq, DS and MACE with pico task 1. -- running
-% TODO: still have an unexplained difference between HMM-crowd and BSCC-Vec. Is it the initialisation? The attempt to test the same hyperparameter values as HMM-crowd failed -- why is that? Diff may also be due to the use of confusion matrix for the data model - check that is working okay.
-
 Note that the token-level F1-score can be skewed upwards by matching a few long spans correctly, but is useful for PICO because it shows up cases where the spans matched but the predictions were split, i.e. B is used instead of I. With non-strict entity matching, the precision and recall can be 100\% even though the prediction is split into multiple spans.
 Token-level F1-score catches this because it penalises the erroneous B tokens. With strict entity-level F1-score, the matches must be exact, so split spans would receive no credit.
 
-% ! means we need to replace the prec, rec and entity f1 with the new versions
-% ...however, this means the scores have now dropped below nguyen's, except DS...
-% * means we have values from the old dataset
-
-% with the new f1 span metric, precision is now lower for BSCC than for IBCC.
-% Precision was higher then for IBCC before, which means that more spans identified by BSCC are covered by the ground truth than for IBCC. However, prec has dropped because BSCC spans are too short. 
-% Recall also dropped below that of IBCC for BSCC-IBCC. This suggests some predicted spans are too long. 
-% The difference in the models is the ground truth HMM and the priors. 
-% The HMM could cause the drop in precision if spans are not sticky enough, i.e. if I-O 
-% transition is more likely than I-I. However, this should not be stronger than the p(O) used by IBCC.
-% Alternatively, there may be an error where labels switch between types caused by initialising using MV? Easily fixed with smaller values for disallowed transitions.
-% 
-% Investigate class-wise prec and rec?
-% \begin{table*}
-% % \small
-% \begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X |}
-% \hline
-% NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} & & \\ \hline 
-% & Prec. & Recall & F1 & F1 & AUC & CEE & $N_{invalid}$  & Notes & Hyperparams\\ \hline
-% MV &  74.05 & 55.11 & 63.19 & 68.45 & .9406 & 7.72 & \MULTIPLY{.000883515461520577}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol &&\\
-% MACE ! & 67.01 & 67.16 & 67.09 & 66.95 & .8385 & 2.87 & \MULTIPLY{.000837014647756336}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, .1\\
-% %DS & 77.23 & 7.94 & 73.95 & 75.50 & .9574 & 3.36 & \MULTIPLY{.000674387237803}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol \\ % max 10 iterations
-% DS & 73.15 & 69.70 & 71.38 & 75.35 & .9548 & 4.10 & \MULTIPLY{.000651011392699372}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & &\\
-% IBCC & 73.92 & 69.56 & 71.67 & 75.41 & .9586 & .61 & \MULTIPLY{.00053475935828877}{82494}{\sol}\ROUND[0]{\sol}{\sol}\sol & & .1, 10, .1 \\ \hline
-% HMM-Crowd* !& 77.67 & 7.05 & 73.67 & 75.33 & .9766 & 1.11 & 0 & Why better than BSCC-Vec-IF? Uses posteriors, different initialisation & 0, .1 \\ % 10 EM iterations
-% HMM-Crowd-then-LSTM*! & 77.67 & 7.66 & 74.00 & 75.11 & .9058 & 13.92 & 0 & & 0, .1\\  \hline
-% BSCC-seq-NF*! & 81.30 & 67.46 & 73.74 & 7.35 & .9585 & .45 & 0 & & 100, 100, 36\\ \hline
-% BSCC-acc-IF & 77.60 & 52.88 & 62.90 & 67.42 & .9643 & 1.41 & 0 & & .1, 1, 1 \\
-% BSCC-MACE-IF! & 44.42 & 79.92 & 57.10 & 57.93 & .9534 & 1.35 & 0 &  & .1, 1, .1\\
-% BSCC-Vec-IF & 75.66 & 63.25 & 68.90 & 72.88 & .9747 & .93 & 0 &  &  .1, 10, .1\\
-% %BSCC-Vec-IF & 81.01 & 62.72 & 7.71 & 71.28 & .9695 & .82 & 0 &  & 10, 1 \\
-% % BSCC-Vec-IF & 81.01 & 63.16 & 71.01 & 71.38 & .9702 & .80 & 0 &  &  .1, 1, .1\\
-% BSCC-IBCC-IF & 7.91 & 7.89 & 7.90 & 74.36 & .9739 & .87 & 0 &  & .1, .1, 1\\
-% %BSCC-IBCC-IF & 75.43 & 74.21 & 74.82 & 74.33 & .9733 & .55 & 0 &  & 100, .1, 9\\
-% BSCC-seq-IF & 
-% 73.63 & 78.51 & 7.98 & 71.96 & .9015 & 1.45 & 0 & & .1, 10, 1\\ \hline
-% %BSCC-seq-IF & 81.66 & 69.49 & 75.08 & 71.31 & .9707 & .44 & 0 & & 100, 36\\ \hline
-% %BSCC-seq-IF & 81.88 & 7.66 & 75.86 & 73.94 & .9304 & .82 & 0 & & .1, 1, 1\\ \hline
-% BSCC-IBCC-IF-then-LSTM*! & 71.53 & 69.88 & 7.70 & 7.61 & .9082 & 16.92 & 0 & Pre bug-fix result & 50, 9 \\% Post bug-fix (with BSCC-seq), the LSTM seems to have failed - sometimes more epochs are required? Compare to HMM-Crowd-then-LSTM & 50, 9\\
-% %BSCC-IBCC+LSTM &\\ % don't need if we already know that including IF helps
-% BSCC-seq-IF+LSTM*! & 81.67 & 69.64 & 75.17 & 71.32 & .9707 & .44 & 0 & & 100, 36 \\ 
-% BCC-seq-IF+LSTM*! & & & & & & & & Running & 100, 36 \\ % no HMM because we integrate LSTM instead
-% \hline
-% \end{tabularx}
-% \caption{Crowdsourced label aggregation performance on NER dataset: estimating true labels given crowdsourced labels.}
-% \label{tab:aggregation_results_ner}
-% \npnoround
-% \end{table*}
-%
-% \begin{table*}
-% % \small
-% \begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | Y | Y | >{\raggedleft\arraybackslash}p{1.6cm} |}
-% \hline
-% NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} & \\ \hline 
-% & Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$  & Hyper.\\ \hline
-% MV & 75.1 & 54.9 & 63.5 & %.796 & .581 & .672 & 
-% 68.5 & .941 & 7.62 & 40 & \\ 
-% MACE & 71.2 & 64.9 & 67.9 & %.741 & .694 & .717 & 
-% 71.6 & .837 & 1.14 & 35 & .1, .1 \\ 
-% DS & 74.9 & 69.7 & 72.2 & %.786 & .739 & .762 & 
-% 75.4 & .955 & 4.16 & 25 &  \\ 
-% IBCC & 75.7 & 69.6 & 72.5 & %.791 & .735 & .762 & 
-% 75.5 & .959 & \textbf{0.62} & 21 & .1, 10, .1 \\ 
-% \hline
-%
-% HMM-crowd & 74.2 & 68.2 & 71.1 & %.784 & .717 & .749 & 
-% 75.2 & \textbf{.977} & 1.08 & 1 & 0, .1 \\ 
-% HMM-crowd$\rightarrow$LSTM & 74.3 & 68.3 & 71.2 & %.785 & .717 & .749 & 
-% 75.5 & .907 & 13.75 & 1 & 0, .1 \\ 
-% \hline
-%
-% BSC-seq-notext & 75.8 & 65.4 & 70.2 & %.829 & .695 & .756 & 
-% 70.8 & .894 & 1.15 & 0 & .1, 10, 1 \\ \hline
-%
-% BSC-acc & 78.0 & 53.2 & 63.2 & 67.5 & .966 & 1.43 & 0 & .1, 1, 1 \\ 
-% BSC-MACE & 63.6 & 73.0 & 68.0 & %.562 & .803 & .661 & 
-% 73.0 & .964 & 1.22 & 0 & .1, 10, .1 \\ 
-% BSC-CV & 76.8 & 62.7 & 69.0 & %.809 & .658 & .726 & 
-% 72.8 & .974 & 1.05 & 0 & .1, 10, .1 \\ 
-% BSC-CM & 73.7 & 72.2 & 72.9 & 75.6 & .965 & 1.80 & 0 & .1, .1, .1 \\ 
-% BSC-seq & \textbf{77.0} & \textbf{72.0} & \textbf{74.4} & \textbf{76.4} & .913 & 1.35 & 0 & .1, 10, 1 \\ 
-% \hline
-%
-% %BSC-seq$\rightarrow$LSTM & 76.6 & 70.9 & 73.6 & 75.6 & .906 & 12.71 & 0 & .1, 10, 1 \\ % old prior
-% BSC-seq$\rightarrow$c  LSTM & 76.2 & 70.2 & 73.1 & 75.8 & .902 & 12.98 & 0 & .1, 10, 1 \\ 
-% %BSC-seq+LSTM & 75.3 & 69.3 & 72.2 & 74.7 & .913 & 1.24 & 0 & .1, 10, 1 \\% old prior
-% BSC-seq+LSTM & 74.9 & 68.3 & 71.4 & 74.1 & .910 & 1.99 & 0 & .1, 10, 1 \\
-% %BCC-seq+LSTM & 51.6 & 20.4 & 29.3 & 36.3 & .947 & 3.54 & 0 & .1, 10, 1 \\
-% \hline
-% \end{tabularx}
-% \caption{NER dataset: estimating true labels for documents that have been labelled by the crowd.}
-% \label{tab:aggregation_results_ner}
-% \npnoround
-% \end{table*}
-%
+% Removed the data on no. invalid spans:
+% 15, 81, 81, 92, 74, 68, 0.... BSC-MACE=91
+% 0, 0, 80, 30, 54, 37, 0, 40, 0000000000000, BSC->LSTM 80
 \begin{table*}
-% \small
-\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | >{\raggedleft\arraybackslash}p{1.6cm} |}
+\small
+\nprounddigits{1}
+\npdecimalsign{.}
+\begin{tabularx}{\textwidth}{| l | n{2}{1} | n{2}{1} | n{2}{1} | n{2}{1} || Y | Y  | Y  ?  n{2}{1} | n{2}{1} | n{2}{1} | n{2}{1} || Y  | Y  | Y |}
 \hline
-NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{2}{|l|}{Token-level metrics} & Hyper.\\ \hline 
-& Prec. & Recall & F1 & %F1 & AUC & 
-CEE & $N_{inval}$  & \\ \hline
+%NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{2}{|l|}{Token-level metrics} & Hyper.\\ \hline 
+& \multicolumn{4}{l||}{NER} & \multicolumn{3}{l||}{Hyperparam.} & \multicolumn{4}{l||}{PICO} & \multicolumn{3}{l|}{Hyperparam.} \\ \hline
+& Prec. & Rec. & \text{F1} & \text{CEE} & $\nu_0$ & acc. bias & $\alpha_0$ & Prec. & Rec. & \text{F1} & \text{CEE} & $\nu_0$ & acc. bias & $\alpha_0$ \\ \hline
 
 Best worker & 76.4 & 60.1 & 67.3 & %69.1 & .8521 & 
-17.13 & 15 & \\
+17.13  & & & &
+64.8 & 53.2 & 58.5 & 17.03 & & & \\
 Worst worker & 55.7 & 26.5 & 35.9 & %43.5 & .6924 & 
-31.94 & 81 &\\ \hline
+31.94  & & & & 
+50.7 & 52.9 & 51.7 & 40.96 & & &\\ \hline
 
 MV & 79.9 & 55.3 & 65.4 & %69.2 & .9422 & 
-6.24 & 81 & \\ 
-MV$\rightarrow$LSTMd & 81.2 & 58.7 & 68.1 & %71.0 & .8447 & 
-16.30 & 2 & \\ 
-MACE & 74.4 & 66.0 & 70.0 & %72.5 & .8300 & 
-1.01 & 92 & .1, .1, 0 \\ 
+6.24  & & & & 82.5 & 52.8 & 64.3 & %76.4 & .923 &
+ 2.55  & & & \\ 
+%MV$\rightarrow$LSTM & 81.2 & 58.7 & 68.1 & %71.0 & .8447 & 
+%16.30 & 2 & \\ 
+MACE & 74.4 & 66.0 & 70.0 & 1.01 &  .1 & .1 & 0  & 25.4 & 84.1 & 39.0 &% 44.3 & .840 &
+ 58.23 & .1 & .1 & 0 %72.5 & .8300 & 
+\\ 
 DS & 79.0 & 70.4 & 74.4 & %76.9 & .9516 & 
-2.84 & 74 &  \\ 
+2.84 & & & & 71.3 & 66.3 & 68.7 &% \textbf{79.3} & .934 &
+ 0.44 & & & \\ 
 IBCC & 79.0 & 70.4 & 74.4 & %77.1 & .9550 & 
-0.49 & 68 & .1, 1, .1 \\ 
-IBCC$\rightarrow$LSTMd & 79.8 & 67.6 & 73.2 & %74.2 & .9040 & 
-14.01 & 86 & .1, 1, .1 \\ 
+{\npboldmath} 0.49 & .1 & 1 & .1 & 72.1 & 66.0 & 68.9 & %\textbf{79.3} & .935 & 
+{\npboldmath} 0.27 & .1 & 10 & 10\\ 
+%IBCC$\rightarrow$LSTM & 79.8 & 67.6 & 73.2 & %74.2 & .9040 & 
+%14.01 & 86 & .1, 1, .1 \\ 
 \hline
 
-HMM-crowd & 80.5 & 69.4 & 74.6 & %77.0 & .9762 & 
-1.04 & 0 & 0, .1, 0 \\ 
-HMM-crowd$\rightarrow$LSTMp & 81.3 & 68.6 & 74.4 & %76.1 & .9887 & 
-0.25 & 134 &  \\ 
-HMM-crowd$\rightarrow$LSTMd & 81.8 & 69.5 & 75.2 & %77.3 & .8972 & 
-12.20 & 0 &  \\ 
+HMMcrowd & 80.5 & 69.4 & 74.6 & %77.0 & .9762 & 
+1.04 & 0 & .1 & 0 & 76.5 & 66.2 & 71.0 & %77.9 & \textbf{.944} & 
+0.79 & 0 & .1 & 0 \\ 
+%HMM-crowd$\rightarrow$LSTMp & 81.3 & 68.6 & 74.4 & %76.1 & .9887 & 
+%0.25 & 134 &  \\ 
+"$\rightarrow$LSTM & 81.8 & 69.5 & 75.2 & %77.3 & .8972 & 
+12.20 & 0 & .1 & 0 & 76.5 & 66.5 & 71.2 & %78.2 & .868 & 
+12.94 & 0 & .1 & 0\\ 
 \hline
-
-BSC-seq-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 & 
-0.52 & 0 & .1, 1, 1 \\ \hline
 
 BSC-acc & 83.4 & 54.3 & 65.7 & %68.2 & .9610 & 
-0.96 & 0 & 10, .1, 10 \\ 
+0.96 & 10 & .1 & 10 & \textbf{89.4} & 45.2 & 60.0 & %74.5 & .9069 & 
+1.59 & .1 & .1 & 10 \\ 
 BSC-MACE & 67.9 & 74.1 & 70.9 & %71.6 & .9658 & 
-0.89 & 911 & 10, 10, 1 \\ 
+0.89 & 10 & 10 & 1 & 46.7 & 84.4 & 60.1 & %68.5 & \textbf{.944} &
+ 1.98 & .1 & 100 & .1\\ 
 BSC-CV & 81.4 & 64.7 & 72.1 & %75.3 & .9715 & 
-0.89 & 0 & 10, 1, 1 \\ 
+0.89 & 10 & 1 & 1 & 74.9 & 67.2 & 71.1 & %77.2 & .936 &
+ 0.84 & .1 & 1 & .1\\ 
 BSC-CM & 79.9 & 72.2 & 75.8 & %77.8 & .9635 & 
-1.46 & 0 & .1, 100, .1 \\ 
+1.46 & .1 & 100 & .1 & 60.1 & 78.8 & 68.2 & %74.5 & .9434 & 
+1.49 & .1 & 100 & 1 \\ 
 BSC-seq & 80.3 & 74.8 & 77.4 & %78.9 & .9598 & 
-0.65 & 0 & .1, 1, 1 \\ \hline
+0.65 & .1 & 1 & 1 & 
+72.9 & 77.6 & 75.1 & %57.9 & .9250 & 
+1.10 & 100 & 1 & 1\\ \hline
 
-BSC-seq$\rightarrow$LSTMp & 80.3 & 74.6 & 77.3 & %78.6 & .9910 & 
-0.20 & 129 & .1, 1, 1 \\
-BSC-seq$\rightarrow$LSTMd & 80.2 & 75.3 & 77.7 & %79.6 & .9262 & 
-11.02 & 0 & .1, 1, 1 \\
-BSC-seq+LSTMp & 81.2 & 75.3 & 78.1 & %79.3 & .9574 & 
-0.54 & 0 & .1, 1, 1 \\
-BSC-seq+LSTMd & 82.3 & 75.9 & 78.9 & %79.6 & .9513 & 
-0.59 & 0 & .1, 1, 1 \\
+''-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 & 
+0.52 & .1 & 1 & 1 & 81.2 & 59.2 & 68.5 & %59.8 & .922 &
+ 0.73 & .1 & .1 & .1\\ \hline
+
+%BSC-seq$\rightarrow$LSTMp & 80.3 & 74.6 & 77.3 & %78.6 & .9910 & 
+%0.20 & 129 & .1, 1, 1 \\
+"$\rightarrow$LSTM & 80.2 & 75.3 & 77.7 & %79.6 & .9262 & 
+11.02 & .1 & 1 & 1 & 
+75.7 & 75.4 & 75.5 & %51.6 & .821 & 
+25.48 & 100 & 1 & 1 \\
+%BSC-seq+LSTMp & 81.2 & 75.3 & 78.1 & %79.3 & .9574 & 
+%0.54 & 0 & .1, 1, 1 \\
+"+LSTM & \textbf{82.3} & \textbf{75.9} & \textbf{78.9} & %79.6 & .9513 & 
+0.59 & .1 & 1 & 1 & 
+78.7 & \textbf{78.6} & \textbf{78.7} & %51.9 & .934 & 
+1.15 & 100 & 1 & 1 \\
 \hline
 \end{tabularx}
 \caption{NER dataset: estimating true labels for documents that have been labelled by the crowd.}
@@ -274,56 +233,35 @@ BSC-seq+LSTMd & 82.3 & 75.9 & 78.9 & %79.6 & .9513 &
 \npnoround
 \end{table*}
 
-
-% tuning tested the following hyperparameters on a subset of the validation data:
-%diags = [.1, 1, 10, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-%factors = [.1, 1, 9, 36]
-
 \begin{table*}
-% \small
-\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | >{\raggedleft\arraybackslash}p{1.6cm} |}
+\small
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X | X | X | X |}
 \hline
-PICO & \multicolumn{3}{|l|}{Span-level metrics}                          & \multicolumn{2}{|l|}{Token-level metrics} &\\ \hline 
-& Prec. & Recall & F1 & %F1 & AUC & 
-CEE & $N_{inval}$ & Hyper. \\ \hline
-MV & 82.5 & 52.8 & 64.3 & %76.4 & .923 &
- 2.55 & 80 &  \\
-MACE & 25.4 & 84.1 & 39.0 &% 44.3 & .840 &
- 58.23 & 0 & .1, .1\\
-DS & 71.3 & 66.3 & 68.7 &% \textbf{79.3} & .934 &
- 0.44 & 54 &\\ 
-IBCC & 72.1 & 66.0 & 68.9 & %\textbf{79.3} & .935 & 
-\textbf{0.27} & 37 & .1, 10, 10 \\ \hline
-
-HMM-Crowd & 76.5 & 66.2 & 71.0 & %77.9 & \textbf{.944} & 
-0.79 & 0, .1 & \\ 
-HMM-Crowd-then-LSTM & 76.5 & 66.5 & 71.2 & %78.2 & .868 & 
-12.94 & 0 & 0, .1 \\ \hline
-
-BSCC-seq-notext & 81.2 & 59.2 & 68.5 & %59.8 & .922 &
- 0.73 & 0 & .1, .1, .1\\ \hline
-
-BSCC-acc & \textbf{89.4} & 45.2 & 60.0 & %74.5 & .9069 & 
-1.59 & 0 & .1, .1, 10 \\
-BSCC-MACE & 46.7 & 84.4 & 60.1 & %68.5 & \textbf{.944} &
- 1.98 & 0 &  .1, 100, .1\\
-BSCC-CV & 74.9 & 67.2 & 71.1 & %77.2 & .936 &
- 0.84 & 0 & .1, 1, .1\\
-BSCC-CM & 60.1 & 78.8 & 68.2 & %74.5 & .9434 & 
-1.49 & 0 & .1, 100, 1 \\
-BSCC-seq & 72.9 & 77.6 & 75.1 & %57.9 & .9250 & 
-1.10 & 0 & .1, .1, .1 \\ \hline 
-
-BSCC-seq$\rightarrow$LSTMd & 87.1 & 61.4 & 72.0 & %51.6 & .821 & 
-21.62 & 0 & .1, .1, .1 \\
-BSCC-seq+LSTMd & 75.1 & \textbf{77.3} & \textbf{76.2} & %51.9 & .934 & 
-0.68 & 0 & .1, .1, .1 \\
-%BCC-seq+LSTM & needs & to & be & rerun & & & & .1, .1, .1 \\
+Method & Data-set & exact match & type wrong only & partial match & mis-sing span & not a span & late start & early start & late finish & early finish & fused spans & split span \\ \hline
+MV & NER & 4307 & 304 & 228 & 1773 & 100 & 96 & 10 & 15 & 85 & 17 & 26 \\
+HMM-Crowd & NER & 4519 & 361 & 256 & 924 & 182 & 101 & 15 & 26 & 97 & 28 & 22 \\
+BSC-CV & NER & 4431 & 275 & 243 & 1245 & 177 & 100 & 17 & 23 & 89 & 29 & 16 \\
+BSC-CM & NER & 4534 & 387 & 258 & 734 & 269 & 111 & 23 & 37 & 86 & 39 & 12 \\
+BSC-seq+LSTM & NER & 4581 & 351 & 261 & 564 & 195 & 93 & 42 & 33 & 85 & 39 & 17 \\
+\hline
+MV & PICO    & 168 & 0 & 32 & 185 & 48 & 9 & 11 & 1 & 0 & 3 & 9 \\
+HMM-Crowd    & PICO & 190 & 0 & 47 & 124 & 81 & 13 & 21 & 0 & 0 & 5 & 8 \\
+BSC-CV       & PICO & 196 & 0 & 46 & 117 & 81 & 10 & 25 & 0 & 0 & 11 & 0 \\
+BSC-CM       & PICO & 203 & 0 & 54 & 77 & 192 & 18 & 15 & 8 & 0 & 4 & 18 \\
+BSC-seq+LSTM & PICO & 81 & 0 & 421 & 75 & 216 & 20 & 6 & 232 & 3 & 24 & 393 \\
 \hline
 \end{tabularx}
-\caption{PICO dataset: estimating true labels for documents that have been labelled by the crowd.}
-\label{tab:aggregation_results_pico}
+\caption{Counts of different types of span errors.}
+\label{tab:error_analysis}
 \end{table*}
+To get a deeper understanding of our proposed method, we examine the types of errors it makes
+in comparison to the previous state-of-the-art, HMM-Crowd, and the majority vote baseline.
+Table \ref{tab:error_analysis} lists counts for different types of span annotation error for these
+three methods on both
+NER and PICO datasets. Compared to HMM-Crowd, BSC-Seq reduces errors of type ..., which is ... but
+increases errors of type ..., which is ...
+This corroborates with the higher precision or recall? in tables ...
+The majority baseline suffers from a large number of type ... errors.
 
 \begin{figure*}
 \centering
@@ -331,25 +269,24 @@ BSCC-seq+LSTMd & 75.1 & \textbf{77.3} & \textbf{76.2} & %51.9 & .934 &
 %   \includegraphics[width=0.9\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/acc}
 % } \\
 \subfloat[BSCC-Vec-IF]{
-  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/vec}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/vec}
 } \\
-\subfloat[BSCC-MACE-IF]{
-  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/mace}
-} \\
+% \subfloat[BSCC-MACE-IF]{
+%   \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/mace}
+% } \\
 \subfloat[BSCC-IBCC-IF]{
-  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/ibcc}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/ibcc}
 } \\
 \subfloat[BSCC-seq-IF, previous label = I]{
-  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev0}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev0}
 } \\
 \subfloat[BSCC-seq-IF, previous label = O]{
-  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev1}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev1}
 } \\
 \subfloat[BSCC-seq-IF, previous label = B]{
-  \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev2}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/seq_prev2}
 } \\
-\caption{Confusion matrix representations from each BSCC-***-IF variant trained on the PICO datasets 
-showing the different representations of workers. 
+\caption{Clusters of confusion matrix representations from each BSC-*** annotator model trained on PICO. 
 % Show how worker representation benefits from richer model: e.g. show differences between rows in IBCC compared to acc.
 % Represent all types as IBCC-confusion matrix plots. seq will need more >= 3 plots! We can focus on PICO data to make it easier to view,
 % or combiner NER classes into BIO. 
@@ -357,8 +294,13 @@ showing the different representations of workers.
 % Each row can then show either a selection of 5 workers, or we can cluster into 5 groups.
 }
 \label{fig:conf_mat_clusters}
-
 \end{figure*}
+The results show a benefit to using a sequential annotator model over CM, CV and Acc.
+To understand how BSC uses the richer model in practice, we plot learned the annotator models for
+PICO as probabilistic confusion matrices in Figure \ref{fig:conf_mat_clusters}.
+To enable us to visualize the large number of annotator models, we clustered them into five groups by
+applying K-means  to their expected values.
+...
 
 %\begin{figure}
 %\centering
@@ -395,6 +337,55 @@ showing the different representations of workers.
 % \label{fig:disagreements}
 % \end{figure}
 
+\subsection{Active Document Selection}
+
+We run an active learning simulation to evaluate whether the proposed Bayesian approach and integrated LSTM
+can improve the efficiency of a crowdsourcing process. 
+The simulation is run separately for each method tested, and begins with the same initial set of randomly-chosen
+documents taken from the same crowd-labelled sets used in Section \ref{sec:task1}.
+We retrieve the crowdsourced labels for the selected documents, run the aggregation method,
+then use its posterior probabilities to select a new batch of the $N_{batchsize}$ most uncertain documents that have not yet been labelled. 
+We retrieve the annotations for the selected batch of documents, then repeat the process until
+all of the available crowd labels have been used.
+We set $N_{batchsize}$ to one tenth of the crowd-labelled dataset size for each of the datasets. At each iteration,
+we monitor progress by training an LSTM on the current output of the aggregation method, 
+and testing its performance as in Section \ref{sec:task1}. 
+With the NER dataset we also evaluate the output of aggregation method on the test set for the crowd-labelled documents. 
+This is not possible with PICO datas because we do not have gold labels for documents labelled by the crowd.
+
+The active learning process tested here employs \emph{uncertainty sampling}, which is a 
+well-established heuristic~\cite{settles2010active}. 
+The selection method and batch size could be fine-tuned for future applications -- the 
+goal of our experiment in this paper was to test the benefits of the proposed aggregation methods,
+rather than to establish a robust active learning approach.
+
+\begin{figure}
+\centering
+\subfloat[Random sampling]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=0 0 0 0]{figures/NER_RAND/pool/plot_f1-score-spans-strict}
+}\\
+\subfloat[Active learning simulation]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=0 0 0 0]{figures/NER_AL/pool/plot_f1-score-spans-strict}
+}
+\caption{Small data subsamples from NER: increasing span-level F1-score.
+%: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
+}
+\label{fig:al}
+\end{figure} 
+% \begin{figure}
+% \centering
+% \subfloat[Random sampling]{
+%   \includegraphics[width=0.8\columnwidth, clip=True, trim=35 0 40 38.4]{figures/PICO_RAND/pool/plot_f1-score-spans-relaxed}
+% }\\
+% \subfloat[Active learning simulation]{
+%   \includegraphics[width=0.8\columnwidth, clip=True, trim=35 0 40 38.4]{figures/PICO_AL/pool/plot_f1-score-spans-relaxed}
+% }
+% \caption{Small data subsamples from PICO: increasing span-level F1-score.
+% %: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
+% }
+% \label{fig:rand}
+% \end{figure}
+
 \subsection{Prediction using an LSTM Trained by the Crowd}\label{sec:task2}
 
 In this task, we use the aggregation methods to train an LSTM sequence tagger \cite{lample2016neural}
@@ -405,121 +396,42 @@ in the original CoNLL dataset.
 With the PICO dataset, we run the aggregators on the $3,649$ documents without gold labels, 
 use the outputs to train the LSTM, then evaluate the LSTM on the validation and test splits from the gold-labelled data.
 
-
-% \begin{table*}
-% % \small
-% \begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | Y | Y |}
-% \hline
-% NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{4}{|l|}{Token-level metrics} \\ \hline 
-% & Prec. & Recall & F1 & F1 & AUC & CEE & $N_{inval}$  \\ \hline 
-% %HMM-Crowd-then-LSTM & 76.19 & 66.24 & 70.87 &\\ % original results from Nguyen 2017
-% %HMM-Crowd-then-LSTM & 72.75 & 68.26 & 70.43 & 35.73 & .8752 & 23.45 & 0 & V. close to Nguyen et al.~\shortcite{nguyen2017aggregating}\\ 
-% HMM-crowd$\rightarrow$LSTM & 68.8 & \textbf{65.4} & \textbf{67.1} & \textbf{67.5} & .910 & 15.21 & 1 \\ 
-% %LSTM & 83.19 & 57.12 & 67.73 \\ 
-% %LSTM-Crowd & 82.38 & 62.10 & 70.82 \\ \hline
-% %BSC-seq$\rightarrow$LSTM & \textbf{75.0} & \textbf{68.0} & \textbf{71.3} & \textbf{70.2} & .909 & 13.35 & 0 \\ % this was achieved before the priors were 'fixed' so that the disallowed count from banned transition from restricted_type1 -> restricted_type2 was transferred to unrestricted_type2 instead of restricted_type1. However, the method without LSTM improved...
-% BSC-seq$\rightarrow$LSTM & \textbf{71.5} & 59.3 & 64.9 & 66.7 & .867 & 17.43 & 0 \\  
-% %BSC-seq+LSTM & 71.7 & 62.7 & 66.9 & 65.9 & \textbf{.957} & \textbf{0.542} & 0 \\
-% BSC-seq+LSTM & 69.3 & 61.1 & 64.9 & 66.3 & \textbf{.945} & \textbf{0.89} & 0 \\  
-% %BCC-seq+LSTM & 39.7 & 14.1 & 20.9 & 31.6 & .924 & 2.14 & 0 \\
-% \hline
-% \end{tabularx}
-% \caption{Prediction performance on NER test dataset with training on crowdsourced labels.}
-% \label{tab:prediction_results_ner}
-% \end{table*}
-%
 \begin{table*}
-% \small
-\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y | }
+\small
+\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y || Y | Y | Y | Y | Y |}
 \hline
-NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{2}{|l|}{Token-level metrics} \\ \hline 
-& Prec. & Recall & F1 & %F1 & AUC & 
-CEE & $N_{inval}$  \\ \hline 
-MV$\rightarrow$LSTMd & 69.4 & 55.1 & 61.5 &% 66.0 & .8775 & 
-19.48 & 0 \\
-IBCC$\rightarrow$LSTMd & 77.6 & 55.7 & 64.9 & %64.8 & .8555 & 
-17.96 & 44 \\
-\hline
-HMM-crowd$\rightarrow$LSTMp & 77.0 & 58.2 & 66.3 &% 70.2 & .9911 &
- 0.23 & 407 \\ 
-HMM-crowd$\rightarrow$LSTMd & 78.7 & 59.0 & 67.5 &% 69.4 & .8642 &
- 15.88 & 0 \\ 
-%LSTM & 83.19 & 57.12 & 67.73 \\ 
-%LSTM-Crowd & 82.38 & 62.10 & 70.82 \\ \hline
-BSC-seq$\rightarrow$LSTMp & 72.9 & 62.4 & 67.2 & %69.3 & .9908 &
- 0.22 & 0 \\  
-BSC-seq$\rightarrow$LSTMd & 74.3 & 62.8 & 68.1 & %69.7 & .8868 & 
-15.65 & 0 \\  
-BSC-seq+LSTMp & 74.4 & 60.3 & 66.6 &% 68.2 & .9782 &
- 0.33 & 0 \\  
-BSC-seq+LSTMd & 73.4 & 62.0 & 67.3 &% 67.6 & .9589 &
- 0.48 & 0 \\
-\hline
-gold$\rightarrow$LSTMp & 74.0 & 75.1 & 74.5 & %76.0 & .9945 &
- 0.19 & 105 \\
-gold$\rightarrow$LSTMd & 76.4 & 77.0 & 76.7 & %77.3 & .9563 & 
-11.10 & 3 \\
-\hline
-\end{tabularx}
-\caption{Prediction performance on NER test dataset with training on crowdsourced labels.}
-\label{tab:prediction_results_ner}
-\end{table*}
-%
-\begin{table*}
-% \small
-\begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y | Y |}
-\hline
-PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{2}{|l|}{Token-level metrics (std.)} \\ \hline 
-& Prec. & Recall & F1 & %F1 & AUC & 
-CEE & $N_{inval}$ \\ \hline
-HMM-Crowd$\rightarrow$LSTMd & \textbf{75.6} & 61.6 & 67.9 & % \textbf{76.4} & .8380 &
+%PICO & \multicolumn{3}{|l|}{Span-level metrics (std.)}                          & \multicolumn{2}{|l|}{Token-level metrics (std.)} \\ \hline 
+ & \multicolumn{5}{l||}{NER} & \multicolumn{5}{l|}{PICO}\\ \hline 
+& Prec. & Recall & F1 & CEE & $N_{inv}$ & Prec. & Recall & F1 & CEE & $N_{inv}$ \\ \hline
+HMM-Crowd$\rightarrow$LSTMd & \textbf{78.7} & 59.0 & 67.5 &% 69.4 & .8642 &
+ 15.88 & 0 & \textbf{75.6} & 61.6 & 67.9 & % \textbf{76.4} & .8380 &
 13.46 & 0\\ \hline
-BSC-seq$\rightarrow$LSTMd & 74.0 & \textbf{66.1} & \textbf{69.8} & %58.2 & .8349 &
+BSC-seq$\rightarrow$LSTMd & 74.3 & \textbf{62.8} & \textbf{68.1} & %69.7 & .8868 & 
+15.65 & 0 & 82.3 & \textbf{66.4} & \textbf{73.5} & %58.2 & .8349 &
  19.62 & 0 \\
-BSC-seq+LSTM & \\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
+BSC-seq+LSTM & 73.4 & 62.0 & 67.3 &% 67.6 & .9589 &
+ 0.48 & 0 & \textbf{87.4} & 57.9 & 69.7 & \textbf{0.93} & 0\\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
 %BCC-seq+LSTM &\\
 \hline
+gold$\rightarrow$LSTMd & 76.4 & 77.0 & 76.7 & %77.3 & .9563 & 
+11.10 & 3 & & & & & \\
+\hline
 \end{tabularx}
-\caption{Prediction performance on PICO test dataset with training on crowdsourced labels.}
+\caption{Prediction performance on test datasets with training on crowdsourced labels.}
 \label{tab:prediction_results_pico}
 \end{table*}
 
-
-\subsection{Active Document Selection}
-
-We run an active learning simulation to evaluate whether the proposed Bayesian approach and integrated LSTM
-can improve the efficiency of the crowdsourcing process. 
-The simulation is run separately for each method tested, and begins with the same initial set of randomly-chosen
-documents taken from the same crowd-labelled sets used in Section \ref{sec:task2}.
-We retrieve the crowdsourced labels for the selected documents, run the aggregation method,
-then use its posterior probabilities to select a new batch of the $N_{batchsize}$ most uncertain documents that have not yet been labelled. 
-We retrieve the annotations for the selected batch of documents, then repeat the process until
-all of the availble crowd labels have been used.
-We set $N_{batchsize}$ to one tenth of the crowd-labelled dataset size for each of the datasets. At each iteration,
-we monitor progress by training an LSTM on the current output of the aggregation method, 
-and testing its performance as in Section \ref{sec:task2}. 
-With the NER dataset we also evaluate the output of aggregation method on the test set for the crowd-labelled documents. 
-This is not possible with PICO datas because we do not have gold labels for documents labelled by the crowd.
-
-The active learning process tested here employs \emph{uncertainty sampling}, which is a 
-well-established heuristic~\cite{settles2010active}. 
-The selection method and batch size could be fine-tuned for future applications -- the 
-goal of our experiment in this paper was to test the benefits of the proposed aggregation methods,
-rather than to establish a robust active learning approach.
- 
-\begin{figure}
-\centering
-% \subfloat[NER dataset]{
-  \includegraphics[width=1\columnwidth, clip=True, trim=35 0 40 40]{figures/NER_AL/pool/plot_f1-score-spans-strict.png}
-% }
-% \subfloat[PICO dataset]{
-%   \includegraphics[width=.7\columnwidth, clip=True, trim=20 47 10 25]{figures/placeholder}
-% }
-\caption{Active learning simulation with NER dataset: increasing span-level F1-score.
-%: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
-}
-\label{fig:al}
-\end{figure}
+\begin{table}
+\small
+\begin{tabularx}{\columnwidth}{|l | Y | Y | Y |} \hline
+No. Tokens & I & O & B \\ \hline
+1486 & 0.22	& 0.978	& 0.648 \\
+14860 & 0.502	& 0.819	& 0.612 \\
+29704 & 0.695	& 0.539	& 0.533 \\ \hline
+\end{tabularx}
+\caption{Accuracies for the integrated LSTM estimated by BSC-Seq+LSTM for NER.}
+\label{tab:lstm_accs}
+\end{table}
 
 \subsection{Discussion}
 

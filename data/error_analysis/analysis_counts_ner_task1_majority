@@ -1,0 +1,2 @@
+# exact match, wrong type, partial match, missed, not a span, late start, early start, late finish, early finish, fused together, extra splits
+4307,304,228,1773,100,96,10,15,85,17,26
