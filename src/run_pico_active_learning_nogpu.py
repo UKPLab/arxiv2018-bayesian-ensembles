@@ -14,27 +14,19 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load
 gold_labelled = gt.flatten() != -1
 crowd_labelled = np.invert(gold_labelled)
 
-# To run with a smaller dataset
-# crowd_labelled[np.random.choice(len(crowd_labelled), int(np.floor(len(crowd_labelled) * 0.99)), replace=False), 0] = False
-# crowd_labelled = crowd_labelled[:, 0]
-#
-# gold_labelled[np.random.choice(len(gold_labelled), int(np.floor(len(gold_labelled) * 0.99)), replace=False), 0] = False
-# gold_labelled = gold_labelled[:, 0]
-#
-# gt_dev = gt_dev[:100]
-# doc_start_dev = doc_start_dev[:100]
-# text_dev = text_dev[:100]
+# run with small dataset to save time
+idxs = np.argwhere(gt != -1)[:, 0]
+idxs = np.concatenate((idxs, np.argwhere(gt != -1)[:, 0]))
+idxs = np.concatenate((idxs, np.argwhere((gt == -1) & (gt_task1_dev == -1))[:300, 0]))  # 100 more to make sure the dataset is reasonable size
 
-# as task 2 -- train on crowdsourced data points with no gold labels,
-# then test on gold-labelled data without using crowd labels
-# annos_tr = annos[crowd_labelled, :]
-# gt_tr = gt[crowd_labelled] # for evaluating performance on labelled data -- these are all -1 so we can ignore these results
-# doc_start_tr = doc_start[crowd_labelled]
-# text_tr = text[crowd_labelled]
-#
-# gt_test = gt[gold_labelled]
-# doc_start_test = doc_start[gold_labelled]
-# text_test = text[gold_labelled]
+gt_task1_dev = gt_task1_dev[idxs]
+annos = annos[idxs]
+doc_start = doc_start[idxs]
+text = text[idxs]
+
+gt_dev = gt_dev[:100]
+doc_start_dev = doc_start_dev[:100]
+text_dev = text_dev[:100]
 
 num_reps = 10
 for rep in range(num_reps):
@@ -50,8 +42,8 @@ for rep in range(num_reps):
         exp.opt_hyper = False #True
 
         exp.nu0_factor = 100
-        exp.alpha0_diags = 10
-        exp.alpha0_factor = 10
+        exp.alpha0_diags = 1
+        exp.alpha0_factor = 1
 
         exp.methods = [
             'majority',
@@ -64,7 +56,7 @@ for rep in range(num_reps):
 
         exp.run_methods(annos, gt, doc_start, output_dir, text,
                         ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                        active_learning=True, AL_batch_fraction=0.02)
+                        active_learning=True, AL_batch_fraction=1.0)
 
 
     # Random Sampling ------------------------------------------------------------------------------
@@ -79,8 +71,8 @@ for rep in range(num_reps):
     exp.opt_hyper = False #True
 
     exp.nu0_factor = 100
-    exp.alpha0_diags = 10
-    exp.alpha0_factor = 10
+    exp.alpha0_diags = 1
+    exp.alpha0_factor = 1
 
     exp.methods = [
         'majority',
@@ -93,7 +85,7 @@ for rep in range(num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=0.02)
+                    active_learning=True, AL_batch_fraction=1.0)
 
     # ------------------------
 
@@ -119,7 +111,7 @@ for rep in range(num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=0.02)
+                    active_learning=True, AL_batch_fraction=1.0)
 
     # Random Sampling ------------------------------------------------------------------------------
 
@@ -145,4 +137,4 @@ for rep in range(num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=0.02)
+                    active_learning=True, AL_batch_fraction=1.0)
