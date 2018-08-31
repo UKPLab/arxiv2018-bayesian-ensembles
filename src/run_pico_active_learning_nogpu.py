@@ -11,10 +11,10 @@ import os
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False)
 
-# gold_labelled = gt.flatten() != -1
-# crowd_labelled = np.invert(gold_labelled)
+gold_labelled = gt.flatten() != -1
+crowd_labelled = np.invert(gold_labelled)
 
-# for debugging
+# To run with a smaller dataset
 # crowd_labelled[np.random.choice(len(crowd_labelled), int(np.floor(len(crowd_labelled) * 0.99)), replace=False), 0] = False
 # crowd_labelled = crowd_labelled[:, 0]
 #

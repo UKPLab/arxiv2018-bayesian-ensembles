@@ -41,6 +41,30 @@ SCORE_NAMES = ['accuracy',
                'mean length error'
                ]
 
+def nice_names(methods):
+
+    nicer = {
+        'bac_acc': 'BSC-acc',
+        'bac_vec': 'BSC-CV',
+        'bac_seq': 'BSC-seq',
+        'bac_ibcc': 'BSC-CM',
+        'bac_mace': 'BSC-MACE',
+        'HMM_crowd': 'HMMcrowd',
+        'ibcc': 'IBCC',
+        'mace': 'MACE',
+        'ds': 'DS',
+        'majority': 'MV'
+    }
+
+    names = []
+    for method in methods:
+        if method in nicer:
+            names.append(nicer[method])
+        else:
+            names.append(method)
+
+    return names
+
 def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=None):
 
     styles = ['-', '--', '-.', ':']
@@ -51,7 +75,7 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
     for j in range(len(methods)):
         plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%4], marker=markers[j%5])
 
-    plt.legend(loc='bottom right') #loc='best')
+    plt.legend(loc='lower right') #loc='best')
 
     if title is not None:
         plt.title(title)
@@ -73,6 +97,8 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
 def plot_results(param_values, methods, param_idx, results, show_plot=False, save_plot=False, output_dir='/output/',
                  score_names=None, title=None):
     # Plots the results for varying the parameter specified by param_idx
+
+    methods = nice_names(methods)
 
     param_values = np.array(param_values)
 
@@ -97,7 +123,7 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
 
         if save_plot:
             print('Saving plot...')
-            plt.savefig(output_dir + 'plot_' + score_names[i] + '.png')
+            plt.savefig(output_dir + 'plot_' + score_names[i] + '.pdf')
             plt.clf()
 
         if show_plot:
@@ -109,13 +135,13 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
 
             if save_plot:
                 print('Saving plot...')
-                plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.png')
+                plt.savefig(output_dir + 'plot_' + score_names[i] + '_zoomed' + '.pdf')
                 plt.clf()
 
             if show_plot:
                 plt.show()
 
-def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
+def plot_active_learning_results(results_dir, output_dir, intervals, result_str='result_'):
 
     # old setups
     #ndocs = np.array([605, 1210, 1815, 2420, 3025, 3630, 4235, 4840, 5445, 6045]) # NER dataset
@@ -123,10 +149,11 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
     #ndocs = np.array([929, 1858, 2787])
 
     # for NER
-    # ndocs = np.array([1486, 2972, 4458, 5944, 7430, 8916, 10402, 11888, 13374, 14860])
-
-    # for PICO
-    ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
+    if intervals == 'NER':
+        ndocs = np.array([1486, 2972, 4458, 5944, 7430, 8916, 10402, 11888, 13374, 14860])
+    elif intervals == 'PICO':
+        # for PICO
+        ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
 
     methods = np.array([
         'majority',
@@ -147,6 +174,9 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
         'BSC-seq->LSTM',
         'BSC-seq+LSTM',
     ])
+
+
+    plot_methods = np.zeros(len(methods), dtype=bool)
 
     # results: y-value, metric, methods, runs
     results = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
@@ -181,11 +211,14 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
             for col in res.columns:
                 thismethod = col.strip("\\# '")
                 print('plotting method "%s"' % thismethod)
+
                 if thismethod in methods:
                     methodidx = np.argwhere(methods == thismethod)[0][0]
                 else:
                     methodidx = len(methods)
                     methods = methods.append(thismethod)
+
+                plot_methods[methodidx] = True
 
                 if result_str + 'started' in resfile:
                     results[ndocsidx, :, methodidx, 0] = (res[col] + run_counts[ndocsidx, :, methodidx, 0] * \
@@ -203,6 +236,8 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
             for row in range(res.shape[0]):
                 methodidx = np.argwhere(methods == res[res.columns[0]][row].strip())[0][0]
 
+                plot_methods[methodidx] = True
+
                 recomputed_order = [6, 7, 8, 3, 4, 5, 13]
 
                 if result_str + 'started' in resfile:
@@ -218,11 +253,13 @@ def plot_active_learning_results(results_dir, output_dir, result_str='result_'):
     output_pool_dir = os.path.join(output_dir, 'pool/')
     output_test_dir = os.path.join(output_dir, 'test/')
 
-    plot_results(ndocs, method_names, 6, results, False, True, output_pool_dir, SCORE_NAMES)#,
+    plot_results(ndocs, method_names[plot_methods], 6, results[:, :, plot_methods, :], False, True, output_pool_dir, SCORE_NAMES)#,
                  #title='Active Learning: Pool Data')
-    plot_results(ndocs, method_names, 6, results_nocrowd, False, True, output_test_dir, SCORE_NAMES)#,
+    plot_results(ndocs, method_names[plot_methods], 6, results_nocrowd[:, :, plot_methods, :], False, True, output_test_dir, SCORE_NAMES)#,
                  #title='Active Learning: Test Data')
 
+    print('Counts of runs with results on pool data:')
     print(run_counts[0, 0, :, 0])
+    print('Counts of runs with results on test data:')
     print(run_counts_nocrowd[0, 0, :, 0])
 

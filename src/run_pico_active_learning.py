@@ -39,7 +39,7 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load
 num_reps = 10
 for rep in range(num_reps):
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -66,7 +66,7 @@ for rep in range(num_reps):
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -92,7 +92,7 @@ for rep in range(num_reps):
 
     # ------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -119,7 +119,7 @@ for rep in range(num_reps):
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_new/'
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
