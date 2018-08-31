@@ -20,6 +20,7 @@ gt_task1_dev = gt_task1_dev[idxs]
 annos = annos[idxs]
 doc_start = doc_start[idxs]
 text = text[idxs]
+gt = gt[idxs]
 
 gt_dev = gt_dev[:100]
 doc_start_dev = doc_start_dev[:100]
