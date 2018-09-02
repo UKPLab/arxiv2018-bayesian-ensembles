@@ -38,6 +38,7 @@
 \newcolumntype{P}[1]{>{\raggedleft\arraybackslash}p{#1}}
 \newcolumntype{Y}{>{\raggedleft\arraybackslash}X}
 \newcolumntype{?}{!{\vrule width 1pt}}
+\newcolumntype{h}{!{\vrule width 0.7pt}}
 
 \usepackage[fleqn]{amsmath}
 \usepackage{amsfonts}
@@ -46,6 +47,7 @@
 \usepackage[boldmath]{numprint}
 \usepackage{url}
 \usepackage[caption=false,font=footnotesize]{subfig}
+\usepackage{float}
 
 \makeatletter
 \makeatother %some sort of hack related to the symbol @
@@ -88,22 +90,25 @@
 
 \begin{abstract}
 Current methods for sequence tagging, a core task in NLP, are data hungry.
-Crowdsourcing is often used as a relatively cheap solution to obtain labeled data, but
-the annotators are unreliable, so noise must be mitigated through redundant labeling
-and aggregation techniques.
-Building on previous Bayesian approaches that have been shown to perform strongly 
-on other crowdsourcing tasks,
-we develop a new model for combining unreliable sequence labels from multiple annotators.
+Crowdsourcing is a relatively cheap way to obtain labeled data, but
+the annotators are unreliable, so redundant labeling
+and aggregation techniques are required.
+We evaluate multiple models of annotator reliability and develop
+ a Bayesian method for aggregating sequence labels from multiple annotators.
+%and propose a technique to boost performance by integrating existing black-box sequence taggers.
 Typically, the process of data collection, aggregation and training a sequence tagger 
 is a pipeline of discrete steps.
-We integrate these steps by introducing
-a Bayesian wrapper for black-box sequence taggers that enables them to be trained with
-crowdsourced data and accounts for the unreliability of the black-box method as well as the crowd of annotators.
+We integrate these steps by training black-box sequence taggers as components in the aggregation model and
+accounting for their unreliability.
 We evaluate our model on named entity recognition and information extraction tasks,
-showing that our method improves on previous work. 
-Our experiments show that by integrating the training and aggregation steps into a Bayesian framework, 
-we can use active learning techniques to obtain data more efficiently without modifying the black-box method.
-A modular implementation of our method is published along with experimental code to encourage adaptation and reuse.
+showing that our method outperforms previous methods, particularly in small data scenarios that
+are encountered at the beginning of a crowdsourcing process.
+%Our experiments show that by integrating the training and aggregation steps into a Bayesian framework, 
+%we can use active learning techniques to obtain data more efficiently without modifying the black-box method.
+Our code is published to encourage adaptation and reuse.
+
+% TODOs: 
+% 2. update plots for PICO -- can cut one or maybe both if they are no different.
 
 % \rough
 % VERSION 1:
@@ -149,7 +154,7 @@ A modular implementation of our method is published along with experimental code
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section*{Acknowledgments}
+%\section*{Acknowledgments}
 
 % \addcontentsline{toc}{chapter}{Bibliography}
 %\bibliographystyle{apalike}

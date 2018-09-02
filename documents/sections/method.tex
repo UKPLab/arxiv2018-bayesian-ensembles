@@ -2,13 +2,12 @@
 
 When combining multiple annotators with varying skill levels, we can improve performance by modeling the reliability of individuals. Several models have previously been applied that do not consider dependencies between a sequence of annotations. In this section, we describe these existing models and provide an extension that captures sequential dependencies.
 
-\textbf{Accuracy model (Acc)}: one of the simplest ways to model the reliability of an annotator
-is simply to learn their accuracy, $\pi$, as follows: 
+\textbf{Accuracy model (acc)}: simply models the annotator's accuracy, $\pi$, as follows: 
 \begin{flalign}
- & p( c_{\tau} = j | t_{\tau} = \iota, \pi ) = \left.
+ & p( c_{\tau} = i | t_{\tau} = i, \pi ) = \left.
 \begin{cases}
-  \pi  \!&\text{ where } j = \iota \\
-  \frac{1 - \pi}{J} \!&\text{ otherwise}
+  \pi  \!&\text{ where } i = j \\
+  \frac{1 - \pi}{J-1} \!&\text{ otherwise}
 \end{cases} 
 \right\} , &&
 \end{flalign}
@@ -20,50 +19,50 @@ which means that when one class label is far more common than others,
 a spammer who always selects the most common label will have a high $\pi$.
 %despite their labels being uninformative.
 
-\textbf{MACE spamming model}: proposed by Hovy et al.~\shortcite{hovy2013learning} as part of
-the \emph{MACE} aggregation method, this method again assumes a constant annotator accuracy,
+\textbf{MACE spamming model}~\cite{hovy2013learning}:
+This method again assumes a constant annotator accuracy,
 but also models the case where annotators are incorrect by assuming they label according to 
 a spamming distribution that is independent of the true label.
 \begin{flalign}
-& p( c_{\tau} = j | t_{\tau} = \iota, \pi, \xi) && \nonumber \\
+& p( c_{\tau} = i | t_{\tau} = j, \pi, \xi) && \nonumber \\
 & = \left.
 \begin{cases}
-  \pi + (1 - \pi) \xi_j  &\text{ where } j = \iota \\
+  \pi + (1 - \pi) \xi_j  &\text{ where } i = j \\
   (1 - \pi) \xi_j &\text{ otherwise}
 \end{cases} 
 \right\}.
 \end{flalign}
-While MACE can capture spamming patterns, it does not explicitly model different 
+While MACE can capture spamming patterns, it does not explicitly model 
 different rates of errors per class. This could be an issue for sequence tagging using the 
 BIO encoding: annotators who start labeling spans one or two tokens early more frequently
 mis-label the `B' tokens than the `I' or `O' tokens,  but this cannot be modeled by MACE. 
 
-\textbf{Confusion vector (CV)}: learn separate accuracies for each class label\cite{nguyen2017aggregating}
-by assuming that $\bs\pi$ is a vector of likelihoods of size $J$:
+\textbf{Confusion vector (CV)}: learn separate accuracies for each class label~\cite{nguyen2017aggregating}
+by assuming that $\bs\pi$ is a vector of size $J$:
 \begin{flalign}
-& p( c_{\tau} \!\!=\! j | t_{\tau} \!=\! \iota, \bs\pi ) = \left.
+& p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi ) = \left.
 \begin{cases}
-  \pi_j  \!\!\!\!\!\!&\text{ where } j \!=\! \iota \\
-  \frac{1 \!- \!\pi_j}{J} \!\!\!\!\!\!&\text{ otherwise}
+  \pi_j  \!\!\!\!\!\!&\text{ where } i \!=\! j \\
+  \frac{1 \!- \!\pi_j}{J-1} \!\!\!\!\!\!&\text{ otherwise}
 \end{cases} 
 \! \right\} \!.&&
 \end{flalign}
-For the incorrect label case where $j \!=\! \iota$,
- $p( c_{\tau} \!\!=\! j | t_{\tau} \!=\! \iota, \bs\pi )$ is constant for all values of $j$.
+For the incorrect label case where $i \!=\! j$,
+ $p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi )$ is constant for all values of $i\neq j$.
  Therefore, this model does not explicitly capture spamming
 patterns where one of the incorrect labels has a much higher likelihood than the others.
 
-\textbf{Confusion matrix (CM)}: first proposed by Dawid and Skene~\shortcite{dawid_maximum_1979},
+\textbf{Confusion matrix (CM)}~\cite{dawid_maximum_1979}:
 this model can be seen as an expansion of the confusion vector so that $\bs\pi$ becomes a 
 $JxJ$ matrix with values given by:
 \begin{flalign}
-& p( c_{\tau} \!\!=\! j | t_{\tau} \!=\! \iota, \bs\pi ) = 
-  \pi_{j,\iota} \!.&&
+& p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi ) = 
+  \pi_{j,i} \!.&&
 \end{flalign}
-This requires a larger number of parameters, $JxJ$, compared to the $J+1$ parameters of MACE or $J$ parameters
+This requires a larger number of parameters, $J\times J$, compared to the $J+1$ parameters of MACE or $J$ parameters
 of the confusion vector.
 The confusion matrix therefore represents the probability of each individual mistake,
-so can model spammers who frequently chose one label regardless
+so it can model spammers who frequently chose one label regardless
 of the ground truth.
 It can also model annotators in sequence tagging tasks who have different error rates for `B-x', `I-x' and `O' labels, for example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently mis-label the start of a span as `O' when the true label is `B-x', but are otherwise accurate.
 However, the confusion matrix ignores the dependencies between annotations in a sequence that affect these probabilities.
@@ -74,51 +73,49 @@ For instance, it is usually not possible for an annotator to assign an `I' label
 % O-O-O-O-O-O
 % We can see that the first two annotators agree that the third token is part of the span, 
 
-\textbf{Sequential Confusion Matrix (Seq)}: we introduce a new extension to the confusion matrix to model the dependency 
+\textbf{Sequential Confusion Matrix (seq)}: we introduce a new extension to the confusion matrix to model the dependency 
 of each label in a sequence on its predecessor. The likelihood of a label can now be written as follows:
 \begin{flalign}
-& p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi ) = 
-  \pi_{j,c_{i-1},\iota} ,&&
+& p( c_{\tau} \!\!=\! i | c_{i-1}, t_{\tau} \!=\! j, \bs\pi ) = 
+  \pi_{j,c_{\tau-1},i} ,&&
 \end{flalign}
-where $\bs\pi$ is now three-dimensional with size $JxJxJ$.
-In the case of diasllowed transitions, e.g. from $c_{i-1}=$`O' to $c_{\tau}=$`I', the value $\pi_{j,c_{i-1},c_{\tau}}=0$, $\forall j$
-need not be learned. 
+where $\bs\pi$ is now three-dimensional with size $J\times J\times J$.
+In the case of disallowed transitions, e.g. from $c_{\tau-1}=$`O' to $c_{\tau}=$`I', the value $\pi_{j,c_{i-1},c_{\tau}}=0$, $\forall j$
+does not need to be learned. 
 The sequential model can capture phenomena such as a tendency toward overly long sequences, by learning that
 $\pi_{O,O,O} > \pi_{O,I,O}$,
 or a tendency to split spans by inserting `B' in place of `I' by increasing the value of
 $\pi_{I,I,B}$ without affecting $\pi_{I,B,B}$ and $\pi_{I,O,B}$.
 
-The annotator models described above can be seen as extensions of one another, which can be used as 
-part of a complete model for aggregating sequential annotations as described in the next section.
+The annotator models described above are extensions of one another that can be used as part of the model for aggregating sequential annotations described in the next section. The experiments in Section \ref{sec:expts_all} 
+ test whether the more expressive seq annotator model,
+which has more parameters to learn, is beneficial in a realistic setting.
 
 \section{Bayesian Sequence Combination}\label{sec:model}
 
 The generative story for our approach, \emph{Bayesian sequence combination (BSC)}, is as follows.
-We assume a transition matrix, $\bs B$, where each entry $B_{j,\iota} = p(t_{\tau} = \iota | t_{\tau-1} = j)$.
+We assume a transition matrix, $\bs B$, where each entry is $B_{j,\iota} = p(t_{\tau} = \iota | t_{\tau-1} = j)$.
 We draw each row of the transition matrix, $B_j \sim \mathrm{Dir}(\bs\beta_j)$, where $\mathrm{Dir}$ is the Dirichlet distribution. 
-For each document, $i$, in a set of $N$ documents, we draw a sequence of class labels, 
-$\bs t_i = [t_{i,1}, ..., t_{i, T_i}]$, of length $T_i$, from $t_{i,\tau} \sim \mathrm{Categorical}(\bs B_{t_{i,\tau-1}})$.
+For each document, $n$, in a set of $N$ documents, we draw a sequence of class labels, 
+$\bs t_n = [t_{n,1}, ..., t_{n, T_n}]$, of length $T_n$, from $t_{n,\tau} \sim \mathrm{Categorical}(\bs B_{t_{n,\tau-1}})$.
 
 Given $K$ annotators and a choice of the models defined in Section \ref{sec:annomodels}, we draw an annotator model for each annotator, $k$.
-All of the annotator models are parametrized by probabilites that we draw from Dirichlet distributions.
-For the Acc model, only one parameter, $\pi^{(k)}$ is drawn for annotator $k$, for MACE we draw a single value $\pi^{(k)}$ and a vector $\xi^{(k)}$, for CV we draw $J$ independent values of $\pi_j^{(k)}$, for CM  
-we draw a vector $\bs\pi^{(k)}_j$ of size $J$ for each true label value $t_{\tau}=j$. In the case of Seq, 
+All of the annotator models are parametrized by probabilities that we draw from Dirichlet distributions.
+For the acc model, only one parameter, $\pi^{(k)}$, is drawn for annotator $k$. 
+For MACE, we draw a single value $\pi^{(k)}$ and a vector $\xi^{(k)}$, 
+while for CV we draw $J$ independent values of $\pi_j^{(k)}$, 
+and for CM  
+we draw a vector $\bs\pi^{(k)}_j$ of size $J$ for each true label value $t_{\tau}=j$. In the case of seq, 
 we draw vectors $\bs\pi^{(k)}_{j,\iota}$ for each true label and each previous label value, $\iota$.
-We hereon refer to the set of all parameters for the chosen annotator models as $\bs A$, whose prior is parametrized
-by hyperparameters $\bs\alpha$.
+We refer to the set of all parameters for the chosen annotator models as $\bs A$, whose prior has hyperparameters $\bs\alpha$.
 
-In contrast to the Hidden Markov Model (HMM) approach used by Nguyen et al, \shortcite{nguyen2017aggregating},
-we do not explicitly consider text features in our observation model. Instead,
-we defer to existing black-box methods to make use of text features. 
-The next section describes how we learn the parameters of the model and
-integrate the existing methods into the model to boost performance.
-The experiments in Sections \ref{sec:synexpts} and \ref{sec:expts} then test whether the more expressive Seq annotator model,
-which has more parameters to learn, is beneficial in a realistic setting.
+%integrating existing sequence taggers using the learning
+%procedure described in the next section.
 
-\section{Variational Wrapper for Black-Box Sequence Taggers} \label{sec:vb}
+\section{Inference using Variational Bayes} \label{sec:vb}
  
-We learn the model parameters, $\bs\theta=\{\bs A, \bs B\}$ and sequence labels $\bs t$
-given a set of annotations, $\bs c$, using \emph{variational Bayes (VB)}\cite{attias_advances_2000}.
+We learn the parameters, $\bs A$ and $\bs B$ and sequence labels $\bs t$
+given annotations, $\bs c$, using \emph{variational Bayes}(\emph{VB})~\cite{attias_advances_2000}.
 VB is an approximate inference method that avoids the need for expensive sampling steps,
 while considering prior distributions and accounting for uncertainty over parameters in a Bayesian manner.
 \begin{algorithm}
@@ -128,99 +125,102 @@ while considering prior distributions and accounting for uncertainty over parame
  $\hat{\bs d}$ randomly or to prior means\;
  \While{$\mathbb{E}\left[\bs t\right]$ not converged}
  {
- \nl Update $q(t_{i,\tau}=j)$ and $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$, $\forall i,\forall \tau,\forall j$,
+ \nl Update $q(t_{n,\tau}=j)$ and $q(t_{n,\tau-1}=j, t_{n,\tau}=j')$, $\forall i,\forall \tau,\forall j$,
  given $\mathbb{E}\left[\ln \bs B \right]$ and 
  $\mathbb{E}\left[\ln\bs A \right]$
  using the forward-backward algorithm~\cite{ghahramani2001introduction}\;
- \nl Set true label predictions $\mathbb{E}\left[t_{i,\tau}=j\right] = q(t_{i,\tau}=j)$ \;
+ \nl Set true label predictions $\mathbb{E}\left[t_{n,\tau}=j\right] = q(t_{n,\tau}=j)$ \;
  \nl Retrain sequence taggers using $\mathbb{E}\left[\bs t\right]$ as training labels\;
  \nl Use sequence taggers to predict $\hat{\bs d}$\;
- \nl Update $q\left(\bs A\right)$ and recompute $\mathbb{E}[p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi )]$ given current $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$\;
- \nl Update $q(\bs B)$ and recompute $\mathbb{E}\left[\ln\bs B \right]$ given current $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$\;
+ \nl Update $q\left(\bs A\right)$ and recompute $\mathbb{E}[p( c_{n,\tau} \!\!=\! j | c_{n,\tau-1}, t_{n,\tau} \!=\! \iota, \bs\pi )]$ given current $q(t_{n,\tau-1}=j, t_{n,\tau}=j')$\;
+ \nl Update $q(\bs B)$ and recompute $\mathbb{E}\left[\ln\bs B \right]$ given current $q(t_{n,\tau-1}=j, t_{n,\tau}=j')$\;
  }
 \KwOut{ Posterior predictions for the true labels, $\mathbb{E}[\bs t]$. }
 \caption{The VB algorithm for Seq-BCC.}
 \label{al:vb_bac}
 \end{algorithm}
 Each latent variable in the generative model, $z$, has a variational distribution $q(z)$,
-that is of the same form as its prior distribution (Dirichlet for $\bs B_j$, Categorical for $t_{i,\tau}$, etc.),
-as defined in Section \ref{sec:model}.
-The parameters of each $q(z)$ are functions of expectations over the other variables in the model.
-For reasons of space, we do not provide all variational update equations in this paper, 
-however, they can be derived given the generative model stated above.
-The VB procedure for BSC is detailed in Algorithm \ref{al:vb_bac}, 
-and includes an extension to integrate black-box sequence taggers using  
-an additional expectation-maximization (EM) step.
+that is of the same form as its prior distribution (Dirichlet for $\bs B_j$, Categorical for $t_{n,\tau}$, etc.),
+defined in Section \ref{sec:model}.
+The parameters of each $q(z)$ are expectations over the other variables in the model.
+For reasons of space, we do not provide all variational update equations here.
+However, they can be derived given the generative model stated above.
 
-We integrate each sequence tagger, $s$, by modeling it as an additional annotator
-that predicts a sequence of labels, $\bs d_{i}^{(s)}$, for document $i$. 
+The VB procedure for BSC is detailed in Algorithm \ref{al:vb_bac},
+including a step for integrating existing 
+sequence taggers to boost performance of the aggregation method. 
+The sequence taggers act as 
+additional noisy annotators who can also make predictions for unlabeled documents.
+We integrate a sequence tagger, $s$, by modeling it as an additional annotator
+that predicts a sequence of labels, $\bs d_{n}^{(s)}$, for document $n$. 
 We treat these predictions as random variables whose
- joint distribution with the sequence of text tokens, $\bs\phi_i$, in document $i$
+ joint distribution with the sequence of text tokens, $\bs\phi_n$, 
  is given by:
 \begin{flalign}
-p \left(d_{i,\tau}^{(s)} , \bs\phi_i | \bs t, \bs\theta^{(s)} \right) 
+p \left(d_{n,\tau}^{(s)} , \bs\phi_n | \bs t, \bs\theta^{(s)} \right) 
 %q \left(d_{i,\tau}^{(s)} \right) 
 = &
 %\mathbb{E}_{\bs\theta^{(s)}}\left[
-p\left(d_{i,\tau}^{(s)} | \bs t, d_{i,\tau-1}^{(s)}, \bs A^{(s)} \right) & \nonumber\\
-& p \left(\bs\phi_i | d_{i,\tau}^{(s)}, \bs\theta^{(s)} \right) 
+p\left(d_{i,\tau}^{(s)} | \bs t, d_{n,\tau-1}^{(s)}, \bs A^{(s)} \right) & \nonumber\\
+& p \left(\bs\phi_n | d_{n,\tau}^{(s)}, \bs\theta^{(s)} \right) 
 %\right]
 ,  &
 \end{flalign}
 where the first term on the right-hand side is defined by the annotator model
 with parameters $\bs A^{(s)}$, and 
 $\bs\theta^{(s)}$ are the parameters of the sequence tagger, $s$.
-Marginalizing $\bs d_i^{(s)},\forall i$ permits us to train the sequence tagger on 
-$\mathbb{E}[\bs t]$ given $\bs\phi_i$ to obtain a prediction function for sequences of labels, 
- $\hat{\bs d}^{(s)}_{i} = f(\bs\phi_i)$,
- where 
- $\hat{\bs d}^{(s)}_{i}$ is either the variational distribution 
- $\hat{\bs d}^{(s)}_{i} = q(\bs d^{(s)}_{i})$ 
- or the sequence of most likely values
- of $\hat{\bs d}^{(s)}_{i} = \argmax_{\bs{d}^{(s)}_{i}} p\left(\bs\phi_i | \bs{d}^{(s)}_{i}, \hat{\bs\theta^{(s)}}\right) $,
-and training may either marginalize $\bs\theta^{(s)}$
-or optimize it using maximum likelihood.
-Since we require only $f$ to perform variational updates for $\bs d^{(s)}_i$, $\bs A^{(s)}$ and $\bs t$, 
+Marginalizing $\bs d_n^{(s)}$ permits us to train the sequence tagger using
+labels $\mathbb{E}[\bs t]$ and features $\bs\phi_n$, to obtain a prediction function for sequences of labels, 
+ $\hat{\bs d}^{(s)}_{n} = f(\bs\phi_n)$.
+ %If training marginalizes $\bs\theta^{(s)}$, then
+ If we use a Bayesian sequence tagger,
+$\hat{\bs d}^{(s)}_n$ is the variational distribution,
+$f(\bs\phi_n) = q(\bs d^{(s)}_{n})$.
+ However, neural network sequence taggers typically maximize likelihood,
+ so that $\hat{\bs d}^{(s)}_{n} = \argmax_{\bs{d}^{(s)}_{n}} p\left(\bs\phi_n | \bs{d}^{(s)}_{n}, \hat{\bs\theta^{(s)}}\right) $
+ is the sequence of most likely values.
+Since we require only $f$ to perform variational updates for $\bs d^{(s)}_n$, $\bs A^{(s)}$ and $\bs t$, 
 we can treat $s$ as a black box inside a variational wrapper,
 ignoring its internal details. Therefore, the sequence tagger need not implement 
-a generative model but can be discriminative, as is the case for many neural networks. 
+a generative model. %as is the case for many neural networks. 
 %that outputs either discrete predictions or probabilities
-Note, however, that 
-if $f(\bs\phi_i)$ approximates $\hat{\bs d}^{(s)}_{i}$, convergence may not be guaranteed.
-Where the sequence tagger uses a maximum likelihood rather than Bayesian training 
-procedure, the complete model also does not account for uncertainty in the model of the text sequence. 
+%Note, however, that 
+%if $f(\bs\phi_n)$ approximates $\hat{\bs d}^{(s)}_{n}$, convergence may not be guaranteed.
+Where the sequence tagger does not use Bayesian inference, 
+the complete model also does not account for uncertainty in its parameters $\bs\theta^{(s)}$. 
 
-This variational wrapper allows us to potentially exploit multiple existing sequence taggers,
-or indeed other existing classifiers useful for recognising tag types,
-with only the requirement that they provide training and prediction functions.
-Our approach learns the reliability of each sequence tagger, hence does not require them 
-to be optimized for the current domain, 
-and provides confidence estimates based on their reliability.
- As with the annotators, we assume the taggers to be conditionally independent of one another given the true labels. 
- While this assumption has not proven a large drawback in previous works on 
- combining annotators~\cite{dawid_maximum_1979,kim2012bayesian,simpson2015bayesian},
-it remains a strong assumption when multiple taggers depend on the same text features.
+Our variational approach allows us to exploit existing sequence taggers to improve 
+the quality of aggregated labels,
+%or indeed other existing classifiers useful for recognising tag types,
+requiring only that they provide training and prediction functions.
+By modeling sequence taggers as additional annotators, our approach accounts for their reliability when aggregating labels, and permits the use of noisy
+sequence taggers, such as those that are not optimized for the current domain. %provides confidence estimates based on their reliability.
+%
+%  As with the annotators, we assume the taggers are conditionally independent of one another given the true labels. 
+%  While this assumption has not proven a large drawback in previous works on 
+%  combining annotators~\cite{dawid_maximum_1979,kim2012bayesian,simpson2015bayesian},
+% it remains a strong assumption when multiple taggers depend on the same text features.
  
 \section{Modular Implementation of Variational Inference} \label{seq:modular}
  
 The variational inference method described in Section  \ref{sec:vb}
 is naturally suited to a modular implementation. We divide the model into 
 three modules: (a) the true label model, (b) the annotator model, and (c) black-box sequence taggers.
-The true label model defines the distribution over sequences of labels, $q(\bs t_i)$, 
+The true label model defines the distribution over sequences of labels, $q(\bs t_n)$, 
 and implements lines 2, 3 and 7 in Algorithm \ref{al:vb_bac}. The annotator model 
 may be one of those described in Section \ref{sec:annomodels} and implements line 6.
 The black-box sequence taggers are existing implementations that provide training and prediction functions
 to predict true labels given text features, and are used in lines 4 and 5.
 
 The true label model exposes methods to compute 
-$q(t_{i,\tau}=j)$ and $q(t_{i,\tau-1}=j, t_{i,\tau}=j')$, $\forall i,\forall \tau,\forall j$
-given $\bs c$ and $\mathbb{E}[p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi )]$.
-In our implementation of BSC, the true label model contains methods for learning a transition matrix over labels,
-$\bs B$, which assumes first-order Markov chain. Other underlying models could also be used, such as a model with longer memory. 
-
+$q(t_{n,\tau}=j)$ and $q(t_{n,\tau-1}=j, t_{n,\tau}=j')$, $\forall n,\forall \tau,\forall j,\forall j'$
+given $\bs c$ and $\mathbb{E}[p( c_{n,\tau} \!\!=\! i | c_{n,\tau-1}, t_{n,\tau} \!=\! j, \bs\pi )]$.
+In BSC, the true label model learns a transition matrix,
+$\bs B$, which assumes a first-order Markov chain. True label models with 
+longer memory could also be used could be used here. 
 The worker models must provide methods to initialise the variational distribution $q(\bs A)$,
 update $q(\bs A)$ given $\bs c$, $\hat{\bs{d}}$, and $\mathbb{E}[\bs t]$, and
-compute $\mathbb{E}[p( c_{\tau} \!\!=\! j | c_{i-1}, t_{\tau} \!=\! \iota, \bs\pi )]$.
+compute $\mathbb{E}[p( c_{n,\tau} \!\!=\! i | c_{n,\tau-1}, t_{n,\tau} \!=\! j, \bs\pi )]$.
 
 By allowing individual functions to be replaced without rewriting the inference
 method, the modular implementation makes it easier to adapt the model to different types of annotations, 

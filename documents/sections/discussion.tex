@@ -2,26 +2,25 @@
 
 Previous work has demonstrated the benefits of modeling annotator reliability when aggregating noisy data, 
 such as crowdsourced labels. 
-We proposed a sequential annotator model for sequence tagging, BSC-Seq,
-and showed how it improves the state-of-the-art. 
+We proposed BSC-Seq, a fully Bayesian approach to aggregating sequence labels, 
+that models the effect of label sequences on annotator reliability,
+and showed how it improves the state-of-the-art, particularly with small datasets.
 %To enable more efficient training data collection,
 To further improve the quality of aggregated labels,
-we design a Bayesian wrapper that allows developers to integrate existing sequence taggers, 
-such as deep neural networks, into BSC-Seq while
-treating them as black boxes.
-Our results show that integrating an LSTM in this manner can outperform an LSTM trained 
-using labels that were aggregated in a separate pre-processing step. 
-However, for active learning from crowds or learning with small datasets, 
-we find that our purely Bayesian aggregation method, i.e. BSC-Seq without integrating the LSTM,
-outperforms both LSTM-based approaches. This hints at the value of uncertainty information
-in text models when data-efficient learning is required. 
+we designed a variational wrapper for integrating existing black-box 
+sequence taggers, such as deep neural networks.
+Our results show that this technique can improve aggregated data quality
+on both active and passive learning tasks.
+%We also found that including a simple conditional independence model of text features enables us to learn BSC-seq more effectively.
 
-Future work will investigate the integration of approximate Bayesian variants of neural network
-sequence taggers, which may address the need for uncertainty information during active learning.
-We will also consider
-%  improving robustness of the active learning process with very small datasets by investigating 
-alternative data selection strategies, and how to include %reduce over-confidence in predictions by including
-prior information about the reliability of black-box classifiers on a given training set size.
+Future work will evaluate integrating sequence taggers that use
+Bayesian methods for deep learning, 
+which may improve active learning.
+We will also investigate
+alternative data selection strategies to bootstrap active learning, 
+and how to set priors for %reduce over-confidence in predictions by including
+the reliability of black-box methods by experimenting
+on other training sets of similar size.
 
 %how to adapt hyper-parameters of the NN automatically in low-resource state?
 

@@ -155,7 +155,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         # for PICO
         ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
     elif intervals == 'PICOsmall':
-        ndocs = np.array([384, 763, 1132, 1488, 1834, 2132, 2300])
+        ndocs = np.array([384, 764, 1132, 1488, 1834, 2132, 2300])
 
     methods = np.array([
         'majority',

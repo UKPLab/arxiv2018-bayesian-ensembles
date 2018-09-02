@@ -1351,46 +1351,65 @@ class Experiment(object):
 
         return results
 
-    def replot_results(self):
+    def replot_results(self, exclude_methods=[], recompute=True):
         # Reloads predictions and probabilities from file, then computes metrics and plots.
 
         # initialise result array
         results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES), len(self.methods), self.num_runs))
         std_results = np.zeros((self.param_values.shape[0], len(SCORE_NAMES)-3, len(self.methods), self.num_runs))
 
-        # iterate through parameter settings
-        for param_idx in range(self.param_values.shape[0]):
+        if recompute:
 
-            print('parameter setting: {0}'.format(param_idx))
+            # iterate through parameter settings
+            for param_idx in range(self.param_values.shape[0]):
 
-            # read parameter directory
-            path_pattern = self.output_dir + 'data/param{0}/set{1}/'
+                print('parameter setting: {0}'.format(param_idx))
 
-            # iterate through data sets
-            for run_idx in range(self.num_runs):
-                print('data set number: {0}'.format(run_idx))
+                # read parameter directory
+                path_pattern = self.output_dir + 'data/param{0}/set{1}/'
 
-                data_path = path_pattern.format(*(param_idx, run_idx))
-                # read data
-                doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')
-                # run methods
-                preds = np.loadtxt(data_path + 'predictions.csv')
-                if preds.ndim == 1:
-                    preds = preds[:, None]
+                # iterate through data sets
+                for run_idx in range(self.num_runs):
+                    print('data set number: {0}'.format(run_idx))
 
-                probabilities = np.load(data_path + 'probabilities')
-                if probabilities.ndim == 2:
-                    probabilities = probabilities[:, :, None]
+                    data_path = path_pattern.format(*(param_idx, run_idx))
+                    # read data
+                    doc_start, gt, annos = self.generator.read_data_file(data_path + 'full_data.csv')
+                    # run methods
+                    preds = np.loadtxt(data_path + 'predictions.csv')
+                    if preds.ndim == 1:
+                        preds = preds[:, None]
 
-                for method_idx in range(len(self.methods)):
-                    print('running method: {0}'.format(self.methods[method_idx]), end=' ')
+                    probabilities = np.load(data_path + 'probabilities')
+                    if probabilities.ndim == 2:
+                        probabilities = probabilities[:, :, None]
 
-                    agg = preds[:, method_idx]
-                    probs = probabilities[:, :, method_idx]
+                    for method_idx in range(len(self.methods)):
 
-                    results[param_idx, :, method_idx, run_idx][:, None], \
-                    std_results[param_idx, :, method_idx, run_idx] = self.calculate_scores(
-                        agg, gt.flatten(), probs, doc_start, bootstrapping=False)
+                        if self.methods[method_idx] in exclude_methods:
+                            continue
+
+                        print('running method: {0}'.format(self.methods[method_idx]), end=' ')
+
+                        agg = preds[:, method_idx]
+                        probs = probabilities[:, :, method_idx]
+
+                        results[param_idx, :, method_idx, run_idx][:, None], \
+                        std_results[param_idx, :, method_idx, run_idx] = self.calculate_scores(
+                            agg, gt.flatten(), probs, doc_start, bootstrapping=False)
+
+        else:
+            print('Loading precomputed results...')
+            # np.savetxt(self.output_dir + 'results.csv', np.mean(results, 3)[:, :, 0])
+            results = np.load(self.output_dir + 'results')
+
+        included_methods = np.ones(len(self.methods), dtype=bool)
+        included_methods[np.in1d(self.methods, exclude_methods)] = False
+        included_methods = np.argwhere(included_methods).flatten()
+
+        results = results[:, :, included_methods, :]
+
+        methods = np.array(self.methods)[included_methods]
 
         if self.save_results:
             if not os.path.exists(self.output_dir):
@@ -1402,7 +1421,7 @@ class Experiment(object):
 
         if self.show_plots or self.save_plots:
             print('making plots for parameter setting: {0}'.format(self.param_idx))
-            plot_results(self.param_values, self.methods, self.param_idx, results,
+            plot_results(self.param_values, methods, self.param_idx, results,
                          self.show_plots, self.save_plots, self.output_dir)
 
         return results

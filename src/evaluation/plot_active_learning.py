@@ -12,13 +12,13 @@ if __name__ == '__main__':
     # output_dir = './documents/figures/NER_RAND/'
     # intervals = 'NER'
 
-    # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_new/'
+    # results_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
     # output_dir = './documents/figures/PICO_AL/'
-    # intervals = 'PICO'
+    # intervals = 'PICOsmall'
 
-    results_dir = '../../data/bayesian_annotator_combination/output/bio_rand_new/'
+    results_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
     output_dir = './documents/figures/PICO_RAND/'
-    intervals = 'PICO'
+    intervals = 'PICOsmall'
 
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
