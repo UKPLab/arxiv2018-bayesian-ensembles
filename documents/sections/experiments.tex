@@ -129,7 +129,7 @@ For PICO, we use the relaxed F1-measure~\cite{nguyen2017aggregating}, which coun
 Since the spans in PICO are longer than those of NER, partial matches may still contain much of the required information. 
 %We additionally compute the root mean squared error in the span lengths, i.e. the difference between the  % actually it's not quite that. We computed the difference in mean span lengths. This is already captured by F1 score for pico and better described by the span-level-precision and recall. Our metric might be more if we didn't take the absolute so we could see if spans were often too long or too short.
 We also compute the cross entropy error (\emph{CEE}) at the level of tokens
-to compare the probability estimates produced by aggregation methods, which are useful for decision-making tasks such as active learning, 
+to compare the probability estimates produced by aggregation methods, which are useful for decision-making tasks such as active learning.
 
 \subsection{Aggregating Crowdsourced Labels}\label{sec:task1}
 \begin{table*}
@@ -321,17 +321,17 @@ further work may be required to improve the distinction between 'B' and 'I' toke
 \begin{figure*}[ht]
 \centering
 \subfloat[NER, random sampling]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 0 0 40]{figures/NER_RAND/pool/plot_f1-score-spans-strict}
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 38]{figures/NER_RAND/pool/plot_f1-score-spans-strict}
 }
 \subfloat[NER, active learning simulation]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 0 0 40]{figures/NER_AL/pool/plot_f1-score-spans-strict}
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 38]{figures/NER_AL/pool/plot_f1-score-spans-strict}
 }\\
 \centering
 \subfloat[PICO, random sampling]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 0 0 40]{figures/PICO_RAND/pool/plot_f1-score-spans-relaxed}
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 40]{figures/PICO_RAND/pool/plot_f1-score-spans-relaxed}
 }
 \subfloat[PICO, active learning simulation]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 0 0 40]{figures/PICO_AL/pool/plot_f1-score-spans-relaxed}
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 40]{figures/PICO_AL/pool/plot_f1-score-spans-relaxed}
 }
 \caption{Small data subsamples: increasing span-level F1-score.
 %: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
