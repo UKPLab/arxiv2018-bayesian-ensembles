@@ -11,8 +11,10 @@ import numpy as np
 output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 
 regen_data = False
+
+print('USING ONLY A SUBSET OF DATA FOR DEBUGGING!!!!!!!!!!!')
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data)
+    load_data.load_biomedical_data(regen_data, 200000)
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 
@@ -94,7 +96,7 @@ exp.nu0_factor = best_nu0factor
 #
 # # run all the methods that don't require tuning here
 exp.methods =  [
-                'majority',
+                #'majority',
                 # 'mace',
                 # 'ds',
                 # #'best',
@@ -109,47 +111,47 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                 new_data=regen_data
                 )
 
-
+#
+# # # reset to free memory? ------------------------------------------------------------------------------------------------
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False
+#
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+#
+# exp.methods =  [
+#                 best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
+# ]
+#
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(annos, gt, doc_start, output_dir, text,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                 new_data=regen_data
+#                 )
+#
+#
 # # reset to free memory? ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False
-
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-
-exp.methods =  [
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-]
-
-# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                new_data=regen_data
-                )
-
-
-# reset to free memory? ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False
-
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-
-exp.methods =  [
-                #'HMM_crowd',
-                best_bac_wm + '_integrateBOF_then_LSTM',
-                #'HMM_crowd_then_LSTM',
-                best_bac_wm,
-]
-
-# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                new_data=regen_data
-                )
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False
+#
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+#
+# exp.methods =  [
+#                 #'HMM_crowd',
+#                 best_bac_wm + '_integrateBOF_then_LSTM',
+#                 #'HMM_crowd_then_LSTM',
+#                 best_bac_wm,
+# ]
+#
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(annos, gt, doc_start, output_dir, text,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                 new_data=regen_data
+#                 )

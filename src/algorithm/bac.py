@@ -187,9 +187,9 @@ class BAC(object):
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.nu0.ndim >= 2:
                 disallowed_count = self.nu0[self.outside_labels[0], restricted_label] - self.rare_transition_pseudocount
-                #self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-                self.nu0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
-                self.nu0[restricted_label, restricted_label] += disallowed_count / 2.0
+                self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                #self.nu0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
+                #self.nu0[restricted_label, restricted_label] += disallowed_count / 2.0
 
                 self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
