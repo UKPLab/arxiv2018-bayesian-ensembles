@@ -1960,7 +1960,7 @@ class LSTM:
 
             dev_labels = self.dev_labels
 
-        freq_eval = 1#5
+        freq_eval = 5
         max_niter_no_imprv = 2
 
         if self.LSTMWrapper.model is None:
