@@ -5,7 +5,7 @@ Created on Oct 25, 2016
 '''
 
 from data.load_data import load_crowdsourcing_data
-import algorithm.bac
+import algorithm.bsc
 import baselines.majority_voting
 import numpy as np
 import data.data_utils as data_utils

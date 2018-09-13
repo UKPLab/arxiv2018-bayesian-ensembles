@@ -6,23 +6,25 @@ Created on Nov 29, 2016
 
 import unittest
 import numpy as np
-from src.baselines import ibcc 
-from src.algorithm import bac
+from joblib import Parallel
+
+from src.baselines import ibcc
+from src.algorithm import bsc, seq
 from src.data.data_generator import DataGenerator
 
     
 class Test(unittest.TestCase):
-    def test_expec_lnA(self):
+    def test_expec_lnB(self):
         
         # test with random input values where nu0 is of high magnitude (~1000)
         for _ in range(10):
             E_t = np.random.random_sample((5,3)) * 1e5
             nu0 = np.random.random_sample((3,)) * 1e5
-            lnA, nu = ibcc._calc_q_A(E_t, nu0)
+            lnB, nu = ibcc._calc_q_A(E_t, nu0)
             
-            #print nu/np.sum(nu), np.exp(lnA)
+            #print nu/np.sum(nu), np.exp(lnB)
         
-            assert np.allclose(nu/np.sum(nu), np.exp(lnA), atol=1e-3)
+            assert np.allclose(nu/np.sum(nu), np.exp(lnB), atol=1e-3)
             
         # test with known specific values
         A = np.random.dirichlet(np.ones(10), 2).T / 2
@@ -30,29 +32,29 @@ class Test(unittest.TestCase):
         E_t = A[0:-1,:]
         nu0 = A[-1,:]
         
-        lnA, nu = ibcc._calc_q_A(E_t, nu0)
+        lnB, nu = ibcc._calc_q_A(E_t, nu0)
         
         assert np.allclose(nu, .5, atol=1e-10)
-        assert np.allclose(lnA, -2 * np.log(2), atol=1e-10)
+        assert np.allclose(lnB, -2 * np.log(2), atol=1e-10)
         
         A = np.random.dirichlet(np.ones(10), 4).T / 4
         
         E_t = A[0:-1,:]
         nu0 = A[-1,:]
         
-        lnA, nu = ibcc._calc_q_A(E_t, nu0)
+        lnB, nu = ibcc._calc_q_A(E_t, nu0)
         
         assert np.allclose(nu, .25, atol=1e-10)
-        assert np.allclose(lnA, -np.pi/2 - 3 * np.log(2), atol=1e-10)
+        assert np.allclose(lnB, -np.pi/2 - 3 * np.log(2), atol=1e-10)
         
         A = np.random.dirichlet(np.ones(10), 3).T / 3
         
         E_t = A[0:-1,:]
         nu0 = A[-1,:]
-        lnA, nu = ibcc._calc_q_A(E_t, nu0)
+        lnB, nu = ibcc._calc_q_A(E_t, nu0)
         
         assert np.allclose(nu, 1.0/3, atol=1e-10)
-        assert np.allclose(lnA,-np.pi/(2*np.sqrt(3)) - ((3.0/2.0) * np.log(3)), atol=1e-10)
+        assert np.allclose(lnB,-np.pi/(2*np.sqrt(3)) - ((3.0/2.0) * np.log(3)), atol=1e-10)
         
         # 2 dimensional tests
         A = np.random.dirichlet(np.ones(10), (2,2)).T / 2
@@ -60,30 +62,30 @@ class Test(unittest.TestCase):
         E_t = A[0:-1,:]
         nu0 = A[-1,:]
         
-        lnA, nu = ibcc._calc_q_A(E_t, nu0)
+        lnB, nu = ibcc._calc_q_A(E_t, nu0)
         
         assert np.allclose(nu, 0.5, atol=1e-10)
-        assert np.allclose(lnA, -2 * np.log(2), atol=1e-10)
+        assert np.allclose(lnB, -2 * np.log(2), atol=1e-10)
         
         A = np.random.dirichlet(np.ones(10), (3,3)).T / 3
         
         E_t = A[0:-1,:]
         nu0 = A[-1,:]
         
-        lnA, nu = ibcc._calc_q_A(E_t, nu0)
+        lnB, nu = ibcc._calc_q_A(E_t, nu0)
         
         assert np.allclose(nu, 1.0/3, atol=1e-10)
-        assert np.allclose(lnA, -np.pi/(2*np.sqrt(3)) - ((3.0/2.0) * np.log(3)), atol=1e-10)
+        assert np.allclose(lnB, -np.pi/(2*np.sqrt(3)) - ((3.0/2.0) * np.log(3)), atol=1e-10)
         
         A = np.random.dirichlet(np.ones(10), (4,4)).T / 4
         
         E_t = A[0:-1,:]
         nu0 = A[-1,:]
         
-        lnA, nu = ibcc._calc_q_A(E_t, nu0)
+        lnB, nu = ibcc._calc_q_A(E_t, nu0)
         
         assert np.allclose(nu, .25, atol=1e-10)
-        assert np.allclose(lnA, -np.pi/2 - 3 * np.log(2), atol=1e-10)
+        assert np.allclose(lnB, -np.pi/2 - 3 * np.log(2), atol=1e-10)
         
     def test_expec_lnPi(self):
         
@@ -91,7 +93,7 @@ class Test(unittest.TestCase):
         alpha[0,:,:,0] = [[2,1,2],[2,1,2]]
         alpha[1,:,:,0] = [[1,2,1],[1,2,1]]
         
-        lnPi = bac._calc_q_pi(alpha)
+        lnPi = seq.SequentialWorker._calc_q_pi(alpha)
         
         # print lnPi[0,:,:,0]
         # print lnPi[1,:,:,0]
@@ -124,7 +126,7 @@ class Test(unittest.TestCase):
         lnR_ = np.log(np.ones((10,4))) 
         lnLambda = np.log(np.ones((10,4)) * (np.array(list(range(4))) + 1)[:, None].T)
         
-        result = bac._expec_t(lnR_, lnLambda)  
+        result = bsc._expec_t(lnR_, lnLambda)
         
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(result,1), 1, atol=1e-10)
@@ -142,13 +144,12 @@ class Test(unittest.TestCase):
         
         lnR_ = np.log(np.ones((T,3)) * (np.array(list(range(3))) + 1)[:, None].T)
         lnLambda = np.log(np.ones((T,3))) 
-        lnA = np.log(np.ones((4,3)))
+        lnB = np.log(np.ones((4,3)))
         lnPi = np.log(np.ones((3,3,4,1)))
-        C = np.ones((T,1)) 
+        C = np.ones((T,1), dtype=int)
         doc_start = np.array([1,0,0])
-        
-        result = bac._expec_joint_t(lnR_, lnLambda, lnA, lnPi, C, doc_start)
-        
+
+        result = bsc._expec_joint_t(lnR_, lnLambda, lnB, lnPi, None, C, None, doc_start, 3, seq.SequentialWorker)
         
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(np.sum(result,-1),-1),1, atol=1e-10)
@@ -162,15 +163,17 @@ class Test(unittest.TestCase):
         
     def test_forward_pass(self):
         initProbs = np.log(np.array([.5,.5]))
-        lnA = np.log(np.array([[.7,.3],[.3,.7]]))
+        lnB = np.log(np.array([[.7,.3],[.3,.7]]))
         lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,None,None],2,axis=2))
         
-        C = np.ones((10,1))
+        C = np.ones((10,1), dtype=int)
         C[[2,7],0] = 2
                 
         doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
-        
-        lnR_ = bac._forward_pass(C, lnA, lnPi, initProbs, doc_start, skip=False)
+
+        with Parallel(n_jobs=-1) as parallel:
+            lnR_ = bsc._parallel_forward_pass(parallel, C, None, lnB, lnPi, None, initProbs, doc_start, 2,
+                                              seq.SequentialWorker, skip=False)
         
         r_ = np.exp(lnR_)
         
@@ -181,58 +184,66 @@ class Test(unittest.TestCase):
         assert np.allclose(s_,target,atol=1e-4)
         
     def test_backward_pass(self):
-        lnA = np.log(np.array([[.7,.3],[.3,.7]]))
+        lnB = np.log(np.array([[.7,.3],[.3,.7]]))
         lnPi = np.log(np.repeat(np.array([[.9,.1],[.2,.8]])[:,:,None,None],2,axis=2))
         
-        C = np.ones((10,1))
+        C = np.ones((10,1), dtype=int)
         C[[2,7],0] = 2
         
         doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
+
+        A = seq.SequentialWorker
+
+        with Parallel(n_jobs=-1) as parallel:
+            lnLambd = bsc._parallel_backward_pass(parallel, C, None, lnB, lnPi, None, doc_start, 2, A, skip=False)
         
-        lnLambd = bac._backward_pass(C, lnA, lnPi, doc_start, skip=False)
+            lambd = np.exp(lnLambd)
         
-        lambd = np.exp(lnLambd)
+            lambdNorm = lambd/np.sum(lambd,1)[:,np.newaxis]
         
-        lambdNorm = lambd/np.sum(lambd,1)[:,np.newaxis]
+        target = np.array([
+                         [0.5923176, 0.4076824],
+                         [0.37626718, 0.62373282],
+                         [0.65334282, 0.34665718],
+                         [0.62727273, 0.37272727],
+                         [0.5,        0.5       ],
+                         [0.5923176,  0.4076824 ],
+                         [0.37626718, 0.62373282],
+                         [0.65334282, 0.34665718],
+                         [0.62727273, 0.37272727],
+                         [0.5,        0.5       ]])
         
-        target = np.array([[.6469,.3531],[.5923,.4077],[.3763,.6237],[.6533,.3467],[.6273,.3727],[.6469,.3531],[.5923,.4077],[.3763,.6237],[.6533,.3467],[.6273,.3727]])
+        assert np.allclose(lambdNorm, target, atol=1e-4)
         
-        assert np.allclose(lambdNorm,target,atol=1e-4)
-        
-    def test_bac(self):
+    def test_bsc(self):
         C = np.ones((5,10)) 
         
         doc_start = np.zeros((5,1))
         doc_start[[0,2]] = 1
         
-        myBac = bac.BAC(L=3, K=10)
+        myBac = bsc.BAC(L=3, K=10)
         
-        result =  myBac.run(C, doc_start)
+        result, _ =  myBac.run(C, doc_start)
         target = np.zeros((5,3))
         target[:,1] = 1
         
         assert np.allclose(target, result, atol=1e-4)
         
-    def test_bac_2(self):
+    def test_bsc_2(self):
 
-        generator = DataGenerator('../src/config/data.ini', seed=42)
+        generator = DataGenerator('./config/data.ini', seed=42)
         
-        generator.init_crowd_model(10, 0, 0)
+        generator.init_crowd_models(10, 0, 0)
         gt, C, _ = generator.generate_dataset(num_docs=2, doc_length=10, group_sizes=10, save_to_file=False)
         
         doc_start = np.zeros((20,1))
         doc_start[[0,10]] = 1
         
-        myBac = bac.BAC(L=3, K=10)
+        myBac = bsc.BAC(L=3, K=10)
         
-        result = myBac.run(C, doc_start)
+        _, result = myBac.run(C, doc_start)
         
-        target = np.zeros((20,3))
-        
-        for t in range(20):
-            target[t,int(gt[t,1])] = 1
-        
-        assert np.allclose(target, result, atol=1e-4)
+        assert np.allclose(gt.flatten(), result, atol=1e-4)
         
         
     def test_post_alpha(self):
@@ -245,8 +256,8 @@ class Test(unittest.TestCase):
         alpha0 = np.zeros((2,2,3,1))
         alpha0[1,0,0,0] = 5
         alpha0[1,1,1,0] = 3
-        
-        result = bac._post_alpha(E_t, C, alpha0, doc_start)
+
+        result = seq.SequentialWorker._post_alpha(E_t, C, alpha0, None, doc_start, 2)
         
         target = np.ones((2,2,3,1)) * .5
         

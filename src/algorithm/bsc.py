@@ -36,7 +36,13 @@ from joblib import Parallel, delayed, cpu_count, effective_n_jobs
 import warnings
 
 #from lample_lstm_tagger.loader import tag_mapping
-from scipy.sparse.coo import coo_matrix
+from algorithm.acc import AccuracyWorker
+from algorithm.cm import ConfusionMatrixWorker
+from algorithm.cv import VectorWorker
+from algorithm.indfeatures import IndependentFeatures
+from algorithm.lstm import LSTM
+from algorithm.mace import MACEWorker
+from algorithm.seq import SequentialWorker
 
 
 class BAC(object):
@@ -51,7 +57,7 @@ class BAC(object):
     
     nu0 = None  # ground truth priors
     
-    lnA = None  # transition matrix
+    lnB = None  # transition matrix
     lnPi = None  # worker confusion matrices
     
     q_t = None  # current true label estimates
@@ -72,6 +78,9 @@ class BAC(object):
         beginning_labels should correspond in order to inside labels.
 
         '''
+        if alpha0 is None:
+            alpha0 = np.ones((L, L)) + np.eye(L)
+
         self.rare_transition_pseudocount = np.min(alpha0) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
@@ -98,7 +107,7 @@ class BAC(object):
             else:
                 self.nu0 = nu0
 
-            self._calc_q_A = self._calc_q_A_trans
+            self._update_B = self._update_B_trans
             self._update_t = self._update_t_trans
             self._lnpt = self._lnpt_trans
         else:
@@ -107,7 +116,7 @@ class BAC(object):
             else:
                 self.nu0 = nu0
 
-            self._calc_q_A = self._calc_q_A_notrans
+            self._update_B = self._update_B_notrans
             self._update_t = self._update_t_notrans
             self._lnpt = self._lnpt_notrans
 
@@ -124,29 +133,29 @@ class BAC(object):
 
         # choose type of worker model
         if worker_model == 'acc':
-            self.worker_model = AccuracyWorker
-            self._set_transition_constraints = self._set_transition_constraints_nuonly
+            self.A = AccuracyWorker
+            self._set_transition_constraints = self._set_transition_constraints_betaonly
             self.alpha_shape = (2)
 
         elif worker_model == 'mace':
-            self.worker_model = MACEWorker
-            self._set_transition_constraints = self._set_transition_constraints_nuonly
+            self.A = MACEWorker
+            self._set_transition_constraints = self._set_transition_constraints_betaonly
             self.alpha_shape = (2 + self.nscores)
             self._lowerbound_pi_terms = self._lowerbound_pi_terms_mace
 
         elif worker_model == 'ibcc':
-            self.worker_model = ConfusionMatrixWorker
-            self._set_transition_constraints = self._set_transition_constraints_nuonly
+            self.A = ConfusionMatrixWorker
+            self._set_transition_constraints = self._set_transition_constraints_betaonly
             self.alpha_shape = (self.L, self.nscores)
 
         elif worker_model == 'seq':
-            self.worker_model = SequentialWorker
-            self._set_transition_constraints = self._set_transition_constraints_seqalpha
+            self.A = SequentialWorker
+            self._set_transition_constraints = self._set_transition_constraints_seq
             self.alpha_shape = (self.L, self.nscores)
 
         elif worker_model == 'vec':
-            self.worker_model = VectorWorker
-            self._set_transition_constraints = self._set_transition_constraints_nuonly
+            self.A = VectorWorker
+            self._set_transition_constraints = self._set_transition_constraints_betaonly
             self.alpha_shape = (self.L, self.nscores)
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
@@ -157,7 +166,7 @@ class BAC(object):
 
         self.verbose = False  # can change this if you want progress updates to be printed
 
-    def _set_transition_constraints_seqalpha(self):
+    def _set_transition_constraints_seq(self):
 
         if self.tagging_scheme == 'IOB':
             restricted_labels = self.beginning_labels  # labels that cannot follow an outside label
@@ -259,7 +268,7 @@ class BAC(object):
                 if self.nu0.ndim == 2:
                     self.nu0[label, excluded] = self.rare_transition_pseudocount
 
-    def _set_transition_constraints_nuonly(self):
+    def _set_transition_constraints_betaonly(self):
 
         if self.nu0.ndim != 2:
             return
@@ -298,7 +307,7 @@ class BAC(object):
             for label, excluded in dict(self.exclusions).items():
                 self.nu0[label, excluded] = self.rare_transition_pseudocount
 
-    def _initA(self):
+    def _initB(self):
         self.nu = self.nu0
 
         if self.nu0.ndim >= 2:
@@ -306,7 +315,7 @@ class BAC(object):
         else:
             nu0_sum = psi(np.sum(self.nu0))
 
-        self.lnA = psi(self.nu0) - nu0_sum
+        self.lnB = psi(self.nu0) - nu0_sum
 
     def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
@@ -334,14 +343,14 @@ class BAC(object):
         return lnpPi, lnqPi
 
     def _lnpt_trans(self):
-        lnpt = self.lnA.copy()[None, :, :]
+        lnpt = self.lnB.copy()[None, :, :]
         lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
         lnpt = lnpt * self.q_t_joint
 
         return lnpt
 
     def _lnpt_notrans(self):
-        lnpt = self.lnA.copy()[None, :]
+        lnpt = self.lnB.copy()[None, :]
         lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
         lnpt = lnpt * self.q_t
 
@@ -371,7 +380,7 @@ class BAC(object):
         
         for j in range(self.L):
             # self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]]
-            lnpCj = valid_labels * self.worker_model._read_lnPi(self.lnPi, j, C-1, C_prev-1, np.arange(self.K)[None, :], self.nscores) \
+            lnpCj = valid_labels * self.A._read_lnPi(self.lnPi, j, C - 1, C_prev - 1, np.arange(self.K)[None, :], self.nscores) \
                     * self.q_t[:, j:j+1]
             lnpC += lnpCj            
 
@@ -399,7 +408,7 @@ class BAC(object):
                                                                  model.lnPi)
 
         # E[ln p(A | nu_0)]
-        x = (self.nu0 - 1) * self.lnA
+        x = (self.nu0 - 1) * self.lnB
         gammaln_nu0 = gammaln(self.nu0)
         invalid_nus = np.isinf(gammaln_nu0) | np.isinf(x) | np.isnan(x)
         gammaln_nu0[invalid_nus] = 0
@@ -410,7 +419,7 @@ class BAC(object):
         lnpA = np.sum(x + z) 
         
         # E[ln q(A)]
-        x = (self.nu - 1) * self.lnA
+        x = (self.nu - 1) * self.lnB
         x[np.isinf(x)] = 0
         gammaln_nu = gammaln(self.nu)
         gammaln_nu[invalid_nus] = 0
@@ -474,13 +483,13 @@ class BAC(object):
         Krange = np.arange(self.K)
 
         # L x 1 x K
-        lnPi_terms = self.worker_model._read_lnPi(self.lnPi, None, C[0:1, :] - 1, self.before_doc_idx, Krange[None, :],
-                                                  self.nscores)
+        lnPi_terms = self.A._read_lnPi(self.lnPi, None, C[0:1, :] - 1, self.before_doc_idx, Krange[None, :],
+                                       self.nscores)
         lnPi_data_terms = 0
         for model in range(len(self.data_model)):
             for m in range(self.nscores):
-                lnPi_data_terms += (self.worker_model._read_lnPi(lnPi_data[model], None,
-                                m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * C_data[model][0, m]).T
+                lnPi_data_terms += (self.A._read_lnPi(lnPi_data[model], None,
+                                                      m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * C_data[model][0, m]).T
 
         lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms
 
@@ -490,19 +499,19 @@ class BAC(object):
         Ccurr = C[1:, :] - 1
 
         # L x (N-1) x K
-        lnPi_terms = self.worker_model._read_lnPi(self.lnPi, None, C[1:, :] - 1, Cprev, Krange[None, :], self.nscores)
+        lnPi_terms = self.A._read_lnPi(self.lnPi, None, C[1:, :] - 1, Cprev, Krange[None, :], self.nscores)
 
         lnPi_data_terms = 0
 
         for model in range(len(self.data_model)):
             for m in range(self.nscores):
                 for n in range(self.nscores):
-                    lnPi_data_terms += (self.worker_model._read_lnPi(lnPi_data[model], None, m, n, 0, self.nscores)[:, :, 0] * \
+                    lnPi_data_terms += (self.A._read_lnPi(lnPi_data[model], None, m, n, 0, self.nscores)[:, :, 0] * \
                                        C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]).T
 
         lnpCT[1:, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms
 
-        lnpCT += self.lnA
+        lnpCT += self.lnB
 
         # ensure that the values are not too small
         largest = np.max(lnpCT, 1)[:, np.newaxis]
@@ -518,45 +527,45 @@ class BAC(object):
 
         # calculate alphas and betas using forward-backward algorithm
         self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
-                                           self.lnA[0:self.L, :], self.lnPi, lnPi_data,
-                                           self.lnA[self.before_doc_idx, :], doc_start, self.nscores,
-                                           self.worker_model, self.before_doc_idx)
+                                           self.lnB[0:self.L, :], self.lnPi, lnPi_data,
+                                           self.lnB[self.before_doc_idx, :], doc_start, self.nscores,
+                                           self.A, self.before_doc_idx)
 
         if self.verbose:
             print("BAC iteration %i: completed forward pass" % self.iter)
 
         lnLambd = _parallel_backward_pass(parallel, C, C_data,
-                                          self.lnA[0:self.L, :], self.lnPi, lnPi_data,
-                                          doc_start, self.nscores, self.worker_model, self.before_doc_idx)
+                                          self.lnB[0:self.L, :], self.lnPi, lnPi_data,
+                                          doc_start, self.nscores, self.A, self.before_doc_idx)
         if self.verbose:
             print("BAC iteration %i: completed backward pass" % self.iter)
 
         # update q_t and q_t_joint
-        self.q_t_joint = _expec_joint_t_quick(self.lnR_, lnLambd, self.lnA, self.lnPi, lnPi_data, C, C_data,
-                                              doc_start, self.nscores, self.worker_model, self.before_doc_idx)
+        self.q_t_joint = _expec_joint_t(self.lnR_, lnLambd, self.lnB, self.lnPi, lnPi_data, C, C_data,
+                                        doc_start, self.nscores, self.A, self.before_doc_idx)
 
         self.q_t = np.sum(self.q_t_joint, axis=1)
 
         return self.q_t
 
-    def _calc_q_A_trans(self):
+    def _update_B_trans(self):
         '''
         Update the transition model.
         '''
         self.nu = self.nu0 + np.sum(self.q_t_joint, 0)
-        self.lnA = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
+        self.lnB = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
 
-        if np.any(np.isnan(self.lnA)):
+        if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def _calc_q_A_notrans(self):
+    def _update_B_notrans(self):
         '''
         Update the transition model.
         '''
         self.nu = self.nu0 + np.sum(self.q_t, 0)
-        self.lnA = psi(self.nu) - psi(np.sum(self.nu))
+        self.lnB = psi(self.nu) - psi(np.sum(self.nu))
 
-        if np.any(np.isnan(self.lnA)):
+        if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
     def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False, crf_probs=False):
@@ -565,8 +574,8 @@ class BAC(object):
 
         '''
         # initialise the hyperparameters to correct sizes
-        self.alpha0, self.alpha0_data = self.worker_model._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
-                                                                         self.nscores)
+        self.alpha0, self.alpha0_data = self.A._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
+                                                              self.nscores)
 
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
@@ -583,8 +592,8 @@ class BAC(object):
             self._set_transition_constraints()
 
             # initialise transition and confusion matrices
-            self._initA()
-            self.alpha, self.lnPi = self.worker_model._init_lnPi(self.alpha0)
+            self._initB()
+            self.alpha, self.lnPi = self.A._init_lnPi(self.alpha0)
 
             # initialise variables
             self.q_t_old = np.zeros((C.shape[0], self.L))
@@ -599,7 +608,7 @@ class BAC(object):
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L, dev_data,
                                   self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs)
-            model.lnPi_data  = self.worker_model._calc_q_pi(model.alpha_data)
+            model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
         for model in self.data_model:
             model.C_data = np.zeros((self.C.shape[0], self.nscores)) + (1.0 / self.nscores)
@@ -632,8 +641,8 @@ class BAC(object):
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
-                # update E_lnA
-                self._calc_q_A()
+                # update E_lnB
+                self._update_B()
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
@@ -656,9 +665,9 @@ class BAC(object):
                             print("BAC iteration %i: updated feature-based predictions from %s" %
                                   (self.iter, type(model)))
 
-                        model.alpha_data = self.worker_model._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
-                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
-                        model.lnPi_data = self.worker_model._calc_q_pi(model.alpha_data)
+                        model.alpha_data = self.A._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
+                                                                   model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                        model.lnPi_data = self.A._calc_q_pi(model.alpha_data)
 
                         if self.verbose:
                             print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
@@ -669,9 +678,9 @@ class BAC(object):
                         model.C_data[:] = 0
 
                 # update E_lnpi
-                self.alpha = self.worker_model._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
-                                                           self.nscores, self.before_doc_idx)
-                self.lnPi = self.worker_model._calc_q_pi(self.alpha)
+                self.alpha = self.A._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
+                                                self.nscores, self.before_doc_idx)
+                self.lnPi = self.A._calc_q_pi(self.alpha)
                 if self.verbose:
                     print("BAC iteration %i: updated worker models" % self.iter)
 
@@ -693,7 +702,7 @@ class BAC(object):
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
             print('BAC final transition matrix: ')
-            print(np.exp(self.lnA))
+            print(np.exp(self.lnB))
 
         return self.q_t, seq
 
@@ -715,7 +724,7 @@ class BAC(object):
         lnEA[EA != 0] = np.log(EA[EA != 0])
         lnEA[EA == 0] = -np.inf
 
-        EPi = self.worker_model._calc_EPi(self.alpha)
+        EPi = self.A._calc_EPi(self.alpha)
         lnEPi = np.zeros_like(EPi)
         lnEPi[EPi != 0] = np.log(EPi[EPi != 0])
         lnEPi[EPi == 0] = -np.inf
@@ -723,7 +732,7 @@ class BAC(object):
         lnEPi_data = []
 
         for model in self.data_model:
-            EPi_m = self.worker_model._calc_EPi(model.alpha_data)
+            EPi_m = self.A._calc_EPi(model.alpha_data)
             lnEPi_m = np.zeros_like(EPi_m)
             lnEPi_m[EPi_m != 0] = np.log(EPi_m[EPi_m != 0])
             lnEPi_m[EPi_m == 0] = -np.inf
@@ -742,10 +751,10 @@ class BAC(object):
         # run forward pass for each doc concurrently
         if len(self.data_model):
             res = parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEA, lnEPi, lnEPi_data, self.L,
-                        self.nscores, self.K, self.worker_model, self.before_doc_idx) for d, doc in enumerate(docs))
+                                                                self.nscores, self.K, self.A, self.before_doc_idx) for d, doc in enumerate(docs))
         else:
             res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEA, lnEPi, lnEPi_data, self.L,
-                                                                self.nscores, self.K, self.worker_model,
+                                                                self.nscores, self.K, self.A,
                                                                 self.before_doc_idx) for d, doc in enumerate(docs))
         # reformat results
         pseq = np.concatenate(list(zip(*res))[0], axis=0)
@@ -823,14 +832,14 @@ def _expec_t(lnR_, lnLambda):
     return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None])
 
 
-def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
-                         before_doc_idx=-1, skip=True):
+def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
+                   before_doc_idx=-1, skip=True):
     '''
     Calculate joint label probabilities for each pair of tokens.
     '''
     # initialise variables
     T = lnR_.shape[0]
-    L = lnA.shape[-1]
+    L = lnB.shape[-1]
     K = lnPi.shape[-1]
 
     lnS = np.repeat(lnLambda[:, None, :], L + 1, 1)
@@ -857,28 +866,28 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
         lnPi_terms = worker_model._read_lnPi(lnPi, l, C, Cprev, np.arange(K)[None, :], nscores)
         if C_data is not None and len(C_data):
             lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
+
+            for model in range(len(C_data)):
+                C_data_prev = np.copy(C_data[model])
+                C_data_prev[doc_start.flatten(), before_doc_idx] = 1
+                C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
+                C_data_prev[0, before_doc_idx] = 1
+
+                for m in range(L):
+                    weights = C_data[model][:, m:m + 1] * C_data_prev
+
+                    for n in range(L):
+                        lnPi_data_terms_mn = weights[:, n] * worker_model._read_lnPi(lnPi_data[model], l, m, n, 0, nscores)
+                        lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
+                        lnPi_data_terms += lnPi_data_terms_mn
         else:
             lnPi_data_terms = 0
-
-        for model in range(len(C_data)):
-            C_data_prev = np.copy(C_data[model])
-            C_data_prev[doc_start.flatten(), before_doc_idx] = 1
-            C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
-            C_data_prev[0, before_doc_idx] = 1
-
-            for m in range(L):
-                weights = C_data[model][:, m:m + 1] * C_data_prev
-
-                for n in range(L):
-                    lnPi_data_terms_mn = weights[:, n] * worker_model._read_lnPi(lnPi_data[model], l, m, n, 0, nscores)
-                    lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
-                    lnPi_data_terms += lnPi_data_terms_mn
 
         loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
 
         # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
         # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
-        lnS[:, :, l] += loglikelihood_l + lnA[:, l][None, :]
+        lnS[:, :, l] += loglikelihood_l + lnB[:, l][None, :]
         lnS[1:, :L, l] += lnR_[:-1, :]
 
     # print('_expec_joint_t_quick: Normalising...')
@@ -896,12 +905,12 @@ def _expec_joint_t_quick(lnR_, lnLambda, lnA, lnPi, lnPi_data, C, C_data, doc_st
     return np.exp(lnS)
 
 
-def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
+def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
     '''
     Perform the forward pass of the Forward-Backward algorithm (for a single document).
     '''
     T = C.shape[0]  # infer number of tokens
-    L = lnA.shape[0]  # infer number of labels
+    L = lnB.shape[0]  # infer number of labels
     K = lnPi.shape[-1]  # infer number of annotators
     Krange = np.arange(K)
 
@@ -947,7 +956,7 @@ def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worke
     for t in range(1, T):
         # iterate through all possible labels
         # prev_idx = Cprev[t - 1, :]
-        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnA, axis=0) + likelihood_next[:, t - 1]
+        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB, axis=0) + likelihood_next[:, t - 1]
         # , np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
 
         # normalise
@@ -956,7 +965,7 @@ def _doc_forward_pass(C, C_data, lnA, lnPi, lnPi_data, initProbs, nscores, worke
     return lnR_
 
 
-def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
+def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
                            before_doc_idx=1, skip=True):
     '''
     Perform the forward pass of the Forward-Backward algorithm (for multiple documents in parallel).
@@ -965,23 +974,24 @@ def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, 
     C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
 
     C_data_by_doc = []
-    for m, Cdata_m in enumerate(Cdata):
-        C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
-    if len(Cdata) >= 1:
-        C_data_by_doc = list(zip(*C_data_by_doc))
 
     # run forward pass for each doc concurrently
     # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
-    if len(Cdata) > 0:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnA, lnPi, lnPi_data, initProbs,
+    if Cdata is not None and len(Cdata) > 0:
+        for m, Cdata_m in enumerate(Cdata):
+            C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
+        if len(Cdata) >= 1:
+            C_data_by_doc = list(zip(*C_data_by_doc))
+
+        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB, lnPi, lnPi_data, initProbs,
                                                   nscores, worker_model, before_doc_idx, skip)
                        for d, C_doc in enumerate(C_by_doc))
     else:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnA, lnPi, lnPi_data, initProbs,
+        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB, lnPi, lnPi_data, initProbs,
                                                   nscores, worker_model, before_doc_idx, skip)
                        for d, C_doc in enumerate(C_by_doc))
 
-    # res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnA, lnPi, lnPi_data, initProbs, nscores, worker_model,
+    # res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnB, lnPi, lnPi_data, initProbs, nscores, worker_model,
     #                         before_doc_idx, skip)
     #       for d, C_doc in enumerate(C_by_doc)]
 
@@ -991,13 +1001,13 @@ def _parallel_forward_pass(parallel, C, Cdata, lnA, lnPi, lnPi_data, initProbs, 
     return lnR_
 
 
-def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
+def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for a single document).
     '''
     # infer number of tokens, labels, and annotators
     T = C.shape[0]
-    L = lnA.shape[0]
+    L = lnB.shape[0]
     K = lnPi.shape[-1]
     Krange = np.arange(K)
 
@@ -1037,7 +1047,7 @@ def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, b
         # prev_idx = Cprev[t, :]
 
         # logsumexp over the L classes of the next timestep
-        lnLambda_t = logsumexp(lnA + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
+        lnLambda_t = logsumexp(lnB + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
         # np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, Krange], axis=1)[None, :], axis = 1)
 
         # logsumexp over the L classes of the current timestep to normalise
@@ -1050,7 +1060,7 @@ def _doc_backward_pass(C, C_data, lnA, lnPi, lnPi_data, nscores, worker_model, b
     return lnLambda
 
 
-def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start, nscores, worker_model,
+def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start, nscores, worker_model,
                             before_doc_idx=1, skip=True):
     '''
     Perform the backward pass of the Forward-Backward algorithm (for multiple documents in parallel).
@@ -1059,18 +1069,18 @@ def _parallel_backward_pass(parallel, C, C_data, lnA, lnPi, lnPi_data, doc_start
     docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
 
     C_data_by_doc = []
-    for m, Cdata_m in enumerate(C_data):
-        C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
-    if len(C_data) >= 1:
-        C_data_by_doc = list(zip(*C_data_by_doc))
-    # docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-    # run forward pass for each doc concurrently
 
-    if len(C_data) > 0:
-        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnA, lnPi, lnPi_data, nscores, worker_model,
+    if C_data is not None:
+        for m, Cdata_m in enumerate(C_data):
+            C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
+        if len(C_data) >= 1:
+            C_data_by_doc = list(zip(*C_data_by_doc))
+
+    if C_data is not None and len(C_data) > 0:
+        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnB, lnPi, lnPi_data, nscores, worker_model,
                                                    before_doc_idx, skip) for d, doc in enumerate(docs))
     else:
-        res = parallel(delayed(_doc_backward_pass)(doc, None, lnA, lnPi, lnPi_data, nscores, worker_model,
+        res = parallel(delayed(_doc_backward_pass)(doc, None, lnB, lnPi, lnPi_data, nscores, worker_model,
                                                    before_doc_idx, skip) for d, doc in enumerate(docs))
 
     # reformat results
@@ -1145,973 +1155,3 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
         pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
 
     return pseq, seq
-
-# Worker model: accuracy only ------------------------------------------------------------------------------------------
-# lnPi[1] = ln p(correct)
-# lnPi[0] = ln p(wrong)
-
-class AccuracyWorker():
-
-    def _init_lnPi(alpha0):
-
-        # Returns the initial values for alpha and lnPi
-        psi_alpha_sum = psi(np.sum(alpha0, 0))
-        lnPi = psi(alpha0) - psi_alpha_sum[None, :]
-
-        # init to prior
-        alpha = np.copy(alpha0)
-        return alpha, lnPi
-
-    def _calc_q_pi(alpha):
-        '''
-        Update the annotator models.
-        '''
-        psi_alpha_sum = psi(np.sum(alpha, 0))[None, :]
-        q_pi = psi(alpha) - psi_alpha_sum
-        return q_pi
-
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha.
-        '''
-        nclasses = E_t.shape[1]
-        alpha = alpha0.copy()
-
-        for j in range(nclasses):
-            Tj = E_t[:, j]
-
-            correct_count = (C == j + 1).T.dot(Tj).reshape(-1)
-            alpha[1, :] += correct_count
-
-            for l in range(nscores):
-                if l == j:
-                    continue
-                incorrect_count = (C == l + 1).T.dot(Tj).reshape(-1)
-                alpha[0, :] += incorrect_count
-
-        return alpha
-
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
-        '''
-        nclasses = E_t.shape[1]
-        alpha = alpha0.copy()
-
-        for j in range(nclasses):
-            Tj = E_t[:, j]
-
-            correct_count = C[:, j:j+1].T.dot(Tj).reshape(-1)
-            alpha[1, :] += correct_count
-
-            for l in range(nscores):
-                if l == j:
-                    continue
-                incorrect_count = C[:, l:l+1].T.dot(Tj).reshape(-1)
-                alpha[0, :] += incorrect_count
-
-        return alpha
-
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
-
-        if np.isscalar(C):
-            N = 1
-        else:
-            N = C.shape[0]
-
-        if np.isscalar(Krange):
-            K = 1
-        else:
-            K = Krange.shape[-1]
-
-        if l is None:
-            result = np.zeros((nscores, N, K))
-            for l in range(nscores):
-
-                if np.isscalar(C) and l == C:
-                    result[l, :, :] = lnPi[1, Krange]
-
-                elif np.isscalar(C) and l != C:
-                    result[l, :, :] = lnPi[0, Krange]
-                    # incorrect answers: split mass across classes evenly
-                    result[l, :, :] = np.log(np.exp(result[l, :, :]) / float(nscores))
-
-                else:
-                    idx = (l==C).astype(int)
-                    result[l, :, :] = lnPi[idx, Krange]
-                    # incorrect answers: split mass across classes evenly
-                    result[l, idx == 0] = np.log(np.exp(result[l, idx == 0]) / float(nscores))
-
-            return result
-
-        if np.isscalar(C) and l == C:
-            result = lnPi[1, Krange]
-
-        elif np.isscalar(C) and l != C:
-            result = lnPi[0, Krange]
-            # incorrect answers: split mass across classes evenly
-            result = np.log(np.exp(result) / float(nscores))
-
-        else:
-            idx = (l==C).astype(int)
-            result = lnPi[idx, Krange]
-            # incorrect answers: split mass across classes evenly
-            result[idx == 0] = np.log(np.exp(result[idx==0]) / float(nscores))
-
-        return result
-
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores):
-        '''
-        Take the alpha0 for one worker and expand.
-        :return:
-        '''
-
-        # set priors
-        if alpha0 is None:
-            # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((2, K))
-            alpha0[1, :] += 1.0
-        else:
-            alpha0 = alpha0[:, None]
-            alpha0 = np.tile(alpha0, (1, K))
-
-        if alpha0_data is None:
-            alpha0_data = np.ones((2, 1))
-            alpha0_data[1, :] += 1.0
-        elif alpha0_data.ndim == 1:
-            alpha0_data = alpha0_data[:, None]
-
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
-        return alpha / np.sum(alpha, axis=0)[None, :]
-
-# Worker model: MACE-like spammer model --------------------------------------------------------------------------------
-
-# alpha[0,:] and alpha[1,:] are parameters for the spamming probability
-# alpha[2:2+nscores,:] are parameters for the spamming pattern
-# similarly for lnPi:
-# lnPi[1, :] = ln p(correct answer)
-# lnPi[0, :] = ln p(incorrect/spam answer)
-# lnPi[2:2+nscores, :] = ln p(label given worker is spamming/incorrect)
-
-class MACEWorker():
-
-    def _init_lnPi(alpha0):
-        # Returns the initial values for alpha and lnPi
-
-        psi_alpha_sum = np.zeros_like(alpha0)
-        psi_alpha_sum[0, :] = psi(alpha0[0,:] + alpha0[1, :])
-        psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
-
-        psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 0))[None, :]
-
-        lnPi = psi(alpha0) - psi_alpha_sum
-
-        # init to prior
-        alpha = np.copy(alpha0)
-
-        return alpha, lnPi
-
-    def _calc_q_pi(alpha):
-        '''
-        Update the annotator models.
-        '''
-        psi_alpha_sum = np.zeros_like(alpha)
-        psi_alpha_sum[0, :] = psi(alpha[0,:] + alpha[1, :])
-        psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
-        psi_alpha_sum[2:, :] = psi(np.sum(alpha[2:, :], 0))[None, :]
-
-        ElnPi = psi(alpha) - psi_alpha_sum
-
-        # ElnPi[0, :] = np.log(0.5)
-        # ElnPi[1, :] = np.log(0.5)
-        # ElnPi[2:, :] = np.log(1.0 / float(alpha.shape[1] - 2))
-
-        return ElnPi
-
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha.
-        '''
-        # Reusing some equations from the Java MACE implementation.,,
-        # strategyMarginal[i,k] = <scalar per worker> p(k knows vs k is spamming for item i | pi, C, E_t)? = ...
-        # ... = \sum_j{ E_t[i, j] / (pi[0,k]*pi[2+C[i,k],k] + pi[1,k]*[C[i,k]==j] } * pi[0,k] * pi[2+C[i,k],k]
-        # instanceMarginal = \sum_j p(t_i = j) = term used for normalisation
-        # spamming = competence = accuracy = pi[1]
-        # a = annotator
-        # d = item number
-        # ai = index of annotator a's annotation for item d
-        # goldlabelmarginals[d] = p(C, t_i = j) =   prior(t_i=j) * \prod_k (pi[0,k] * pi[2+C[i,k],k] + pi[1,k] * [C[i,k]==j])
-        # [labels[d][ai]] = C[i, :]
-        # thetas = pi[2:,:] = strategy params
-        # strategyExpectedCounts[a][labels[d][ai]] = pseudo-count for each spamming action = alpha[2+C[i,k], k] += ...
-        # ... += strategyMarginal[i,k] / instanceMarginal
-        # knowingExpectedCounts[a][0]+=strategyMarginal/instanceMarginal ->alpha[0,k]+=strategyMarginal/instanceMarginal
-        # knowingExpectedCounts[a][1] += (goldLabelMarginals[d][labels[d][ai]] * spamming[a][1] / (spamming[a][0] *
-        # ...thetas[a][labels[d][ai]] + spamming[a][1])) / instanceMarginal;
-        # ... -> alpha[1,k] += E_t[i, C[i,k]] * pi[1,k] / (pi[0,k]*pi[2+C[i,k],k] + pi[1,k]) / instanceMarginal
-        # ... everything is normalised by instanceMarginal because goldlabelMarginals is not normalised and is actually
-        # a joint probability
-
-        # start by determining the probability of not spamming at each data point using current estimates of pi
-        pknowing = 0
-        pspamming = 0
-
-        Pi = np.zeros_like(alpha)
-        Pi[0, :] = alpha[0, :] / (alpha[0, :] + alpha[1, :])
-        Pi[1, :] = alpha[1, :] / (alpha[0, :] + alpha[1, :])
-        Pi[2:, :] = alpha[2:, :] / np.sum(alpha[2:, :], 0)[None, :]
-
-        pspamming_j_unnormed = Pi[0, :][None, :] * Pi[C + 1, np.arange(C.shape[1])[None, :]]
-
-        for j in range(E_t.shape[1]):
-            Tj = E_t[:, j:j+1]
-
-            pknowing_j_unnormed = (Pi[1,:][None, :] * (C == j + 1))
-
-            pknowing_j = pknowing_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
-            pspamming_j = pspamming_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
-
-            # The cases where worker has not given a label are not really spam!
-            pspamming_j[C==0] = 0
-
-            pknowing += pknowing_j * Tj
-            pspamming += pspamming_j * Tj
-
-        correct_count = np.sum(pknowing, 0)
-        incorrect_count = np.sum(pspamming, 0)
-
-        alpha = alpha0.copy()
-        alpha[1, :] += correct_count
-        alpha[0, :] += incorrect_count
-
-        for l in range(nscores):
-            strategy_count_l = np.sum((C == l + 1) * pspamming, 0)
-            alpha[l+2, :] += strategy_count_l
-
-        return alpha
-
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
-        '''
-
-        # start by determining the probability of not spamming at each data point using current estimates of pi
-        pknowing = 0
-        pspamming = 0
-
-        Pi = np.zeros_like(alpha)
-        Pi[0, :] = alpha[0, :] / (alpha[0, :] + alpha[1, :])
-        Pi[1, :] = alpha[1, :] / (alpha[0, :] + alpha[1, :])
-        Pi[2:, :] = alpha[2:, :] / np.sum(alpha[2:, :], 0)[None, :]
-
-        pspamming_j_unnormed = 0
-        for j in range(C.shape[1]):
-            pspamming_j_unnormed += Pi[0, :] * Pi[j, :] * C[:, j:j+1]
-
-        for j in range(E_t.shape[1]):
-            Tj = E_t[:, j:j+1]
-
-            pknowing_j_unnormed = (Pi[1,:][None, :] * (C[:, j:j+1]))
-
-            pknowing_j = pknowing_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
-            pspamming_j = pspamming_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
-
-            pknowing += pknowing_j * Tj
-            pspamming += pspamming_j * Tj
-
-        correct_count = np.sum(pknowing, 0)
-        incorrect_count = np.sum(pspamming, 0)
-
-        alpha[1, :] += correct_count
-        alpha[0, :] += incorrect_count
-
-        for l in range(nscores):
-            strategy_count_l = np.sum((C[:, l:l+1]) * pspamming, 0)
-            alpha[l+2, :] += strategy_count_l
-
-        return alpha
-
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
-
-        ll_incorrect = lnPi[0, Krange] + lnPi[C+2, Krange]
-
-        if np.isscalar(C):
-            N = 1
-            if C == -1:
-                ll_incorrect = 0
-        else:
-            N = C.shape[0]
-            ll_incorrect[C == -1] = 0
-
-        if np.isscalar(Krange):
-            K = 1
-        else:
-            K = Krange.shape[-1]
-
-        if l is None:
-            ll_correct = np.zeros((nscores, N, K))
-            for m in range(nscores):
-
-                if np.isscalar(C) and C == m:
-                    ll_correct[m] = lnPi[1, Krange]
-
-                elif np.isscalar(C) and C != m:
-                    ll_correct[m] = - np.inf
-
-                else:
-                    idx = (C == m).astype(int)
-
-                    ll_correct[m] = lnPi[1, Krange] * idx
-                    ll_correct[m, idx==0] = -np.inf
-
-            ll_incorrect = np.tile(ll_incorrect, (nscores, 1, 1))
-        else:
-            if np.isscalar(C) and C == l:
-                ll_correct = lnPi[1, Krange]
-
-            elif np.isscalar(C) and C != l:
-                ll_correct = - np.inf
-
-            else:
-                idx = (C == l).astype(int)
-                ll_correct = lnPi[1, Krange] * idx
-                ll_correct[idx == 0] = - np.inf
-
-        # avoid values that are too small
-        p_correct = np.exp(ll_correct - logsumexp([ll_correct, ll_incorrect], axis=0))
-        p_incorrect = np.exp(ll_incorrect - logsumexp([ll_correct, ll_incorrect], axis=0))
-
-        # deal with infs
-        if not np.isscalar(ll_correct):
-            ll_correct[p_correct == 0] = 0
-        elif p_correct == 0:
-            ll_correct = 0
-
-        if not np.isscalar(ll_incorrect):
-            ll_incorrect[p_incorrect == 0] = 0
-        elif p_incorrect == 0:
-            ll_incorrect = 0
-
-        return p_correct * ll_correct + p_incorrect * ll_incorrect
-
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores):
-        '''
-        Take the alpha0 for one worker and expand.
-        :return:
-        '''
-        L = alpha0.shape[0]
-
-        # set priors
-        if alpha0 is None:
-            # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((nscores + 2, K))
-            alpha0[1, :] += 1.0
-        else:
-            alpha0 = alpha0[:, None]
-            alpha0 = np.tile(alpha0, (1, K))
-
-        if alpha0_data is None:
-            alpha0_data = np.ones((nscores + 2, 1))
-            alpha0_data[1, :] += 1.0
-        elif alpha0_data.ndim == 1:
-            alpha0_data = alpha0_data[:, None]
-
-
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
-
-        pi = np.zeros_like(alpha)
-
-        pi[0] = alpha[0] / (alpha[0] + alpha[1])
-        pi[1] = alpha[1] / (alpha[0] + alpha[1])
-        pi[2:] = alpha[2:] / np.sum(alpha[2:], axis=0)[None, :]
-
-        return pi
-
-# Worker model: Bayesianized Dawid and Skene confusion matrix ----------------------------------------------------------
-
-class ConfusionMatrixWorker():
-
-    def _init_lnPi(alpha0):
-        # Returns the initial values for alpha and lnPi
-        psi_alpha_sum = psi(np.sum(alpha0, 1))
-        lnPi = psi(alpha0) - psi_alpha_sum[:, None, :]
-
-        # init to prior
-        alpha = np.copy(alpha0)
-        return alpha, lnPi
-
-    def _calc_q_pi(alpha):
-        '''
-        Update the annotator models.
-        '''
-        psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
-        q_pi = psi(alpha) - psi_alpha_sum
-        return q_pi
-
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha.
-        '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        for j in range(dims[0]):
-            Tj = E_t[:, j]
-
-            for l in range(dims[1]):
-                counts = (C == l + 1).T.dot(Tj)
-                alpha[j, l, :] += counts
-
-        return alpha
-
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
-        '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        for j in range(dims[0]):
-            Tj = E_t[:, j]
-
-            for l in range(dims[1]):
-                counts = (C[:, l:l+1]).T.dot(Tj).reshape(-1)
-                alpha[j, l, :] += counts
-
-        return alpha
-
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
-        if l is None:
-            if np.isscalar(Krange):
-                Krange = np.array([Krange])[None, :]
-            if np.isscalar(C):
-                C = np.array([C])[:, None]
-
-            result = lnPi[:, C, Krange]
-            result[:, C == -1] = 0
-        else:
-            result = lnPi[l, C, Krange]
-            if np.isscalar(C):
-                if C == -1:
-                    result = 0
-            else:
-                result[C == -1] = 0
-
-        return result
-
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores):
-        '''
-        Take the alpha0 for one worker and expand.
-        :return:
-        '''
-        L = alpha0.shape[0]
-
-        # set priors
-        if alpha0 is None:
-            # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
-        else:
-            alpha0 = alpha0[:, :, None]
-            alpha0 = np.tile(alpha0, (1, 1, K))
-
-        if alpha0_data is None:
-            alpha0_data = np.ones((L, nscores, 1)) + 1.0 * np.eye(L)[:, :, None]
-        elif alpha0_data.ndim == 2:
-            alpha0_data = alpha0_data[:, :, None]
-
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
-        return alpha / np.sum(alpha, axis=1)[:, None, :]
-
-# Worker model: accuracy vector for workers ----------------------------------------------------------------------------
-
-class VectorWorker():
-
-# the alphas are counted as for IBCC for simplicity. However, when Pi is computed, the counts for incorrect answers
-# are summed together to compute lnPi_incorrect, then exp(lnPi_incorrect) is divided by nclasses - 1.
-
-    def _init_lnPi(alpha0):
-        # Returns the initial values for alpha and lnPi
-        lnPi = VectorWorker._calc_q_pi(alpha0)
-
-        # init to prior
-        alpha = np.copy(alpha0)
-        return alpha, lnPi
-
-    def _calc_q_pi(alpha):
-        '''
-        Update the annotator models.
-
-        TODO Representing using a full matrix might break lower bound
-        '''
-        psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
-        q_pi = psi(alpha) - psi_alpha_sum
-
-        q_pi_incorrect = psi(np.sum(alpha, 1) - alpha[np.arange(alpha.shape[0]), np.arange(alpha.shape[0]), :]) \
-                         - psi_alpha_sum[:, 0, :]
-        q_pi_incorrect = np.log(np.exp(q_pi_incorrect) / float(alpha.shape[1] - 1)) # J x K
-
-        for j in range(alpha.shape[0]):
-            for l in range(alpha.shape[1]):
-                if j == l:
-                    continue
-                q_pi[j, l, :] = q_pi_incorrect[j, :]
-
-        return q_pi
-
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha.
-        '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        for j in range(dims[0]):
-            Tj = E_t[:, j]
-
-            for l in range(dims[1]):
-                counts = (C == l + 1).T.dot(Tj).reshape(-1)
-                alpha[j, l, :] += counts
-
-        return alpha
-
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
-        '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        for j in range(dims[0]):
-            Tj = E_t[:, j]
-
-            for l in range(dims[1]):
-                counts = (C[:, l:l+1]).T.dot(Tj).reshape(-1)
-                alpha[j, l, :] += counts
-
-        return alpha
-
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
-        if l is None:
-            if np.isscalar(Krange):
-                Krange = np.array([Krange])[None, :]
-            if np.isscalar(C):
-                C = np.array([C])[:, None]
-
-            result = lnPi[:, C, Krange]
-            result[:, C == -1] = 0
-        else:
-            result = lnPi[l, C, Krange]
-            if np.isscalar(C):
-                if C == -1:
-                    result = 0
-            else:
-                result[C == -1] = 0
-
-        return result
-
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores):
-        '''
-        Take the alpha0 for one worker and expand.
-        :return:
-        '''
-        L = alpha0.shape[0]
-
-        # set priors
-        if alpha0 is None:
-            # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
-        else:
-            alpha0 = alpha0[:, :, None]
-            alpha0 = np.tile(alpha0, (1, 1, K))
-
-        if alpha0_data is None:
-            alpha0_data = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
-        elif alpha0_data.ndim == 2:
-            alpha0_data = alpha0_data[:, :, None]
-
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
-
-        EPi = np.zeros_like(alpha)
-
-        for j in range(alpha.shape[0]):
-
-            EPi[j, j, :] = alpha[j, j, :] / np.sum(alpha[j, :, :], axis=0)
-
-            EPi_incorrect_j = (np.sum(alpha[j, :, :], axis=0) - alpha[j, j, :]) / np.sum(alpha[j, :, :], axis=0)
-            EPi_incorrect_j /= float(alpha.shape[1] - 1)
-
-            for l in range(alpha.shape[1]):
-                if j == l:
-                    continue
-                EPi[j, l, :] = EPi_incorrect_j
-
-        return EPi
-
-# Worker model: sequential model of workers-----------------------------------------------------------------------------
-
-class SequentialWorker():
-
-    def _init_lnPi(alpha0):
-        # Returns the initial values for alpha and lnPi
-        psi_alpha_sum = psi(np.sum(alpha0, 1))
-        lnPi = psi(alpha0) - psi_alpha_sum[:, None, :, :]
-
-        # init to prior
-        alpha = np.copy(alpha0)
-        return alpha, lnPi
-
-    def _calc_q_pi(alpha):
-        '''
-        Update the annotator models.
-        '''
-        psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :, :]
-        q_pi = psi(alpha) - psi_alpha_sum
-        return q_pi
-
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha.
-        '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        for j in range(dims[0]):
-            Tj = E_t[:, j]
-
-            for l in range(dims[1]):
-                counts = ((C == l + 1) * doc_start).T.dot(Tj).reshape(-1)
-                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0)).T.dot(Tj[1:]) # add counts of where
-                # previous tokens are missing.
-
-                alpha[j, l, before_doc_idx, :] += counts
-
-                for m in range(dims[1]):
-                    counts = ((C == l + 1)[1:, :] * (1 - doc_start[1:]) * (C == m + 1)[:-1, :]).T.dot(Tj[1:])
-                    alpha[j, l, m, :] += counts
-
-        return alpha
-
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
-        '''
-        Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
-        '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
-
-        for j in range(dims[0]):
-            Tj = E_t[:, j]
-
-            for l in range(dims[1]):
-
-
-                counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
-                alpha[j, l, before_doc_idx, :] += counts
-
-                for m in range(dims[1]):
-                    counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
-                    alpha[j, l, m, :] += counts
-
-        return alpha
-
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
-        if l is None:
-
-            if np.isscalar(Krange):
-                Krange = np.array([Krange])[None, :]
-            if np.isscalar(C):
-                C = np.array([C])[:, None]
-
-            result = lnPi[:, C, Cprev, Krange]
-            result[:, C == -1] = 0
-
-        else:
-            if np.isscalar(C):
-                if C == -1:
-                    result = 0
-                else:
-                    result = lnPi[l, C, Cprev, Krange]
-            else:
-                result = lnPi[l, C, Cprev, Krange]
-                result[C == -1] = 0
-
-        return result
-
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores):
-        '''
-        Take the alpha0 for one worker and expand.
-        :return:
-        '''
-        L = alpha0.shape[0]
-
-        # set priors
-        if alpha0 is None:
-            # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((L, nscores, nscores + 1, K)) + 1.0 * np.eye(L)[:, :, None, None]
-        else:
-            alpha0 = alpha0[:, :, None, None]
-            alpha0 = np.tile(alpha0, (1, 1, nscores + 1, K))
-
-        if alpha0_data is None:
-            alpha0_data = np.ones((L, L, L + 1, 1)) + 1.0 * np.eye(L)[:, :, None, None]
-        elif alpha0_data.ndim == 2:
-            alpha0_data = alpha0_data[:, :, None, None]
-            alpha0_data = np.tile(alpha0_data, (1, 1, L+1, 1))
-
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
-        return alpha / np.sum(alpha, axis=1)[:, None, :, :]
-
-# DATA MODEL -----------------------------------------------------------------------------------------------------------
-# Models the likelihood of the features given the class.
-
-class LSTM:
-
-    train_type = 'Bayes'
-
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters, crf_probs):
-
-        self.crf_probs = crf_probs
-
-        self.n_epochs_per_vb_iter = 1#3 # this may be too much?
-        self.max_vb_iters = max_vb_iters
-
-        self.probs = None
-
-        self.N = N
-
-        labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
-
-        from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format, LSTMWrapper
-
-        self.sentences, self.IOB_map, self.IOB_label = data_to_lstm_format(N, text, doc_start, labels, nclasses)
-
-        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
-        self.LSTMWrapper = LSTMWrapper('./models_bac_%s' % timestamp)
-
-        self.Ndocs = self.sentences.shape[0]
-
-        self.train_data_objs = None
-
-        self.nclasses = nclasses
-
-        self.dev_sentences = dev_data
-        if dev_data is not None:
-            self.all_sentences = np.concatenate((self.sentences, self.dev_sentences))
-            dev_gold = []
-            for sen in self.dev_sentences:
-                for tok in sen:
-                    dev_gold.append( self.IOB_map[tok[1]] )
-            self.dev_labels = dev_gold
-        else:
-            self.all_sentences = self.sentences
-
-        alpha_data = np.copy(alpha0_data)
-        self.alpha0_data = np.copy(alpha0_data)
-
-        return alpha_data
-
-    def fit_predict(self, labels, compute_dev_score=False):
-
-        if self.train_type == 'Bayes':
-            labels = np.argmax(labels, axis=1) # uses the mode
-
-            # try sampling the posterior distribution. With enough iterations, this should work, but didn't in our tests with 20 iterations.
-            #rvsunif = np.random.rand(labels.shape[0], 1)
-            #labels = (rvsunif < np.cumsum(labels, axis=1)).argmax(1)
-
-        l = 0
-        labels_by_sen = []
-        for s, sen in enumerate(self.sentences):
-            sen_labels = []
-            labels_by_sen.append(sen_labels)
-            for t, tok in enumerate(sen):
-                self.sentences[s][t][1] = self.IOB_label[labels[l]]
-                sen_labels.append(self.IOB_label[labels[l]])
-                l += 1
-
-        # select a random subset of data to use for validation if the dataset is large
-        if self.dev_sentences is None:
-
-            devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)) )
-
-            trainidxs = np.ones(self.Ndocs, dtype=bool)
-            trainidxs[devidxs] = 0
-            train_sentences = self.sentences[trainidxs]
-
-            if len(devidxs) == 0:
-                dev_sentences = self.sentences
-            else:
-                dev_sentences = self.sentences[devidxs]
-
-            dev_labels = np.array(labels_by_sen)[devidxs].flatten()
-
-        else:
-            dev_sentences = self.dev_sentences
-            train_sentences = self.sentences
-
-            dev_labels = self.dev_labels
-
-        freq_eval = 5
-        max_niter_no_imprv = 2
-
-        if self.LSTMWrapper.model is None:
-            #from lample_lstm_tagger.lstm_wrapper import MAX_NO_EPOCHS
-
-            # the first update needs more epochs to reach a useful level
-            # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
-            # if n_epochs < self.n_epochs_per_vb_iter:
-            #     n_epochs = self.n_epochs_per_vb_iter
-            n_epochs = 20
-
-            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
-                                                                 dev_labels, self.IOB_map, self.IOB_label,
-                                                                 self.nclasses, n_epochs, freq_eval=freq_eval,
-                                                                 crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=max_niter_no_imprv)
-        else:
-            n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
-
-            best_dev = -np.inf
-            last_score = best_dev
-            niter_no_imprv = 0
-
-            self.LSTMWrapper.model.best_model_saved = False
-
-            # for epoch in range(n_epochs):
-            #     niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-            #                         best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
-
-                # if niter_no_imprv >= max_niter_no_imprv:
-                #     print("- early stopping %i epochs without improvement" % niter_no_imprv)
-                #
-                #     # Commented out because we're not sure what happens if we load a model from earlier iterations.
-                #     # reload if something better was saved already.
-                #         self.LSTMWrapper.model.reload()
-                #     if self.LSTMWrapper.model.best_model_saved:
-                #
-                #     break
-
-        # now make predictions for all sentences
-        if self.probs is None:
-            agg, self.probs = self.LSTMWrapper.predict_LSTM(self.sentences)
-
-            print('LSTM assigned class labels %s' % str(np.unique(agg)) )
-
-        return self.probs
-
-    def predict(self, doc_start, text):
-        from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
-        N = len(doc_start)
-        test_sentences, _, _ = data_to_lstm_format(N, text, doc_start, np.ones(N), self.nclasses)
-
-        # now make predictions for all sentences
-        agg, probs = self.LSTMWrapper.predict_LSTM(test_sentences)
-
-        print('LSTM assigned class labels %s' % str(np.unique(agg)))
-
-        return probs
-
-    def log_likelihood(self, C_data, E_t):
-        '''
-        '''
-        lnp_Cdata = C_data * np.log(E_t)
-        lnp_Cdata[E_t == 0] = 0
-        return np.sum(lnp_Cdata)
-
-class IndependentFeatures:
-
-    train_type = 'Bayes'
-
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_iters_after_workers_converge, crf_probs):
-
-        self.N = N
-
-        self.nclasses = nclasses
-
-        self.feat_map = {}
-
-        self.features = []
-
-        for feat in text.flatten():
-            if feat not in self.feat_map:
-                self.feat_map[feat] = len(self.feat_map)
-
-            self.features.append( self.feat_map[feat] )
-
-        self.features = np.array(self.features).astype(int)
-
-        # sparse matrix of one-hot encoding, nfeatures x N
-        self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
-
-        self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
-
-        # set this to trust the model completely
-        alpha0_data = np.copy(alpha0_data) #
-
-        # alpha0_data = np.ones_like(alpha0_data)
-        #
-        # alpha0_data[:] = 0.001
-        # if alpha0_data.ndim == 2:
-        #     alpha0_data *= (nclasses - 1)
-        #     alpha0_data[1, 0] = 1000
-        # elif alpha0_data.ndim >= 3:
-        #     alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
-
-        alpha_data = np.copy(alpha0_data)
-
-        self.alpha0_data = alpha0_data
-
-        return alpha_data
-
-    def fit_predict(self, Et):
-
-        # count the number of occurrences for each label value
-
-        beta = self.beta0 +  self.features_mat.dot(Et)
-
-        self.ElnRho = psi(beta) - psi(np.sum(beta, 0)[None, :])
-
-        lnptext_given_t = self.ElnRho[self.features, :]
-
-        # normalise, assuming equal prior here
-        pt_given_text = np.exp(lnptext_given_t - logsumexp(lnptext_given_t, 1)[:, None])
-
-        return pt_given_text
-
-    def predict(self, doc_start, text):
-        N = len(doc_start)
-
-        test_features = np.zeros(N, dtype=int)
-        valid_feats = np.zeros(N, dtype=bool)
-
-        for i, feat in enumerate(text.flatten()):
-            if feat in self.feat_map:
-                valid_feats[i] = True
-                test_features[i] = self.feat_map[feat]
-
-        lnptext_given_t = self.ElnRho[test_features[valid_feats], :]
-
-        # normalise, assuming equal prior here
-        pt_given_text = np.exp(lnptext_given_t - logsumexp(lnptext_given_t, 1)[:, None])
-
-        probs = np.zeros((N, self.nclasses))
-        probs[valid_feats, :] = pt_given_text
-
-        return probs
-
-    def log_likelihood(self, C_data, E_t):
-
-        lnptext_given_t = self.ElnRho[self.features, :]
-
-        lnp_Cdata = E_t * lnptext_given_t
-        lnp_Cdata[E_t == 0] = 0
-        return np.sum(lnp_Cdata)

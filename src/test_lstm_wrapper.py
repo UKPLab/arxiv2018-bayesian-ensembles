@@ -1,4 +1,4 @@
-from algorithm.bac import LSTM
+from algorithm.lstm import LSTM
 import numpy as np
 from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
 import pandas as pd

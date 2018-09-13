@@ -67,13 +67,20 @@ class DataGenerator(object):
     
     
     def init_crowd_models(self, acc=None, miss=None, short=None, group_sizes=None):
-        
-        self.crowd_model = np.ones((4,3,3,len(group_sizes))) 
+
+        if np.isscalar(acc):
+            acc = [acc]
+        if np.isscalar(miss):
+            miss = [miss]
+        if np.isscalar(short):
+            short = [short]
+
         acc = np.array(acc)
         miss = np.array(miss)
         short = np.array(short)
-    
-        for i in range(len(acc)):
+        self.crowd_model = np.ones((4,3,3, acc.size))
+
+        for i in range(acc.size):
             # add accuracy
             self.crowd_model[:,:,:,i] += (np.eye(3)*acc[i])[None,:,:]
         
@@ -119,6 +126,10 @@ class DataGenerator(object):
     
     def build_crowd(self, group_sizes):
         crowd = []
+
+        if np.isscalar(group_sizes):
+            group_sizes = [group_sizes]
+
         group_sizes = np.array(group_sizes)
         
         # initialise annotators   
@@ -156,7 +167,10 @@ class DataGenerator(object):
         crowd = self.build_crowd(group_sizes)
         
         annotations = self.generate_annotations(doc_start, ground_truth, crowd)
-        
+
+        doc_start = np.zeros((num_docs * int(doc_length), 1))
+        doc_start[np.array(range(0, int(num_docs * doc_length), doc_length))] = 1
+
         if save_to_file:
             if output_dir==None:
                 output_dir = self.output_dir
@@ -167,11 +181,7 @@ class DataGenerator(object):
             np.savetxt(output_dir + 'full_data.csv', np.concatenate((doc_start,ground_truth, annotations),1), fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'annotations.csv', annotations, fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
-            
-        doc_start = np.zeros((num_docs*int(doc_length),1))
-        doc_start[np.array(range(0, int(num_docs*doc_length), doc_length))] = 1
-        
-        np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
+            np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
         
         return ground_truth, annotations, doc_start
 

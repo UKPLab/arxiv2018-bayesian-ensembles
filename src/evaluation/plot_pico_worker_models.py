@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 
-from algorithm.bac import BAC
+from algorithm.bsc import BAC
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 import data.load_data as load_data
 import numpy as np
@@ -135,7 +135,7 @@ for w, worker_model in enumerate(worker_models):
     # DATA MODELS
     for d, dm in enumerate(model.data_model):
         alpha_data = dm.alpha_data
-        EPi = model.worker_model._calc_EPi(alpha_data)
+        EPi = model.A._calc_EPi(alpha_data)
 
         # get the confusion matrices from the worker model
         if worker_model == 'acc':
@@ -169,7 +169,7 @@ for w, worker_model in enumerate(worker_models):
 
     # WORKERS
     EPi_list = []
-    EPi = model.worker_model._calc_EPi(model.alpha)
+    EPi = model.A._calc_EPi(model.alpha)
 
     # get the confusion matrices from the worker model
     if worker_model == 'acc':
