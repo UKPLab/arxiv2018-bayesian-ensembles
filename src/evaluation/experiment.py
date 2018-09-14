@@ -14,8 +14,6 @@ import sklearn.metrics as skm
 import numpy as np
 import glob
 
-logging.basicConfig(level=logging.DEBUG)
-# things needed for the LSTM
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 import evaluation.metrics as metrics
 from evaluation.plots import SCORE_NAMES, plot_results
@@ -25,6 +23,8 @@ from baselines import ibcc, clustering, majority_voting
 from algorithm import bsc
 from data import data_utils
 from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
+
+logging.basicConfig(level=logging.DEBUG)
 
 def calculate_sample_metrics(nclasses, agg, gt, probs, doc_starts, print_per_class_results=False):
     result = -np.ones(len(SCORE_NAMES) - 3)
@@ -554,11 +554,11 @@ class Experiment(object):
         elif self.bac_worker_model == 'mace':
             alpha0_factor = self.alpha0_factor #/ ((L-1)/2)
             self.bac_alpha0 = alpha0_factor * np.ones((2 + L))
-            self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
+            self.bac_alpha0[1] = self.alpha0_diags  # diags are bias toward correct answer
 
             self.bac_alpha0_data = np.copy(self.bac_alpha0)
             self.bac_alpha0_data[:] = self.alpha0_factor_lstm
-            self.bac_alpha0_data[1] += self.alpha0_diags_lstm
+            self.bac_alpha0_data[1] = self.alpha0_diags_lstm
 
             self.bac_alpha0[3] += self.alpha0_acc_bias
             self.bac_alpha0_data[3] += self.alpha0_acc_bias

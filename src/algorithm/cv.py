@@ -20,7 +20,7 @@ class VectorWorker():
         '''
         Update the annotator models.
 
-        TODO Representing using a full matrix might break lower bound
+        TODO Representing using a full matrix might break lower bound implementation
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
         q_pi = psi(alpha) - psi_alpha_sum

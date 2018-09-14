@@ -98,13 +98,12 @@ class MACEWorker():
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
-        alpha = alpha0.copy()
-        alpha[1, :] += correct_count
-        alpha[0, :] += incorrect_count
+        alpha[1, :] = alpha0[1, :] + correct_count
+        alpha[0, :] = alpha0[0, :] + incorrect_count
 
         for l in range(nscores):
             strategy_count_l = np.sum((C == l + 1) * pspamming, 0)
-            alpha[l+2, :] += strategy_count_l
+            alpha[l+2, :] = alpha0[l+2, :] + strategy_count_l
 
         return alpha
 
@@ -140,12 +139,12 @@ class MACEWorker():
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
-        alpha[1, :] += correct_count
-        alpha[0, :] += incorrect_count
+        alpha[1, :] = alpha0[1, :] + correct_count
+        alpha[0, :] = alpha0[0, :] + incorrect_count
 
         for l in range(nscores):
             strategy_count_l = np.sum((C[:, l:l+1]) * pspamming, 0)
-            alpha[l+2, :] += strategy_count_l
+            alpha[l+2, :] = alpha0[l+2, :] + strategy_count_l
 
         return alpha
 
@@ -195,22 +194,7 @@ class MACEWorker():
                 ll_correct = lnPi[1, Krange] * idx
                 ll_correct[idx == 0] = - np.inf
 
-        # avoid values that are too small
-        p_correct = np.exp(ll_correct - logsumexp([ll_correct, ll_incorrect], axis=0))
-        p_incorrect = np.exp(ll_incorrect - logsumexp([ll_correct, ll_incorrect], axis=0))
-
-        # deal with infs
-        if not np.isscalar(ll_correct):
-            ll_correct[p_correct == 0] = 0
-        elif p_correct == 0:
-            ll_correct = 0
-
-        if not np.isscalar(ll_incorrect):
-            ll_incorrect[p_incorrect == 0] = 0
-        elif p_incorrect == 0:
-            ll_incorrect = 0
-
-        return p_correct * ll_correct + p_incorrect * ll_incorrect
+        return logsumexp([ll_correct, ll_incorrect], axis=0)
 
     def _expand_alpha0(alpha0, alpha0_data, K, nscores):
         '''

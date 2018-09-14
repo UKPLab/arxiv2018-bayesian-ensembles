@@ -200,9 +200,10 @@ class BAC(object):
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
                 disallowed_count = self.beta0[self.outside_labels[0], restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-                #self.nu0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
-                #self.nu0[restricted_label, restricted_label] += disallowed_count / 2.0
+                self.beta0[self.outside_labels[0], restricted_label] = self.rare_transition_pseudocount
+                #self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                #self.beta0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
+                #self.beta0[restricted_label, restricted_label] += disallowed_count / 2.0
 
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
@@ -223,7 +224,7 @@ class BAC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
+                    #self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
                     self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
@@ -261,7 +262,7 @@ class BAC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
+                    #self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
                     self.beta0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
@@ -288,7 +289,7 @@ class BAC(object):
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            #self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
             self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # cannot jump from one type to another
@@ -296,7 +297,7 @@ class BAC(object):
                 if i == j:
                     continue  # this transitiion is allowed
                 disallowed_counts = self.beta0[unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[unrestricted_label, self.inside_labels[j]] += disallowed_counts
+                #self.beta0[unrestricted_label, self.inside_labels[j]] += disallowed_counts
                 self.beta0[unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
             # can't switch types mid annotation
@@ -304,7 +305,7 @@ class BAC(object):
                 if other_inside_label == restricted_label:
                     continue
                 disallowed_counts = self.beta0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
+                #self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
                 self.beta0[other_inside_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
