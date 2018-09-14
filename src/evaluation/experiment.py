@@ -224,7 +224,7 @@ class Experiment(object):
     random_sampling = False
 
     def __init__(self, generator, nclasses=None, nannotators=None, config=None,
-                 alpha0_factor=1.0, alpha0_diags = 1.0, nu0_factor = 0.1, max_iter=20, crf_probs=False, rep=0):
+                 alpha0_factor=1.0, alpha0_diags=1.0, beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0):
 
         self.output_dir = '~/data/bayesian_annotator_combination/output/'
 
@@ -244,7 +244,7 @@ class Experiment(object):
 
         self.alpha0_factor = alpha0_factor
         self.alpha0_diags = alpha0_diags
-        self.nu0_factor = nu0_factor
+        self.nu0_factor = beta0_factor
 
         # save results from methods here. If we use compound methods, we can reuse these results in different
         # combinations of methods.
@@ -594,7 +594,7 @@ class Experiment(object):
             bac_model = bsc.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
                                 inside_labels=inside_labels, outside_labels=outside_labels,
                                 beginning_labels=begin_labels, alpha0=self.bac_alpha0, alpha0_data=self.bac_alpha0_data,
-                                nu0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
+                                beta0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
                                 exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
                                 tagging_scheme='IOB2',
                                 data_model=data_model, transition_model=transition_model)

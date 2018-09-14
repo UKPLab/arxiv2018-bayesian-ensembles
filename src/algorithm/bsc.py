@@ -55,7 +55,7 @@ class BAC(object):
     
     nscores = None  # number of possible values a token can have, usually this is L + 1 (add one to account for unannotated tokens)
     
-    nu0 = None  # ground truth priors
+    beta0 = None  # ground truth priors
     
     lnB = None  # transition matrix
     lnPi = None  # worker confusion matrices
@@ -70,7 +70,7 @@ class BAC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, exclusions=None, alpha0=None, nu0=None, worker_model='ibcc',
+                 before_doc_idx=1, exclusions=None, alpha0=None, beta0=None, worker_model='ibcc',
                  data_model=None, alpha0_data=None, tagging_scheme='IOB2', transition_model='HMM'):
         '''
         Constructor
@@ -79,9 +79,11 @@ class BAC(object):
 
         '''
         if alpha0 is None:
-            alpha0 = np.ones((L, L)) + np.eye(L)
+            self.alpha0 = np.ones((L, L)) + np.eye(L)
+        else:
+            self.alpha0 = np.copy(alpha0) # make sure we don't overwrite the original object
 
-        self.rare_transition_pseudocount = np.min(alpha0) / 10.0 # this makes the rare transition much less likely than
+        self.rare_transition_pseudocount = np.min([np.min(beta0), np.min(alpha0)]) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
 
@@ -92,8 +94,10 @@ class BAC(object):
         self.nscores = L
         self.K = K
 
-        self.alpha0 = alpha0
-        self.alpha0_data = alpha0_data
+        if alpha0_data is not None:
+            self.alpha0_data = np.copy(alpha0_data)
+        else:
+            self.alpha0_data = None
 
         self.inside_labels = inside_labels
         self.outside_labels = outside_labels
@@ -102,19 +106,19 @@ class BAC(object):
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-            if nu0 is None:
-                self.nu0 = np.ones((L + 1, L)) * 10
+            if beta0 is None:
+                self.beta0 = np.ones((L + 1, L)) * 10
             else:
-                self.nu0 = nu0
+                self.beta0 = np.copy(beta0)
 
             self._update_B = self._update_B_trans
             self._update_t = self._update_t_trans
             self._lnpt = self._lnpt_trans
         else:
-            if nu0 is None:
-                self.nu0 = np.ones(L) * 10
+            if beta0 is None:
+                self.beta0 = np.ones(L) * 10
             else:
-                self.nu0 = nu0
+                self.beta0 = np.copy(beta0)
 
             self._update_B = self._update_B_notrans
             self._update_t = self._update_t_notrans
@@ -194,13 +198,13 @@ class BAC(object):
                 self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
-            if self.nu0.ndim >= 2:
-                disallowed_count = self.nu0[self.outside_labels[0], restricted_label] - self.rare_transition_pseudocount
-                self.nu0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+            if self.beta0.ndim >= 2:
+                disallowed_count = self.beta0[self.outside_labels[0], restricted_label] - self.rare_transition_pseudocount
+                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
                 #self.nu0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
                 #self.nu0[restricted_label, restricted_label] += disallowed_count / 2.0
 
-                self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
+                self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
@@ -217,10 +221,10 @@ class BAC(object):
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
 
-                if self.nu0.ndim >= 2:
-                    disallowed_count = self.nu0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.nu0[other_restricted_label, other_restricted_label] += disallowed_count
-                    self.nu0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
+                if self.beta0.ndim >= 2:
+                    disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
+                    self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
+                    self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
@@ -255,22 +259,22 @@ class BAC(object):
                 self.alpha0[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
 
-                if self.nu0.ndim >= 2:
-                    disallowed_count = self.nu0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.nu0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
-                    self.nu0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
+                if self.beta0.ndim >= 2:
+                    disallowed_count = self.beta0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
+                    self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
+                    self.beta0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
             for label, excluded in dict(self.exclusions).items():
                 self.alpha0[:, excluded, label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, excluded, label, :] = self.rare_transition_pseudocount
 
-                if self.nu0.ndim == 2:
-                    self.nu0[label, excluded] = self.rare_transition_pseudocount
+                if self.beta0.ndim == 2:
+                    self.beta0[label, excluded] = self.rare_transition_pseudocount
 
     def _set_transition_constraints_betaonly(self):
 
-        if self.nu0.ndim != 2:
+        if self.beta0.ndim != 2:
             return
 
         # set priors for invalid transitions (to low values)
@@ -283,39 +287,39 @@ class BAC(object):
 
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            disallowed_counts = self.nu0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            self.nu0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
-            self.nu0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
+            disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
+            self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # cannot jump from one type to another
             for j, unrestricted_label in enumerate(unrestricted_labels):
                 if i == j:
                     continue  # this transitiion is allowed
-                disallowed_counts = self.nu0[unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                self.nu0[unrestricted_label, self.inside_labels[j]] += disallowed_counts
-                self.nu0[unrestricted_label, restricted_label] = self.rare_transition_pseudocount
+                disallowed_counts = self.beta0[unrestricted_label, restricted_label] - self.rare_transition_pseudocount
+                self.beta0[unrestricted_label, self.inside_labels[j]] += disallowed_counts
+                self.beta0[unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
             # can't switch types mid annotation
             for j, other_inside_label in enumerate(restricted_labels):
                 if other_inside_label == restricted_label:
                     continue
-                disallowed_counts = self.nu0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
-                self.nu0[other_inside_label, self.inside_labels[j]] += disallowed_counts
-                self.nu0[other_inside_label, restricted_label] = self.rare_transition_pseudocount
+                disallowed_counts = self.beta0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
+                self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
+                self.beta0[other_inside_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
             for label, excluded in dict(self.exclusions).items():
-                self.nu0[label, excluded] = self.rare_transition_pseudocount
+                self.beta0[label, excluded] = self.rare_transition_pseudocount
 
     def _initB(self):
-        self.nu = self.nu0
+        self.beta = self.beta0
 
-        if self.nu0.ndim >= 2:
-            nu0_sum = psi(np.sum(self.nu0, -1))[:, None]
+        if self.beta0.ndim >= 2:
+            nu0_sum = psi(np.sum(self.beta0, -1))[:, None]
         else:
-            nu0_sum = psi(np.sum(self.nu0))
+            nu0_sum = psi(np.sum(self.beta0))
 
-        self.lnB = psi(self.nu0) - nu0_sum
+        self.lnB = psi(self.beta0) - nu0_sum
 
     def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
@@ -408,24 +412,24 @@ class BAC(object):
                                                                  model.lnPi)
 
         # E[ln p(A | nu_0)]
-        x = (self.nu0 - 1) * self.lnB
-        gammaln_nu0 = gammaln(self.nu0)
+        x = (self.beta0 - 1) * self.lnB
+        gammaln_nu0 = gammaln(self.beta0)
         invalid_nus = np.isinf(gammaln_nu0) | np.isinf(x) | np.isnan(x)
         gammaln_nu0[invalid_nus] = 0
         x[invalid_nus] = 0
         x = np.sum(x, axis=1)
-        z = gammaln(np.sum(self.nu0, 1) ) - np.sum(gammaln_nu0, 1)
+        z = gammaln(np.sum(self.beta0, 1)) - np.sum(gammaln_nu0, 1)
         z[np.isinf(z)] = 0
         lnpA = np.sum(x + z) 
         
         # E[ln q(A)]
-        x = (self.nu - 1) * self.lnB
+        x = (self.beta - 1) * self.lnB
         x[np.isinf(x)] = 0
-        gammaln_nu = gammaln(self.nu)
+        gammaln_nu = gammaln(self.beta)
         gammaln_nu[invalid_nus] = 0
         x[invalid_nus] = 0
         x = np.sum(x, axis=1)
-        z = gammaln(np.sum(self.nu, 1)) - np.sum(gammaln_nu, 1)
+        z = gammaln(np.sum(self.beta, 1)) - np.sum(gammaln_nu, 1)
         z[np.isinf(z)] = 0
         lnqA = np.sum(x + z)
         
@@ -448,7 +452,7 @@ class BAC(object):
             n_alpha_elements = len(hyperparams) - 1
 
             self.alpha0 = np.exp(hyperparams[0:n_alpha_elements]).reshape(self.alpha_shape)
-            self.nu0 = np.ones((self.L + 1, self.L)) * np.exp(hyperparams[-1])
+            self.beta0 = np.ones((self.L + 1, self.L)) * np.exp(hyperparams[-1])
 
             # run the method
             self.run(C, doc_start, features, dev_data, converge_workers_first=converge_workers_first)
@@ -462,7 +466,7 @@ class BAC(object):
             self.opt_runs += 1
             return -lb
         
-        initialguess = np.log(np.append(self.alpha0.flatten(), self.nu0[0, 0]))
+        initialguess = np.log(np.append(self.alpha0.flatten(), self.beta0[0, 0]))
         ftol = 1.0  #1e-3
         opt_hyperparams, _, _, _, _ = fmin(neg_marginal_likelihood, initialguess, args=(C, doc_start), maxfun=maxfun,
                                                      full_output=True, ftol=ftol, xtol=1e100) 
@@ -552,8 +556,8 @@ class BAC(object):
         '''
         Update the transition model.
         '''
-        self.nu = self.nu0 + np.sum(self.q_t_joint, 0)
-        self.lnB = psi(self.nu) - psi(np.sum(self.nu, -1))[:, None]
+        self.beta = self.beta0 + np.sum(self.q_t_joint, 0)
+        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
 
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
@@ -562,8 +566,8 @@ class BAC(object):
         '''
         Update the transition model.
         '''
-        self.nu = self.nu0 + np.sum(self.q_t, 0)
-        self.lnB = psi(self.nu) - psi(np.sum(self.nu))
+        self.beta = self.beta0 + np.sum(self.q_t, 0)
+        self.lnB = psi(self.beta) - psi(np.sum(self.beta))
 
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
@@ -714,10 +718,10 @@ class BAC(object):
         Taking the most probable labels results in an illegal sequence of [0, 1]. 
         Using most probable sequence would result in [0, 0].
         '''
-        if self.nu.ndim >= 2:
-            EA = self.nu / np.sum(self.nu, axis=1)[:, None]
+        if self.beta.ndim >= 2:
+            EA = self.beta / np.sum(self.beta, axis=1)[:, None]
         else:
-            EA = self.nu / np.sum(self.nu)
+            EA = self.beta / np.sum(self.beta)
             EA = np.tile(EA[None, :], (self.L+1, 1))
 
         lnEA = np.zeros_like(EA)
