@@ -7,7 +7,7 @@ class AccuracyWorker():
     # lnPi[1] = ln p(correct)
     # lnPi[0] = ln p(wrong)
 
-    def _init_alpha0(self, alpha0_diags, alpha0_factor, L):
+    def _init_alpha0(alpha0_diags, alpha0_factor, L):
         alpha0 = alpha0_factor * np.ones((2))
         alpha0[1] += alpha0_diags  # diags are bias toward correct answer
 

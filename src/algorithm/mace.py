@@ -13,7 +13,7 @@ class MACEWorker():
     # lnPi[0, :] = ln p(incorrect/spam answer)
     # lnPi[2:2+nscores, :] = ln p(label given worker is spamming/incorrect)
 
-    def _init_alpha0(self, alpha0_diags, alpha0_factor, L):
+    def _init_alpha0(alpha0_diags, alpha0_factor, L):
         alpha0 = alpha0_factor * np.ones((2 + L))
         alpha0[1] = alpha0_diags  # diags are bias toward correct answer
 
