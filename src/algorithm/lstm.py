@@ -7,7 +7,7 @@ class LSTM:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, dev_data, max_vb_iters, crf_probs):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs):
 
         self.crf_probs = crf_probs
 
@@ -33,17 +33,6 @@ class LSTM:
 
         self.nclasses = nclasses
 
-        self.dev_sentences = dev_data
-        if dev_data is not None:
-            self.all_sentences = np.concatenate((self.sentences, self.dev_sentences))
-            dev_gold = []
-            for sen in self.dev_sentences:
-                for tok in sen:
-                    dev_gold.append( self.IOB_map[tok[1]] )
-            self.dev_labels = dev_gold
-        else:
-            self.all_sentences = self.sentences
-
         alpha_data = np.copy(alpha0_data)
         self.alpha0_data = np.copy(alpha0_data)
 
@@ -68,45 +57,16 @@ class LSTM:
                 sen_labels.append(self.IOB_label[labels[l]])
                 l += 1
 
-        # select a random subset of data to use for validation if the dataset is large
-        if self.dev_sentences is None:
-
-            devidxs = np.random.randint(0, self.Ndocs, int(np.round(self.Ndocs * 0.2)) )
-
-            trainidxs = np.ones(self.Ndocs, dtype=bool)
-            trainidxs[devidxs] = 0
-            train_sentences = self.sentences[trainidxs]
-
-            if len(devidxs) == 0:
-                dev_sentences = self.sentences
-            else:
-                dev_sentences = self.sentences[devidxs]
-
-            dev_labels = np.array(labels_by_sen)[devidxs].flatten()
-
-        else:
-            dev_sentences = self.dev_sentences
-            train_sentences = self.sentences
-
-            dev_labels = self.dev_labels
-
-        freq_eval = 5
-        max_niter_no_imprv = 2
-
         if self.LSTMWrapper.model is None:
-            #from lample_lstm_tagger.lstm_wrapper import MAX_NO_EPOCHS
-
             # the first update needs more epochs to reach a useful level
-            # n_epochs = MAX_NO_EPOCHS - ((self.max_vb_iters - 1) * self.n_epochs_per_vb_iter)
-            # if n_epochs < self.n_epochs_per_vb_iter:
-            #     n_epochs = self.n_epochs_per_vb_iter
-            n_epochs = 20
+            n_epochs = self.n_epochs_per_vb_iter + 2
 
-            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, train_sentences, dev_sentences,
-                                                                 dev_labels, self.IOB_map, self.IOB_label,
-                                                                 self.nclasses, n_epochs, freq_eval=freq_eval,
+            # don't need to use an dev set here for early stopping as this may break EM
+            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, [], [],
+                                                                 self.IOB_map, self.IOB_label,
+                                                                 self.nclasses, n_epochs, freq_eval=n_epochs,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=max_niter_no_imprv)
+                                                                 max_niter_no_imprv=2)
         else:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 
@@ -116,19 +76,9 @@ class LSTM:
 
             self.LSTMWrapper.model.best_model_saved = False
 
-            # for epoch in range(n_epochs):
-            #     niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-            #                         best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
-
-                # if niter_no_imprv >= max_niter_no_imprv:
-                #     print("- early stopping %i epochs without improvement" % niter_no_imprv)
-                #
-                #     # Commented out because we're not sure what happens if we load a model from earlier iterations.
-                #     # reload if something better was saved already.
-                #         self.LSTMWrapper.model.reload()
-                #     if self.LSTMWrapper.model.best_model_saved:
-                #
-                #     break
+            for epoch in range(n_epochs):
+                niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
+                                    best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
 
         # now make predictions for all sentences
         if self.probs is None:

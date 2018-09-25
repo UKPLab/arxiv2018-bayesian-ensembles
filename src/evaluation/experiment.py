@@ -609,10 +609,10 @@ class Experiment(object):
         np.random.seed(592) # for reproducibility
 
         if self.opt_hyper:
-            probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000, dev_data=dev_sentences,
+            probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000,
                                       converge_workers_first=use_LSTM==2)
         else:
-            probs, agg = bac_model.run(annotations, doc_start, text, dev_data=dev_sentences,
+            probs, agg = bac_model.run(annotations, doc_start, texts,
                                  converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs)
 
         model = bac_model
@@ -697,7 +697,7 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
+                        IOB_label, self.num_classes, freq_eval=self.max_iter, n_epochs=self.max_iter,
                         crf_probs=self.crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences

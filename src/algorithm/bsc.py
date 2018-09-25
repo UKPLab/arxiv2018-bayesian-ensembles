@@ -199,13 +199,9 @@ class BAC(object):
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
-                disallowed_count = self.beta0[self.outside_labels[0], restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels[0], restricted_label] = self.rare_transition_pseudocount
-                #self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-                #self.beta0[unrestricted_labels[i], restricted_label] += disallowed_count / 2.0
-                #self.beta0[restricted_label, restricted_label] += disallowed_count / 2.0
-
+                disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
+                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
 
             for typeid, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
@@ -224,29 +220,12 @@ class BAC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    #self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
+                    self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
                     self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
                 if typeid == i:  # same type is allowed
-
-                    # if self.alpha0.shape[0] == 3:
-                    #
-                    #     # reduce likelihood of I->I | B, increase I->B | B
-                    #     disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
-                    #     self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
-                    #     self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
-                    #
-                    #     # reduce prevalence of I->B transitions, increase I->I
-                    #     disallowed_count = self.nu0[restricted_label, other_unrestricted_label] * 0.5
-                    #     self.nu0[restricted_label, other_unrestricted_label] *= 0.5
-                    #     self.nu0[restricted_label, restricted_label] += disallowed_count
-
-                        # reduce prevalence of B->B transitions, increase B->I
-                        #disallowed_count = self.nu0[other_unrestricted_label, other_unrestricted_label] * 0.5
-                        #self.nu0[other_unrestricted_label, other_unrestricted_label] *= 0.5
-                        #self.nu0[other_unrestricted_label, restricted_label] += disallowed_count
                     continue
 
                 disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
@@ -262,7 +241,7 @@ class BAC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                    #self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
+                    self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
                     self.beta0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
@@ -289,7 +268,7 @@ class BAC(object):
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            #self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
             self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # cannot jump from one type to another
@@ -297,7 +276,7 @@ class BAC(object):
                 if i == j:
                     continue  # this transitiion is allowed
                 disallowed_counts = self.beta0[unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                #self.beta0[unrestricted_label, self.inside_labels[j]] += disallowed_counts
+                self.beta0[unrestricted_label, self.inside_labels[j]] += disallowed_counts
                 self.beta0[unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
             # can't switch types mid annotation
@@ -305,7 +284,7 @@ class BAC(object):
                 if other_inside_label == restricted_label:
                     continue
                 disallowed_counts = self.beta0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
-                #self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
+                self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
                 self.beta0[other_inside_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
@@ -439,7 +418,7 @@ class BAC(object):
         lb = lnpCt - lnqt + lnp_features_and_Cdata - lnq_Cdata + lnpPi - lnqPi + lnpA - lnqA
         return lb
         
-    def optimize(self, C, doc_start, features=None, maxfun=50, dev_data=None, converge_workers_first=False):
+    def optimize(self, C, doc_start, features=None, maxfun=50, converge_workers_first=False):
         ''' 
         Run with MLII optimisation over the lower bound on the log-marginal likelihood.
         Optimizes the confusion matrix prior to the same values for all previous labels, and the scaling of the transition matrix
@@ -456,7 +435,7 @@ class BAC(object):
             self.beta0 = np.ones((self.L + 1, self.L)) * np.exp(hyperparams[-1])
 
             # run the method
-            self.run(C, doc_start, features, dev_data, converge_workers_first=converge_workers_first)
+            self.run(C, doc_start, features, converge_workers_first=converge_workers_first)
             
             # compute lower bound
             lb = self.lowerbound()
@@ -573,7 +552,7 @@ class BAC(object):
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def run(self, C, doc_start, features=None, dev_data=None, converge_workers_first=False, crf_probs=False):
+    def run(self, C, doc_start, features=None, converge_workers_first=False, crf_probs=False):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
 
@@ -611,7 +590,7 @@ class BAC(object):
 
         # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
-            model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L, dev_data,
+            model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L,
                                   self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs)
             model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
