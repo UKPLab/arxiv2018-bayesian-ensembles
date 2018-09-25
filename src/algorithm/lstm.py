@@ -62,7 +62,7 @@ class LSTM:
             n_epochs = self.n_epochs_per_vb_iter + 2
 
             # don't need to use an dev set here for early stopping as this may break EM
-            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, [], [],
+            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.sentences, self.sentences, [], [],
                                                                  self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=n_epochs,
                                                                  crf_probs=self.crf_probs,
@@ -78,7 +78,7 @@ class LSTM:
 
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-                                    best_dev, last_score, compute_dev_score and (((epoch+1) % freq_eval) == 0) and (epoch < n_epochs))
+                                    best_dev, last_score, compute_dev=False)
 
         # now make predictions for all sentences
         if self.probs is None:

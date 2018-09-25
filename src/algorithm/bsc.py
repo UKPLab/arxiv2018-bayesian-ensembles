@@ -69,7 +69,7 @@ class BAC(object):
     max_data_updates_at_end = 20 - 2 # the first iteration uses 3 instead of 1 epoch
     eps = None  # maximum difference of estimate differences in convergence chack
 
-    def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
+    def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, nu0_factor=1.0,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM'):
         '''
@@ -540,7 +540,7 @@ class BAC(object):
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def run(self, C, doc_start, features=None, converge_workers_first=False, crf_probs=False):
+    def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
 
