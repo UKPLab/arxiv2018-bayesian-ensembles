@@ -99,8 +99,9 @@ for w, worker_model in enumerate(worker_models):
     data_model = data_models[w]
 
     model = BAC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
-                beginning_labels=begin_labels, alpha0=alpha0, beta0=nu0, before_doc_idx=1,
-                worker_model=worker_model, tagging_scheme='IOB2', data_model=data_model, transition_model='HMM')
+                beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0=nu0,
+                before_doc_idx=1, worker_model=worker_model, tagging_scheme='IOB2',
+                data_model=data_model, transition_model='HMM')
 
     model.verbose = True
 

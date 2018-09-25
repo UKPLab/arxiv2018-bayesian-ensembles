@@ -1,8 +1,10 @@
 import numpy as np
 from scipy.special.basic import psi
 
+from algorithm.cv import VectorWorker
 
-class ConfusionMatrixWorker():
+
+class ConfusionMatrixWorker(VectorWorker):
     # Worker model: Bayesianized Dawid and Skene confusion matrix ----------------------------------------------------------
 
     def _init_lnPi(alpha0):

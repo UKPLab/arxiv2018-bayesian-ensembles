@@ -7,6 +7,16 @@ class AccuracyWorker():
     # lnPi[1] = ln p(correct)
     # lnPi[0] = ln p(wrong)
 
+    def _init_alpha0(self, alpha0_diags, alpha0_factor, L):
+        alpha0 = alpha0_factor * np.ones((2))
+        alpha0[1] += alpha0_diags  # diags are bias toward correct answer
+
+        alpha0_data = np.copy(alpha0)
+        alpha0_data[:] = alpha0_factor
+        alpha0_data[1] += alpha0_diags
+
+        return alpha0, alpha0_data
+
     def _init_lnPi(alpha0):
 
         # Returns the initial values for alpha and lnPi

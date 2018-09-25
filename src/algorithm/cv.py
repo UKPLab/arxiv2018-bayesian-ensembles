@@ -8,6 +8,19 @@ class VectorWorker():
 # the alphas are counted as for IBCC for simplicity. However, when Pi is computed, the counts for incorrect answers
 # are summed together to compute lnPi_incorrect, then exp(lnPi_incorrect) is divided by nclasses - 1.
 
+    def _init_alpha0(self, alpha0_diags, alpha0_factor, L):
+        alpha0_factor = alpha0_factor / ((L - 1) / 2)
+        alpha0_diags = alpha0_diags + alpha0_factor - alpha0_factor
+
+        alpha0 = alpha0_factor * np.ones((L, L)) + \
+                          alpha0_diags * np.eye(L)
+
+        alpha0_data = np.copy(self.bac_alpha0)
+        alpha0_data[:] = alpha0_factor / ((L - 1) / 2) + np.eye(L) * (
+                alpha0_diags + alpha0_factor - (alpha0_factor / ((L - 1) / 2)))
+
+        return alpha0, alpha0_data
+
     def _init_lnPi(alpha0):
         # Returns the initial values for alpha and lnPi
         lnPi = VectorWorker._calc_q_pi(alpha0)

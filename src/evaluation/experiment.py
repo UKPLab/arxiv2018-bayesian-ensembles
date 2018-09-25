@@ -251,9 +251,6 @@ class Experiment(object):
         self.aggs = {}
         self.probs = {}
 
-        self.bac_pretrained = None
-        self.bac_iterative_learning = False
-
         self.max_iter = max_iter # allow all methods to use a maximum no. iterations
 
         np.random.seed(3849)
@@ -520,68 +517,16 @@ class Experiment(object):
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM',
-                 bac_model=None, doc_start_unseen=None, text_unseen=None):
+                 doc_start_unseen=None, text_unseen=None):
 
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
-
-
-        if not hasattr(self, 'alpha0_factor_lstm'):
-            self.alpha0_factor_lstm = self.alpha0_factor
-        if not hasattr(self, 'alpha0_diags_lstm'):
-            self.alpha0_diags_lstm = self.alpha0_diags
-        if not hasattr(self, 'alpha0_acc_bias'):
-            self.alpha0_acc_bias = 0
-
-        # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
-        if self.bac_worker_model == 'seq' or self.bac_worker_model == 'ibcc' or self.bac_worker_model == 'vec':
-
-            alpha0_factor = self.alpha0_factor / ((L-1)/2)
-            alpha0_diags = self.alpha0_diags + self.alpha0_factor - alpha0_factor
-
-            self.bac_alpha0 = alpha0_factor * np.ones((L, L)) + \
-                              alpha0_diags * np.eye(L)
-
-            # Acceptance bias -- should be tuned!
-            self.bac_alpha0[:, 1] += self.alpha0_acc_bias # add to the outside label to bias toward accepting more annotations
-
-            self.bac_alpha0_data = np.copy(self.bac_alpha0)
-            self.bac_alpha0_data[:] = self.alpha0_factor_lstm / ((L-1)/2) + np.eye(L) * (
-                    self.alpha0_diags_lstm + self.alpha0_factor_lstm - (self.alpha0_factor_lstm / ((L-1)/2)))
-
-            self.bac_alpha0_data[:, 1] += self.alpha0_acc_bias  # add to the outside label to bias toward accepting more annotations
-
-        elif self.bac_worker_model == 'mace':
-            alpha0_factor = self.alpha0_factor #/ ((L-1)/2)
-            self.bac_alpha0 = alpha0_factor * np.ones((2 + L))
-            self.bac_alpha0[1] = self.alpha0_diags  # diags are bias toward correct answer
-
-            self.bac_alpha0_data = np.copy(self.bac_alpha0)
-            self.bac_alpha0_data[:] = self.alpha0_factor_lstm
-            self.bac_alpha0_data[1] = self.alpha0_diags_lstm
-
-            self.bac_alpha0[3] += self.alpha0_acc_bias
-            self.bac_alpha0_data[3] += self.alpha0_acc_bias
-
-        elif self.bac_worker_model == 'acc':
-            self.bac_alpha0 = self.alpha0_factor * np.ones((2))
-            self.bac_alpha0[1] += self.alpha0_diags  # diags are bias toward correct answer
-
-            self.bac_alpha0_data = np.copy(self.bac_alpha0)
-            self.bac_alpha0_data[:] = self.alpha0_factor_lstm
-            self.bac_alpha0_data[1] += self.alpha0_diags_lstm
 
         num_types = (self.num_classes - 1) / 2
         outside_labels = [-1, 1]
         inside_labels = (np.arange(num_types) * 2 + 1).astype(int)
         inside_labels[0] = 0
         begin_labels = (np.arange(num_types) * 2 + 2).astype(int)
-
-        if use_LSTM and ground_truth_val is not None and doc_start_val is not None and text_val is not None:
-            dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
-                                                                   doc_start_val, ground_truth_val)
-        else:
-            dev_sentences = None
 
         data_model = []
 
@@ -590,25 +535,16 @@ class Experiment(object):
         if use_BOF:
             data_model.append('IF')
 
-        if bac_model is None:
-            bac_model = bsc.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
-                                inside_labels=inside_labels, outside_labels=outside_labels,
-                                beginning_labels=begin_labels, alpha0=self.bac_alpha0, alpha0_data=self.bac_alpha0_data,
-                                beta0=self.bac_nu0 if transition_model == 'HMM' else self.ibcc_nu0,
-                                exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
-                                tagging_scheme='IOB2',
-                                data_model=data_model, transition_model=transition_model)
-        else:
-            bac_model.alpha0 = self.bac_alpha0
-            bac_model.alpha0_data = self.bac_alpha0_data
-            bac_model.nu0 = self.bac_nu0
-            bac_model.data_model_updated = 0 # update only the data model without resetting everything.
+        bac_model = bsc.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+                    inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
+                    alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, beta0=self.nu0_factor,
+                    exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
+                    tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model)
 
         bac_model.verbose = True
 
-        np.random.seed(592) # for reproducibility
-
         if self.opt_hyper:
+            np.random.seed(592)  # for reproducibility
             probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000,
                                       converge_workers_first=use_LSTM==2)
         else:
@@ -1036,15 +972,12 @@ class Experiment(object):
                                     doc_start_nocrowd=doc_start_nocrowd,
                                     text_nocrowd=text_nocrowd,
                                     transition_model=trans_model,
-                                    bac_model=self.bac_pretrained,
                                     doc_start_unseen=doc_start_unseen,
                                     text_unseen=text_unseen)
 
                         self.aggs[method] = agg
                         self.probs[method] = probs
 
-                        if self.bac_iterative_learning:
-                            self.bac_pretrained = model
                     else:
                         agg = self.aggs[method]
                         probs = self.probs[method]

@@ -1,8 +1,10 @@
 import numpy as np
 from scipy.special.basic import psi
 
+from algorithm.cv import VectorWorker
 
-class SequentialWorker():
+
+class SequentialWorker(VectorWorker):
     # Worker model: sequential model of workers-----------------------------------------------------------------------------
 
     def _init_lnPi(alpha0):

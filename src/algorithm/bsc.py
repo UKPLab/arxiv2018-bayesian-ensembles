@@ -70,20 +70,15 @@ class BAC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=100, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, exclusions=None, alpha0=None, beta0=None, worker_model='ibcc',
-                 data_model=None, alpha0_data=None, tagging_scheme='IOB2', transition_model='HMM'):
+                 before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, nu0_factor=1.0,
+                 worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM'):
         '''
         Constructor
 
         beginning_labels should correspond in order to inside labels.
 
         '''
-        if alpha0 is None:
-            self.alpha0 = np.ones((L, L)) + np.eye(L)
-        else:
-            self.alpha0 = np.copy(alpha0) # make sure we don't overwrite the original object
-
-        self.rare_transition_pseudocount = np.min([np.min(beta0), np.min(alpha0)]) / 10.0 # this makes the rare transition much less likely than
+        self.rare_transition_pseudocount = np.min([np.min(nu0_factor), alpha0_diags, alpha0_factor]) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
 
@@ -94,11 +89,6 @@ class BAC(object):
         self.nscores = L
         self.K = K
 
-        if alpha0_data is not None:
-            self.alpha0_data = np.copy(alpha0_data)
-        else:
-            self.alpha0_data = None
-
         self.inside_labels = inside_labels
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
@@ -106,19 +96,14 @@ class BAC(object):
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-            if beta0 is None:
-                self.beta0 = np.ones((L + 1, L)) * 10
-            else:
-                self.beta0 = np.copy(beta0)
+
+            self.beta0 = np.ones((self.L + 1, self.L)) * nu0_factor
 
             self._update_B = self._update_B_trans
             self._update_t = self._update_t_trans
             self._lnpt = self._lnpt_trans
         else:
-            if beta0 is None:
-                self.beta0 = np.ones(L) * 10
-            else:
-                self.beta0 = np.copy(beta0)
+            self.beta0 = np.ones(self.num_classes) * nu0_factor
 
             self._update_B = self._update_B_notrans
             self._update_t = self._update_t_notrans
@@ -161,6 +146,9 @@ class BAC(object):
             self.A = VectorWorker
             self._set_transition_constraints = self._set_transition_constraints_betaonly
             self.alpha_shape = (self.L, self.nscores)
+
+        self.alpha0, self.alpha0_data = self.A._init_alpha0(alpha0_diags, alpha0_factor, L)
+
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
         
