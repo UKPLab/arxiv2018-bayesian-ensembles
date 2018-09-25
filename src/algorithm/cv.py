@@ -15,7 +15,7 @@ class VectorWorker():
         alpha0 = alpha0_factor * np.ones((L, L)) + \
                           alpha0_diags * np.eye(L)
 
-        alpha0_data = np.copy(self.bac_alpha0)
+        alpha0_data = np.copy(alpha0)
         alpha0_data[:] = alpha0_factor / ((L - 1) / 2) + np.eye(L) * (
                 alpha0_diags + alpha0_factor - (alpha0_factor / ((L - 1) / 2)))
 
