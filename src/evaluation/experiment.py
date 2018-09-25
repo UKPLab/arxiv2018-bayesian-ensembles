@@ -549,7 +549,7 @@ class Experiment(object):
             probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000,
                                       converge_workers_first=use_LSTM==2)
         else:
-            probs, agg = bac_model.run(annotations, doc_start, texts,
+            probs, agg = bac_model.run(annotations, doc_start, text,
                                  converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs)
 
         model = bac_model
