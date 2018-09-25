@@ -12,9 +12,9 @@ output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
 
 regen_data = False
 
-print('USING ONLY A SUBSET OF DATA FOR DEBUGGING!!!!!!!!!!!')
+# print('USING ONLY A SUBSET OF DATA FOR DEBUGGING!!!!!!!!!!!')
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, 200000)
+    load_data.load_biomedical_data(regen_data)
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 
