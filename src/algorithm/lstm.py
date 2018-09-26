@@ -14,8 +14,6 @@ class LSTM:
         self.n_epochs_per_vb_iter = 1#3 # this may be too much?
         self.max_vb_iters = max_vb_iters
 
-        self.probs = None
-
         self.N = N
 
         labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
@@ -81,12 +79,10 @@ class LSTM:
                                     best_dev, last_score, compute_dev=False)
 
         # now make predictions for all sentences
-        if self.probs is None:
-            agg, self.probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+        agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+        print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
-            print('LSTM assigned class labels %s' % str(np.unique(agg)) )
-
-        return self.probs
+        return probs
 
     def predict(self, doc_start, text):
         from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
