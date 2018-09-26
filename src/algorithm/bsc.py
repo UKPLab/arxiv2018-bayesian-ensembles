@@ -66,7 +66,7 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
-    max_data_updates_at_end = 20 - 2 # the first iteration uses 3 instead of 1 epoch
+    max_data_updates_at_end = 10 - 2 # the first iteration uses 3 instead of 1 epoch
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
