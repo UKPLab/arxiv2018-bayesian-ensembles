@@ -9,6 +9,8 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs):
 
+        self.max_epochs = 10
+
         self.crf_probs = crf_probs
 
         self.n_epochs_per_vb_iter = 1#3 # this may be too much?
@@ -65,7 +67,11 @@ class LSTM:
                                                                  self.nclasses, n_epochs, freq_eval=n_epochs,
                                                                  crf_probs=self.crf_probs,
                                                                  max_niter_no_imprv=2)
-        else:
+
+            self.completed_epochs = n_epochs
+            model_updated = True
+
+        elif self.completed_epochs <= self.max_epochs:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 
             best_dev = -np.inf
@@ -78,8 +84,18 @@ class LSTM:
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
                                     best_dev, last_score, compute_dev=False)
 
+            self.completed_epochs += n_epochs
+            model_updated = True
+        else:
+            model_updated = False
+
         # now make predictions for all sentences
-        agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+        if model_updated:
+            agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+            self.probs = probs
+        else:
+            probs = self.probs
+            
         print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
         return probs
