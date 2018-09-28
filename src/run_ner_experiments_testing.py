@@ -14,7 +14,7 @@ import numpy as np
 
 output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
 
-regen_data = True
+regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, _ = \
     load_data.load_ner_data(regen_data)
 
@@ -48,8 +48,6 @@ exp.opt_hyper = False#True
 # exp.alpha0_factor = 0.1
 
 exp.nu0_factor = 0.1
-exp.alpha0_acc_bias = 0
-
 exp.alpha0_diags = 1
 exp.alpha0_factor = 1
 best_bac_wm = 'bac_seq'
@@ -72,8 +70,8 @@ best_bac_wm = 'bac_seq'
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                'best',
-                'worst',
+                # 'best',
+                # 'worst',
                 # #'majority',
                 # # 'ds',
                 # #'gt_then_LSTM',

@@ -9,7 +9,8 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs):
 
-        self.max_epochs = 10
+        self.max_epochs = 10 # sets the total number of training epochs allowed. After this, it will just let the BSC
+        #  model converge. This gives better convergence of BSC in practice.
 
         self.crf_probs = crf_probs
 
@@ -93,10 +94,9 @@ class LSTM:
         if model_updated:
             agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
             self.probs = probs
+            print('LSTM assigned class labels %s' % str(np.unique(agg)) )
         else:
             probs = self.probs
-            
-        print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
         return probs
 

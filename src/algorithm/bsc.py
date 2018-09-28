@@ -773,7 +773,8 @@ class BAC(object):
         else:
             converged = self.data_model_updated >= self.max_data_updates_at_end
 
-        if not converged:
+        if not converged and self.data_model_updated != 1: # we need to allow at least one more iteration after the data
+            # model has been updated because it will not yet have changed q_t
             converged = np.max(np.abs(self.q_t_old - self.q_t)) < self.eps
 
         if converged and not self.workers_converged:
