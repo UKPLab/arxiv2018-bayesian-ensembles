@@ -347,6 +347,43 @@ class IBCC(object):
         Takes crowdlabels in either sparse list or table formats, along with optional training labels (goldlabels)
         and applies data-preprocessing steps before running inference for the model parameters and target labels.
         Returns the expected values of the target labels.
+        
+        Parameters
+        ----------
+        
+        crowdlabels : N_labels x 3 numpy array or N_data_points x N_workers numpy array
+            Where N_labels is the number of labels received from the crowd/base classifiers/all annotators; 
+            N_data_points is the number of data points to be classified; and N_workers is the number of workers/
+            annotators/base classifiers that have provided labels.
+            
+            The N_labels x 3 array is a sparse format and is more compact if most data points are 
+            only labelled by a small subset of workers. Each row represents a label, where the first column is the 
+            worker/agent/base classifier ID, the second column is the data point ID, and the third column is the label
+            that was assigned by that worker to that data point. 
+            
+            The N_data_points x N_workers array is a matrix where each row corresponds to a data point and each column
+            to a worker/agent/base classifier. Any missing entries should be np.NaN or -1. To use this matrix as 
+            input, set table_format=True
+        goldlabels : N_data_points numpy array
+            Optional array for supplying any known training data. Missing labels, i.e. test locations, should have 
+            values of -1.
+        testidxs : N_data_points numpy array
+            Optional array of boolean values indicating which indices require predictions. If not set, all idxs will be
+            predicted. 
+        optimise_hyperparams : bool
+            Optimise nu0 and alpha0 using the Nelder-Mead algorithm.
+        max_iter : int
+            maximum number of iterations permitted
+        table_format : bool
+            Set this to true if the crowdlabels are a matrix with rows corresponding to data points and columns 
+            corresponding to workers. 
+        
+        Returns
+        -------
+        
+        E_t : N_data_points x nclasses numpy array
+            Posterior class probabilities (expected t-values) for each data point. Each column corresponds to a class.
+        
         '''
         self.table_format_flag = table_format
         oldK = self.K
@@ -640,7 +677,7 @@ class IBCC(object):
     
     def optimize_hyperparams(self, maxiter=20, use_MAP=False):
         ''' 
-        Assuming gamma distributions over the hyper-parameters, we find the MAP values. The heatmapcombiner object is updated
+        Assuming gamma distributions over the hyper-parameters, we find the MAP values. The combiner object is updated
         to contain the optimal values, searched for using BFGS.
         '''
         #Evaluate the first guess using the current value of the hyper-parameters

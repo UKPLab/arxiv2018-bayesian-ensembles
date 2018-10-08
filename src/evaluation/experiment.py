@@ -517,7 +517,7 @@ class Experiment(object):
     def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM',
-                 doc_start_unseen=None, text_unseen=None):
+                 doc_start_unseen=None, text_unseen=None, active_learning=False):
 
         self.bac_worker_model = method.split('_')[1]
         L = self.num_classes
@@ -544,8 +544,10 @@ class Experiment(object):
 
         bac_model.verbose = True
 
-        if self.opt_hyper:
+        if not active_learning:
             np.random.seed(592)  # for reproducibility
+
+        if self.opt_hyper:
             probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000,
                                       converge_workers_first=use_LSTM==2)
         else:
@@ -974,7 +976,9 @@ class Experiment(object):
                                     text_nocrowd=text_nocrowd,
                                     transition_model=trans_model,
                                     doc_start_unseen=doc_start_unseen,
-                                    text_unseen=text_unseen)
+                                    text_unseen=text_unseen,
+                                    active_learning=active_learning
+                        )
 
                         self.aggs[method] = agg
                         self.probs[method] = probs
