@@ -9,7 +9,7 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs):
 
-        self.max_epochs = 10 # sets the total number of training epochs allowed. After this, it will just let the BSC
+        self.max_epochs = 5 # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge. This gives better convergence of BSC in practice.
 
         self.crf_probs = crf_probs

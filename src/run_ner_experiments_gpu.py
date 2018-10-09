@@ -98,7 +98,7 @@ best_bac_wm_score = -np.inf
 # print('best BAC method tested here = %s' % best_bac_wm)
 
 # Niter = 10 !!!!!!!!!!!!!!!!!!!!!!!!!
-niter = 10
+niter = 5
 # --------------------
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
 exp.save_results = True
