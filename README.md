@@ -43,9 +43,11 @@ the constructor.
 
 A single call is used to train the model and produce the aggregated labels:
 ~~~
-probs, agg = bac_model.run(annotations, doc_start, text
+probs, agg = bac_model.run(annotations, doc_start, features)
 ~~~
-The text object is a vector of strings, i.e. the tokens themselves.
+The features object is a numpy array that typically contains strings, i.e. a column vector of text tokens.
+Other features can also be provided as additional columns. The shape of features is num_tokens x num_features_per_token.
+If we consider only the text tokens as features, num_features_per_token == 1.
 
 The method outputs both 'probs', i.e. the class label probabilities for each token, and 
 'agg', which is the most likely sequence of labels aggregated from the crowdsourced data. 

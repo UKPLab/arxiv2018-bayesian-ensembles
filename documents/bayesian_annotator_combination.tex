@@ -8,8 +8,9 @@
 
 %Additional commands added by ES
 
-\taclfinalfalse % For camera-ready, replace "\taclfinalfalse" with
+%\taclfinalfalse % For camera-ready, replace "\taclfinalfalse" with
 % "\taclfinalcopy"
+\taclfinalcopy
 
 %%%%
 %%%% Material in this block can be removed by TACL authors.
@@ -62,21 +63,12 @@
 
 \title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}%Multiple Unreliable Text Annotators}
 
-\author{First Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  {\tt email@domain} \\\And
-  Second Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  {\tt email@domain} \\\And
-  Third Author \\
-  Affiliation / Address line 1 \\
-  Affiliation / Address line 2 \\
-  Affiliation / Address line 3 \\
-  {\tt email@domain} \\
+\author{Edwin Simpson and Iryna Gurevych\\
+  Ubiquitious Knowledge Processing Lab \\
+  Department of Computer Science \\
+  Technische Universit\"at Darmstadt \\
+  \url{https://www.ukp.tu-darmstadt.de} \\
+  {\tt \{simpson,gurevych\}@ukp.informatik.tu-darmstadt.de}
 }
 
 \begin{document}
@@ -148,7 +140,10 @@ Our code is published to encourage adaptation and reuse.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \input{sections/intro}
-\input{sections/method}
+\input{sections/annotator_models}
+\input{sections/bsc_model}
+\input{sections/inference}
+\input{sections/method} % could be renamed. Contains commented out stuff and the software design stuff.
 \input{sections/experiments}
 \input{sections/discussion}
 

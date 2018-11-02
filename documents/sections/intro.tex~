@@ -1,119 +1,76 @@
 \section{Introduction}\label{sec:intro}
-% {\rough
-%
-% \begin{itemize}
-% \item sequential annotation problems are very frequent in NLP; high cost of labelling means we need crowdsourcing; 
-% \item Example of a sequential span and disagreement between workers
-% \item ...we treat the crowd workers as classifiers and combine; can also do this with ensembles of ML classifiers
-% \item ...current methods don’t take advantage of sequential information
-% \item Add in description of rival method – non-Bayesian, missing sequential model for workers, has no way to set priors to specify IOB rules, 
-% \item (Put into a later related work section?) HMM\_crowd includes features but we don't consider that aspect here because it is task-specific. 
-% Using a generic word-based model may be effective in some cases but could be problematic if using small datasets where the words are not actually good features, e.g. argument labelling. 
-% The best models for doing this are... Any problem-specific model can be incorporated into VB. Here, we focus on the combination of workers and sequential labelling.
-% \item Bayesian approaches to classifier combination without sequential information are state-of-the-art
-% \item We develop a Bayesian approach that takes full advantage of knowledge of sequential labelling rules, such as BIO.
-% \end{itemize}
-%
-% Scientific research relies on humans to recognise important patterns in data – even if we employ automated methods, these typically require training labels produced by human annotators. 
-% Natural language processing (NLP) often requires people to annotate segments of text, which we then use to train machine learning algorithms and evaluate our results.
-% Many NLP tasks require training data in the form of annotations of phrases and propositions in text. These annotations are spans of varying length, and different pieces of text may contain different numbers of spans. An example is highlighting claims in argumentative text. Annotators will typically make mistakes and may disagree with each other about the correct annotation, even if they are experts. When processing large datasets we may use crowdsourcing to reduce costs/time of experts, which increases the amount of noise and disagreements as the annotators are non-experts. Therefore, we require a method for aggregating text span annotations from multiple annotators.
-%
-% Heuristic rules could be applied, such as taking intersections of annotations, or majority labels for individual words to determine whether they form part of a span or not. However, this does not account for differing reliability between workers (e.g. there may be spammers, people who do not understand the task) and the theoretical justification for these rules is often unclear. Therefore it may not be possible to apply simple heuristics to obtain gold-standard labels from a crowd. 
-%
-% The method we propose is based on the classifier combination method described by \cite{kim2012bayesian}, 
-% which was shown to be effective for handling the unreliable classifications provided by a crowd of workers. A scalable implementation of this method using variational Bayes was described by \cite{simpsonlong}, which we use as the basis for our implementation in the current work. 
-%
-% In this paper develop a Bayesian machine learning algorithm for combining unreliable sequence annotations from multiple sources.
-%
-% Future work/things that are not quite there yet:
-%   \begin{itemize}
-%      \item Analysis of priors and how to choose them
-%      \item Guidelines for NLP crowdsourcing users on why and when to use MACE/IBCC (spam probability vs. confusion matrix) models for workers (this requires a task with many classes to show value of MACE, e.g. from the MACE paper itself)
-%       \item Show that the technique also works well for forming ensembles of classifiers
-%         \item Evaluates the different possibilities for integrating a task-specific classifier using one of the following methods (we do cover 0 and 1):
-%        \item (0) use a pipeline approach and train the classifier on the outputs of the crowdsourcing model
-%        \item (1) an additional base classifier (trained on hard labels after crowdsourced labels have been combined; predictions then made as a combination of crowd+newly trained classifier)
-%      \item (2) an additional base classifier (iteratively retrained on soft labels inside the VB loop)
-%      \item (3) using the probabilities output by the classifier as a q() distribution inside the graphical model (as in WWW 16 paper) (retraining inside the VB loop until convergence).
-%      \item (4) Other approach taken in ACL 2017 paper, i.e. building a bespoke crowd layer onto the classifier
-%      \item The distinction is important because intuitively many people use a pipeline: first, get gold or soft-gold labels by applying MACE to the crowdsourced labels, then train a classifier. We found that iterative training (2) did not improve over (1). Perhaps (3) would be better because it removes the need for a confusion matrix around the LSTM (fewer parameters) but also removes the reliability-based uncertainty estimates for new predictions. We did try this briefly by setting strong very priors on the LSTM but it didn't make much difference.
-%   \end{itemize}
-% }
 
-The high demand for labeled training data in current NLP methods is widely recognized,
-with deep learning performance often improved by making use of larger training sets
-(e.g. \cite{zoph2016transfer, rastogi2016weighting, P14-1111}).
-A common NLP task that has benefited from deep learning is \emph{sequence tagging} (also known as
-sequence labeling or sequential classification),
-which involves classifying spans of tokens 
-to perform tasks such as named entity recognition (NER),
+The high demand for labeled training data in current NLP methods,
+particularly deep learning, is widely recognized
+%with deep learning performance often improved by making use of larger training sets
+\cite{zoph2016transfer, rastogi2016weighting, P14-1111}.
+A common NLP task that has benefited from deep learning is \emph{sequence tagging},
+which involves classifying sequences of tokens for tasks such as named entity recognition (NER),
 part-of-speech tagging (POS), or information extraction (IE). 
-Recent neural network approaches to sequence tagging are typically trained on 
-tens of thousands of documents, containing hundreds of thousands of tokens~\cite{ma2016end,lample2016neural}.
-However, this requirement for large labeled datasets presents a challenge when training models for new domains and tasks, where obtaining labels may be time-consuming or costly.
+Neural network sequence taggers are typically trained on 
+tens of thousands of documents %containing hundreds of thousands of tokens
+~\cite{ma2016end,lample2016neural}.
+This requirement for large labeled datasets presents a challenge 
+when facing new domains or tasks, where obtaining labels is often time-consuming or costly.
 %Unlike I.I.D. classification tasks, such as document classification, the class labels in a sequence tagging task are dependent on the labels of the previous tokens.
 
 One way to obtain labeled data relatively cheaply is crowdsourcing, in which large
-numbers of untrained workers annotate documents in place of more expensive experts.
-We could also obtain training data by aggregating labels from models trained on different domains,  
-from multiple experts, or from users of an application who click on and interact
-with data in various ways that can be interpreted as noisy labels.
-All of these cases require the aggregation of unreliable, redundant labels, potentially in small quantities.
-Probabilistic methods for aggregating unreliable labels, such as that proposed by 
-Dawid and Skene~\shortcite{dawid_maximum_1979}
-have been shown to produce more reliable annotations than using simple heuristics 
+numbers of untrained workers annotate documents instead of more expensive experts.
+However, this requires aggregating multiple unreliable labels for each document.
+We could also obtain noisy labels from models trained on different domains,  
+ multiple experts, or users of applications who click on and interact
+with text.
+Probabilistic methods for aggregating unreliable classifications 
+have been shown to be more accurate than simple heuristics 
 such as majority voting~\cite{Raykar2010,sheshadri2013square,rodrigues2013learning,hovy2013learning}.
+However, work on sequence tagging is less extensive 
+and existing methods cannot model some common annotator error patterns or
+the effects of the order of annotators' labels~\cite{rodrigues2014sequence,nguyen2017aggregating}.
 
-Text spans can be annotated using a tagging scheme such as BIO, in 
-which the first token 
-in a span of type x is labeled 'B-x',  subsequent tokens in the same span are labeled as 'I-x', and tokens outside of any spans are labeled as 'O'. 
-This results in a sequence of labels, where each label depends on its predecessor.
-Aggregation methods have been proposed to exploit the sequential dependencies between these labels\cite{rodrigues2014sequence, nguyen2017aggregating},
-however, these methods use simplified models of annotators that differ from 
-that of Dawid and Skene~\shortcite{dawid_maximum_1979}, 
-and does not capture the effect of sequential dependencies on the annotators' reliability.
- In this paper, we compare annotator models qualitatively and empirically, 
- and introduce a sequential annotator model that outperforms previous approaches for sequence tagging.
+%%%% In this paper... we develop Bayesian model for aggregating sequence labels and compare different annotator models.
+The sequence labeling tasks we consider in this paper follow a \emph{beginning, inside, outside} (\emph{BIO})
+ scheme, 
+in which the first token in a span of type `x' is labeled `B-x',  
+subsequent tokens in the same span are labeled `I-x', 
+and tokens outside spans are labeled `O'.
+%This results in a sequence of labels, where each label depends on its predecessor.
+We propose an aggregation method that takes advantage of the sequential dependencies between BIO tags
+to learn the reliability of individual annotators and predict the true sequence.
 
-The cost of labeling can also be reduced by choosing a smaller set of training examples 
-that minimize redundancy without reducing the model's performance. 
-This can be achieved using active learning~\cite{settles2010active}, in which
-a model is trained iteratively, using its predictions at each iteration 
-to guide selection of new data points to label and add to the training set.
-Active learning relies on identifying informative data points
-using heuristics such as \emph{uncertainty sampling}, in which the 
-most uncertain data points according to the model are selected for labeling in the
-next iteration. 
-%A model that can express the confidence in its predictions can therefore facilitate active learning.
-Bayesian methods provide a natural basis for %aggregating unreliable data and 
-decision making tasks, such as active learning,
-because their predictions account for the uncertainty in the model that arises from 
-small or noisy training data.
-While Bayesian approaches place probability distributions over model parameters,
- alternatives such as maximum likelihood estimation optimize point values, and may produce over-confident
- predictions.
-%Bayesian predictions are therefore suited to active learning techniques such as uncertainty sampling, where the goal is to find data points that the model is uncertain about due to a lack of training data. They also facilitate the use of small or noisy datasets by avoiding over-confident predictions when the training data is insufficient.
-Bayesian methods have successfully been applied to various crowdsourcing tasks in NLP, such as
-sentence fragment classification~\cite{fang2014active},
-sentiment analysis~\cite{levenberg2014predicting,venanzi2014community},
-intent classification~\cite{yang2018leveraging}
-and argument ranking\cite{simpson2018finding}, 
-but have not been adapted to sequence tagging. Conversely, the methods proposed for sequence tagging
-\cite{rodrigues2014sequence,nguyen2017aggregating} do not use a fully Bayesian approach.
-We introduce a fully Bayesian approach for aggregating sequence tags from multiple sources and  
-providing a modular inference method using variational Bayes that facilitates modifications to the model.
+When learning from noisy or small datasets, commonly-used
+methods based on maximum likelihood estimation may produce over-confident predictions~\cite{xiong2011bayesian,srivastava2014dropout}. 
+We therefore apply a Bayesian treatment to our method to account for model uncertainty in our predictions.
+The resulting posterior probabilities facilitate active learning~\cite{settles2010active},
+which aims to reduce the number of labels required to train a 
+model by iteratively
+selecting the most informative data points to label.
 
-Active learning over a large dataset requires us to make predictions for unlabeled documents.
+When aggregating crowdsourced data, we can improve performance and 
+make predictions for unlabeled documents by modeling the text features as well as the annotators~\cite{simpson2015language,Felt2016SemanticAA}
+%e.g. when performing active learning. 
 For complex tasks such as sequence tagging, 
-we may wish to take advantage of state-of-the-art models for the task in hand, including neural networks
-that do not account for model uncertainty, 
-potentially forming an ensemble of multiple methods to boost performance.
-One approach is to modify these sequence taggers by adding a crowd layer~\cite{nguyen2017aggregating,rodrigues2018deep}. 
-However, we argue that integrating existing methods into the aggregation model allows us to
-treat them as black boxes and facilitate ensemble construction.
-These black box methods may not always be trusted to perform well, particularly given small training datasets.
-In contrast to previous work, we address this by modeling the reliability of the black box 
-sequence taggers.
+we may wish to exploit existing state-of-the-art models, such as neural networks
+that do not account for model uncertainty.
+%potentially forming an ensemble of multiple methods to boost performance.
+In this paper, we show how to integrate existing black box methods into the aggregation model 
+to construct ensembles of deep learners and human annotators. 
+Our method learns the reliability of each black box method,
+since they may not always perform well, particularly given small training datasets,
+and avoids the need to aggregate crowdsourced data using a separate pre-processing step 
+before training a sequence tagger.
+
+% Bayesian methods have successfully been applied to various crowdsourcing tasks in NLP, such as
+% sentence fragment classification~\cite{fang2014active},
+% sentiment analysis~\cite{levenberg2014predicting,venanzi2014community},
+% intent classification~\cite{yang2018leveraging}
+% and argument ranking~\cite{simpson2018finding}, 
+% but have not been adapted to sequence tagging. 
+
+% Conversely, the methods proposed for sequence tagging
+% \cite{rodrigues2014sequence,nguyen2017aggregating} do not use a fully Bayesian approach.
+% We introduce a fully Bayesian approach for aggregating sequence tags from multiple sources and  
+% providing a modular inference method using variational Bayes that facilitates modifications to the model.
+%
 
 % Slight re-emphasis on the black-box integration: we adapt an existing idea, and show that it works but only
 % once enough crowdsourced data is obtained. So our contribution is more about evaluating an existing idea
@@ -122,180 +79,83 @@ sequence taggers.
 % successfully capture reliability of it, or do they collapse?
 This paper provides the following contributions:
 \begin{itemize}
- \item A taxonomy of annotator reliability models and an empirical analysis of these models on sequence tagging tasks
-  \item A Bayesian method for combining sequential classifications from multiple annotators that models sequential dependencies between tags and outperforms 
- \item A technique for wrapping existing task-specific classifiers into the Bayesian model to improve 
- the quality of aggregated data performance given sufficient amounts of crowdsourced data
- \item An empirical evaluation of our proposed approach in small data scenarios, with and without active learning,
- showing that our Bayesian aggregation method consistently outperforms the previous state-of-the-art
- \item Experimental code\footnote{\url{http://github.com/***/***}} including a modular implementation of Bayesian classifier combination methods 
+ \item A taxonomy of annotator reliability models and evaluation on sequence tagging tasks
+ \item \emph{Bayesian sequence combination (BSC)}, 
+ a method for aggregating sequence labels from multiple annotators 
+ that can model sequential dependencies between tags 
+ \item A technique for wrapping existing black-box sequence taggers into the aggregation model to improve 
+ the quality of aggregated labels
 \end{itemize}
-In the remainder of the paper, we begin with related work, 
-then provide a description of annotator models for sequence tagging,
-then our variational approach that integrates existing classifiers,
-followed by an outline of the modular design of our implementation 
-illustrating how this library can be extended to new types of aggregation problems
-We then provide an empirical comparison of each approach on two NLP datasets,
-showing performance in both active and passive learning scenarios, 
-visualizing the models learned by each approach and analyzing their errors.
-Finally, we provide conclusions and avenues for future work.
+The following sections discuss related work, 
+then detail annotator models for sequence tagging,
+and present our variational approach that enables us to integrate existing classifiers.
+We then describe the modular implementation of our proposed method, which is
+made public with all of our experimental code\footnote{\url{http://github.com/***/***}}
+and can easily be extended to new aggregation problems. 
+The next sections compare different aggregation methods
+with simulated annotators and two crowdsourced NLP datasets,
+showing that our Bayesian aggregation method consistently outperforms the previous state-of-the-art.
+Our experiments evaluate both active and passive learning scenarios with varying dataset sizes, 
+analyze types of errors, and visualize the annotator models learned by our method.
+Finally, we give conclusions and ideas for future work.
 
 \subsection{Related Work}
 
-Sheshadri and Lease~\shortcite{sheshadri2013square} use a set of benchmarks to evaluate 
-several different aggregation methods, finding the most consistent performance from the method
-proposed by Raykar et al.~\shortcite{Raykar2010}, which is an extension of the 
-confusion matrix approach~\cite{dawid_maximum_1979}.
-However, the methods they evaluate use different inference methods and apply prior distributions
-in various ways, making it unclear whether the differences in performance are due to the 
-structure of the annotator model or these additional aspects. 
-In this paper, we compare several annotator models on sequence tagging tasks,
-as components of a model that is otherwise the same and uses the same inference procedure.
-Our experiments include the annotator model used by the well-used MACE implementation\cite{hovy2013learning}.
-
-Several extensions have been proposed for IID classification
-that could also be adapted to any of the models we test:
-clustering annotators with similar behaviour~\cite{venanzi2014community,moreno_bayesian_2015},
+A number of works have investigated methods for aggregating non-sequential
+classifications from crowds, including 
+Sheshadri and Lease~\shortcite{sheshadri2013square}, who benchmarked several 
+aggregation methods. 
+They found the most consistent performance from the method of
+Raykar et al.~\shortcite{Raykar2010}, which employs probabilistic confusion matrices 
+to model the reliability of individual annotators,
+as proposed by Dawid and Skene~\cite{dawid_maximum_1979}.
+In this paper, we develop and compare variations of this model for sequence tagging,
+including a variant based on MACE~\cite{hovy2013learning}.
+We focus on the core annotator representation, rather than extensions 
+for clustering annotators~\cite{venanzi2014community,moreno_bayesian_2015},
+modeling their dynamics~\cite{simpsonlong},
 adapting to task difficulty~\cite{whitehill2009whose,bachrach2012grade},
-tracking changing behavior over time~\cite{simpson2015bayesian}, and
-learning from the time annotators spend on each task~\cite{venanzi2016time}.
-However, our comparison focuses on the core representation of an annotator, 
-while these works augment this model by sharing parameters between annotators 
-or modifying their models between tasks.
+or time spent~\cite{venanzi2016time}.
 
-Raykar et al.~\shortcite{Raykar2010} proposed a method for directly learning a logistic
-regression classifier from crowdsourced labels, but unlike our approach, it does not model the 
-reliability of the classifier as it is being trained.
-Felt et al.~\shortcite{Felt2016SemanticAA} evaluate several methods for incorporating text features into  
-crowdsourcing models for classification, comparing generative with discriminative methods and improving performance using
-pre-trained word embeddings. However, their methods are designed for IID classification, rather than sequence tagging, 
-and define only simple models of the text features. In contrast, our approach makes use of sequential dependencies
-between annotations and permits the integration of arbitrary sequence tagging models.
-
-Previous works have applied crowdsourcing to sequence labeling tasks such as named entity recognition~\cite{ritter2011named}
-and POS-tagging~\cite{hovy2014experiments}, but these do not develop new aggregation methods.
-Rodrigues et al.~\shortcite{rodrigues2014sequence} proposed a CRF-based model, CRF-MA,
-for sequence tagging that estimates true labels given multiple annotators, 
-but their annotator model assumes only one annotator is correct for any given label.
-Recently, Nguyen et al.~\shortcite{nguyen2017aggregating} proposed an approach 
-based on hidden Markov models, called HMM-Crowd, which outperformed CRF-MA and non-sequential baselines including
-MACE~\cite{hovy2013learning} and Dawid-Skene~\cite{dawid_maximum_1979}.
-HMM-Crowd considers the text data by modeling the distribution of tokens conditioned on the hidden state,
-More sophisticated LSTM-based sequence taggers must be trained separately given the true labels estimated by HMM-Crowd.
-
-The goal of aggregating noisy sequence labels is often to train a model for predicting labels on unlabeled documents.
-Recently, deep neural methods based on Bi-LSTMs have achieved state-of-the-art performance for 
-sequence tagging~\cite{lample2016neural,ma2016end}.
-Both Rodrigues and Pereira~\shortcite{rodrigues2018deep} and 
-Nguyen et al.~\shortcite{nguyen2017aggregating} extend neural network sequence taggers 
-using an additional \emph{crowd layer} that learns 
-weights for individual annotators when trained directly on crowdsourced data.
-While Nguyen et al.~\shortcite{nguyen2017aggregating} found that performance improved over training 
-on the raw crowd labels without the crowd layer, 
-although their best results were obtained using HMM-Crowd as a separate pre-processing step, 
-then training the sequence tagger on its predictions.
-%the LSTM model of Lample et al.~\shortcite{lample2016neural} 
-
-% 
-% Not sequence tagging but intent classification
-% How are workers modeled?
-% How is DL integrated?
-%How do they make it all Bayesian?
-% What does their AL experiment do?
+%Previous works have applied crowdsourcing to sequence labeling tasks such as named entity recognition~\cite{ritter2011named}
+%and POS-tagging~\cite{hovy2014experiments}, but these do not develop new aggregation methods.
+For aggregating sequence tags, Rodrigues et al.~\shortcite{rodrigues2014sequence} proposed 
+a CRF-based model, \emph{CRF-MA}, that assumes only one annotator is correct for any given label.
+Recently, Nguyen et al.~\shortcite{nguyen2017aggregating} proposed an approach that outperformed CRF-MA,
+based on hidden Markov models (HMMs), called \emph{HMM-crowd}.
+%HMM-crowd models the distribution of text tokens conditioned on the hidden state.
+%More sophisticated LSTM-based sequence taggers must be trained separately given the true labels estimated by HMM-crowd.
+Both CRF-MA and HMM-crowd use simpler annotator models than Dawid and Skene~\shortcite{dawid_maximum_1979}
+that do not capture the effect of sequential dependencies on annotator reliability.
+Neither CRF-MA nor HMM-crowd use a fully Bayesian approach,
+which has been shown to be effective for handling uncertainty
+due to noise in crowdsourced data for non-sequential classification~\cite{kim2012bayesian,simpsonlong,venanzi2014community,moreno_bayesian_2015}.
+In this paper, we develop a sequential annotator model and a fully Bayesian method for aggregating sequence labels  that improves performance over previous approaches.
 
 
-Instead of modifying a neural network, 
+The HMM adapted by Nguyen et al \shortcite{nguyen2017aggregating} uses only a simple model conditional independence model of text features. 
+The authors also show how to train 
+neural network sequence taggers directly on crowdsourced data
+using an additional network layer to handle worker reliability, similar to Rodrigues and Pereira~\shortcite{rodrigues2018deep}.
+However, the proposed approaches did not outperform either CRF-MA~\cite{rodrigues2018deep} or HMM-crowd\cite{nguyen2017aggregating}. 
 Albarqouni et al.~\shortcite{albarqouni2016aggnet}
 integrate a CNN classifier for image annotation
 into an aggregation method based on 
 expectation maximization (EM)~\cite{dempster_maximum_1977}.
-While this approach improves the CNN performance over using a separate pre-processing step, 
-their method cannot model label dependencies in sequence tagging, does not consider 
-the unreliability of the neural network classifier itself.
-The same EM approach was evaluated by Rodrigues and Pereira~\shortcite{rodrigues2018deep},
-who found it was out-performed by a GRU with crowd layer. 
-However, they did not adapt the EM method to sequence tagging.
+% % While this approach improves the CNN performance over using a separate pre-processing step, 
+% % their method cannot model label dependencies in sequence tagging.
+Yang et al.~\shortcite{yang2018leveraging}  
+adapt a Bayesian neural network so that it can be trained concurrently with an annotator model, also using EM. 
+In contrast to previous work,
+we do not adapt neural networks nor trust their predictions when aggregating annotations using EM.
+Instead, we propose to learn the reliability of  
+existing sequence taggers using a variational approach, 
+allowing untrusted, off-the-shelf sequence taggers to be enhance the performance of
+the aggregation method. 
 
-Recent work has developed a method for actively learning approximately Bayesian neural networks from crowds
-for the task of classifying intent in user queries~\cite{yang2018leveraging}.
-The authors adopt a Bayesian deep learning method based on dropout~\cite{gal2016dropout}
-to account for uncertainty in neural network parameters.
-They use an EM algorithm to train the neural network concurrently with an annotator model.
-However, in contrast to our method, 
-the annotator model is not given a Bayesian treatment while 
-the neural network is adapted rather than treating it as a black box.
-Their work follows earlier research on active learning from crowds that uses simpler 
+%
 % takes as input only the crowdsourced labels 
 %and not the features of data points~\cite{yan2011,chen2013},
 %other methods improves performance by expanding 
-models of independent data points~\cite{fang2014active,simpson2015bayesian}. 
-
-% {\rough
-%
-%
-% % A model for aggregating sequential annotations was recently introduced by \cite{nguyen2017aggregating}. Their approach assumes a simplified worker model that captures only a worker's overall accuracy, rather than modelling their skills separately for different tasks. A Bayesian treatment is not provided, meaning that it is not possible to use background knowledge of worker accuracy, for example, by transferring a worker model from a previous task.
-%
-% Nugyen et al. ~\shortcite{nguyen2017aggregating} experimented with two main tasks: 
-% \begin{enumerate}
-% \item Predicting the ground truth for items labelled by the crowd, i.e. finding the true label given multiple noisy crowdsourced labels
-% \item Predicting the ground truth for new items not labelled by the crowd, i.e. they use crowdsourced labels for a training set of items to train a model to predict labels for a test set
-% \end{enumerate}
-% We show that with our Bayesian approach, a validation set for tuning hyperparameters is not required as they can be tuned in an unsupervised manner to give comparable performance.
-%
-% The model proposed by Nguyen et al. ~\shortcite{nguyen2017aggregating}, called \emph{HMMcrowd}, 
-% estimates the sequential labels for a document given unreliable crowdsourced labels. 
-% For their first task, HMM-Crowd gave the best overall performance, closely followed in one dataset by 
-% the DS-then-HMM method, 
-% a pipeline method that first combines crowdsourced labels using Dawid and Skene's model (DS),
-% then uses these to train an HMM to predict the sequence labels given the input text.
-% In the second dataset the runner up was another HMM-based method that models the sequential dependencies between
-% the annotators' labels as well as the true labels. However, DS without using the textual features also performs well in
-% this task, much better than DS-then-HMM. 
-%
-% For the second task, the authors propose two other methods, both using an LSTM classifier: 
-% (1) HMMCrowd is used as a pre-processing step and the most likely sequence of labels predicted by HMMCrowd predictions is used as training labels; 
-% (2) the crowdsourced labels are used directly to train the LSTM classifier, using a vector representation for each annotator's labelling noise.
-% It is unclear why they do not use the HMM-Crowd model directly to predict the class labels. 
-% The first approach performed marginally better in practice, but both methods were substantially better than the alternatives they tested for both datasets. 
-% We show that separate approaches are not required for the different tasks, by proposing a Bayesian approach that
-% can integrate any classifier (such as the LSTM classifier used by Nguyen et al. ~\shortcite{nguyen2017aggregating}, 
-%  into its inference loop and train it using classifier with soft, probabilistic labels, where possible. This results in improved performance for tasks 1 and 2, and enables simple, widely-applicable active learning approaches that can reduce the cost of crowdsourcing.
-% We demonstrate this in our experiments by integrating the LSTM into our model for task 1, and by applying the complete model to task 2. We further demonstrate the active learning potential of our method against a pure neural network approach by showing task 2 performance with active learning (F1-score on unlabelled items, corresponding to figure 4 in \cite{nguyen2017aggregating}), and also task 1 performance with active learning (F1-score on all items in task 1 dataset, whether labelled by crowd or not).
-%
-% We show the ability to incorporate different classifiers by testing our method with the LSTM as well as naive Bayes, a GP classifier, and a multinomial model \cite{simpson2015language}, the state-of-the-art for another task such as argumentation mining?
-%
-% We demonstrate the diversity of NLP task types to which the approach is applicable by also testing on ...
-% \begin{itemize}
-% \item Check the Christian Stab argumentation data from his paper again?
-% \item Don't we really need a good dataset for classifier combination instead? There won't be space for so many experiments.
-% \item Check with Christian briefly if the argumentation sequential dataset is available
-% \item Check with Tobias or Avinesh about extractive summarisation? But if it is whole sentences, may not work
-% \item Is there any data for SRL or POS tagging? If not, it may be a useful one to crowdsource.
-% \end{itemize}
-%
-%
-%
-% \subsection{Notes on Applications and Datasets}
-%
-% There are several annotation tasks for NLP or information retrieval that we are interested in:
-% \begin{itemize}
-%   \item Argument component labelling -- identifying claims and premises that form an argument. This requires marking individual sentences, clauses, or spans that cross sentence boundaries. Some schemas allow for the component to be split so that it consists of multiple spans with excluded text between the spans. -- check Steffen's ensemble work again to see if there is anything else we can do with that paper. I think the 7-class problem failed? Ideally, we combine heterogeneous classifiers. See http://www.aclweb.org/anthology/P/P17/P17-1002.pdf. We don't have a comparable metric to the paper implemented? Another option is to introduce some training data for BAC/IBCC/MACE. We can also try the argumentative essays corpus for an additional result with expert annotators.
-%   \item Semantic role labelling (SRL) -- e.g. A Joint Sequential and Relational Model for Frame-Semantic Parsing
-%   \item Extractive summarisation -- marking the important spans. 
-%   \item Named entity recognition -- Ma and Hovy 2016; uses same dataset as Nguyen et al 2017, except with the complete dataset. Could we combine the Nguyen LSTM with the Ma and Hovy one + crowd labels? Could also combine other work such as Empower Sequence Labeling with Task-Aware Neural Language Model and other papers that cite Hovy. Perhaps worth testing whether the complex sequential models are necessary if our model is providing that part, or if IBCC is sufficient if the base classifiers capture sequential patterns? Or we apply the Ma and Hovy and the Lample models and the some feature-engineered baselines (?) in an ensemble to an arbitrary task.
-%   \item POS-tagging
-%   \item Information extraction -- marking relevant spans given an information requirement
-%   \item Sentiment analysis -- e.g. Neural Networks for Open Domain Targeted Sentiment, Meishan Zhang and Yue Zhang and Duy-Tin Vo. The paper presents a sequential classification problem ("targeted sentiment analysis", tokens referring to entities with that are target of particular sentiment) and compares CRF and NN models, but publishes code in C++... Could look whether the results are available as we can just use these as input.
-%   \item Unsupervised Aspect Term Extraction with B-LSTM and CRF using Automatically Labelled Datasets -- Semeval task. Code not available but others might be?
-%   \item Bidirectional LSTM-CRF for Clinical Concept Extraction (2016) -- code available; 2010 i2b2/VA Natural Language Processing Challenges for Clinical Records concept extraction task; compares 3 versions of their method against 5 other methods with performance around 78 - 85 f score.
-%   \item Semantic slots -- End-to-End Task-Completion Neural Dialogue Systems; code available at https://github. com/MiuLab/TC- Bot; 2017; can't clearly find the results of methods compared
-% \item Results of the WNUT2017 Shared Task on Novel and Emerging Entity Recognition; 7 systems with low F1 scores around 40. 
-% \item Event extraction? NILs?
-% \item action sequence extraction
-% \end{itemize}
-%
-% Note that for classifier combination, a good use case is where we the annotations are difficult to model with a single method, hence we combine several specialised models. This may not apply to NER or POS tagging because the sequential classifier gets information from the pattern of types, so a classifier specialised in one type is unlikely to work better. However, for argument claim detection, we could train models on different datasets and combine later, rather than simply dumping all datasets together -- this may work because we know that there are different text types, but putting the data together into one dataset would lose that information. Could debate topics be a good way to split datasets? If the way we identify claims in each topic differs, then yes. However, it could be confused by topic-specific features and not learn a model that generalises at all. Better would be text types, e.g. argumentative essays, reviews, tweets. Imagine that I need to reuse a set of pre-trained models to discover arguments on a new topic. The new topic is slightly different, but could still be the same text type, e.g. Tweets. So perhaps trying either topic-specific models, or even random dataset splits could produce a set of models that we can combine. The combination should be better than a single one of the classifiers, including a classifier trained on everything.     
-%
-% AUTOML?
-%
-% }
+% Their work follows earlier research on active learning from crowds that uses simpler 
+% models of independent data points~\cite{fang2014active,simpson2015bayesian}. 

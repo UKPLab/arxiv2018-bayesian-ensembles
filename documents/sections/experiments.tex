@@ -26,7 +26,7 @@
 We evaluate Bayesian sequence combination (BSC) against alternative methods to test 
  (a) the different annotator models described in Section \ref{sec:model},
  (b) the performance of BSC on unreliable or small training sets,
-and (c) the benefits of including sequence taggers into the graphical model.
+and (c) the benefits of including sequence taggers into the probabilistic model.
 The first experiment uses simulated annotators to investigate the effects of different annotator flaws on aggregation methods. 
 We then introduce two NLP datasets to 
 test aggregation performance in passive and active learning scenarios, 
@@ -49,7 +49,7 @@ and variational inference for an integrated hidden Markov model.
 %  a model without a fully Bayesian treatment. 
 We also introduce a \emph{clustering} baseline,
 that aggregates spans from multiple annotators by grouping them together
-using kernel density estimation\cite{rosenblatt1956remarks}.
+using kernel density estimation~\cite{rosenblatt1956remarks}.
 
 BSC is tested with each of the different annotator models described in Section \ref{sec:annomodels} and integrating different text models. 
 As the default set-up, 
@@ -58,6 +58,11 @@ that treats all text features as conditionally independent of each other and of 
 The BSC-seq variant is also tested without a text model (\emph{notext}), 
 and with an integrated LSTM~\cite{lample2016neural}, labeled \emph{BSC-seq+LSTM}.
 We also use HMM-crowd and BSC-seq to produce training labels for the LSTM as a separate pre-processing step, labeled in our results as $\rightarrow$LSTM.
+
+The MACE and IBCC methods are non-sequential variants of BSC-MACE and BSC-CM,
+and serve to show the benefits of the sequential BSC model.
+The HMM-Crowd and DS methods also allow us to compare non-Bayesian methods
+against their Bayesian variants, BSC-CV and IBCC, respectively. 
 
 \subsection{Simulated Annotators}\label{sec:synexpts}
 
@@ -140,7 +145,7 @@ to compare the probability estimates produced by aggregation methods, which are 
 \hline
 %NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{2}{|l|}{Token-level metrics} & Hyper.\\ \hline 
 & \multicolumn{4}{l}{NER} & \multicolumn{3}{l?}{Hyperparams.} & \multicolumn{4}{l}{PICO} & \multicolumn{3}{l?}{Hyperparams.} \\ \hline
-& \text{Prec.} &  \text{Rec.} & \text{F1} & \text{CEE} & $\beta_0$ & $\gamma_0$ & $\alpha_0$ & \text{Prec.} & \text{Rec.} & \text{F1} & \text{CEE} & $\beta_0$ & $\gamma_0$ & $\alpha_0$ \\ \hline
+& \text{Prec.} &  \text{Rec.} & \text{F1} & \text{CEE} & $\gamma_0$ & $\epsilon_0$ & $\alpha_0$ & \text{Prec.} & \text{Rec.} & \text{F1} & \text{CEE} & $\gamma_0$ & $\epsilon_0$ & $\alpha_0$ \\ \hline
 
 Best worker & 76.4 & 60.1 & 67.3 & %69.1 & .8521 & 
 17.13  & & & &
@@ -278,11 +283,11 @@ while for PICO, the split was not available so our results are not directly comp
 %Note that the token-level F1-score can be skewed upwards by matching a few long spans correctly, but is useful for PICO because it shows up cases where the spans matched but the predictions were split, i.e. B is used instead of I. With non-strict entity matching, the precision and recall can be 100\% even though the prediction is split into multiple spans.
 %Token-level F1-score catches this because it penalises the erroneous B tokens. With strict entity-level F1-score, the matches must be exact, so split spans would receive no credit.
 
-To limit the number of hyperparameters to tune, we optimize only three values for BSC.
-Hyperparameters of the transition matrix, $\bs\beta_j$, are set to the same value, 
-$\beta_0$, except for disallowed transitions, (O$\rightarrow$I, transitions between types, e.g. I-PER$\rightarrow$I-ORG), which are set to 0.1.  
-For the annotator models,
-all values are set to $\alpha_0$, except for disallowed transitions, which are set to 0.1, then $\gamma_0$ is added to hyperparameters 
+We tune the hyperparameters using a validation set. To limit the number of hyperparameters to tune, we optimize only three values for BSC.
+Hyperparameters of the transition matrix, $\bs\gamma_j$, are set to the same value, 
+$\gamma_0$, except for disallowed transitions, (O$\rightarrow$I, transitions between types, e.g. I-PER$\rightarrow$I-ORG), which are set to 0.1.  
+For the annotator models (both $\bs A$ and $\bs B$),
+all values are set to $\alpha_0$, except for disallowed transitions, which are set to 0.1, then $\epsilon_0$ is added to hyperparameters 
 corresponding to correct annotations (e.g. diagonal entries in a confusion matrix).
 We use validation set F1-scores to choose values from $[0.1, 1, 10, 100]$, 
 training on a small subset of 250 documents for NER and 500 documents for PICO. 
@@ -370,7 +375,9 @@ the first tests our methods on random subsamples of crowdsourced data of increas
 the second starts with a random initial subsample,
 then uses \emph{uncertainty sampling}, a well-established active learning
 heuristic~\cite{settles2010active}, 
-to iteratively select additional crowd labels given posterior label predictions from a model trained on the previous subset. 
+to iteratively select additional crowd labels given posterior label predictions from a model trained on the previous subset. To compute the uncertainty of each
+document, we take the mean shannon entropy $H$ of the labels, 
+$H(\bs t | \bs c_{\mathrm{current}}) / L_n$, where $\bs c_{\mathrm{current}}$ is the current set of crowd labels.
 We used the same random samples for all methods and repeated 
 the experiments ten times with different initializations. 
 \begin{table*}[t]
@@ -458,4 +465,3 @@ its F1-scores are lower than those of BSC-seq$\rightarrow$LSTM.
 %combining the LSTM with human annotators, as in Section \ref{sec:task1}.
 %The same technique can also be used to combine multiple sequence taggers in an ensemble,
 %which may be an avenue for future work.
-
