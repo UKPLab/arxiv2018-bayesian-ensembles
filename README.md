@@ -70,3 +70,31 @@ sequential label model. This is achieved by passing an optional constructor argu
 
 * MACE
 * src/baselines/hmm.py
+ 
+## Competence Scores
+
+Most of the annotator models used here to not learn a single competence score
+for each worker. However, a competence score or similar can be useful for ranking
+workers to decide who to exclude from a task.
+We can compute a competence measure as follows:
+
+~~~
+model = bsc.BAC(L=num_classes, K=num_annotators, worker_model='seq',
+            data_model=['IF'])
+
+probs, agg = model.run(annotations, doc_start, features)
+
+EPi = model.A._calc_EPi(self.alpha) # gives us a 2D or 3D matrix
+
+if EPi.ndim == 1:
+    competence = EPi[1, :]
+elif EPi.ndim == 2:
+    competence = np.mean(EPi[range(EPi.shape[0]), range(EPi.shape[0]), :], axis=0)
+else:
+    competence = np.mean(np.mean(EPi[range(EPi.shape[0]), range(EPi.shape[0]), :, :], axis=0), axis=0)
+    
+print(competence)
+~~~
+
+In this case, the competence is the probability of the annotator giving the 
+correct answer, averaged over all the different cases considered by the model.
