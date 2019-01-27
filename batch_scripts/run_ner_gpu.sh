@@ -12,7 +12,12 @@
 
 # ----------------------------------
 
-module load python
-module load intel
 
-python3 run_ner_experiments_gpu.py
+module load intel cuda gcc python/3.5.2
+
+cudaDir="/home/ih68sexe/cudnn/cuda"
+export LD_LIBRARY_PATH=${cudaDir}/lib64:${LD_LIBRARY_PATH}
+export CPATH=${cudaDir}/include:${CPATH}
+export LIBRARY_PATH=${cudaDir}/lib64:${LD_LIBRARY_PATH}
+
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32,optimizer_including=cudnn python3 run_ner_experiments_gpu.py
