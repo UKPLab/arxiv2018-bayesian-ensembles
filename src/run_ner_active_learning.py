@@ -24,7 +24,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 num_reps = 10
 for rep in range(num_reps):
 
-    output_dir = '../../data/bayesian_annotator_combination/output/ner_al_new2/'
+    output_dir = '../../data/bayesian_annotator_combination/output/ner_al/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -32,15 +32,15 @@ for rep in range(num_reps):
     exp.save_results = True
     exp.opt_hyper = False#True
 
-    exp.nu0_factor = 1
-    exp.alpha0_diags = 10 # best_diags
-    exp.alpha0_factor = 10 #9 # best_factor
+    exp.nu0_factor = .1
+    exp.alpha0_diags = 1 # best_diags
+    exp.alpha0_factor = 1 #9 # best_factor
 
     # run all the methods that don't require tuning here
     exp.methods =  [
         'bac_seq_integrateBOF_integrateLSTM_atEnd',
         'bac_seq_integrateBOF_then_LSTM',
-        'HMM_crowd_then_LSTM'
+        #'HMM_crowd_then_LSTM'
                     ]
 
     results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -52,30 +52,30 @@ for rep in range(num_reps):
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new2/'
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-
-    exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
-    exp.save_results = True
-    exp.opt_hyper = False#True
-
-    exp.nu0_factor = 1
-    exp.alpha0_diags = 10 # best_diags
-    exp.alpha0_factor = 10 #9 # best_factor
-
-    # run all the methods that don't require tuning here
-    exp.methods =  [
-        'bac_seq_integrateBOF_integrateLSTM_atEnd',
-        'bac_seq_integrateBOF_then_LSTM',
-        'HMM_crowd_then_LSTM'
-                    ]
-
-    exp.random_sampling = True
-
-    results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
-                        annos, gt, doc_start, output_dir, text,
-                        ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-                        ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-                        active_learning=True
-    )
+    # output_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new2/'
+    # if not os.path.isdir(output_dir):
+    #     os.mkdir(output_dir)
+    #
+    # exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
+    # exp.save_results = True
+    # exp.opt_hyper = False#True
+    #
+    # exp.nu0_factor = 1
+    # exp.alpha0_diags = 10 # best_diags
+    # exp.alpha0_factor = 10 #9 # best_factor
+    #
+    # # run all the methods that don't require tuning here
+    # exp.methods =  [
+    #     'bac_seq_integrateBOF_integrateLSTM_atEnd',
+    #     'bac_seq_integrateBOF_then_LSTM',
+    #     'HMM_crowd_then_LSTM'
+    #                 ]
+    #
+    # exp.random_sampling = True
+    #
+    # results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
+    #                     annos, gt, doc_start, output_dir, text,
+    #                     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    #                     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    #                     active_learning=True
+    # )

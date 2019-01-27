@@ -30,29 +30,30 @@ num_reps = 10
 for rep in range(1, num_reps):
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
+    # output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
+    # if not os.path.isdir(output_dir):
+    #     os.mkdir(output_dir)
+    #
+    # exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
+    #
+    # exp.save_results = True
+    # exp.opt_hyper = False #True
+    #
+    # exp.nu0_factor = 100
+    # exp.alpha0_diags = 1
+    # exp.alpha0_factor = 1
+    #
+    # exp.methods = [
+    #     'bac_seq_integrateBOF_integrateLSTM_atEnd',
+    #                ]
+    #
+    # exp.save_results = True
+    # exp.opt_hyper = False #True
+    #    exp.random_sampling = True
 
-    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
-
-    exp.save_results = True
-    exp.opt_hyper = False #True
-
-    exp.nu0_factor = 100
-    exp.alpha0_diags = 1
-    exp.alpha0_factor = 1
-
-    exp.methods = [
-        'bac_seq_integrateBOF_integrateLSTM_atEnd',
-                   ]
-
-    exp.save_results = True
-    exp.opt_hyper = False #True
-
-    exp.run_methods(annos, gt, doc_start, output_dir, text,
-                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1.0)
+    # exp.run_methods(annos, gt, doc_start, output_dir, text,
+    #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+    #                 active_learning=True, AL_batch_fraction=1.0)
 
 
     output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
@@ -77,7 +78,7 @@ for rep in range(1, num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1.0)
+                    active_learning=True, AL_batch_fraction=0.07)
 
     # ------------------------
 
@@ -96,7 +97,7 @@ for rep in range(1, num_reps):
 
     exp.methods = [
         'bac_seq_integrateBOF_then_LSTM',
-        'HMM_crowd_then_LSTM'
+        #'HMM_crowd_then_LSTM'
     ]
 
     exp.save_results = True
@@ -104,31 +105,32 @@ for rep in range(1, num_reps):
 
     exp.run_methods(annos, gt, doc_start, output_dir, text,
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1.0)
+                    active_learning=True, AL_batch_fraction=0.07)
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
+    # output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
+    # if not os.path.isdir(output_dir):
+    #     os.mkdir(output_dir)
+    #
+    # exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
+    #
+    # exp.save_results = True
+    # exp.opt_hyper = False  # True
+    #
+    # exp.nu0_factor = 100
+    # exp.alpha0_diags = 1
+    # exp.alpha0_factor = 1
+    #
+    # exp.methods = [
+    #     'bac_seq_integrateBOF_then_LSTM',
+    #     'HMM_crowd_then_LSTM'
+    # ]
+    #
+    # exp.save_results = True
+    # exp.opt_hyper = False  # True
+    #    exp.random_sampling = True
 
-    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.nu0_factor = 100
-    exp.alpha0_diags = 1
-    exp.alpha0_factor = 1
-
-    exp.methods = [
-        'bac_seq_integrateBOF_then_LSTM',
-        'HMM_crowd_then_LSTM'
-    ]
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.run_methods(annos, gt, doc_start, output_dir, text,
-                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1.0)
+    # exp.run_methods(annos, gt, doc_start, output_dir, text,
+    #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+    #                 active_learning=True, AL_batch_fraction=1.0)

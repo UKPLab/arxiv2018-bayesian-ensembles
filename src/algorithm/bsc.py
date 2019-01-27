@@ -66,7 +66,6 @@ class BAC(object):
     iter = 0  # current iteration
     
     max_iter = None  # maximum number of iterations
-    max_data_updates_at_end = 20 - 2 # the first iteration uses 3 instead of 1 epoch
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
@@ -151,9 +150,10 @@ class BAC(object):
 
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
-        
-        self.max_iter = max_iter #- self.max_data_updates_at_end  # maximum number of iterations
-        self.eps = eps  # threshold for convergence 
+
+        self.max_data_updates_at_end = 3  # small number to avoid overfitting
+        self.max_iter = max_iter - self.max_data_updates_at_end  # maximum number of iterations before training data models
+        self.eps = eps  # threshold for convergence
         self.iter = 0
 
         self.verbose = False  # can change this if you want progress updates to be printed
