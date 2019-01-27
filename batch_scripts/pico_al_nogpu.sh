@@ -13,7 +13,7 @@
 # ----------------------------------
 
 
-module load intel cuda gcc python/3.5.2
+module load intel cuda gcc python/3.5.2 blas OpenBLAS/gcc/avx OpenBLAS/gcc/sse OpenBLAS/intel/avx/0.2.2
 
 cudaDir="/home/ih68sexe/cudnn/cuda"
 export LD_LIBRARY_PATH=${cudaDir}/lib64:${LD_LIBRARY_PATH}
