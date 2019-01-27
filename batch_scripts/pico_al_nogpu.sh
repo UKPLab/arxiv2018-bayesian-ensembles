@@ -20,4 +20,4 @@ export LD_LIBRARY_PATH=${cudaDir}/lib64:${LD_LIBRARY_PATH}
 export CPATH=${cudaDir}/include:${CPATH}
 export LIBRARY_PATH=${cudaDir}/lib64:${LD_LIBRARY_PATH}
 
-THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32,optimizer_including=cudnn python3 run_pico_active_learning_nogpu.py
+THEANO_FLAGS=mode=FAST_RUN,device=cuda*,floatX=float32,optimizer_including=cudnn python3 run_pico_active_learning_nogpu.py
