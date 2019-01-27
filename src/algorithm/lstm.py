@@ -38,6 +38,15 @@ class LSTM:
         self.alpha0_data = np.copy(alpha0_data)
 
         self.dev_sentences = dev_sentences
+        if dev_sentences is not None:
+            self.all_sentences = np.concatenate((self.sentences, self.dev_sentences))
+            dev_gold = []
+            for sen in self.dev_sentences:
+                for tok in sen:
+                    dev_gold.append( self.IOB_map[tok[1]] )
+            self.dev_labels = dev_gold
+        else:
+            self.all_sentences = self.sentences
 
         return alpha_data
 
@@ -65,9 +74,8 @@ class LSTM:
             n_epochs = 3 # the first iteration needs a bit more to move off the random initialisation
 
             # don't need to use an dev set here for early stopping as this may break EM
-            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.sentences, self.sentences, self.dev_sentences,
-                                                                 None, # get the dev labels from dev sentences
-                                                                 self.IOB_map, self.IOB_label,
+            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, self.dev_sentences,
+                                                                 self.dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=1,
                                                                  crf_probs=self.crf_probs,
                                                                  max_niter_no_imprv=n_epochs)

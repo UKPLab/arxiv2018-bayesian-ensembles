@@ -1,6 +1,14 @@
 \section{Inference using Variational Bayes} \label{sec:vb}
  
-%TODO I think we should include the lower bound to state it is the objective function! 
+%TODOn't: I think we should include the lower bound to state it is the objective function. Don't do this because we need to cut maths out.
+%TODO equation 23 could be one line?
+%TODO equation 24 on one line?
+%TODO can we replace eq 12 with just a E p(c | t) term?
+%TODO simplify the description of the forward/backward passes
+%TODO cut eq 21, don't give the equation for CM, just replace with a statement about simplifying equations 19 and 20 for the other models. 
+%TODO equations 19 and 22 can be on one line if we change equation 20 to include 
+% the prior pseudocounts.
+%TODO do we need the variational factor equations or just the updates? E.g. we cut out equation 10, 17, 19 and possibly 23 completely. Then we may keep equation 12 to help with reproducibility.
  
 Given a set of annotations, $\bs c=\{\bs c^{(1)}, .., \bs c^{(K)} \}$ from $K$ annotators,
 our aim is to obtain a posterior distribution over 
