@@ -70,3 +70,13 @@ sequential label model. This is achieved by passing an optional constructor argu
 
 * MACE
 * src/baselines/hmm.py
+
+# Experiments
+
+Instructions on how to reproduce the experiments in the paper "Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging".
+Required data for experiments on the NER dataset:
+* crf-ma-NER-task1
+* English NER
+For the PICO dataset:
+* bio-PICO
+These folders should all be copied to ~/data/bayesian_annotator_combination/data (or you can replace all references to '../../data' in the code with the desired location. The experiments should then be run from within the src directory. More details to follow...
