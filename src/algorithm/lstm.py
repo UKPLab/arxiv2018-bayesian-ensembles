@@ -14,7 +14,7 @@ class LSTM:
 
         self.crf_probs = crf_probs
 
-        self.n_epochs_per_vb_iter = 20 # this may be too much?
+        self.n_epochs_per_vb_iter = 1
         self.max_vb_iters = max_vb_iters
 
         self.N = N
@@ -62,7 +62,7 @@ class LSTM:
 
         if self.LSTMWrapper.model is None:
             # the first update needs more epochs to reach a useful level
-            n_epochs = self.n_epochs_per_vb_iter
+            n_epochs = 3 # the first iteration needs a bit more to move off the random initialisation
 
             # don't need to use an dev set here for early stopping as this may break EM
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.sentences, self.sentences, self.dev_sentences,
@@ -70,7 +70,7 @@ class LSTM:
                                                                  self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=1,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=5)
+                                                                 max_niter_no_imprv=n_epochs)
 
             self.completed_epochs = n_epochs
             model_updated = True
@@ -82,11 +82,14 @@ class LSTM:
             last_score = best_dev
             niter_no_imprv = 0
 
-            self.LSTMWrapper.model.best_model_saved = False
+            # self.LSTMWrapper.model.best_model_saved = False
 
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
                                     best_dev, last_score, compute_dev=True)
+
+            if self.LSTMWrapper.model.best_model_saved:
+                self.LSTMWrapper.model.reload()
 
             self.completed_epochs += n_epochs
             model_updated = True
