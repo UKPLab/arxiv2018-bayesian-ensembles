@@ -46,7 +46,7 @@ model by iteratively
 selecting the most informative data points to label.
 
 When aggregating crowdsourced data, we can improve performance and 
-make predictions for unlabeled documents by modeling the text features as well as the annotators~\cite{simpson2015language,Felt2016SemanticAA}
+make predictions for unlabeled documents by modeling the text features as well as the annotators~\cite{simpson2015language,Felt2016SemanticAA}.
 %e.g. when performing active learning. 
 For complex tasks such as sequence tagging, 
 we may wish to exploit existing state-of-the-art models, such as neural networks
@@ -79,7 +79,8 @@ before training a sequence tagger.
 % successfully capture reliability of it, or do they collapse?
 This paper provides the following contributions:
 \begin{itemize}
- \item A taxonomy of annotator reliability models and evaluation on sequence tagging tasks
+ \item A theoretical comparison of annotator reliability models 
+ and evaluation on sequence tagging tasks
  \item \emph{Bayesian sequence combination (BSC)}, 
  a method for aggregating sequence labels from multiple annotators 
  that can model sequential dependencies between tags 
@@ -90,7 +91,7 @@ The following sections discuss related work,
 then detail annotator models for sequence tagging,
 and present our variational approach that enables us to integrate existing classifiers.
 We then describe the modular implementation of our proposed method, which is
-made public with all of our experimental code\footnote{\url{http://github.com/***/***}}
+made public with all of our experimental code\footnote{\url{http://github.com/ukplab/arxiv2018-bayesian-ensembles}}
 and can easily be extended to new aggregation problems. 
 The next sections compare different aggregation methods
 with simulated annotators and two crowdsourced NLP datasets,
@@ -133,7 +134,7 @@ due to noise in crowdsourced data for non-sequential classification~\cite{kim201
 In this paper, we develop a sequential annotator model and a fully Bayesian method for aggregating sequence labels  that improves performance over previous approaches.
 
 
-The HMM adapted by Nguyen et al \shortcite{nguyen2017aggregating} uses only a simple model conditional independence model of text features. 
+The HMM adapted by Nguyen et al \shortcite{nguyen2017aggregating} uses only a simple conditional independence model of text features. 
 The authors also show how to train 
 neural network sequence taggers directly on crowdsourced data
 using an additional network layer to handle worker reliability, similar to Rodrigues and Pereira~\shortcite{rodrigues2018deep}.
@@ -147,10 +148,12 @@ expectation maximization (EM)~\cite{dempster_maximum_1977}.
 Yang et al.~\shortcite{yang2018leveraging}  
 adapt a Bayesian neural network so that it can be trained concurrently with an annotator model, also using EM. 
 In contrast to previous work,
-we do not adapt neural networks nor trust their predictions when aggregating annotations using EM.
+we do not require neural networks to be adapted, 
+nor assume that their predictions are reliable 
+when aggregating annotations.
 Instead, we propose to learn the reliability of  
 existing sequence taggers using a variational approach, 
-allowing untrusted, off-the-shelf sequence taggers to be enhance the performance of
+allowing untrusted, off-the-shelf sequence taggers to enhance the performance of
 the aggregation method. 
 
 %

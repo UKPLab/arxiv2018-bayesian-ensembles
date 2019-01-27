@@ -1,11 +1,13 @@
 \section{Inference using Variational Bayes} \label{sec:vb}
  
-Given a set of annotations, $\bs c=\{\bs c^{(1)}, ..., \bs c^{(K)} \}$ from $K$ annotators,
+%TODO I think we should include the lower bound to state it is the objective function! 
+ 
+Given a set of annotations, $\bs c=\{\bs c^{(1)}, .., \bs c^{(K)} \}$ from $K$ annotators,
 our aim is to obtain a posterior distribution over 
 %the parameters, 
-%$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},...,\bs\theta^{(S)} \}$, 
-%$\bs A=\{ A^{(1)},...,A^{(K)} \}$ and
-%$\bs B = \{ B^{(1)},...,B^{(S)} \}$, 
+%$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},..,\bs\theta^{(S)} \}$, 
+%$\bs A=\{ A^{(1)},..,A^{(K)} \}$ and
+%$\bs B = \{ B^{(1)},..,B^{(S)} \}$, 
 %and thereby compute the posterior over 
 the sequence labels, $\bs t$.
 We present an approximate inference method using 
@@ -16,18 +18,19 @@ to determine convergence~\cite{bishop_pattern_2007}.
 Unlike maximum likelihood methods such as standard expectation maximization (EM),
 VB considers prior distributions 
 and accounts for parameter uncertainty in a Bayesian manner.
-The trade-off is that to apply VB to our BSC model, we need to approximate the posterior distribution 
-over $\bs t$ and the model parameters, 
-$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},...,\bs\theta^{(S)} \}$, 
-$\bs A=\{ A^{(1)},...,A^{(K)} \}$ and
-$\bs B = \{ B^{(1)},...,B^{(S)} \}$.
-The labels produced by the sequence taggers, $\bs d$, 
-can be marginalized, so do not appear in the approximate posterior, which is given by:
+The trade-off is that to apply VB to our BSC model, we approximate the posterior distribution as follows: 
+%over $\bs t$ and the model parameters, 
+%$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},..,\bs\theta^{(S)} \}$, 
+%$\bs A=\{ A^{(1)},..,A^{(K)} \}$ and
+%$\bs B = \{ B^{(1)},..,B^{(S)} \}$.
+%The labels produced by the sequence taggers, $\bs d$, 
+%can be marginalized, so do not appear in the approximate posterior, which is given by:
 \begin{flalign} \label{eq:vb_posterior}
 & p(\bs t, \bs A, \bs B, \bs T, \bs\theta | \bs c, \bs x, \bs \alpha, \bs \beta, \bs\gamma )  \approx \prod_{k=1}^K  q(A^{(k)}) &   \nonumber\\
 & \prod_{j=1}^J q(\bs T_j) \prod_{n=1}^N q(\bs t_n) 
-\prod_{s=1}^S\Big\{ q(B^{(s)})  q(\bs\theta^{(s)}) \Big\} . & % q(\bs d^{(s)} )
+\prod_{s=1}^S\Big\{ q(B^{(s)})  q(\bs\theta^{(s)}) \Big\} , & % q(\bs d^{(s)} )
 \end{flalign}
+where the labels produced by the sequence taggers, $\bs d$, have been marginalized.
 % We optimise this distribution using Algorithm \ref{al:vb_bac} to obtain approximate posterior
 % distributions over $\bs t$, $\bs\pi^{(k)}, \forall k$ and $A_j, \forall j$.
 % The algorithm iteratively increases the lower bound on the model evidence, $\mathcal{L}$, 
@@ -44,24 +47,23 @@ can be marginalized, so do not appear in the approximate posterior, which is giv
 % marginal probabilities over class labels. If a Bayesian classifier is integrated, 
 % retraining the text classifier becomes a VB step, in which a variational factor, $q(\bs c^{(b)}$, is updated,
 % making the complete algorithm a fully Bayesian approximation.
-The variational approximation factorizes between subsets of parameters or latent variables, so that each subset, $z$, has a variational distribution $q(z)$. 
+The variational approximation factorizes between subsets of parameters or latent variables, so that each subset, $z$, has a variational distribution, $q(z)$. 
 Due to our choice of conjugate priors, the variational factors for BSC all have
 the same form as their prior distributions defined in Section \ref{sec:model},
 and the parameters of each variational distribution can be computed in terms  of 
 expectations over the other subsets of variables.
 The inference algorithm works by updating each of these variational factors, $q(z)$, 
 in turn,
-taking expectations with respect to the current estimates of the other variational factors.
+taking expectations with respect to the current estimates of the other variational factors
+(see Algorithm \ref{al:vb_bac}).
 Each iteration reduces the KL-divergence between the true and approximate posteriors
 of Equation \ref{eq:vb_posterior}, and hence optimizes a lower bound on the 
 log marginal likelihood (also called evidence lower bound or ELBO), as described in
 ~\cite{bishop_pattern_2007,attias_advances_2000}.
-A summary of the VB procedure for BSC is shown in Algorithm \ref{al:vb_bac}.
-
-The remainder of this section provides the variational factors,
+We now provide the variational factors,
 which can be used to approximate the marginal posterior distributions for the parameters and sequence
 labels,
-and explains how to incorporate existing sequence taggers into the algorithm.
+and explain how to incorporate existing sequence taggers into the algorithm.
 %that
 %predict only sequence labels rather than full posterior distributions.
 \begin{algorithm}
@@ -73,7 +75,7 @@ and explains how to incorporate existing sequence taggers into the algorithm.
   randomly or to expectations with respect to the priors\;
  \While{$\mathbb{E}\left[\bs t\right]$ not converged}
  {
- \nl Update $r_{j,n,\tau}$ and $s_{t_{j,n,\tau-1}, t_{\iota,n,\tau}}$, $\forall j,\forall \tau,\forall i,\forall \iota$,
+ \nl Update $r_{j,n,\tau}$ and $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$, $\forall j,\forall \tau,\forall i,\forall \iota$,
  given $\bs c$, 
  $\mathbb{E}\left[\ln \bs A \right]$, $\mathbb{E}\left[\ln \bs B \right]$ and $\mathbb{E}\left[\ln \bs T \right]$
  using the forward-backward algorithm~\cite{ghahramani2001introduction}\;
@@ -82,7 +84,7 @@ and explains how to incorporate existing sequence taggers into the algorithm.
  \nl Use sequence taggers to predict $\hat{p}(d^{(s)}_{n,\tau}=i)$, $\forall s,\forall n,\forall \tau,\forall i$\;
  \nl Update $q\left(\bs A\right)$ given current $\bs c$, $r_{j,n,\tau}$\;
  \nl Update $q\left(\bs B\right)$ given current $\hat{\bs d}$, $r_{j,n,\tau}$\;
- \nl Update $q(\bs T)$ given current $s_{t_{j,n,\tau-1}, t_{\iota,n,\tau}}$\;
+ \nl Update $q(\bs T)$ given current $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$\;
  \nl Recompute $\mathbb{E}\left[\ln \bs A \right]$, $\mathbb{E}\left[\ln \bs B \right]$, $\mathbb{E}\left[\ln\bs T \right]$ 
  }
 \KwOut{ Posteriors for true labels, $\mathbb{E}[\bs t]$,
@@ -94,46 +96,54 @@ most probable sequences of true labels, $\hat{\bs t}$ }
 
 \textbf{Variational factor for }$\bs t$, true sequence labels:
  \begin{flalign}
-& \ln q(\bs t_n) = 
-\sum_{n=1}^N \sum_{\tau=1}^{L_n} \bigg\{ \mathbb{E}_{\bs T} \left[ \ln T_{t_{n,\tau-1}, t_{n,\tau}} \right] &&\nonumber \\
-& + \sum_{k=1}^K \mathbb{E}_{\bs A} \left[ \ln A^{(k)}(t_{n,\tau},c_{n,\tau}^{(k)},c_{n,\tau-1}^{(k)}) \right]  \nonumber \\
-& + \sum_{s=1}^S \mathbb{E}_{\bs B,\bs d^{(s)}} \!\left[ \ln B^{(s)}(t_{n,\tau},d_{n,\tau}^{(s)},d_{n,\tau-1}^{(s)}) \right]
-\bigg\} \!+\! \mathrm{const}. && \label{eq:qstar_t}
+& \ln q(\bs t_n) \!=\! 
+\sum_{n=1}^N \sum_{\tau=1}^{L_n} 
+\sum_{s=1}^S \mathbb{E}%_{\bs B,\bs d^{(s)}} \!\left[ 
+\ln \!B^{(s)}\!(t_{n,\tau},d_{n,\tau}^{(s)},d_{n,\tau\!-\!1}^{(s)}) %\right]
+%\bigg\{ \mathbb{E}%_{\bs T} \left[ 
+%\ln T_{t_{n,\tau\!-\!1}, t_{n,\tau}} %\right] 
+&&\nonumber \\
+& \sum_{k=1}^K \mathbb{E}%_{\bs A} \left[ 
+\ln \!A^{(k)}\!(t_{n,\tau},c_{n,\tau}^{(k)},c_{n,\tau\!-\!1}^{(k)}) %\right]  
+\!+\! \mathbb{E}\ln T_{t_{n,\tau\!-\!1}, t_{n,\tau}} \!\!\bigg\}
+\nonumber \\
+&
++\mathrm{const}. && \label{eq:qstar_t}
  \end{flalign}
 To compute $q(\bs T_j)$, $q(\bs A^{(k)} )$, and $q(\bs B^{(s)})$, 
 we require expectations for the individual 
 true labels $r_{n,\tau,j} = \mathbb{E}_{\bs T,\bs A,\bs B,\bs d}[p(t_{n,\tau}=j | \bs c)]$ 
 and transitions from one each label to the next, $s_{n,\tau,j,\iota} = 
-\mathbb{E}_{\bs T,\bs A,\bs B,\bs d}[p(t_{n,\tau-1}=j, t_{n,\tau}=\iota | \bs c)]$.
+\mathbb{E}_{\bs T,\bs A,\bs B,\bs d}[p(t_{n,\tau\!-\!1}=j, t_{n,\tau}=\iota | \bs c)]$.
  These terms can be computed using the forward-backward algorithm~\cite{ghahramani2001introduction},
  which consists of two passes. 
- The forward pass is run for each document $n$, starting from $\tau=1$,
+ The \emph{forward pass} is run for each document $n$, starting from $\tau=1$,
  and computes for each value of $\tau$ the posterior given crowdsourced annotations for tokens $\leq\tau$. 
  \begin{flalign}
-   & \ln r^{-}_{n,\tau,j} = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau-1,\iota} \exp \mathbb{E}[\ln T_{\iota,j}] \right\}  
-   & \nonumber \\ 
-   & \hspace{3cm} + ll(j, n,\tau),
+   & \ln r^{-}_{n,\tau,j} \! = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau\!-\!1,\iota} \mathrm{e}^{\mathbb{E}\ln T_{\iota,j}} \right\} \!+ ll(j, n,\tau), & 
  \end{flalign}
- where the log likelihood $ll(n,\tau)$ of the annotations from the crowd and sequence taggers for token $\tau$ in document $n$ is:
+ where the log likelihood $ll(j,n,\tau)$ of the annotations for token $\tau$ in document $n$ given
+ label $j$ is:
  \begin{flalign} 
-   & ll(j, n,\tau) = \sum_{k=1}^K \mathbb{E}_{\bs A}\left[\ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau-1}^{(k)} \right)\right] + 
+   & ll(j, n,\tau) = \sum_{k=1}^K \mathbb{E}%_{\bs A}
+   \ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right) + 
    & \nonumber \\
-   & \sum_{s=1}^S \sum_{i=1}^J \sum_{\iota=1}^J \mathbb{E}_{\bs B}\left[\ln B^{(s)} \left(j, i, \iota \right) \right] 
-   \hat{p}(d_{n,\tau}^{(s)} = i) & \nonumber \\
-   &\hat{p}(d_{n,\tau}^{(s)} = \iota), & 
+   & \sum_{s=1}^S \!\sum_{i=1}^J \!\sum_{\iota=1}^J \!\mathbb{E}%_{\bs B}
+   \ln B^{(s)} \!\!\left(j, i, \!\iota \right)  
+   \hat{p}(d_{n,\tau}^{(s)} \!\! = \!i) \hat{p}(d_{n,\tau\!-\!1}^{(s)} \!\!= \!\iota), & 
  \end{flalign}
  where $\hat{p}(d_{n,\tau}^{(s)} = i)$ is the probability of label $d_{n,\tau}^{(s)}$ produced 
  by the sequence tagger $s$, which we explain in more detail below (see Equation \ref{eq:hatp}).
-  
  For the first token in each sequence, $r^{-}_{n,0,\iota}  = 1$ where $\iota$ corresponds to the `O' label 
   and is $0$ otherwise.
- After the forward pass is complete, the backwards pass starts from $\tau=L_n$ and scrolls backwards, 
- computing the likelihoods of the annotations at positions from $\tau+1$ to $L_n$, as follows:
+  
+The \emph{backwards pass} starts from $\tau=L_n$ and scrolls backwards, 
+at each token computing the likelihoods of the annotations from $\tau+1$ to $L_n$:
  \begin{flalign}
-   & \ln \lambda_{n,L_n,j} = 0 & \nonumber\\
-   & \ln \lambda_{n,\tau,j} = \ln\sum_{\iota=1}^J \exp \bigg\{ \ln \lambda_{i,\tau+1,\iota} + \mathbb{E}[\ln T_{j,\iota}] 
+   \ln \lambda_{n,L_n,j} = 0, & \hspace{1cm}
+   \ln \lambda_{n,\tau,j} = \ln\sum_{\iota=1}^J \exp \bigg\{ 
    & \nonumber \\
-   & + ll(\iota,n,\tau+1) \bigg\} . &
+   \ln \lambda_{i,\tau+1,\iota} + \mathbb{E}[&\ln T_{j,\iota}] + ll(\iota,n,\tau+1) \bigg\} .&
  \end{flalign}
  Since the terms may become small over a long sequence, we normalize
  $r^{-}_{n,\tau,j}$ and $\lambda_{n,\tau,j}$ after each iteration of the forward and backward pass
@@ -141,10 +151,9 @@ and transitions from one each label to the next, $s_{n,\tau,j,\iota} =
  By taking the exponents and applying Bayes' rule we arrive at the terms $r_{n,\tau,j}$ and $s_{n,\tau,j,\iota}$:
  \begin{flalign}
   & r_{n,\tau,j} = \frac{r^{-}_{n,\tau,j}\lambda_{n,\tau,j}}{\sum_{\iota=1}^J r^{-}_{n,\tau,\iota}\lambda_{n,\tau,\iota}} &\\
-  & \ln\tilde{s}_{n,\tau,j,\iota} = \ln r^{-}_{n,\tau-1,j} + \ln \lambda_{n,\tau,\iota} + \mathbb{E}[\ln T_{j,\iota}] 
-& \nonumber \\
-& \hspace{3cm} + ll(\iota,n,\tau) & \\ %} {\sum_{\iota=1}^J \sum_{\iota'=1}^J  
-%  r^{-}_{n,\tau-1,\iota}\lambda_{n,\tau,\iota'} \exp\mathbb{E}[\ln T_{\iota,\iota'}] 
+  & \ln\tilde{s}_{n,\tau\!,j,\iota} \!= \ln r^{-}_{\!n,\tau\!-\!1,j} \!\!+\! \ln\! \lambda_{n,\tau\!,\iota} \!\!+ \mathbb{E}\!\ln T_{\!j,\iota}
+\!\!+ \!ll(\!\iota,\!n,\!\tau\!) & \\ %} {\sum_{\iota=1}^J \sum_{\iota'=1}^J  
+%  r^{-}_{n,\tau\!-\!1,\iota}\lambda_{n,\tau,\iota'} \exp\mathbb{E}[\ln T_{\iota,\iota'}] 
 % + ll(\iota',n,\tau)  } . &
 & s_{n,\tau,j,\iota} = \frac{ \tilde{s}_{n,\tau,j,\iota} }{ \sum_{j=1}^J\sum_{\iota=1}^J  \tilde{s}_{n,\tau,j,\iota} } &
  \end{flalign}
@@ -153,16 +162,15 @@ The $r_{i,\tau,j}$ terms provide the output predictions of the class labels.
 \textbf{Variational factor for} $\bs T$: each row of the transition matrix has a separate factor:
 \begin{flalign}
 & \ln q(\bs T_{j}) 
-  = \sum_{\iota=1}^J N_{j,\iota}  + \ln \mathrm{Dir}(\bs T_j | \bs\gamma_j) + \mathrm{const} & \nonumber\\
-&= \ln \mathrm{Dir}\left(\left[ N_{j,\iota} + \gamma_{j,\iota}, \forall \iota \in \{1,...,J\} \right]\right), &
+  %= \sum_{\iota=1}^J N_{j,\iota}  + \ln \mathrm{Dir}(\bs T_j | \bs\gamma_j) + \mathrm{const} & \nonumber\\
+= \ln \mathrm{Dir}\left(\left[ N_{j,\iota} + \gamma_{j,\iota}, \forall \iota \in \{1,..,J\} \right]\right), &
 \end{flalign}
 where $N_{j,\iota} = \sum_{n=1}^N \sum_{\tau=1}^{L_n}  s_{n,\tau,j,\iota}\ln T_{j,\iota}$ is the pseudo-count of the 
 number of times that label $\iota$ follows label $j$.  
-The variational factor $q(\bs t)$ requires the following expectations for the transition matrix:
+The variational factor $q(\bs t)$ requires the following expectations:
  \begin{flalign}
-& \mathbb{E}[\ln T_{j,\iota}] = \Psi\left(N_{j,\iota} + \gamma_{j,\iota}\right) 
-& \nonumber \\
-& \hspace{2cm} - \Psi\left(\sum_{\iota=1}^J (N_{j,\iota} + \gamma_{j,\iota}) \right), &
+& \mathbb{E}\ln T_{j,\iota} = \Psi\!\left(N_{j,\iota} \!\!+ \gamma_{j,\iota}\right) 
+ - \Psi\!\left(\sum_{\iota=1}^J (N_{j,\iota} \!\!+ \gamma_{j,\iota}) \!\right), &
 \end{flalign}
  where $\Psi$ is the digamma function.
  
@@ -171,31 +179,32 @@ The variational factor for each annotator model is a distribution over its param
 which differs between models.
 For \emph{seq}, the variational factor is given by:
  \begin{flalign}
-  & \ln q\left( A^{(k)}\right) = \sum_{j=1}^J  \sum_{l=1}^J \bigg\{ \sum_{m=1}^J N_{j,l,m}^{(k)}\ln\pi_{j,l,m}^{(k)} & \nonumber\\
-  & \hspace{2.7cm} 
-  + \ln p\left(\bs\pi_{j,l}^{(k)} | \bs \alpha_{j,l}^{(k)} \right) \bigg\} + \mathrm{const}, & \nonumber \\
- & = \sum_{j=1}^J  \sum_{l=1}^J \mathrm{Dir} \left(\left[ \bs N_{j,l,m}^{(k)} \! 
- + \alpha_{j,l,m}^{(k)}, \! \forall m \! \in \! \{1,..,J\} \right] \right), & \\
-& N^{(k)}_{j,l,m} = \sum_{n=1}^N \sum_{\tau=1}^{L_n} r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau-1}}\delta_{m,c^{(k)}_{n,\tau}}, & 
+  & \ln q\left( A^{(k)}\right) %= \sum_{j=1}^J  \sum_{l=1}^J \bigg\{ \sum_{m=1}^J N_{j,l,m}^{(k)}\ln\pi_{j,l,m}^{(k)} & \nonumber\\
+ % & \hspace{2.7cm} 
+ % + \ln p\left(\bs\pi_{j,l}^{(k)} | \bs \alpha_{j,l}^{(k)} \right) \bigg\} + \mathrm{const}, & \nonumber \\
+  = \sum_{j=1}^J  \sum_{l=1}^J \mathrm{Dir} \left(\left[ \bs N_{j,l,m}^{(k)} \! 
+ + \alpha_{j,l,m}^{(k)}, \! \right.\right.\nonumber&\\
+&  \hspace{3.5cm} \left.\left.\forall m \! \in \! \{1,..,J\} \right] \right), & \\
+& N^{(k)}_{j,l,m} = \sum_{n=1}^N \sum_{\tau=1}^{L_n} r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau\!-\!1}}\delta_{m,c^{(k)}_{n,\tau}}, & 
 \end{flalign}
  where $\delta$ is the Kronecker delta. 
 For the \emph{CM} model, the variational factor is simplified to:
  \begin{flalign}
   & \ln q\left( A^{(k)}\right) = \sum_{j=1}^J  \mathrm{Dir} \bigg( \bigg[ \sum_{n=1}^N \sum_{\tau=1}^{L_n} r_{n,\tau,j} \delta_{m,c^{(k)}_{n,\tau}} 
   & \nonumber \\ 
-& \hspace{2cm} + \alpha_{j,m}^{(k)}, \! \forall m \! \in \! \{1,..,J\} \bigg] \bigg) .
+& \hspace{2.0cm} + \alpha_{j,m}^{(k)}, \! \forall m \! \in \! \{1,..,J\} \bigg] \bigg) .
 \end{flalign}
 For \emph{MACE}, \emph{CV} and \emph{acc}, the factors follow a similar pattern of summing pseudo-counts of correct and incorrect answers. For reasons of space, we omit the equations for these variants. 
 The variational factor $q(\bs t)$ also requires the following expectation terms for \emph{seq} models:
  \begin{flalign}
-& \mathbb{E}\left[\ln A^{(k)}(j,l,m) \right] = \Psi\left(N^{(k)}_{j,l,m} + \alpha^{(k)}_{j,l,m}\right)
+& \mathbb{E}\ln A^{(k)}(j,l,m) = \Psi\left(N^{(k)}_{j,l,m} + \alpha^{(k)}_{j,l,m}\right)
 & \nonumber \\ 
 & \hspace{2cm}  - \Psi\left(\sum_{m'=1}^J \left( N^{(k)}_{j,l,m'} + \alpha^{(k)}_{j,l,m'} \right) \right). &
  \end{flalign}
  For \emph{CM}, the equation can be adapted by omitting the $l$ subscripts on the right-hand side, which refer to the previous annotation in the sequence. 
  
 The varational factor, $q(B^{(s)} )$, for each sequence tagger's annotator model
- follows the same form as $q(A^{(k)} )$, substituting $\delta_{l,c^{(k)}_{n,\tau-1}}$ 
+ follows the same form as $q(A^{(k)} )$, substituting $\delta_{l,c^{(k)}_{n,\tau\!-\!1}}$ 
  for $\hat{p}(d_{n,\tau}^{(s)} = i)$, as defined in below in Equation \ref{eq:hatp}.
 
 \textbf{Black-box sequence taggers}:
@@ -209,7 +218,7 @@ For sequence taggers that we wish to train as part of our VB algorithm,
 the variational factor is:
 \begin{flalign}
 & \ln q(\bs\theta^{(s)}) = \ln p(\bs\theta^{(s)}) + \mathbb{E}_{\bs d_n^{(s)}}\left[ \ln p(\bs x | \bs\theta^{(s)}, \bs d_n^{(s)} ) \right] & \nonumber \\
-& \approx \ln p(\bs\theta^{(s)}) + \ln p\left(\bs x | \bs\theta^{(s)}, \mathbb{E}\left[ \bs d_n^{(s)} | B^{(s)}, \bs t_n \right] \right) & 
+& \approx \ln p(\bs\theta^{(s)}) + \ln p\left(\bs x | \bs\theta^{(s)}, \mathbb{E}\left[ \bs d_n^{(s)} | B^{(s)}\!\!, \bs t_n \right] \right) & 
 \end{flalign}
 The approximation above enables us to train the sequence tagger using its standard training or fitting function:
 we compute $\ln q(\bs\theta^{(s)})$ by running the training function of the black-box sequence tagger, 
@@ -218,18 +227,18 @@ passing in a set of expectations over the labels in place of gold labels:
 & \tilde{p}(d_{n,\tau}) = \mathbb{E}\left[ p(d_{n,\tau}^{(s)} = i | B^{(s)}, t_{n,\tau} ) \right] & 
 \nonumber \\
 & = \sum_{j=1}^J \sum_{\iota=1}^J
-r_{n,\tau,j} \tilde{p}(d_{n,\tau-1}) \mathbb{E}[B^{(s)}(j, i, \iota)] \label{eq:tildepd}
+r_{n,\tau,j} \tilde{p}(d_{n,\tau\!-\!1}) \mathbb{E}[B^{(s)}(j, i, \iota)] \label{eq:tildepd}
 \end{flalign}
 The term $d_{n,\tau}^{(s)}$ can be marginalized without recourse to its own variational factor. 
 since it
 is independent of all other variables given $t_{n,\tau}$, $\bs x_n$, $B^{(s)}$,
-$d_{n,\tau-1}^{(s)}$
+$d_{n,\tau\!-\!1}^{(s)}$
 and $\bs\theta^{(s)}$.
 Depending on its implementation, it may be necessary to train the sequence tagger using discrete labels, 
 in which case we take the most probable values at each token instead of Equation \ref{eq:tildepd}: 
 \begin{flalign}
-& \tilde{d}_{n,\tau}^{(s)} = \argmax_{i} \;
-\mathbb{E}\left[ p(d_{n,\tau}^{(s)} = i | B^{(s)}, t_{n,\tau}) \right]. & \label{eq:discrete1}
+& \tilde{d}_{n,\tau}^{(s)} \!= \argmax_{i} \;
+\mathbb{E}\!\left[ p(d_{n,\tau}^{(s)} \!= i | B^{(s)}\!, t_{n,\tau}) \right]. & \label{eq:discrete1}
 \end{flalign}
 If we use discrete labels to train a sequence tagger, our inference procedure becomes 
 a hybrid between VB and a maximum a posteriori (MAP) expectation maximization (EM) solution~\cite{bishop_pattern_2007}.
@@ -242,7 +251,8 @@ the complete procedure becomes a hybrid between maximum likelihood EM for $\bs\t
 The forward and backward passes used to update $q(\bs t)$ require
 expectations over $\bs d_n^{(s)}$, defined as:
 \begin{flalign}
-& \hat{p}(d_{n,\tau}^{(s)} =i) = \mathbb{E}_{\bs\theta^{(s)}} \left[p(d_{n,\tau}^{(s)}=i | \bs x_n, \bs\theta^{(s)}) \right]. & \label{eq:hatp}
+& \hat{p}(d_{n,\tau}^{(s)} =i) = \mathbb{E}%_{\bs\theta^{(s)}} 
+\left[p(d_{n,\tau}^{(s)}=i | \bs x_n, \bs\theta^{(s)}) \right]. & \label{eq:hatp}
 \end{flalign}
 If possible, we obtain this posterior through the prediction function of the sequence tagger.
 However, some sequence tagger implementations may output only discrete predictions of the following form:
@@ -280,7 +290,7 @@ human annotations, $\bs c$, and rely only on the black-box sequence taggers.
 % The VB algorithm optimises the lower bound on model evidence, so it is useful to compute the lower bound
 % to check for convergence, or to compare models with different hyperparameters when performing model selection. The lower bound for Bayesian annotator combination is:
 % \begin{flalign}
-%  &\mathcal{L}  = \mathbb{E}_{q} \left[ \ln p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},...,\bs\pi^{(K)}\right)
+%  &\mathcal{L}  = \mathbb{E}_{q} \left[ \ln p\left(\bs c, \bs t | \bs A, \bs\pi^{(1)},..,\bs\pi^{(K)}\right)
 %  - \ln q(\bs t) \right] & \nonumber \\
 %  & + \sum_{j=1}^L \bigg\{ \mathbb{E}_{q} \left[ \ln p\left(\bs A_j | \bs\beta_j\right)  -  \ln q(\bs A_j ) \right] & \nonumber\\
 %  & + \sum_{l=1}^J \sum_{k=1}^K 

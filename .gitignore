@@ -1,3 +1,4 @@
+LSTM_worker_model*.npy
 models_*
 documents/figures/*_OLD*
 documents/figures/*_old*

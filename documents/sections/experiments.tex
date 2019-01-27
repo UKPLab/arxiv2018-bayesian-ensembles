@@ -1,28 +1,44 @@
 
 \section{Experiments}\label{sec:expts_all}
 
-\begin{figure}
+\begin{figure*}
 \centering
 \subfloat[Average annotator accuracy]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 40]{figures/synthetic/acc_bias_exp/plot_f1-score-tokens}
-}\\
+  \includegraphics[width=0.505\columnwidth, clip=True, trim=14 20 45 40]{figures/synthetic/acc_bias_exp/plot_f1-score-tokens}
+}
 \subfloat[Short span bias]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 40]{figures/synthetic/short_bias_exp/plot_f1-score-tokens}
-}\\
+  \includegraphics[width=0.485\columnwidth, clip=True, trim=32 18 40 40]{figures/synthetic/short_bias_exp/plot_f1-score-tokens}
+}
 \subfloat[Missed span bias]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 40]{figures/synthetic/class_bias_exp/plot_f1-score-tokens}
-}\\
+  \includegraphics[width=0.485\columnwidth, clip=True, trim=32 18 45 40]{figures/synthetic/class_bias_exp/plot_f1-score-tokens}
+}
 % \subfloat[Crowd size]{
 %   \includegraphics[width=0.2\textwidth, clip=True, trim=0 10 0 27]{figures/synthetic/acc_bias_exp/plot_f1-score.png}
 % }
-\subfloat[Number of good workers out of a crowd of 10, where the rest are random.]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=10 20 40 38]{figures/synthetic/group_ratio_exp/plot_f1-score-tokens}
+\subfloat[
+Good workers out of 10 %a crowd of , where the rest are random.
+]{
+  \includegraphics[width=0.485\columnwidth, clip=True, trim=32 18 40 40]{figures/synthetic/group_ratio_exp/plot_f1-score-tokens}
 }
 \caption{F1 scores with simulated annotators. Each plot shows the effect of varying one characteristic.}
 \label{fig:simulated}
-\end{figure}
-
-
+\end{figure*}
+\begin{table*}[h]
+\small
+\begin{tabularx}{\textwidth}{| X || X | X | X | X | X | l || l | l || X | X | X | X |} \hline
+Data & \multicolumn{4}{c|}{Docs} & Sente & Tokens & \multicolumn{2}{c||}{Workers} & Span & Gold & \multicolumn{2}{c|}{Span length}  \\
+-set & total & dev & train/test & crowd & nces & & total & /doc & type & spans & mean & std.  \\
+\hline
+NER & 1393 & ? & 1393 & 415 & 6503 & 179323  & 47 & 4.9 & PER & 6282 & 1.19 & 0.49 \\
+&       & & & & & & &  & LOC  & 6482 & 1.73 & 0.57\\
+&       & & & & & & & & ORG  & 5789 & 1.55 & 0.92\\
+&       & & & & & & & & MISC & 3059 & 1.44 & 0.80\\ \hline
+PICO & 4740 & ? & 191 & 4740 & 9480 & 1424721 & 312 & 6.0 & pop. & 700 & 7.74 & 7.38  \\ \hline
+\end{tabularx}
+\label{tab:datasets}
+\caption{Numbers of documents, spans, annotators, tokens and sentences for datasets used in our experiments.}
+\end{table*}
+%TODO sort out what is train and test in the above table. 
 We evaluate Bayesian sequence combination (BSC) against alternative methods to test 
  (a) the different annotator models described in Section \ref{sec:model},
  (b) the performance of BSC on unreliable or small training sets,
@@ -47,17 +63,45 @@ maximum \emph{a posteriori} (or smoothed maximum likelihood) estimates for a con
 and variational inference for an integrated hidden Markov model. 
 %  HMM-crowd is the current state-of-the-art and allows us to compare our approach against 
 %  a model without a fully Bayesian treatment. 
-We also introduce a \emph{clustering} baseline,
-that aggregates spans from multiple annotators by grouping them together
-using kernel density estimation~\cite{rosenblatt1956remarks}.
+%We also introduce a \emph{clustering} baseline,
+%that aggregates spans from multiple annotators by grouping them together
+%using kernel density estimation~\cite{rosenblatt1956remarks}.
 
 BSC is tested with each of the different annotator models described in Section \ref{sec:annomodels} and integrating different text models. 
 As the default set-up, 
 we integrate a simple black-box classifier
 that treats all text features as conditionally independent of each other and of the sequence of labels. This set-up is tested with all annotator models.
 The BSC-seq variant is also tested without a text model (\emph{notext}), 
-and with an integrated LSTM~\cite{lample2016neural}, labeled \emph{BSC-seq+LSTM}.
-We also use HMM-crowd and BSC-seq to produce training labels for the LSTM as a separate pre-processing step, labeled in our results as $\rightarrow$LSTM.
+and with an integrated BiLSTM-LSTM-CRF, ~\cite{lample2016neural}, labeled \emph{BSC-seq+LSTM}.
+We also use the output predictions of HMM-crowd and BSC-seq as training labels for the same LSTM-based method,
+then evaluate its predictions (labeled in our results as $\rightarrow$LSTM).
+In our experiments we evaluate the benefits of integrating black-box sequence taggers
+as part of an ensemble, rather than tuning for optimal performance on a particular task.
+Therefore, we reuse the hyperparameters determined by Lample et al.~\shortcite{lample2016neural} 
+for all instances of BiLSTM-LSTM-CRF, except for the optimizer, for which we use Adam to improve the convergence rate, as recommended by Reimers and Gurevych~\shortcite{reimers2017optimal}.
+We apply early stopping if the development set score does not improve after 5 iterations. 
+%For reasons of computational cost, 
+%%we limit all aggregation methods to 20 iterations,
+%%although they often converge in fewer, and we did not find that development set performance improved
+%%when higher limits were used.
+%we limit all LSTMs to 20 epochs, 
+%but allow early stopping 
+%when performance peaks on the development sets. --> I think this need not be mentioned, just make the use of dev sets clearer in the dataset table. 
+For the integrated BSC-seq+LSTM,  
+we found better development set performance for both our datasets if the other parameters 
+are allowed to converge before training the LSTM to convergence. 
+%or reached a maximum of 20 iterations, -> chosen because we found that 3 epochs/iterations were enough, then we keep the total number of iterations the same. 
+%then not re-training the LSTM in subsequent iterations the LSTM.  
+%As with early stopping, limiting the training of the LSTM in this way 
+This is intended to reduce over-fitting,
+which is a likely consequence of using a maximum likelihood step to integrate the LSTM as a black-box sequence tagger.
+% I don't think these things need to be done right now as they don't change the results. We can also do them by just 
+% using the dev set as testing and running the whole set up multiple times with different numbers of iterations without
+% LSTM and different numbers of iterations with, i.e. the code may not formalise this. However, the code should reproduce the results we have here. 
+%TODO rerun with evaluation on dev: is 17+3 the optimal number of epochs for BSC-seq+LSTM? We need to avoid fixing 3 epochs using early stopping instead? Do this for both PICO and NER.
+% BECAUSE: the only way we know how to do this is dev set. Else we have either optimized on a test set or chosen 3 iterationsarbitrarily. If the latter, we should at least run the ->LSTM methods with 3 iterations
+% (I think they will also perform worse in this case based on my previous experiments).
+%TODO table 4 results need to show what happens when LSTM is trained like this on NER. I think this is not a problem if the results are slightly different and can be updated after submission.
 
 The MACE and IBCC methods are non-sequential variants of BSC-MACE and BSC-CM,
 and serve to show the benefits of the sequential BSC model.
@@ -65,83 +109,13 @@ The HMM-Crowd and DS methods also allow us to compare non-Bayesian methods
 against their Bayesian variants, BSC-CV and IBCC, respectively. 
 
 \subsection{Simulated Annotators}\label{sec:synexpts}
-
-Simulated data allows us to test the effect of one  
-type of error in the crowdsourced data,
-while keeping other characteristics of the data constant.
-We generate crowds of 10 annotators for four experiments, which  
-test the effect of varying
-(a) average annotator accuracy,
-(b) short span bias, i.e. the probability of not including the last tokens in a span, 
-(c) missed span bias, i.e. the probability of missing a span entirely,
-and (d) the ratio of good to uninformative annotators in the crowd.
-We simulate annotators using the generative model of BSC-seq, 
-drawing annotator labeling probabilities from Dirichlet distributions. 
-%given the ground truth label and the annotator's previous label.
-By default, Dirichlet parameters corresponding to incorrect answers are 1,
-those for correct answers are 2.5, and disallowed transitions (O$\rightarrow$I) are close to 0. 
-We then change the parameters of these Dirichlet distributions 
-to obtain the variations described above. 
-We repeat each experiment 25 times, in each case generating 25 documents of 100 tokens each. 
-
-Figure \ref{fig:simulated} shows the F1-scores for our tested methods. 
-Where annotator accuracy is high, majority voting and clustering are less accurate than  methods that model individual annotator behavior, although the difference decreases as we introduce more errors.
-Clustering performs better with high short span bias, 
-as density estimation can compensate for short spans but may over-estimate
-those of the correct length.
-% miss bias and low average annotator accuracy, suggesting that clustering-based approaches may be worth considering in future work on span aggregation.
-Among the BSC variants, performance increases with the complexity of the annotator model, from BSC-acc to BSC-seq,
-suggesting that this richer model can be successfully learned on a small dataset. 
-There are some benefits for the Bayesian approaches, IBCC and BSC-CV, over the similar  models, DS and HMM-crowd, respectively, in handling all four types of annotator error.
-% low annotator accuracy, crowds with few good workers, short span bias and some degree of missed span bias.
-%MACE mostly performs only slightly better than majority vote.
-%, its spammer model
-%handles short span bias and missed span bias relatively well. 
-
-\begin{table*}
-\small
-\begin{tabular}{| l || r | r | r | r | r || r | r || l | r | r | r |} \hline
-Dataset & \multicolumn{3}{c|}{Docs} & Sent & Tokens & \multicolumn{2}{c||}{Workers} & Span & Gold & \multicolumn{2}{c|}{Span length}  \\
- & total & gold & crowd & -ences & & total & /doc & type & spans & mean & std.  \\
-\hline
-NER & 1393 & 1393 & 415 & 6503 & 179323  & 47 & 4.9 & PER & 6282 & 1.19 & 0.49 \\
-       & & & & & & &  & LOC  & 6482 & 1.73 & 0.57\\
-       & & & & & & & & ORG  & 5789 & 1.55 & 0.92\\
-       & & & & & & & & MISC & 3059 & 1.44 & 0.80\\ \hline
-PICO & 4740 & 191 & 4740 & 9480 & 1424721 & 312 & 6.0 & population & 700 & 7.74 & 7.38  \\ \hline
-\end{tabular}
-\label{tab:datasets}
-\caption{Numbers of documents, spans, annotators, tokens and sentences for our test datasets.}
-\end{table*}
-
-
-\subsection{Crowdsourced Datasets}\label{sec:expts}
-
-We use two datasets containing both crowdsourced and gold sequential annotations. 
-The CoNLL 2003 named-entity recognition dataset~\cite{tjong2003introduction},
-\emph{NER}, contains gold labels for four named entity categories (PER, LOC, ORG, MISC),
-with crowdsourced labels provided by \cite{rodrigues2014sequence}.
-\emph{PICO}~\cite{nguyen2017aggregating}, 
-consists of medical paper abstracts that have been annotated by a crowd to indicate text spans that identify the population enrolled in a clinical trial. 
-Further information about the datasets is shown in Table \ref{tab:datasets}. Note that NER spans are typically much shorter than those in PICO.
-
-\subsection{Evaluation Metrics}
-
-For NER we use the CoNLL 2003 F1-score, which considers only exact span matches %(type, start and end) 
-to be correct. 
-%This measure is intuitive because complete named entities must be marked to be of value. 
-For PICO, we use the relaxed F1-measure~\cite{nguyen2017aggregating}, which counts the matching fractions of spans when computing precision and recall.
-Since the spans in PICO are longer than those of NER, partial matches may still contain much of the required information. 
-%We additionally compute the root mean squared error in the span lengths, i.e. the difference between the  % actually it's not quite that. We computed the difference in mean span lengths. This is already captured by F1 score for pico and better described by the span-level-precision and recall. Our metric might be more if we didn't take the absolute so we could see if spans were often too long or too short.
-We also compute the cross entropy error (\emph{CEE}) at the level of tokens
-to compare the probability estimates produced by aggregation methods, which are useful for decision-making tasks such as active learning.
-
-\subsection{Aggregating Crowdsourced Labels}\label{sec:task1}
 \begin{table*}
 \small
 \nprounddigits{1}
 \npdecimalsign{.}
-\begin{tabularx}{\textwidth}{| p{1.9cm} h n{2}{1} | n{2}{1} | n{2}{1} | n{2}{1} h Y | Y  | Y  ?  n{2}{1} | n{2}{1} | n{2}{1} | n{2}{1} h Y  | Y  | Y ?}
+\begin{tabularx}{\textwidth}{| p{2.5cm} h X | X | X | X | P{0.3cm} | P{0.4cm} | P{0.3cm} ? X | X | X | X | P{0.4cm} | P{0.4cm} | P{0.3cm} ?}
+
+%n{2}{1} | n{2}{1} | n{2}{1} | n{2}{1} h Y | Y  | Y  ?  n{2}{1} | n{2}{1} | n{2}{1} | n{2}{1} h Y  | Y  | Y ?}
 \hline
 %NER & \multicolumn{3}{|l|}{Span-level metrics}                     & \multicolumn{2}{|l|}{Token-level metrics} & Hyper.\\ \hline 
 & \multicolumn{4}{l}{NER} & \multicolumn{3}{l?}{Hyperparams.} & \multicolumn{4}{l}{PICO} & \multicolumn{3}{l?}{Hyperparams.} \\ \hline
@@ -199,6 +173,8 @@ BSC-seq & 80.3 & 74.8 & 77.4 & %78.9 & .9598 &
 72.9 & 77.6 & 75.1 & %57.9 & .9250 & 
 1.10 & 100 & 1 & 1\\ \hline
 
+BSC-MACE-notext \\
+BSC-CM-notext \\
 BSC-seq-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 & 
 0.52 & .1 & 1 & 1 & 81.2 & 59.2 & 68.5 & %59.8 & .922 &
  0.73 & .1 & .1 & .1\\ \hline
@@ -221,29 +197,96 @@ BSC-seq +LSTM & \textbf{82.3} & \textbf{75.9} & \textbf{78.9} & %79.6 & .9513 &
 \label{tab:aggregation_results}
 \npnoround
 \end{table*}
+Simulated data allows us to test the effect of one  
+type of error in the crowdsourced data,
+while keeping other characteristics of the data constant.
+We generate crowds of 10 annotators for four experiments, which  
+test the effect of varying
+(a) average annotator accuracy,
+(b) short span bias, i.e. the probability of not including the last tokens in a span, 
+(c) missed span bias, i.e. the probability of missing a span entirely,
+and (d) the ratio of good to uninformative annotators in the crowd.
+We simulate annotators using the generative model of BSC-seq, 
+drawing annotator labeling probabilities from Dirichlet distributions. 
+%given the ground truth label and the annotator's previous label.
+By default, Dirichlet parameters corresponding to incorrect answers are 1,
+those for correct answers are 2.5, and disallowed transitions (O$\rightarrow$I) are close to 0. 
+We then change the parameters of these Dirichlet distributions 
+to obtain the variations described above. 
+We repeat each experiment 25 times, in each case generating 25 documents of 100 tokens each. 
+
+Figure \ref{fig:simulated} shows the F1-scores for our tested methods. 
+Where annotator accuracy is high, majority voting and clustering are less accurate than  methods that model individual annotator behavior, although the difference decreases as we introduce more errors.
+Clustering performs better with high short span bias, 
+as density estimation can compensate for short spans but may over-estimate
+those of the correct length.
+% miss bias and low average annotator accuracy, suggesting that clustering-based approaches may be worth considering in future work on span aggregation.
+Among the BSC variants, performance increases with the complexity of the annotator model, from BSC-acc to BSC-seq,
+suggesting that this richer model can be successfully learned on a small dataset. 
+There are some benefits for the Bayesian approaches, IBCC and BSC-CV, over the similar  models, DS and HMM-crowd, respectively, in handling all four types of annotator error.
+% low annotator accuracy, crowds with few good workers, short span bias and some degree of missed span bias.
+%MACE mostly performs only slightly better than majority vote.
+%, its spammer model
+%handles short span bias and missed span bias relatively well. 
+
+\subsection{Crowdsourced Datasets}\label{sec:expts}
+
+We use two datasets containing both crowdsourced and gold sequential annotations. 
+The CoNLL 2003 named-entity recognition dataset~\cite{tjong2003introduction},
+\emph{NER}, contains gold labels for four named entity categories (PER, LOC, ORG, MISC),
+with crowdsourced labels provided by \cite{rodrigues2014sequence}.
+\emph{PICO}~\cite{nguyen2017aggregating}, 
+consists of medical paper abstracts that have been annotated by a crowd to indicate text spans that identify the population enrolled in a clinical trial. 
+Further information about the datasets is shown in Table \ref{tab:datasets}. Note that NER spans are typically much shorter than those in PICO.
+
+\subsection{Evaluation Metrics}
+
+For NER we use the CoNLL 2003 F1-score, which considers only exact span matches %(type, start and end) 
+to be correct. 
+%This measure is intuitive because complete named entities must be marked to be of value. 
+For PICO, we use the relaxed F1-measure~\cite{nguyen2017aggregating}, which counts the matching fractions of spans when computing precision and recall.
+Since the spans in PICO are longer than those of NER, partial matches may still contain much of the required information. 
+%We additionally compute the root mean squared error in the span lengths, i.e. the difference between the  % actually it's not quite that. We computed the difference in mean span lengths. This is already captured by F1 score for pico and better described by the span-level-precision and recall. Our metric might be more if we didn't take the absolute so we could see if spans were often too long or too short.
+We also compute the cross entropy error (\emph{CEE}) at the level of tokens
+to compare the probability estimates produced by aggregation methods, which are useful for decision-making tasks such as active learning.
+
+\subsection{Aggregating Crowdsourced Labels}\label{sec:task1}
+
 \begin{figure*}
-\centering
 % \subfloat[BSCC-acc-IF]{
 %   \includegraphics[width=0.9\textwidth, clip=True, trim=0 10 0 28]{figures/worker_models/acc}
 % } \\
-\subfloat[BSC-CV]{
-  \includegraphics[width=0.7\textwidth, clip=True, trim=0 4 0 3]{figures/worker_models/vec}
-} \\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-CV:
+\end{minipage}
+  \includegraphics[width=0.72\textwidth, clip=True, trim=0 4 0 3]{figures/worker_models/vec} 
+  \\
 % \subfloat[BSCC-MACE-IF]{
 %   \includegraphics[width=1\textwidth, clip=True, trim=0 10 0 27]{figures/worker_models/mace}
 % } \\
-\subfloat[BSC-CM]{
-  \includegraphics[width=0.7\textwidth, clip=True, trim=0 20 0 28]{figures/worker_models/ibcc}
-} \\
-\subfloat[BSC-seq, previous label = I]{
-  \includegraphics[width=0.7\textwidth, clip=True, trim=0 20 0 28]{figures/worker_models/seq_prev0}
-} \\
-\subfloat[BSC-seq, previous label = O]{
-  \includegraphics[width=0.7\textwidth, clip=True, trim=0 20 0 28]{figures/worker_models/seq_prev1}
-} \\
-\subfloat[BSC-seq, previous label = B]{
-  \includegraphics[width=0.7\textwidth, clip=True, trim=0 20 0 28]{figures/worker_models/seq_prev2}
-} \\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-CM:
+\end{minipage}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=20 20 0 28]{figures/worker_models/ibcc}
+ \\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-seq, \\
+previous label = I:
+\end{minipage}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=20 20 0 28]{figures/worker_models/seq_prev0}
+\\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-seq, \\
+previous label = O:
+\end{minipage}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=20 20 0 28]{figures/worker_models/seq_prev1}
+\\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-seq,\\
+ previous label = B:
+\end{minipage}
+  \includegraphics[width=0.7\textwidth, clip=True, trim=20 20 0 28]{figures/worker_models/seq_prev2}
+\\
 \caption{Clusters of confusion matrix representations from each BSC-*** annotator model trained on PICO. 
 % Show how worker representation benefits from richer model: e.g. show differences between rows in IBCC compared to acc.
 % Represent all types as IBCC-confusion matrix plots. seq will need more >= 3 plots! We can focus on PICO data to make it easier to view,
@@ -253,27 +296,6 @@ BSC-seq +LSTM & \textbf{82.3} & \textbf{75.9} & \textbf{78.9} & %79.6 & .9513 &
 }
 \label{fig:conf_mat_clusters}
 \end{figure*}
-\begin{table*}
-\small
-\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X | X | X | X |}
-\hline
-Method & Data-set & exact match & type wrong only & partial match & mis-sing span & false +ve & late start & early start & late finish & early finish & fused spans & split span \\ \hline
-MV & NER & 4307 & 304 & 228 & 1773 & 100 & 96 & 10 & 15 & 85 & 17 & 26 \\
-HMM-crowd & NER & 4519 & 361 & 256 & 924 & 182 & 101 & 15 & 26 & 97 & 28 & 22 \\
-BSC-CV & NER & 4431 & 275 & 243 & 1245 & 177 & 100 & 17 & 23 & 89 & 29 & 16 \\
-BSC-CM & NER & 4534 & 387 & 258 & 734 & 269 & 111 & 23 & 37 & 86 & 39 & 12 \\
-BSC-seq+LSTM & NER & 4581 & 351 & 261 & 564 & 195 & 93 & 42 & 33 & 85 & 39 & 17 \\
-\hline
-MV & PICO    & 168 & 0 & 32 & 185 & 48 & 9 & 11 & 1 & 0 & 3 & 9 \\
-HMM-crowd    & PICO & 190 & 0 & 47 & 124 & 81 & 13 & 21 & 0 & 0 & 5 & 8 \\
-BSC-CV       & PICO & 196 & 0 & 46 & 117 & 81 & 10 & 25 & 0 & 0 & 11 & 0 \\
-BSC-CM       & PICO & 203 & 0 & 54 & 77 & 192 & 18 & 15 & 8 & 0 & 4 & 18 \\
-BSC-seq+LSTM & PICO & 81 & 0 & 421 & 75 & 216 & 20 & 6 & 232 & 3 & 24 & 393 \\
-\hline
-\end{tabularx}
-\caption{Counts of different types of span errors.}
-\label{tab:error_analysis}
-\end{table*}
 In this task, we use the aggregation methods to combine multiple crowdsourced labels and predict the true labels for the same documents. 
 For both datasets, we provide all the crowdsourced labels as input to the aggregation method. 
 In both cases, we split the gold-labelled documents into 50\% validation and test sets. 
@@ -323,26 +345,27 @@ a span.
 Therefore, while BSC-seq outperforms the alternatives in terms of F1-score and missing spans, 
 further work may be required to improve the distinction between 'B' and 'I' tokens. 
 
-\begin{figure*}[ht]
-\centering
-\subfloat[NER, random sampling]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 38]{figures/NER_RAND/pool/plot_f1-score-spans-strict}
-}
-\subfloat[NER, active learning simulation]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 38]{figures/NER_AL/pool/plot_f1-score-spans-strict}
-}\\
-\centering
-\subfloat[PICO, random sampling]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 40]{figures/PICO_RAND/pool/plot_f1-score-spans-relaxed}
-}
-\subfloat[PICO, active learning simulation]{
-  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 40]{figures/PICO_AL/pool/plot_f1-score-spans-relaxed}
-}
-\caption{Small data subsamples: increasing span-level F1-score.
-%: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
-}
-\label{fig:alner}
-\end{figure*}
+\begin{table*}
+\small
+\begin{tabularx}{\textwidth}{| l | X | X | X | X | X | X | X | X | X | X | X | X |}
+\hline
+Method & Data-set & exact match & type wrong only & partial match & mis-sing span & false +ve & late start & early start & late finish & early finish & fused spans & split span \\ \hline
+MV & NER & 4307 & 304 & 228 & 1773 & 100 & 96 & 10 & 15 & 85 & 17 & 26 \\
+HMM-crowd & NER & 4519 & 361 & 256 & 924 & 182 & 101 & 15 & 26 & 97 & 28 & 22 \\
+BSC-CV & NER & 4431 & 275 & 243 & 1245 & 177 & 100 & 17 & 23 & 89 & 29 & 16 \\
+BSC-CM & NER & 4534 & 387 & 258 & 734 & 269 & 111 & 23 & 37 & 86 & 39 & 12 \\
+BSC-seq+LSTM & NER & 4581 & 351 & 261 & 564 & 195 & 93 & 42 & 33 & 85 & 39 & 17 \\
+\hline
+MV & PICO    & 168 & 0 & 32 & 185 & 48 & 9 & 11 & 1 & 0 & 3 & 9 \\
+HMM-crowd    & PICO & 190 & 0 & 47 & 124 & 81 & 13 & 21 & 0 & 0 & 5 & 8 \\
+BSC-CV       & PICO & 196 & 0 & 46 & 117 & 81 & 10 & 25 & 0 & 0 & 11 & 0 \\
+BSC-CM       & PICO & 203 & 0 & 54 & 77 & 192 & 18 & 15 & 8 & 0 & 4 & 18 \\
+BSC-seq+LSTM & PICO & 81 & 0 & 421 & 75 & 216 & 20 & 6 & 232 & 3 & 24 & 393 \\
+\hline
+\end{tabularx}
+\caption{Counts of different types of span errors.}
+\label{tab:error_analysis}
+\end{table*}
 Table \ref{tab:aggregation_results} shows a benefit of using the sequential annotator model over CM, CV and acc.
 To understand how BSC uses the richer model in practice, we plot the learned
  annotator models for
@@ -364,23 +387,29 @@ indicate very different labeling behavior. The model therefore appears able to l
 distinct confusion matrices for different workers given previous labels, which supports the use of sequential
 annotator models.
 
-\subsection{Small Data and Active Learning}
+\subsection{Active Learning}
 
-We investigate the performance of the aggregation methods with smaller datasets,
-and 
-the effectiveness of active learning at improving performance with fewer annotations.
-%improve the efficiency of the annotation process.
-Two set-ups were evaluated on NER and PICO: 
-the first tests our methods on random subsamples of crowdsourced data of increasing size;
-the second starts with a random initial subsample,
-then uses \emph{uncertainty sampling}, a well-established active learning
-heuristic~\cite{settles2010active}, 
-to iteratively select additional crowd labels given posterior label predictions from a model trained on the previous subset. To compute the uncertainty of each
-document, we take the mean shannon entropy $H$ of the labels, 
-$H(\bs t | \bs c_{\mathrm{current}}) / L_n$, where $\bs c_{\mathrm{current}}$ is the current set of crowd labels.
-We used the same random samples for all methods and repeated 
-the experiments ten times with different initializations. 
-\begin{table*}[t]
+\begin{figure*}[h]
+\centering
+% \subfloat[NER, random sampling]{
+%   \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 38]{figures/NER_RAND/pool/plot_f1-score-spans-strict}
+% }
+\subfloat[NER, active learning simulation]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 38]{figures/NER_AL/pool/plot_f1-score-spans-strict}
+}%\\
+\centering
+% \subfloat[PICO, random sampling]{
+%   \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 40]{figures/PICO_RAND/pool/plot_f1-score-spans-relaxed}
+% }
+\subfloat[PICO, active learning simulation]{
+  \includegraphics[width=0.9\columnwidth, clip=True, trim=12 0 0 40]{figures/PICO_AL/pool/plot_f1-score-spans-relaxed}
+}
+\caption{Small data subsamples: increasing span-level F1-score.
+%: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
+}
+\label{fig:alner}
+\end{figure*}
+\begin{table*}
 \small
 \begin{tabularx}{\textwidth}{| l | Y | Y | Y | Y ? Y | Y | Y | Y |}
 \hline
@@ -396,14 +425,77 @@ BSC-seq$\rightarrow$LSTM & 74.3 & \textbf{62.8} & \textbf{68.1} & %69.7 & .8868 
 BSC-seq+LSTM & 72.3 & 64.2 & 68.0 &% 67.6 & .9589 &
  \textbf{0.6} & \textbf{87.4} & 57.9 & 69.7 & \textbf{0.9} \\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
 %BCC-seq+LSTM &\\
+% Results on current code
+% 69.6 & 60.3 & 64.6 ????
 \hline
-LSTM trained on gold labels& 76.4 & 77.0 & 76.7 & %77.3 & .9563 & 
-11.10 & & & & \\
+LSTM trained on gold labels & %76.4 & 77.0 & 76.7 & 11.10 %77.3 & .9563 & %this result from 08-09-01-16-44 on krusty.
+77.6 & 75.3 & 76.5
+& \multicolumn{4}{c |}{too few training labels} \\
+% results on latest code:
+% 75.5 & 75.7 & 75.6 & 12.00 & ->  on Apu. Is this a cockup with the dataset on Apu or because of running on CPU?
 \hline
 \end{tabularx}
 \caption{Prediction performance on test datasets with training on crowdsourced labels.}
 \label{tab:prediction_results}
 \end{table*}
+% TODO make it clear that we test three things here:
+% 1. Does being Bayesian help with AL?
+% 2. Does sequential modelling help?
+% 3. Does including an LSTM or IF feature model help?
+% TODO rework the AL plots: 
+% 1. There should be 4 less cluttered plots similar to figure 1. 
+% 2. We have three additional methods: BSC-CV, IBCC and DS. We can remove MV and HMMCrowd->LSTM?
+% 3. For each dataset, first plot shows benefit of Bayes: DS vs IBCC and HMMCrowd vs BSC-CV
+% 4. For each dataset, second plot shows benefit of sequential user model and LSTM: BSC-CM vs BSC-Seq vs BSC-seq->LSTM vs BSC-seq+LSTM
+% 5. The benefit of sequential true label model is shown by comparing first and second plots (IBCC vs BSC-CM).
+% 6. Do we include a random sampling line in each plot, perhaps for BSC-seq+LSTM (best model) and DS and IBCC (show how Bayes makes AL difference more pronounced)?
+% 7. Pico needs a smaller step size at the start: suggest running it only up to 1500 labels, suggest running with 200 label increments starting at 100 labels
+Active learning iteratively selects informative data points to be labeled so that a model can be trained
+using less labeled data. The posterior probabilities that are output by a Bayesian methods 
+account for uncertainty in the model parameters, hence can be used to choose data points for labeling 
+that most rapidly reduce that uncertainty and improve the model's confidence. In contrast, frequentist methods
+such as maximum likelihood, output probabilities that do not account for parameter uncertainty due to 
+small datasets or noisy labels. 
+We therefore hypothesize that BSC will learn more quickly than HMMCrowd, which uses only partially-Bayesian
+inference, and majority voting, which is not probabilistic and also does not benefit from a sequential model.
+When the labeled dataset is small and many documents have few labels, the integration of an LSTM
+may improve performance as it acts as an additional annotator.
+%We investigate the performance of the aggregation methods with smaller datasets,
+%and 
+%the effectiveness of active learning at improving performance with fewer annotations.
+%improve the efficiency of the annotation process.
+%Two set-ups were evaluated on NER and PICO: 
+%the first tests our methods on random subsamples of crowdsourced data of increasing size;
+%the second starts with a random initial subsample,
+To test these hypotheses, we simulate active learning using \emph{uncertainty sampling}~\cite{settles2010active},
+as described in Algorithm \ref{al:uncertainty_sampling}:
+\begin{algorithm}
+\DontPrintSemicolon
+ \KwIn{ A random $initial\_set$ of training labels, the same for all methods. }
+ \nl Set training set $\bs c=initial\_set$ \;
+ \While{training set size < $max\_no\_labels$}
+ {
+ \nl Train on $\bs c$\;
+ \nl Compute the mean entropy of the sequence labels of each document: 
+ $-\frac{1}{L_n} \sum_{\tau=1}^{L_n}
+ \sum_{j=1}^J
+ p(t_{n,\tau} = j | \bs c) \ln p(t_{n,\tau} = j | \bs c) $
+ \;
+ \nl Select $batch\_size$ documents with highest mean entropy, add their annotations to $\bs c$\;
+ }
+\caption{Active learning simulation for each method using uncertainty sampling.}
+\label{al:uncertainty_sampling}
+\end{algorithm}
+Here we compute entropy over token labels independently so that 
+the method is applicable to non-sequential models such as majority voting. 
+However, for sequential models such as HMM-crowd and BSC, the entropy 
+could in future take into account the label dependencies, which may improve performance.
+
+%to iteratively select additional crowd labels given posterior label predictions from a model trained on the previous subset. To compute the uncertainty of each
+%document, we take the mean shannon entropy $H$ of the labels, 
+%
+%We used the same random samples for all methods and repeated 
+%the experiments ten times with different initializations. 
 %\begin{table}
 %\small
 %\begin{tabularx}{\columnwidth}{|l | Y | Y | Y |} \hline
@@ -418,21 +510,21 @@ LSTM trained on gold labels& 76.4 & 77.0 & 76.7 & %77.3 & .9563 &
 %}
 %\label{tab:lstm_accs}
 %\end{table}
-
-Figure \ref{fig:alner} plots the F1 score at each iteration 
-of the random sampling and active learning procedures.
-BSC performs best with smaller datasets, where it may benefit from a Bayesian approach. 
-Uncertainty sampling appears to have a greater improvement over random sampling on NER
-after around $7000$ labels have been obtained, suggesting that a different strategy could be beneficial while
-the dataset is very small. On PICO, with its smaller sample sizes, the effect of active learning is only observed
-with BSC-seq+LSTM.
+Figure \ref{fig:alner} plots the mean F1 scores over ten repeats of the active learning simulation.
+BSC variants perform best with smaller datasets, where they may benefit from the Bayesian approach. 
+%Uncertainty sampling appears to have a greater improvement over random sampling on NER
+%after around $7000$ labels have been obtained, suggesting that a different strategy could be beneficial while
+%the dataset is very small. 
+%On PICO, with its smaller sample sizes, the effect of active learning is only observed
+%with BSC-seq+LSTM.
 BSC-seq$\rightarrow$LSTM and HMM-crowd$\rightarrow$LSTM are effective on NER with smaller datasets, improving over BSC-seq and HMM-crowd methods that 
 use only a simple independent text model to make predictions for unlabeled data. 
-However, on PICO, they underperform BSC-seq and HMM-crowd respectively. 
-BSC-seq+LSTM accounts for uncertainty in the predictions of the integrated LSTM, 
-enabling it to outperform BSC-seq$\rightarrow$LSTM when active learning aquires more than $10000$ labels.
+However, on PICO, they underperform BSC-seq and HMM-crowd respectively, possibly because the dataset is too small to train 
+the LSTM reliably.
+BSC-seq+LSTM accounts for the unreliability of the predictions of the integrated LSTM, 
+enabling it to outperform BSC-seq$\rightarrow$LSTM on NER with more than $10000$ labels and on PICO at almost all points.
 We observe that
- BSC-seq$\rightarrow$LSTM learns different values for the accuracy of the integrated LSTM depending on the true class label, even with only 1486 tokens  labeled by the crowd.
+%  BSC-seq$\rightarrow$LSTM learns different values for the accuracy of the integrated LSTM depending on the true class label, even with only 1486 tokens  labeled by the crowd.
 
 %By examining the posterior reliability model for the integrated LSTM learned by 
 %, we observe that 
@@ -448,18 +540,35 @@ We observe that
 
 \subsection{Prediction with Crowd-Trained LSTMs}\label{sec:task2}
 
-We compare the LSTM sequence taggers~\cite{lample2016neural}
-trained by HMM-crowd and BSC-seq on test data from NER and PICO. 
-For NER, we use the original CoNLL English test set~\cite{tjong2003introduction},
+% In this scenario we have only crowd labels -- no gold. Should we
+In this scenario, we evaluate two ways to train a sequence tagger: (1) the more
+traditional approach of first aggregating crowdsourced labels
+to produce a gold standard, then training the model on the gold labels (BSC-seq->LSTM and HMM-crowd->LSTM),
+or (2) using BSC-seq+LSTM to form an ensemble of crowd annotators with a sequence tagger, 
+allowing us to exploit the Bayesian framework to output confidence estimates
+that account for model uncertainty.
+% we used the dev sets to do early stopping. Should we also say that we tuned hyperparameters on 2002 data?
+% ideally we should tune the hyperparameters of each of these instances separately on the dev set OR
+% assume there is no dev set in this scenario so we have to either split one off or use settings from another dataset.
+% I think this applies equally to the previous scenario. It makes most sense if another dataset is used for dev, and
+% no early stopping is applied.
+%We compare the Bi-LSTM-LSTM-CRF sequence taggers~\cite{lample2016neural}
+%trained by HMM-crowd and BSC-seq on test data from NER and PICO. 
+For NER, we evaluate on the CoNLL English test set~\cite{tjong2003introduction},
 while for PICO, we train the aggregators on the $3,649$ documents without gold labels, 
 then evaluate on the gold-labelled test data split used in Section \ref{sec:task1}.
 
-The results in Table \ref{tab:prediction_results} show that the LSTM trained with 
-BSC-seq predictions outperforms that trained using the outputs of HMM-crowd, 
-the previous state-of-the-art~\cite{nguyen2017aggregating}.
- However, while BSC-seq+LSTM also outperforms
-HMM-crowd$\rightarrow$LSTM and produces the lowest cross entropy error, 
-its F1-scores are lower than those of BSC-seq$\rightarrow$LSTM. 
+The results in Table \ref{tab:prediction_results} show that for F1-scores, BSC-seq->LSTM 
+outperforms 
+the previous state-of-the-art, HMM-crowd->LSTM~\cite{nguyen2017aggregating}.
+F1-scores  for BSC-seq+LSTM are lower than those of BSC-seq$\rightarrow$LSTM,
+although it also outperforms
+HMM-crowd$\rightarrow$LSTM.
+However, BSC-seq+LSTM produces a far lower cross entropy error than either of the other methods, 
+indicating that the probabilities it outputs are a better reflection of confidence and
+are likely to be more suitable to downstream decision-making tasks than the raw outputs
+from the LSTM sequence tagger.  The benefits of Bayesian ensemble methods
+such as BSC for decision-making tasks is therefore a promising topic for future work.
 %This suggests that the strength of our technique for 
 %integrating sequence taggers comes from 
 %combining the LSTM with human annotators, as in Section \ref{sec:task1}.

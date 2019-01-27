@@ -109,3 +109,6 @@ Required data for experiments on the NER dataset:
 For the PICO dataset:
 * bio-PICO
 These folders should all be copied to ~/data/bayesian_annotator_combination/data (or you can replace all references to '../../data' in the code with the desired location. The experiments should then be run from within the src directory. More details to follow...
+
+Run this:
+python -m spacy download en_core_web_sm

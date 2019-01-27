@@ -74,9 +74,11 @@ and instead use only the sequence tagger's existing training and prediction func
 $\bs\theta^{(s)}$ in parallel with the parameters of the BSC model.
 Like the human annotators, each sequence tagger is assumed to produce labels that are conditionally independent 
 of the other sequence taggers given $\bs t$. Due to the fact that sequence taggers will typically use
-the same features, i.e. the text of the documents, this independence assumption may be violated, yet
-as with the human annotators, comparable assumptions in other models
- have been shown not to hamper performance in 
+the same features, i.e. the text of the documents, this independence assumption may be violated, 
+yet
+%as with the human annotators, 
+this assumption in other models
+ has been shown not to hamper performance in 
 many practical situations~\citep{zhang2004optimality}.
 
 \textbf{Joint distribution}: the complete model can be represented by the
