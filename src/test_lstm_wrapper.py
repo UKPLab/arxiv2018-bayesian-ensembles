@@ -44,7 +44,7 @@ Et[np.arange(N), gt.flatten()] = 1
 lstm = LSTM()
 
 n_epochs = 30
-lstm.init(None, N, text, doc_start, nclasses, dev_sentences, n_epochs)
+lstm.init(None, N, text, doc_start, nclasses, n_epochs, dev_sentences,)
 
 for n in range(n_epochs):
     prob = lstm.fit_predict(Et, compute_dev_score=True)

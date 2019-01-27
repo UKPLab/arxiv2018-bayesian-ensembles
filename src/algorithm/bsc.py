@@ -540,7 +540,7 @@ class BAC(object):
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False):
+    def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[]):
         '''
         Runs the BAC algorithm with the given annotations and list of document starts.
 
@@ -579,7 +579,8 @@ class BAC(object):
         # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L,
-                                  self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs)
+                                  self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
+                                  dev_sentences)
             model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
         for model in self.data_model:

@@ -529,9 +529,16 @@ class Experiment(object):
         begin_labels = (np.arange(num_types) * 2 + 2).astype(int)
 
         data_model = []
+        dev_sentences = []
 
         if use_LSTM > 0:
             data_model.append('LSTM')
+
+            if ground_truth_val is not None and doc_start_val is not None and text_val is not None:
+                ground_truth_val = ground_truth_val[ground_truth_val != -1]
+                dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
+                                                                   doc_start_val, ground_truth_val)
+
         if use_BOF:
             data_model.append('IF')
 
@@ -549,10 +556,10 @@ class Experiment(object):
 
         if self.opt_hyper:
             probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000,
-                                      converge_workers_first=use_LSTM==2)
+                                      converge_workers_first=use_LSTM==2, dev_sentences=dev_sentences)
         else:
             probs, agg = bac_model.run(annotations, doc_start, text,
-                                 converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs)
+                             converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs, dev_sentences=dev_sentences)
 
         model = bac_model
 
@@ -636,8 +643,8 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter,
-                        crf_probs=self.crf_probs, max_niter_no_imprv=5)
+                        IOB_label, self.num_classes, freq_eval=self.max_iter+1, n_epochs=self.max_iter,
+                        crf_probs=self.crf_probs, max_niter_no_imprv=self.max_iter)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)

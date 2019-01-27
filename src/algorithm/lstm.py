@@ -7,7 +7,7 @@ class LSTM:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences):
 
         self.max_epochs = 20 # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge. This gives better convergence of BSC in practice.
@@ -37,6 +37,8 @@ class LSTM:
         alpha_data = np.copy(alpha0_data)
         self.alpha0_data = np.copy(alpha0_data)
 
+        self.dev_sentences = dev_sentences
+
         return alpha_data
 
     def fit_predict(self, labels, compute_dev_score=False):
@@ -63,7 +65,8 @@ class LSTM:
             n_epochs = self.n_epochs_per_vb_iter
 
             # don't need to use an dev set here for early stopping as this may break EM
-            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.sentences, self.sentences, [], [],
+            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.sentences, self.sentences, self.dev_sentences,
+                                                                 None, # get the dev labels from dev sentences
                                                                  self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=1,
                                                                  crf_probs=self.crf_probs,
@@ -83,7 +86,7 @@ class LSTM:
 
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-                                    best_dev, last_score, compute_dev=False)
+                                    best_dev, last_score, compute_dev=True)
 
             self.completed_epochs += n_epochs
             model_updated = True
