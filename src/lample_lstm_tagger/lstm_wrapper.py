@@ -222,6 +222,9 @@ class LSTMWrapper(object):
         if self.best_model_saved:
             model.reload()
 
+        self.best_dev = best_dev
+        self.last_score = last_score
+
         return model, f_eval
 
     def predict_LSTM(self, test_sentences):

@@ -82,7 +82,7 @@ which makes use of the update equations for the log variational factors given be
 \begin{algorithm}[t]
 \DontPrintSemicolon
  \KwIn{ Annotations, $\bs c$}
- \nl Randomly initialise $\mathbb{E}\left\ln A^{(k)},\forall k$,
+ \nl Randomly initialise $\mathbb{E}\ln A^{(k)},\forall k$,
  $\mathbb{E}\ln B^{(s)},\forall s$, $\mathbb{E}\ln \bs T_j,\forall j$ 
  and $\hat{d}^{(s)}_{n,\tau}(i), \forall s,\forall n,\forall \tau,\forall i$.\;
 %  randomly or to expectations with respect to the priors\;
@@ -95,12 +95,12 @@ which makes use of the update equations for the log variational factors given be
  %\nl Set current true label predictions $\mathbb{E}\left[t_{n,\tau}=j\right] = r_{j,n,\tau}$ \;
  \nl Retrain all sequence taggers using $\tilde{\bs d}^{(s)}$ as training labels for tagger $s$\;
  \nl Use sequence taggers to predict $\hat{d}^{(s)}_{n,\tau}(i)$, $\forall s,\forall n,\forall \tau,\forall i$\;
- \nl Update $\ln q(A^{(k)})$ and $\mathbb{E}\left\ln A^{(k)},\forall k$ \;%given current $\bs c$, $r_{j,n,\tau}$\;
+ \nl Update $\ln q(A^{(k)})$ and $\mathbb{E}\ln A^{(k)},\forall k$ \;%given current $\bs c$, $r_{j,n,\tau}$\;
  \nl Update $\ln q(B^{(s)})$ and $\mathbb{E}\ln B^{(s)},\forall s$ \;%given current $\hat{\bs d}$, $r_{j,n,\tau}$\;
- \nl Update $\ln q(\bs T_j)$ and $\mathbb{E}\ln \bs T_j,\forall j$ \;%given current $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$\;
+ \nl Update $\ln q(\bs T_j)$ and $\mathbb{E}\ln T_{j,\iota},\forall j,\forall \iota$ \;%given current $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$\;
  }
 \KwOut{ Label posteriors, $r_{n,\tau,j},\forall n,\forall \tau, \forall j$, %\mathbb{E}[\bs t]$, 
-most probable sequence of labels, $\hat{\bs t}$ }
+most probable sequence of labels, $\hat{\bs t}_n,\forall n$ using Viterbi algorithm }
 \;
 \caption{The VB algorithm for BSC.}
 \label{al:vb_bac}
@@ -136,11 +136,11 @@ using the forward-backward algorithm~\cite{ghahramani2001introduction},
  and computes:% for each value of $\tau$:
  % the posterior given crowdsourced annotations for tokens $\leq\tau$. 
  \begin{flalign}
-   & \ln r^{-}_{n,\tau,j} = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau-1,\iota} \mathrm{e}^{\mathbb{E}\ln T_{\iota,j}} \right\} + ll_{n,\tau}(j) & \nonumber \\
-%  \end{flalign}
+   & \ln r^{-}_{n,\tau,j} = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau-1,\iota} \mathrm{e}^{\mathbb{E}\ln T_{\iota,j}} \right\} + ll_{n,\tau}(j), & \nonumber \\
+ \end{flalign}
 %  where the log likelihood $ll(j,n,\tau)$ of the annotations for token $\tau$ in document $n$ given
 %  label $j$ is:
-%  \begin{flalign} 
+ \begin{flalign} 
    & ll_{n,\tau}(j) = \sum_{k=1}^K \mathbb{E}%_{\bs A}
    \ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right) +  \sum_{s=1}^S
    & \nonumber \\
@@ -219,11 +219,12 @@ The forward-backward passes
 also require the following expectation terms for \emph{seq},
 which can be simplified for the other annotator models:
  \begin{flalign}
+ \label{eq:elna}
 & \mathbb{E}\ln \! A^{(k)}\!(j,l,m) \!=\! \Psi\!\left(\!N^{(k)}_{j,l,m}\!\right)
  \!-\! \Psi\!\left(\!\sum_{\;m'\!=1\!}^J \!\!\left( \!N^{(k)}_{j,l,m'} \!\right) \!\!\right)\!. &
  \end{flalign}
 % For \emph{CM}, the equation can be adapted by omitting the $l$ subscripts on the right-hand side, which refer to the previous annotation in the sequence. 
-The varational factor, $q(B^{(s)} )$, for each sequence tagger's annotator model
+The variational factor, $q(B^{(s)} )$, for each sequence tagger's annotator model
  has the same form as $q(A^{(k)} )$, substituting $\delta_{l,c^{(k)}_{n,\tau\!-\!1}}$ 
  for $\hat{d}_{n,\tau}^{(s)}(i)$, as defined in below in Equation \ref{eq:hatp}.
 
@@ -255,7 +256,7 @@ the following variational factor:
 \mathbb{E}\left[ p(d_{n,\tau}^{(s)} = i | B^{(s)}, t_{n,\tau} ) \right] 
 & \nonumber\\
 & = \sum_{j=1}^J \sum_{\iota=1}^J
-r_{n,\tau,j} \tilde{d}_{n,\tau\!-\!1} \mathbb{E}B^{(s)}(j, i, \iota) .
+r_{n,\tau,j} \tilde{d}_{n,\tau\!-\!1} \mathbb{E}B^{(s)}(j, i, \iota) .\!
  \label{eq:tildepd}
 \end{flalign}
 % d can be marginalized analytically so does not need a separate variational factor. 
@@ -295,7 +296,7 @@ with respect to $\bs\theta^{(s)}$, or their ML approximation:
 \left[p(d_{n,\tau}^{(s)}=i | \bs x_n, \bs\theta^{(s)}) \right] \nonumber\\
 & \approx p\left(d_{n,\tau}^{(s)}=i | \bs x_n, \hat{\bs\theta}^{(s)}\right) & \label{eq:hatp}
 \end{flalign}
-These values are the predictions obtained from the black-box sequence tagger given features $\bs x$.
+These values are the predictions obtained from the black-box sequence tagger given tokens $\bs x$.
 % If possible, we obtain this posterior through the prediction function of the sequence tagger.
 % However, some sequence tagger implementations may output only discrete predictions of the following form:
 % \begin{flalign}
@@ -314,19 +315,20 @@ Pre-trained taggers can also be used, for example, to make use of taggers that w
 
 \subsection{Predicting the Sequence Labels}
 
-Two types of output from the BSC inference algorithm are of particular interest: (1) posterior probabilities of 
-the true labels, $\mathbb{E}[\bs t]$, which provide confidence estimates for the labels; (2) the most 
-probable sequence of labels, $\hat{\bs t}$. The latter can be computed using the Viterbi algorithm 
-using the converged variational factors to compute the transition matrix, $\mathbb{E}[\bs T]$,
-and the likelihood or emission probabilities as a function of $\mathbb{E}[\bs A]$, $\mathbb{E}[\bs B]$ and
-$\hat{p}(d_{n,\tau}^{(s)}=i)$, $\forall s, \forall n, \forall \tau, \forall i$.
-The most probable sequence is particularly useful because, unlike $\mathbb{E}[\bs t]$,
+%Two types of output from the BSC inference algorithm are of particular interest: (1) 
+The approximate posterior probabilities of the true labels, $r_{j,n,\tau}$, provide confidence estimates for the labels. However, it is often useful to  compute 
+the most probable sequence of labels, $\hat{\bs t}_n$, using the
+Viterbi algorithm~\cite{viterbi1967error}. 
+To apply the algorithm, we use the converged variational factors to compute 
+$\mathbb{E}[\bs T]$, $\mathbb{E}[A^{(k)}],\forall k$, $\mathbb{E}[B^{(s)}],\forall s$ and
+$\hat{d}_{n,\tau}^{(s)}(i), \forall s, \forall n, \forall \tau, \forall i$.
+The most probable sequence is particularly useful because, unlike $r_{j,n,\tau}$,
 the sequence will be consistent with any transition 
 constraints imposed by the priors on the transition matrix $\bs T$, 
 such as preventing `O'$\rightarrow$`I' transitions by assigning them zero probability.
-
-We can also make predictions for unlabelled documents in a similar manner. In this case, we omit the 
-human annotations, $\bs c$, and rely only on the black-box sequence taggers.
+We can also make predictions for unlabelled documents in a similar manner,
+simply omitting the human annotations, $\bs c$, and relying only on the predictions
+of the black-box sequence taggers, $\hat{\bs d}^{(s)}$.
 
 % \subsection{Variational Lower Bound}
 %

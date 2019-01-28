@@ -70,8 +70,8 @@ class LSTM:
                 l += 1
 
         if self.LSTMWrapper.model is None:
-            # the first update needs more epochs to reach a useful level
-            n_epochs = 3 # the first iteration needs a bit more to move off the random initialisation
+            # the first update needs more epochs to reach a useful level -- use all allowed epochs
+            n_epochs = self.max_epochs - ((self.max_vb_iters-1) * self.n_epochs_per_vb_iter) # the first iteration needs a bit more to move off the random initialisation
 
             # don't need to use an dev set here for early stopping as this may break EM
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, self.dev_sentences,
@@ -86,8 +86,11 @@ class LSTM:
         elif self.completed_epochs <= self.max_epochs:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 
-            best_dev = -np.inf
-            last_score = best_dev
+            # best_dev = -np.inf
+            # last_score = best_dev
+            best_dev = self.LSTMWrapper.best_dev
+            last_score = self.LSTMWrapper.last_score
+
             niter_no_imprv = 0
 
             for epoch in range(n_epochs):
