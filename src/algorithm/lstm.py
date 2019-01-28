@@ -90,13 +90,11 @@ class LSTM:
             last_score = best_dev
             niter_no_imprv = 0
 
-            # self.LSTMWrapper.model.best_model_saved = False
-
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
                                     best_dev, last_score, compute_dev=True)
 
-            if self.LSTMWrapper.model.best_model_saved:
+            if self.LSTMWrapper.best_model_saved: # check that we are actually saving models before loading the best one so far
                 self.LSTMWrapper.model.reload()
 
             self.completed_epochs += n_epochs
