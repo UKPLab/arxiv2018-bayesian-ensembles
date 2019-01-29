@@ -37,8 +37,8 @@ factors = [0.1, 1, 10]
 # exp.alpha0_factor_lstm = 0.1
 
 methods_to_tune = [
-                'bac_ibcc_noHMM',
-                'bac_seq_noHMM',
+                'bac_ibcc_integrateBOF_noHMM',
+                'bac_seq_integrateBOF_noHMM',
                     # 'bac_ibcc',
                     # 'bac_mace',
                    # 'ibcc',
