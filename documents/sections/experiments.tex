@@ -39,7 +39,9 @@ PICO & 4740 & ? & 191 & 4740 & 9480 & 1424721 & 312 & 6.0 & pop. & 700 & 7.74 & 
 \label{tab:datasets}
 \caption{Numbers of documents, spans, annotators, tokens and sentences for datasets used in our experiments.}
 \end{table*}
-%TODO sort out what is train and test in the above table. 
+%TODO put correct sentence counts in the above table. 
+%TODO note that LSTM has purely discrete inputs/outputs. Do we need the probabilistic ones 
+% to compare CEE? -- yes. Put the best CEE out of either proba or discrete.
 We evaluate Bayesian sequence combination (BSC) against alternative methods to test 
  (a) the different annotator models described in Section \ref{sec:model},
  (b) the performance of BSC on unreliable or small training sets,
@@ -174,8 +176,8 @@ BSC-seq & 80.3 & 74.8 & 77.4 & %78.9 & .9598 &
 72.9 & 77.6 & 75.1 & %57.9 & .9250 & 
 1.10 & 100 & 1 & 1\\ \hline
 
-BSC-MACE-notext \\
-BSC-CM-notext \\
+BSC-MACE-notext & 78.9 & 66.2 & 72.0 & 0.71 & 10 & .1 & .1 \\
+BSC-CM-notext & 75.0 & 68.8 & 71.8 & 0.75 & .1 & 10 & 1\\
 BSC-seq-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 & 
 0.52 & .1 & 1 & 1 & 81.2 & 59.2 & 68.5 & %59.8 & .922 &
  0.73 & .1 & .1 & .1\\ \hline
@@ -189,7 +191,8 @@ BSC-seq$\rightarrow$LSTM & 80.2 & 75.3 & 77.7 & %79.6 & .9262 &
 %BSC-seq+LSTMp & 81.2 & 75.3 & 78.1 & %79.3 & .9574 & 
 %0.54 & 0 & .1, 1, 1 \\
 BSC-seq +LSTM & \textbf{82.3} & \textbf{75.9} & \textbf{78.9} & %79.6 & .9513 & 
-0.59 & .1 & 1 & 1 & 
+0.59
+& .1 & 1 & 1 & 
 78.7 & \textbf{78.6} & \textbf{78.7} & %51.9 & .934 & 
 1.15 & 100 & 1 & 1 \\ % best pico scores are from krusty, 08-29-21-10-22
 \hline
@@ -198,6 +201,9 @@ BSC-seq +LSTM & \textbf{82.3} & \textbf{75.9} & \textbf{78.9} & %79.6 & .9513 &
 \label{tab:aggregation_results}
 \npnoround
 \end{table*}
+%TODO note discrete LSTM outputs. The alternative would be to switch the output layer to probabilities? This decreases f1 score though while improving CEE, 
+%whereas our integration method increases it on tasks 1 and 2. I guess benefits would be clearer in a proper ensemble. I guess F1 score is the main support for integrated LSTM on task 1. On task 2, 
+% it seems a little unnecessary unless you cannot add an output layer onto the black box.
 Simulated data allows us to test the effect of one  
 type of error in the crowdsourced data,
 while keeping other characteristics of the data constant.
