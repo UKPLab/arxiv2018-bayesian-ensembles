@@ -84,7 +84,7 @@ factors = [0.1, 1, 10]
 # # acc_biases = [1, 10, 100]
 #
 methods_to_tune = [
-                    'bac_ibcc_integrateBOF_noHMM',
+                    #'bac_ibcc_integrateBOF_noHMM',
                     'bac_seq_integrateBOF_noHMM',
                     # 'bac_ibcc',
                     # 'bac_mace'
