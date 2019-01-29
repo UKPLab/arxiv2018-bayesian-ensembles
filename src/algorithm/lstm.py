@@ -14,7 +14,7 @@ class LSTM:
 
         self.crf_probs = crf_probs
 
-        self.n_epochs_per_vb_iter = 0
+        self.n_epochs_per_vb_iter = 1
         self.max_vb_iters = max_vb_iters
 
         self.N = N
