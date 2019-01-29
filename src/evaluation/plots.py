@@ -155,12 +155,15 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         # for PICO
         ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
     elif intervals == 'PICOsmall':
-        ndocs = np.array([384, 764, 1132, 1488, 1834, 2132, 2300])
+        ndocs = np.array([162,324,486,648,810,972,1134,1296,1458,1620])#384, 764, 1132, 1488, 1834, 2132, 2300])
 
     methods = np.array([
-        'majority',
+        #'majority',
+        'ds',
+        'ibcc',
         'HMM_crowd',
-        'HMM_crowd_then_LSTM',
+        #'HMM_crowd_then_LSTM',
+        'bac_vec_integrateBOF',
         'bac_ibcc_integrateBOF',
         'bac_seq_integrateBOF',
         'bac_seq_integrateBOF_then_LSTM',
@@ -168,9 +171,12 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
     ])
 
     method_names = np.array([
-        'MV',
+        #'MV',
+        'DS',
+        'IBCC',
         'HMMcrowd',
-        'HMMcrowd->LSTM',
+        #'HMMcrowd->LSTM',
+        'BSC-CV',
         'BSC-CM',
         'BSC-seq',
         'BSC-seq->LSTM',
@@ -218,7 +224,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
                     methodidx = np.argwhere(methods == thismethod)[0][0]
                 else:
                     methodidx = len(methods)
-                    methods = methods.append(thismethod)
+                    methods = np.append(methods, thismethod)
 
                 plot_methods[methodidx] = True
 
