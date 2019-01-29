@@ -26,8 +26,9 @@ Good workers out of 10 %a crowd of , where the rest are random.
 \begin{table*}[h]
 \small
 \begin{tabularx}{\textwidth}{| X || X | X | X | X | X | l || l | l || X | X | X | X |} \hline
-Data & \multicolumn{4}{c|}{Docs} & Sente & Tokens & \multicolumn{2}{c||}{Workers} & Span & Gold & \multicolumn{2}{c|}{Span length}  \\
--set & total & dev & train/test & crowd & nces & & total & /doc & type & spans & mean & std.  \\
+Data & \multicolumn{3}{c|}{Sentences with crowd} & \multicolumn{2}{c|}{without crowd} & Tokens & \multicolumn{2}{c||}{Workers} & Span & Gold & \multicolumn{2}{c|}{Span length}  \\
+-set & total & dev & test & dev & test %crowd & 
+& /sent. & total & /doc & type & spans & mean & std.  \\
 \hline
 NER & 1393 & ? & 1393 & 415 & 6503 & 179323  & 47 & 4.9 & PER & 6282 & 1.19 & 0.49 \\
 &       & & & & & & &  & LOC  & 6482 & 1.73 & 0.57\\

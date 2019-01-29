@@ -173,7 +173,7 @@ exp.run_methods(
 
 # --------------------
 
-# niter = 20
+niter = 20
 
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
 exp.save_results = True
