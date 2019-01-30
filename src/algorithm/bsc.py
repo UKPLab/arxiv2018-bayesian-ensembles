@@ -102,7 +102,7 @@ class BAC(object):
             self._update_t = self._update_t_trans
             self._lnpt = self._lnpt_trans
         else:
-            self.beta0 = np.ones(self.num_classes) * nu0_factor
+            self.beta0 = np.ones(self.L) * nu0_factor
 
             self._update_B = self._update_B_notrans
             self._update_t = self._update_t_notrans
