@@ -10,7 +10,7 @@ class VectorWorker():
 
     def _init_alpha0(alpha0_diags, alpha0_factor, L):
         alpha0_factor = alpha0_factor / ((L - 1) / 2)
-        alpha0_diags = alpha0_diags + alpha0_factor - alpha0_factor
+        alpha0_diags = alpha0_diags + alpha0_factor * ((L-1)/2 - 1)
 
         alpha0 = alpha0_factor * np.ones((L, L)) + \
                           alpha0_diags * np.eye(L)
