@@ -102,15 +102,17 @@ class BAC(object):
             self._update_B = self._update_B_notrans
 
         # choose data model
+        self.max_data_updates_at_end = 0  # no data model to be updated after everything else has converged.
+
         if data_model is None:
             self.data_model = []
-            self.max_data_updates_at_end = 0  # no data model to be updated
         else:
             self.data_model = []
-            self.max_data_updates_at_end = 3  # small number to avoid overfitting
             for modelstr in data_model:
                 if modelstr == 'LSTM':
                     self.data_model.append(LSTM())
+                    self.max_data_updates_at_end = 3  # allow the other parameters to converge first, then update LSTM
+                    # with small number of iterations to avoid overfitting
                 if modelstr == 'IF':
                     self.data_model.append(IndependentFeatures())
 
