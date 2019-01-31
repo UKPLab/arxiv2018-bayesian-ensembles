@@ -9,7 +9,7 @@ class LSTM:
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences):
 
-        self.max_epochs = 3 # sets the total number of training epochs allowed. After this, it will just let the BSC
+        self.max_epochs = 20#3 # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
 
         self.crf_probs = crf_probs
@@ -80,7 +80,7 @@ class LSTM:
                                                                  self.dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=1,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=n_epochs)
+                                                                 max_niter_no_imprv=2)#n_epochs)
 
             self.completed_epochs = n_epochs
             model_updated = True
