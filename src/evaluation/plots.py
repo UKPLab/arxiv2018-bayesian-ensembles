@@ -155,7 +155,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         # for PICO
         ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
     elif intervals == 'PICOsmall':
-        ndocs = np.array([162,324,486,648,810,972,1134,1296,1458,1620])#384, 764, 1132, 1488, 1834, 2132, 2300])
+        ndocs = np.array([384, 764, 1132, 1488, 1834, 2132, 2300]) # [162,324,486,648,810,972,1134,1296,1458,1620])#
 
     methods = np.array([
         #'majority',
@@ -218,13 +218,15 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
 
             for col in res.columns:
                 thismethod = col.strip("\\# '")
-                print('plotting method "%s"' % thismethod)
 
                 if thismethod in methods:
                     methodidx = np.argwhere(methods == thismethod)[0][0]
+                    print('plotting method "%s"' % thismethod)
                 else:
-                    methodidx = len(methods)
-                    methods = np.append(methods, thismethod)
+                    print('Skipping method %s ' % thismethod)
+                    # methodidx = len(methods)
+                    # methods = np.append(methods, thismethod)
+                    continue
 
                 plot_methods[methodidx] = True
 

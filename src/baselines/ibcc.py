@@ -707,7 +707,7 @@ class IBCC(object):
 def _calc_q_A(E_t, nu0, use_ml=False):
     if use_ml:
         nu = np.reshape(np.sum(E_t, 0), nu0.shape) # ignores nu0
-        lnkappa = np.log((nu-1) / float(np.sum(nu, 0) - len(nu0)))
+        lnkappa = np.log((nu) / float(np.sum(nu, 0)))
     else:
         nu = nu0 + np.reshape(np.sum(E_t, 0), nu0.shape)
         lnkappa = (psi(nu) - psi(np.sum(nu, 0)))
@@ -718,7 +718,7 @@ def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True, use_ml=False):
     for s in range(nscores): 
 
         if use_ml:
-            lnPi[:, s, :] = np.log( (alpha[:, s, :] - 1) / float(alpha_sum - nscores)) # mode of a dirichlet
+            lnPi[:, s, :] = np.log( (alpha[:, s, :]) / float(alpha_sum )) # mode of a dirichlet
         else:
             lnPi[:, s, :] = psi(alpha[:, s, :]) - psi(alpha_sum)
     

@@ -60,33 +60,87 @@ for rep in range(num_reps):
     #                     active_learning=True, AL_batch_fraction=1.0)
 
 
-    # Random Sampling ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
+
+    exp.save_results = True
+    exp.opt_hyper = False #True
+
+    exp.nu0_factor = 100
+    exp.alpha0_diags = 1
+    exp.alpha0_factor = 1
+
+    exp.methods = [
+        #'majority',
+        'bac_seq_integrateBOF',
+        'HMM_crowd'
+    ]
+
+    exp.save_results = True
+    exp.opt_hyper = False #True
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                    active_learning=True, AL_batch_fraction=1)
+
+    # ------------------------
+
+    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
+
+    exp.save_results = True
+    exp.opt_hyper = False  # True
+
+    exp.nu0_factor = 0.1
+    exp.alpha0_diags = 100
+    exp.alpha0_factor = 0.1
+
+    exp.methods = [
+        'bac_ibcc_integrateBOF',
+    ]
+
+    exp.save_results = True
+    exp.opt_hyper = False  # True
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text,
+                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                    active_learning=True, AL_batch_fraction=1)
+
+
+    # ------------------------
 
     # output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #
-    # exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=False, rep=rep)
+    # exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
     #
     # exp.save_results = True
-    # exp.opt_hyper = False #True
+    # exp.opt_hyper = False  # True
     #
-    # exp.nu0_factor = 100
-    # exp.alpha0_diags = 1
-    # exp.alpha0_factor = 1
+    # exp.nu0_factor = 0.1
+    # exp.alpha0_diags = 0.1#10
+    # exp.alpha0_factor = 0.1#10
     #
     # exp.methods = [
-    #     #'majority',
-    #     'bac_seq_integrateBOF',
-    #     'HMM_crowd'
+    #     'ibcc',
+    #     'ds'
     # ]
     #
     # exp.save_results = True
-    # exp.opt_hyper = False #True
+    # exp.opt_hyper = False  # True
     #
     # exp.run_methods(annos, gt, doc_start, output_dir, text,
     #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-    #                 active_learning=True, AL_batch_fraction=0.07)
+    #                 active_learning=True, AL_batch_fraction=1)
     #
     # # ------------------------
     #
@@ -100,11 +154,11 @@ for rep in range(num_reps):
     # exp.opt_hyper = False  # True
     #
     # exp.nu0_factor = 0.1
-    # exp.alpha0_diags = 100
+    # exp.alpha0_diags = 1
     # exp.alpha0_factor = 0.1
     #
     # exp.methods = [
-    #     'bac_ibcc_integrateBOF',
+    #     'bac_vec_integrateBOF',
     # ]
     #
     # exp.save_results = True
@@ -112,61 +166,7 @@ for rep in range(num_reps):
     #
     # exp.run_methods(annos, gt, doc_start, output_dir, text,
     #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-    #                 active_learning=True, AL_batch_fraction=0.07)
-
-
-    # ------------------------
-
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-
-    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.nu0_factor = 0.1
-    exp.alpha0_diags = 0.1#10
-    exp.alpha0_factor = 0.1#10
-
-    exp.methods = [
-        'ibcc',
-        'ds'
-    ]
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.run_methods(annos, gt, doc_start, output_dir, text,
-                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1)
-
-    # ------------------------
-
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-
-    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.nu0_factor = 0.1
-    exp.alpha0_diags = 1
-    exp.alpha0_factor = 0.1
-
-    exp.methods = [
-        'bac_vec_integrateBOF',
-    ]
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.run_methods(annos, gt, doc_start, output_dir, text,
-                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1)
+    #                 active_learning=True, AL_batch_fraction=1)
 
     # Random Sampling ------------------------------------------------------------------------------
     #

@@ -492,8 +492,8 @@ class Experiment(object):
 
     def _run_ibcc(self, annotations, use_ml=False):
         if use_ml:
-            alpha0 = 0.0000001 * np.ones((self.num_classes, self.num_classes)) # no prior information at all
-            ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
+            alpha0 = np.ones((self.num_classes, self.num_classes)) # no prior information at all
+            ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=np.ones(self.num_classes),
                         alpha0=alpha0, uselowerbound=True, use_ml=True)
         else:
             self.ibcc_alpha0 = self.alpha0_factor * np.ones((self.num_classes, self.num_classes)) \
