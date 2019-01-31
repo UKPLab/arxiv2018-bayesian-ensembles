@@ -103,9 +103,11 @@ class BAC(object):
 
         # choose data model
         if data_model is None:
-            self.data_model = [] #ignore_features()]
+            self.data_model = []
+            self.max_data_updates_at_end = 0  # no data model to be updated
         else:
             self.data_model = []
+            self.max_data_updates_at_end = 3  # small number to avoid overfitting
             for modelstr in data_model:
                 if modelstr == 'LSTM':
                     self.data_model.append(LSTM())
@@ -144,7 +146,6 @@ class BAC(object):
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
 
-        self.max_data_updates_at_end = 3  # small number to avoid overfitting
         self.max_iter = max_iter - self.max_data_updates_at_end  # maximum number of iterations before training data models
         self.eps = eps  # threshold for convergence
         self.iter = 0
