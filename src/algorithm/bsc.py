@@ -93,20 +93,13 @@ class BAC(object):
         self.beginning_labels = beginning_labels
         self.exclusions = exclusions
 
+        self.beta0 = np.ones((self.L + 1, self.L)) * nu0_factor
+
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-
-            self.beta0 = np.ones((self.L + 1, self.L)) * nu0_factor
-
             self._update_B = self._update_B_trans
-            self._update_t = self._update_t_trans
-            self._lnpt = self._lnpt_trans
         else:
-            self.beta0 = np.ones(self.L) * nu0_factor
-
             self._update_B = self._update_B_notrans
-            self._update_t = self._update_t_notrans
-            self._lnpt = self._lnpt_notrans
 
         # choose data model
         if data_model is None:
@@ -314,17 +307,10 @@ class BAC(object):
 
         return lnpPi, lnqPi
 
-    def _lnpt_trans(self):
+    def _lnpt(self):
         lnpt = self.lnB.copy()[None, :, :]
         lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
         lnpt = lnpt * self.q_t_joint
-
-        return lnpt
-
-    def _lnpt_notrans(self):
-        lnpt = self.lnB.copy()[None, :]
-        lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
-        lnpt = lnpt * self.q_t
 
         return lnpt
 
@@ -448,54 +434,7 @@ class BAC(object):
 
         return self.q_t, self._most_probable_sequence(C, C_data, doc_start)[1]
 
-    def _update_t_notrans(self, parallel, C, C_data, lnPi_data,  doc_start):
-
-        lnpCT = np.zeros((C.shape[0], self.L))
-
-        Krange = np.arange(self.K)
-
-        # L x 1 x K
-        lnPi_terms = self.A._read_lnPi(self.lnPi, None, C[0:1, :] - 1, self.before_doc_idx, Krange[None, :],
-                                       self.nscores)
-        lnPi_data_terms = 0
-        for model in range(len(self.data_model)):
-            for m in range(self.nscores):
-                lnPi_data_terms += (self.A._read_lnPi(lnPi_data[model], None,
-                                                      m, self.before_doc_idx, 0, self.nscores)[:, :, 0] * C_data[model][0, m]).T
-
-        lnpCT[0:1, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms
-
-        Cprev = C - 1
-        Cprev[Cprev == -1] = self.before_doc_idx
-        Cprev = Cprev[:-1, :]
-        Ccurr = C[1:, :] - 1
-
-        # L x (N-1) x K
-        lnPi_terms = self.A._read_lnPi(self.lnPi, None, C[1:, :] - 1, Cprev, Krange[None, :], self.nscores)
-
-        lnPi_data_terms = 0
-
-        for model in range(len(self.data_model)):
-            for m in range(self.nscores):
-                for n in range(self.nscores):
-                    lnPi_data_terms += (self.A._read_lnPi(lnPi_data[model], None, m, n, 0, self.nscores)[:, :, 0] * \
-                                       C_data[model][1:, m][None, :] * C_data[model][:-1, n][None, :]).T
-
-        lnpCT[1:, :] = np.sum(lnPi_terms, axis=2).T + lnPi_data_terms
-
-        lnpCT += self.lnB
-
-        # ensure that the values are not too small
-        largest = np.max(lnpCT, 1)[:, np.newaxis]
-        joint = lnpCT - largest
-        joint = np.exp(joint)
-        norma = np.sum(joint, axis=1)[:, np.newaxis]
-        self.q_t = joint / norma
-
-        return self.q_t
-
-
-    def _update_t_trans(self, parallel, C, C_data, lnPi_data, doc_start):
+    def _update_t(self, parallel, C, C_data, lnPi_data, doc_start):
 
         # calculate alphas and betas using forward-backward algorithm
         self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
@@ -533,9 +472,12 @@ class BAC(object):
     def _update_B_notrans(self):
         '''
         Update the transition model.
+
+        q_t_joint is N x L+1 x L. In this case, we just sum up over all previous label values, so the counts are
+        independent of the previous labels.
         '''
-        self.beta = self.beta0 + np.sum(self.q_t, 0)
-        self.lnB = psi(self.beta) - psi(np.sum(self.beta))
+        self.beta = self.beta0 + np.sum(np.sum(self.q_t_joint, 0), 0)[None, :]
+        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
 
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
