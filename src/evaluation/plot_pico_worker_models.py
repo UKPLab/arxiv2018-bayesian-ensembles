@@ -22,7 +22,7 @@ import data.load_data as load_data
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 
-output_dir = '../../data/bayesian_annotator_combination/output/bio_workers/'
+output_dir = '../../data/bayesian_sequence_combination/output/bio_workers/'
 
 # debug with subset -------
 s = None #1000

@@ -7,7 +7,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/ner-lstmIters/'
+output_dir = '../../data/bayesian_sequence_combination/output/ner/'
 
 regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, gt_all = \
@@ -25,9 +25,7 @@ best_acc_bias = 0
 best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
 
-# ------------------
-
-# # -----------------------
+# The following code tunes on dev set: -----------------------
 #
 # exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 # exp.save_results = True
@@ -96,10 +94,6 @@ best_bac_wm_score = -np.inf
 #     #     best_bac_wm = 'bac_' + method.split('_')[1]
 #
 # print('best BAC method tested here = %s' % best_bac_wm)
-
-# Niter = 10 !!!!!!!!!!!!!!!!!!!!!!!!!
-
-niter = 20
 
 # --------------------
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)

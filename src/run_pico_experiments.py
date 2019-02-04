@@ -8,11 +8,10 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/bio_task1/'
+output_dir = '../../data/bayesian_sequence_combination/output/pico/'
 
 regen_data = False
 
-# print('USING ONLY A SUBSET OF DATA FOR DEBUGGING!!!!!!!!!!!')
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data)
 
@@ -32,9 +31,6 @@ best_factor = 1
 nu_factors = [0.1, 10, 100]
 diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]
-
-# exp.alpha0_diags_lstm = 0.1
-# exp.alpha0_factor_lstm = 0.1
 
 methods_to_tune = [
                 'bac_ibcc',
@@ -117,7 +113,7 @@ for m, method in enumerate(methods_to_tune):
 #                 )
 
 
-# # reset to free memory? ------------------------------------------------------------------------------------------------
+# #  ------------------------------------------------------------------------------------------------
 # exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 #
 # exp.save_results = True
@@ -129,7 +125,6 @@ for m, method in enumerate(methods_to_tune):
 #
 # exp.methods =  [
 #                 #'HMM_crowd',
-#                 #'HMM_crowd_then_LSTM',
 # ]
 #
 # # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof

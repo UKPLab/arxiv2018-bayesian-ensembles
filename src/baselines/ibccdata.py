@@ -211,11 +211,11 @@ class DataHandler(object):
         def translate_gold(gold):
             return gold
         
-        outputFile = '../../data/bayesian_annotator_combination/output/output_%s.csv'
-        confMatFile = ''#'../../data/bayesian_annotator_combination/output/confMat.csv'
+        outputFile = '../../data/bayesian_sequence_combination/output/output_%s.csv'
+        confMatFile = ''#'../../data/bayesian_sequence_combination/output/confMat.csv'
         hyperparam_file = ''
-        inputFile = '../../data/bayesian_annotator_combination/data/input.csv'
-        goldFile = ''#../../data/bayesian_annotator_combination/data/gold.csv'
+        inputFile = '../../data/bayesian_sequence_combination/data/input.csv'
+        goldFile = ''#../../data/bayesian_sequence_combination/data/gold.csv'
         
         nClasses = 2
         nu0 = self.nu0

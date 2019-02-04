@@ -80,7 +80,7 @@ def plot_crowdsourcing_results():
     
     num_runs = 2
     
-    all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/crowdsourcing/k*')
+    all_dirs = glob.glob('../../data/bayesian_sequence_combination/output/crowdsourcing/k*')
     all_dirs.sort(key=lambda s: int(s.split('/')[3][1:]))
     
     scores = np.zeros((len(exp.param_values), len(exp.SCORE_NAMES), len(exp.methods), num_runs))
@@ -89,7 +89,7 @@ def plot_crowdsourcing_results():
         for i in range(num_runs):
             scores[j,:,:,i] = np.genfromtxt(all_dirs[j] + '/run' + str(i) + '/results2.csv', delimiter=',')
     
-    exp.plot_results(scores, False, True, '../../data/bayesian_annotator_combination/output/crowdsourcing/plots/')
+    exp.plot_results(scores, False, True, '../../data/bayesian_sequence_combination/output/crowdsourcing/plots/')
 
             
 def plot_hyperparameter_results():
@@ -104,8 +104,8 @@ def plot_hyperparameter_results():
      
     num_runs = 2
      
-    #all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor*')
-    all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_argmin/nu0factor*_'
+    #all_dirs = glob.glob('../../data/bayesian_sequence_combination/output/hyperparameters_crowdsourcing/alphafactor*')
+    all_dirs = glob.glob('../../data/bayesian_sequence_combination/output/hyperparameters_argmin/nu0factor*_'
                          + exp.methods[0])
     all_dirs.sort(key=lambda s: float(s.split('/')[6][9:].split('_')[0]))
      
@@ -123,8 +123,8 @@ def plot_hyperparameter_results():
             if scores_ji.shape[0] > len(exp.SCORE_NAMES):
                 lb[j, :, i] = scores_ji[len(exp.SCORE_NAMES), :] # the lower bound values 
                  
-    exp.plot_results(scores, False, True, '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/plots/')
-    exp.plot_results(lb[:, None, :, :], False, True, '../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/plots/', ['ELBO'])
+    exp.plot_results(scores, False, True, '../../data/bayesian_sequence_combination/output/hyperparameters_crowdsourcing/plots/')
+    exp.plot_results(lb[:, None, :, :], False, True, '../../data/bayesian_sequence_combination/output/hyperparameters_crowdsourcing/plots/', ['ELBO'])
 
 
 def plot_tuning_results():
@@ -132,9 +132,9 @@ def plot_tuning_results():
     diags = [1, 5, 10, 50]
     factors = [1, 4, 9, 16, 25]
     methods_to_tune = ['ibcc'] # 'bac_mace', 'bac_acc', 'bac_ibcc', 'bac_seq',
-    output_dir = '../../data/bayesian_annotator_combination/output/ner/'
+    output_dir = '../../data/bayesian_sequence_combination/output/ner/'
 
-    # all_dirs = glob.glob('../../data/bayesian_annotator_combination/output/hyperparameters_crowdsourcing/alphafactor*')
+    # all_dirs = glob.glob('../../data/bayesian_sequence_combination/output/hyperparameters_crowdsourcing/alphafactor*')
 
     for method in methods_to_tune:
 

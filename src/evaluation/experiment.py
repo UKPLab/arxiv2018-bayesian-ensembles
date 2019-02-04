@@ -226,7 +226,7 @@ class Experiment(object):
     def __init__(self, generator, nclasses=None, nannotators=None, config=None,
                  alpha0_factor=1.0, alpha0_diags=1.0, beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0):
 
-        self.output_dir = '~/data/bayesian_annotator_combination/output/'
+        self.output_dir = '~/data/bayesian_sequence_combination/output/'
 
         self.crf_probs = crf_probs
 

@@ -28,15 +28,15 @@ maj = data_utils.postprocess(maj, doc_start)
 bac_ = bac.BAC(L=L, K=K, nu0=np.ones((L+1, L)) * 100, alpha0=100.0 * (np.ones((L, L, L+1, K)) + 1.0 * np.eye(3)[:, :, None, None]))
 probs, agg = bac_.run_synth(annos, doc_start)
 
-np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/probs2.csv', probs, delimiter=',')
-np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/agg2.csv', agg, delimiter=',')
+np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/probs2.csv', probs, delimiter=',')
+np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/agg2.csv', agg, delimiter=',')
 
-np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/majority2.csv', maj , delimiter=',')
-np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/votes2.csv', votes, delimiter=',')
+np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/majority2.csv', maj , delimiter=',')
+np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/votes2.csv', votes, delimiter=',')
 
 # load data
-# probs = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/probs.csv', delimiter=',')
-# agg = np.genfromtxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/agg.csv', delimiter=',')
+# probs = np.genfromtxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/probs.csv', delimiter=',')
+# agg = np.genfromtxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/agg.csv', delimiter=',')
 
 # build gold standard
 gold = -np.ones_like(agg)
@@ -47,7 +47,7 @@ for i in range(agg.shape[0]):
         
 print("Generated the gold data for testing on the crowdsourcing dataset. There are %i gold-labelled and %i unconfirmed data points." % (np.sum(gold!=-1), np.sum(gold==-1)))    
     
-np.savetxt('../../data/bayesian_annotator_combination/data/crowdsourcing/gen/gold2.csv', gold, fmt='%s', delimiter=',')
+np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/gold2.csv', gold, fmt='%s', delimiter=',')
 
 if __name__ == '__main__':
     pass

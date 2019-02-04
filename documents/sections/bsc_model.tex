@@ -57,10 +57,6 @@ Each sequence tagger generates a sequence of labels, $\bs d_{n}^{(s)}$, for each
 & \hspace{3.0cm} B^{(s)}(\bs t_{n,\tau}, J, d_{n,\tau-1}^{(s)})]). &&
 \end{flalign}
 
-% *** Check that this is right. Ideally, we could have a discriminative model here. If it's right add a comment about independence of ds from multiple sequence taggers. DO I already mention that the use of B means we can compensate
-% for unreliable sequence taggers or soften labels from those that don't produce probabilities. Also could include
-% labellers from other domains where theta is pretrained. ***
-% Even if we took a discriminative approach, we still get dependencies between the taggers.
 In the generative model, we draw a sequence of text tokens, $\bs x_n$, 
 from a likelihood, $p \left(\bs x_n | \bs d_{n}^{(s)}, \bs\theta^{(s)} \right) $,
  given internal parameters, $\bs\theta^{(s)}$, and

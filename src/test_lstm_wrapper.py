@@ -4,7 +4,7 @@ from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
-savepath = '../../data/bayesian_annotator_combination/data/ner/'  # location to save our csv files to
+savepath = '../../data/bayesian_sequence_combination/data/ner/'  # location to save our csv files to
 
 text = pd.read_csv(savepath + '/task1_test_text.csv', skip_blank_lines=False, header=None)
 text = text.fillna(' ').values

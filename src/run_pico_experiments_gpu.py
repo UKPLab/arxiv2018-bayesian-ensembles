@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/bio_task1-lstmIters'
+output_dir = '../../data/bayesian_sequence_combination/output/pico'
 
 regen_data = False
 
@@ -30,7 +30,7 @@ best_diags = 1
 best_factor = 1
 
 nu_factors = [0.1, 10, 100]
-diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+diags = [0.1, 1, 10, 100]
 factors = [0.1, 1, 10]
 
 # reset ------------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                 )
 
 
-# # reset to free memory? ------------------------------------------------------------------------------------------------
+# #  ------------------------------------------------------------------------------------------------
 # exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
 #
 # exp.save_results = True

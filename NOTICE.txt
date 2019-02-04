@@ -45,6 +45,14 @@ Code is released alongside the following paper and the authors retain copyright:
 
 *** src/lample_lstm_tagger ***
 
+From https://github.com/glample/tagger. 
+
 Copyright 2017 Guillaume Lample
 
 See LICENSE.md in that directory.
+
+*** data/task1.zip ***
+
+Contains data from http://www.fprodrigues.com/software/crf-ma-sequence-labeling-with-multiple-annotators/, collected by Felipe Rodrigues (2014).
+
+This package is from https://github.com/thanhan/seqcrowd-acl17/ by An Thanh Nguyen, Byron C. Wallace, Junyi Jessy Li, Ani Nenkova and Matthew Lease (2017).

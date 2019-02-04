@@ -161,8 +161,6 @@ BSC-seq & 80.3 & 74.8 & 77.4 & %78.9 & .9598 &
 
 %BSC-MACE-notext & 78.9 & 66.2 & 72.0 & 0.71 & 10 & .1 & .1 \\ % seems to imply that the HMM over the sequence labels helps MACE. 
 %BSC-CM-notext & 75.0 & 68.8 & 71.8 & 0.75 & .1 & 10 & 1\\ % does it imply that the HMM over the sequence labels is detrimental to IBCC?
-% Leads to the question, what about IBCC with text features? --> does improvement of BSC-CM over IBCC come from text features? Would it improve more without the HMM? See IBCC+text
-% Also leads to question, does the seq annotator model need the HMM? Maybe it would improve more over IBCC if it were scrapped? Maybe its performance advantages come from seq and features but not HMM? See IBCC-seq+text
 BSC-CM-notext & 74.7 & 69.7 & 72.1 & 1.48 & .1 & 1 & .1 & 62.7 & 74.8 & 68.2 & 1.32 & 100 & 100 & .1 \\
 BSC-CM$\backslash\bs T$ & 80.0 & 73.0 & 76.3 & 0.99 & .1 & 100 & .1 & 65.8 & 66.7 & 66.2 & 0.28 & .1 & 100 & .1  \\
 BSC-seq-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 & 
@@ -256,11 +254,6 @@ BSC-seq,\\
   \includegraphics[width=0.7\textwidth, clip=True, trim=20 17 0 28]{figures/worker_models/seq_prev2}
 \\
 \caption{Clusters of confusion matrix representations from each BSC-*** annotator model trained on PICO. 
-% Show how worker representation benefits from richer model: e.g. show differences between rows in IBCC compared to acc.
-% Represent all types as IBCC-confusion matrix plots. seq will need more >= 3 plots! We can focus on PICO data to make it easier to view,
-% or combiner NER classes into BIO. 
-% If each row corresponds to one model, we have 7 rows (2 extra for seq). 
-% Each row can then show either a selection of 5 workers, or we can cluster into 5 groups.
 }
 \label{fig:conf_mat_clusters}
 \end{figure*}
@@ -293,9 +286,6 @@ For both datasets, we provide all the crowdsourced labels as input to the aggreg
 In both cases, we split the gold-labeled documents into 50\% validation and test sets. 
 For NER, we use the split given by Nguyen et al. ~\shortcite{nguyen2017aggregating},
 while for PICO, the split was not available so our results are not directly comparable to theirs.
-%and they appear to have used a subset of the publicly-available dataset with on average 5 annotators per documents, rather than the 6 per document in the complete dataset.
-%Note that the token-level F1-score can be skewed upwards by matching a few long spans correctly, but is useful for PICO because it shows up cases where the spans matched but the predictions were split, i.e. B is used instead of I. With non-strict entity matching, the precision and recall can be 100\% even though the prediction is split into multiple spans.
-%Token-level F1-score catches this because it penalises the erroneous B tokens. With strict entity-level F1-score, the matches must be exact, so split spans would receive no credit.
 
 We tune the hyperparameters using a validation set. To limit the number of hyperparameters to tune, we optimize only three values for BSC.
 Hyperparameters of the transition matrix, $\bs\gamma_j$, are set to the same value, 
@@ -333,12 +323,7 @@ However, for BSC-CM, the results are less clear: BSC-CM-notext differs from IBCC
 inclusion of the transition matrix, $\bs T$, yet IBCC outperforms BSC-CM-notext.
 This suggests that the combination of these elements is important: the seq annotator model is effective 
 in combination with the transition matrix and simple text model.
-% when learning the
-%more complex BSC-seq model. 
-Integrating an LSTM improves performance further in both datasets, and outperforms an LSTM trained on the output of HMM-crowd or BSC-seq.% to train an LSTM produces a small improvement, but is outperformed by BSC-seq+LSTM.
-% Removed the data on no. invalid spans:
-% 15, 81, 81, 92, 74, 68, 0.... BSC-MACE=91
-% 0, 0, 80, 30, 54, 37, 0, 40, 0000000000000, BSC\Arrow{0.2cm}LSTM 80
+Integrating an LSTM improves performance further in both datasets, and outperforms an LSTM trained on the output of HMM-crowd or BSC-seq.
 
 \begin{table*}[h]
 \small
@@ -361,7 +346,6 @@ BSC-seq+LSTM & PICO & 81 & 0 & 421 & 75 & 216 & 20 & 6 & 232 & 3 & 24 & 393 \\
 \caption{Counts of different types of span errors.}
 \label{tab:error_analysis}
 \end{table*}
-%To get a deeper understanding of the key methods, w
 We categorize the errors made by key methods and list the
 counts for each category in Table \ref{tab:error_analysis}.
 All machine learning methods shown reduce the number of spans that were completely missed by majority
@@ -453,18 +437,6 @@ LSTM trained on gold labels & %76.4 & 77.0 & 76.7 & 11.10 %77.3 & .9563 & %this 
 \caption{Prediction performance on test datasets with training on crowdsourced labels.}
 \label{tab:prediction_results}
 \end{table*}
-% TODO make it clear that we test three things here:
-% 1. Does being Bayesian help with AL?
-% 2. Does sequential modelling help?
-% 3. Does including an LSTM or IF feature model help?
-% TODO rework the AL plots: 
-% 1. There should be 4 less cluttered plots similar to figure 1. 
-% 2. We have three additional methods: BSC-CV, IBCC and DS. We can remove MV and HMMCrowd->LSTM?
-% 3. For each dataset, first plot shows benefit of Bayes: DS vs IBCC and HMMCrowd vs BSC-CV
-% 4. For each dataset, second plot shows benefit of sequential user model and LSTM: BSC-CM vs BSC-Seq vs BSC-seq->LSTM vs BSC-seq+LSTM
-% 5. The benefit of sequential true label model is shown by comparing first and second plots (IBCC vs BSC-CM).
-% 6. Do we include a random sampling line in each plot, perhaps for BSC-seq+LSTM (best model) and DS and IBCC (show how Bayes makes AL difference more pronounced)?
-% 7. Pico needs a smaller step size at the start: suggest running it only up to 1500 labels, suggest running with 200 label increments starting at 100 labels
 Active learning iteratively selects informative data points to be labeled so that a model can be trained
 using less labeled data. Posterior probabilities output by Bayesian methods 
 account for uncertainty in the model parameters, hence can be used to choose data points 

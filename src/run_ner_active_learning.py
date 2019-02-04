@@ -24,7 +24,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 num_reps = 10
 for rep in range(num_reps):
 
-    output_dir = '../../data/bayesian_annotator_combination/output/ner_al/'
+    output_dir = '../../data/bayesian_sequence_combination/output/ner_al/'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -52,7 +52,7 @@ for rep in range(num_reps):
 
     # Random Sampling ------------------------------------------------------------------------------
 
-    # output_dir = '../../data/bayesian_annotator_combination/output/ner_rand_new2/'
+    # output_dir = '../../data/bayesian_sequence_combination/output/ner_rand_new2/'
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #

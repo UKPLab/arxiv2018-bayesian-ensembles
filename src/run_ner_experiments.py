@@ -52,7 +52,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_annotator_combination/output/ner-by-sentence/'
+output_dir = '../../data/bayesian_sequence_combination/output/ner/'
 
 regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, _ = \
