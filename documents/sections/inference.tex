@@ -1,16 +1,7 @@
 \section{Inference using Variational Bayes} \label{sec:vb}
  
-%TODOn't: I think we should include the lower bound to state it is the objective function. Don't do this because we need to cut maths out.
-%TODO equation 23 could be one line?
-%TODO equation 24 on one line?
-%TODO can we replace eq 12 with just a E p(c | t) term?
-%TODO simplify the description of the forward/backward passes
-%TODO cut eq 21, don't give the equation for CM, just replace with a statement about simplifying equations 19 and 20 for the other models. 
-%TODO equations 19 and 22 can be on one line if we change equation 20 to include 
-% the prior pseudocounts.
-%TODO do we need the variational factor equations or just the updates? E.g. we cut out equation 10, 17, 19 and possibly 23 completely. Then we may keep equation 12 to help with reproducibility.
- 
-Given a set of annotations, $\bs c=\{\bs c^{(1)}, .., \bs c^{(K)} \}$ from $K$ annotators,
+%TODOn't: I think we should include the lower bound to state it is the objective function. Don't do this because we need to cut maths out. 
+Given a set of annotations, $\bs c=\{\bs c^{(1)}, .., \bs c^{(K)} \}$, from $K$ annotators,
 our aim is to obtain a posterior distribution over 
 %the parameters, 
 %$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},..,\bs\theta^{(S)} \}$, 
@@ -22,11 +13,13 @@ To do this, we employ
 \emph{variational Bayes} (\emph{VB})~\cite{attias_advances_2000}.
 In comparison to other Bayesian approaches such as Markov chain Monte Carlo (MCMC),
 VB is often faster, readily allows incremental learning, and provides easier ways
-to determine convergence~\cite{bishop_pattern_2007}. 
+to determine convergence~\cite{Bishop2006}. 
 Unlike maximum likelihood methods such as standard expectation maximization (EM),
 VB considers prior distributions 
 and accounts for parameter uncertainty in a Bayesian manner.
-The trade-off is that VB requires us to approximate the posterior distribution: 
+The trade-off is that VB requires us to approximate the posterior distribution.
+Here, we apply the \emph{mean field} assumption to assume a variational approximation that factorizes between subsets of parameters 
+or latent variables, so that each subset, $z$, has a \emph{variational factor}, $q(z)$:
 %over $\bs t$ and the model parameters, 
 %$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},..,\bs\theta^{(S)} \}$, 
 %$\bs A=\{ A^{(1)},..,A^{(K)} \}$ and
@@ -38,7 +31,6 @@ The trade-off is that VB requires us to approximate the posterior distribution:
 & \prod_{j=1}^J q(\bs T_j) \prod_{n=1}^N q(\bs t_n) 
 \prod_{s=1}^S\Big\{ q(B^{(s)})  q(\bs\theta^{(s)}) \Big\}. & % q(\bs d^{(s)} )
 \end{flalign}
-
 % We optimise this distribution using Algorithm \ref{al:vb_bac} to obtain approximate posterior
 % distributions over $\bs t$, $\bs\pi^{(k)}, \forall k$ and $A_j, \forall j$.
 % The algorithm iteratively increases the lower bound on the model evidence, $\mathcal{L}$, 
@@ -55,22 +47,19 @@ The trade-off is that VB requires us to approximate the posterior distribution:
 % marginal probabilities over class labels. If a Bayesian classifier is integrated, 
 % retraining the text classifier becomes a VB step, in which a variational factor, $q(\bs c^{(b)}$, is updated,
 % making the complete algorithm a fully Bayesian approximation.
-The variational approximation factorizes between subsets of parameters or latent variables, so that each subset, $z$, has a \emph{variational factor}, $q(z)$. 
-The labels produced by the sequence taggers, $\bs d$, have been marginalized.
-Due to our choice of conjugate priors, the variational factors for BSC are of the same types
-as their prior distributions defined in Section \ref{sec:model},
-and the parameters of each variational distribution can be computed in terms  of 
-expectations over the other subsets of variables.
-We perform approximate inference,
+The labels produced by the sequence taggers, $\bs d$, can be marginalized analytically so do not require
+a separate factor.
+Each variational factor has the form $\ln q(z) = \mathbb{E}[\ln p(z | \bs c, \neg z)]$, 
+where $\neg z$ contains all the latent variables except $z$.
+We perform approximate inference by
 %we optimize Equation \ref{eq:vb_posterior} 
 using coordinate ascent to update each variational factor, $q(z)$, in turn,
 taking expectations with respect to the current estimates of the other variational factors.
-Our VB approximation therefore makes use of the \emph{mean field} assumption.
 %(see Algorithm \ref{al:vb_bac}).
 Each iteration reduces the KL-divergence between the true and approximate posteriors
 of Equation \ref{eq:vb_posterior}, and hence optimizes a lower bound on the 
 log marginal likelihood, also called the evidence lower bound or ELBO
-~\cite{bishop_pattern_2007,attias_advances_2000}.
+~\cite{Bishop2006,attias_advances_2000}.
 The complete VB algorithm is described in Algorithm \ref{al:vb_bac},
 which makes use of the update equations for the log variational factors given below.
 % We now provide the variational factors,
@@ -79,10 +68,10 @@ which makes use of the update equations for the log variational factors given be
 % and explain how to incorporate existing sequence taggers into the algorithm.
 %that
 %predict only sequence labels rather than full posterior distributions.
-\begin{algorithm}[t]
+\begin{algorithm}
 \DontPrintSemicolon
  \KwIn{ Annotations, $\bs c$}
- \nl Randomly initialise $\mathbb{E}\ln A^{(k)},\forall k$,
+ \nl Randomly initialize $\mathbb{E}\ln A^{(k)},\forall k$,
  $\mathbb{E}\ln B^{(s)},\forall s$, $\mathbb{E}\ln \bs T_j,\forall j$ 
  and $\hat{d}^{(s)}_{n,\tau}(i), \forall s,\forall n,\forall \tau,\forall i$.\;
 %  randomly or to expectations with respect to the priors\;
@@ -106,6 +95,12 @@ most probable sequence of labels, $\hat{\bs t}_n,\forall n$ using Viterbi algori
 \label{al:vb_bac}
 \end{algorithm}
 
+The prior distributions chosen for our generative model are conjugate to the distributions over the
+latent variables and model parameters, 
+meaning that each $q(z)$ is the same type of distribution
+as the corresponding  prior distribution defined in Section \ref{sec:model}.
+The parameters of each variational distribution can be computed in terms  of 
+expectations over the other subsets of variables.
 For the true labels, $\bs t$, the variational factor is:
  \begin{flalign}
 & \ln q(\bs t_n) \!=\! 
@@ -137,10 +132,10 @@ using the forward-backward algorithm~\cite{ghahramani2001introduction},
  % the posterior given crowdsourced annotations for tokens $\leq\tau$. 
  \begin{flalign}
    & \ln r^{-}_{n,\tau,j} = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau-1,\iota} \mathrm{e}^{\mathbb{E}\ln T_{\iota,j}} \right\} + ll_{n,\tau}(j), & \nonumber \\
- \end{flalign}
+% \end{flalign}
 %  where the log likelihood $ll(j,n,\tau)$ of the annotations for token $\tau$ in document $n$ given
 %  label $j$ is:
- \begin{flalign} 
+% \begin{flalign} 
    & ll_{n,\tau}(j) = \sum_{k=1}^K \mathbb{E}%_{\bs A}
    \ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right) +  \sum_{s=1}^S
    & \nonumber \\
@@ -182,7 +177,7 @@ Each row of the transition matrix has the factor:
 \end{flalign}
 where $N_{j,\iota} = \sum_{n=1}^N \sum_{\tau=1}^{L_n}  s_{n,\tau,j,\iota}$ is the expected number of times that label $\iota$ follows label $j$.  
 %The variational factor $q(\bs t)$ requires the following expectation:
-The forward-backward algorithm requires the terms:
+The forward-backward algorithm requires expectations of $\ln \bs T$ that can be computed using standard equations for a Dirichlet distribution:
  \begin{flalign}
 & \mathbb{E}\ln T_{j,\iota} = \Psi\!\left(N_{j,\iota} \!\!+ \gamma_{j,\iota}\right) 
  - \Psi\!\left(\sum_{\iota=1}^J (N_{j,\iota} \!\!+ \gamma_{j,\iota}) \!\right), &
@@ -217,7 +212,7 @@ For \emph{CM}, \emph{MACE}, \emph{CV} and \emph{acc}, the factors follow a simil
 The forward-backward passes
 % variational factor $q(\bs t)$ 
 also require the following expectation terms for \emph{seq},
-which can be simplified for the other annotator models:
+which are standard equations for Dirichlet distributions and can be simplified for the other annotator models:
  \begin{flalign}
  \label{eq:elna}
 & \mathbb{E}\ln \! A^{(k)}\!(j,l,m) \!=\! \Psi\!\left(\!N^{(k)}_{j,l,m}\!\right)
@@ -266,7 +261,7 @@ r_{n,\tau,j} \tilde{d}_{n,\tau\!-\!1} \mathbb{E}B^{(s)}(j, i, \iota) .\!
 %is independent of all other variables given $t_{n,\tau}$, $\bs x_n$, $B^{(s)}$,
 %$d_{n,\tau\!-\!1}^{(s)}$
 %and $\bs\theta^{(s)}$.
-The expecations, $\tilde{\bs d}_n^{(s)}$, fill the role of training labels,
+The expectations, $\tilde{\bs d}_n^{(s)}$, fill the role of training labels,
 allowing us to use the training function of the black-box sequence taggers
 to update the variational factor, $q\left(\theta^{(s)}\right)$.
 %hence we can marginalize $\bs \theta^{(s)}$
@@ -276,7 +271,7 @@ use maximum likelihood (ML) to find optimal point values, $\hat{\bs\theta}^{(s)}
 rather than their posterior distribution.
 If we integrate such sequence taggers, 
 our complete inference procedure becomes 
-a hybrid between VB and ML expectation maximization (EM)~\cite{bishop_pattern_2007}.
+a hybrid between VB and ML expectation maximization (EM) (see Bishop~\shortcite{Bishop2006}).
 The sequence tagger may also require training using discrete labels, 
 in which case we introduce a further ML step and 
 approximate $\tilde{\bs d}_n^{(s)}$ 
@@ -326,7 +321,7 @@ The most probable sequence is particularly useful because, unlike $r_{j,n,\tau}$
 the sequence will be consistent with any transition 
 constraints imposed by the priors on the transition matrix $\bs T$, 
 such as preventing `O'$\rightarrow$`I' transitions by assigning them zero probability.
-We can also make predictions for unlabelled documents in a similar manner,
+We can also make predictions for unlabeled documents in a similar manner,
 simply omitting the human annotations, $\bs c$, and relying only on the predictions
 of the black-box sequence taggers, $\hat{\bs d}^{(s)}$.
 

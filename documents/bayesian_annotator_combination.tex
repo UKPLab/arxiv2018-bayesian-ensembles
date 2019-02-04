@@ -1,16 +1,9 @@
-% Copied from EMNLP 2018 template
 \documentclass[11pt,a4paper]{article}
-\usepackage[hyperref]{tacl2018}
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage{url}
 \usepackage[T1]{fontenc}
-
-%Additional commands added by ES
-
-\taclfinalfalse % For camera-ready, replace "\taclfinalfalse" with
-% "\taclfinalcopy"
-%\taclfinalcopy
+\usepackage[]{tacl2018v2}
 
 %%%%
 %%%% Material in this block can be removed by TACL authors.
@@ -19,24 +12,11 @@
 
 \newcommand{\ex}[1]{{\sf #1}}
 
-%
-\iftaclfinal
-\newcommand{\taclpaper}{camera-ready\xspace}
-\newcommand{\taclpapers}{camera-readies\xspace}
-\newcommand{\Taclpaper}{Camera-ready\xspace}
-\newcommand{\Taclpapers}{Camera-readies\xspace}
-\else
-\newcommand{\taclpaper}{submission\xspace}
-\newcommand{\taclpapers}{{\taclpaper}s\xspace}
-\newcommand{\Taclpaper}{Submission\xspace}
-\newcommand{\Taclpapers}{{\Taclpaper}s\xspace}
-\fi
-
 \usepackage{graphicx}
 \usepackage{tabularx}
 
 \usepackage{array}
-\newcolumntype{P}[1]{>{\raggedleft\arraybackslash}p{#1}}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 \newcolumntype{Y}{>{\raggedleft\arraybackslash}X}
 \newcolumntype{?}{!{\vrule width 1pt}}
 \newcolumntype{h}{!{\vrule width 0.7pt}}
@@ -50,6 +30,8 @@
 \usepackage[caption=false,font=footnotesize]{subfig}
 \usepackage{float}
 \captionsetup[subfigure]{margin=0pt}
+\usepackage{booktabs}
+\usepackage{tikz}
 
 \makeatletter
 \makeatother %some sort of hack related to the symbol @
@@ -60,12 +42,14 @@
 
 \newcommand{\rough}[0]{\color{purple}}
 
+\newcommand{\Arrow}[1]{\parbox{#1}{\tikz{\draw[->](0,0)--(#1,0)}} }
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}%Multiple Unreliable Text Annotators}
 
 \author{Edwin Simpson and Iryna Gurevych\\
-  Ubiquitious Knowledge Processing Lab \\
+  Ubiquitous Knowledge Processing Lab \\
   Department of Computer Science \\
   Technische Universit\"at Darmstadt \\
   \url{https://www.ukp.tu-darmstadt.de} \\
@@ -84,58 +68,26 @@
 \begin{abstract}
 Current methods for sequence tagging, a core task in NLP, are data hungry.
 Crowdsourcing is a relatively cheap way to obtain labeled data, but
-the annotators are unreliable, so redundant labeling
-and aggregation techniques are required.
-We evaluate multiple models of annotator reliability and develop
- a Bayesian method for aggregating sequence labels from multiple annotators.
+the annotators are unreliable.
+%, so redundant labeling
+%and aggregation techniques are required.
+To address this, we develop
+ a modular Bayesian method for aggregating sequence labels from multiple annotators
+ and evaluate different models of annotator reliability.
 %and propose a technique to boost performance by integrating existing black-box sequence taggers.
-Typically, the process of data collection, aggregation and training a sequence tagger 
-is a pipeline of discrete steps.
-We integrate these steps by training black-box sequence taggers as components in the aggregation model and
-accounting for their unreliability.
-We evaluate our model on named entity recognition and information extraction tasks,
-showing that our method outperforms previous methods, particularly in small data scenarios that
-are encountered at the beginning of a crowdsourcing process.
+%Typically, the process of data collection, aggregation and training a sequence tagger 
+%is a pipeline of discrete steps.
+Our approach integrates 
+%these steps by training 
+black-box sequence taggers as components in the aggregation model
+to improve the quality of predictions.
+We evaluate our model on crowdsourced data for named entity recognition and information extraction tasks,
+showing that our sequential annotator model outperforms previous methods.
+%particularly in small data scenarios that
+%are encountered at the beginning of a crowdsourcing process.
 %Our experiments show that by integrating the training and aggregation steps into a Bayesian framework, 
 %we can use active learning techniques to obtain data more efficiently without modifying the black-box method.
-Our code is published to encourage adaptation and reuse.
-
-% TODOs: 
-% 2. update plots for PICO -- can cut one or maybe both if they are no different.
-
-% \rough
-% VERSION 1:
-% A common task in NLP is sequence labelling, which is performed by both human annotators to 
-% produce training data and by automatic classifiers that extract information from text.
-% However, different annotators can often disagree and may have highly varying levels of reliability,
-% particularly when crowdsourcing is used to annotate spans of text. 
-% High error rates can be mitigated by combining annotations from multiple annotators,
-% a technique that is also used by ensembles of classifiers to boost performance.
-% Existing approaches that model the biases and error rates of annotators have been shown to 
-% improve over simple heuristics such as majority voting. However, existing methods
-% ignore the sequential nature of text span annotations and may therefore underperform.
-% We propose a new Bayesian technique to combined multiple annotators of differing reliability 
-% and make the software available publicly. 
-% Using a series of simulations, we show how several different probabilistic
-% and heuristic approaches perform under different conditions. 
-% We illustrate how our approach can improve sequential classification performance on a 
-% real-world argumentation mining task by using it to combine both human annotators and 
-% an ensemble of automated classifiers.
-%
-% VERSION 2:
-% We present a Bayesian method for combining sequence classifications from multiple annotators with different levels of noise and class bias. Sequential classification is an important problem in fields such as NLP, where many tasks involve annotating spans of text. 
-% In such tasks, crowdsourcing is often used to obtain training data for automated classifiers. However, individual human annotators have highly variable error rates and different automated classifiers often produce different patterns of errors. In both cases, errors can be reduced by combining multiple annotators.
-% However, while Bayesian methods have proved effective in combining unreliable classifiers, they have not previously taken into account the sequence of classifications and are therefore unable to incorporate rules that restrict which labels may follow each other, such as with BIO encoding. We propose a new method that incorporates sequence information using hidden Markov models, and show how the priors can be set to capture sequence rules. We analyse performance against established classifier combination methods on synthetic data to show the effects of annotator accuracy, bias and crowd size on performance. We further evaluate the methods on two NLP datasets: crowdsourced annotations of argument components; and predictions of argument components from an ensemble of neural network classifiers. The results show the advantage of modelling sequential dependencies between labels. We make our source code and data available online.
-%
-% VERSION 3:
-% Despite sequences being core to NLP, scant work has considered how to handle noisy sequence labels from multiple anno- tators for the same text. Given such anno- tations, we consider two complementary tasks: (1) aggregating sequential crowd la- bels to infer a best single set of consen- sus annotations; and (2) using crowd an- notations as training data for a model that can predict sequences in unannotated text. For aggregation, we propose a novel Hid- den Markov Model variant. To predict se- quences in unannotated text, we propose a neural approach using Long Short Term Memory. We evaluate a suite of meth- ods across two different applications and text genres: Named-Entity Recognition in news articles and Information Extraction from biomedical abstracts. Results show improvement over strong baselines. Our source code and data are available online1. 
-%
-% VERSION 4:
-% We present a Bayesian method for combining sequence classifications from multiple annotators with different levels of noise and class bias. Sequential classification is an important problem in fields such as NLP, where many tasks involve annotating spans of text. 
-% In such tasks, crowdsourcing is often used to obtain training data for automated classifiers. However, individual human annotators have highly variable error rates and different automated classifiers often produce different patterns of errors. In both cases, errors can be reduced by combining multiple annotators.
-% However, while Bayesian methods have proved effective in combining unreliable classifiers, they have not previously taken into account the sequence of classifications and are therefore unable to incorporate rules that restrict which labels may follow each other, such as with BIO encoding. We propose a new method that incorporates sequence information using hidden Markov models, and show how the priors can be set to capture sequence rules. We analyse performance against established classifier combination methods on synthetic data to show the effects of annotator accuracy, bias and crowd size on performance. We further evaluate the methods on two NLP datasets: crowdsourced annotations of argument components; and predictions of argument components from an ensemble of neural network classifiers. The results show the advantage of modelling sequential dependencies between labels. We make our source code and data available online.
-%
-% Bayesian classifier combination methods can be used both to obtain reliable classifications from crowdsourced annotations and to combine an ensemble of automated classifiers to reduce overall error rates. 
+We publish our code to encourage adaptation and reuse.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -155,7 +107,7 @@ Our code is published to encourage adaptation and reuse.
 % \addcontentsline{toc}{chapter}{Bibliography}
 %\bibliographystyle{apalike}
 % \bibliographystyle{IEEEtran}
-\bibliographystyle{acl_natbib_nourl}
+\bibliographystyle{acl_natbib}
 \bibliography{simpson}
 
 \end{document}

@@ -114,3 +114,6 @@ LSTM_worker_model_started-2018-09-27-11-39-41.npy
 LSTM_worker_model_started-2018-09-27-17-05-28.npy
 LSTM_worker_model_started-2018-09-27-17-17-03.npy
 documents/Archive.zip
+*.bbl
+*.toc
+*.blg

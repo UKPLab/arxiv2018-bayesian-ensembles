@@ -1,24 +1,27 @@
-\section{Conclusions}
+\section{Discussion and Conclusions}
 
-Previous work has demonstrated the benefits of modeling annotator reliability when aggregating noisy data, 
-such as crowdsourced labels. 
-We proposed BSC-Seq, a fully Bayesian approach to aggregating sequence labels, 
-which models the effect of label sequences on annotator reliability,
-and showed how it improves the state-of-the-art, particularly with small datasets.
+We proposed BSC-Seq, a Bayesian approach to aggregating sequence labels, 
+which models the effect of label sequences on annotator reliability.
+Our results reinforce previous work that has demonstrated the benefits of modeling annotator reliability when aggregating noisy data, such as crowdsourced labels. 
+We showed that sequential models outperform non-sequential baselines
+and that 
+BSC-seq improves the state-of-the-art over HMM-crowd.
+Its performance depends on the combination of sequential annotator model, label transition matrix, and 
+text model. 
 %To enable more efficient training data collection,
-To further improve the quality of aggregated labels,
-we integrate existing 
-sequence taggers, such as deep neural networks, into our variational inference approach as black-box training and prediction functions.
-Our results show that this technique can improve aggregated data quality
-on both active and passive learning tasks.
+We further improved the quality of aggregated labels,
+by integrating existing 
+sequence taggers into our variational inference approach as black-box training and prediction functions.
+This technique performed well with larger amounts of labeled data, but may benefit from the use of pre-trained neural sequence taggers
+when the dataset is very small.
 %We also found that including a simple conditional independence model of text features enables us to learn BSC-seq more effectively.
-
-Future work will evaluate integrating sequence taggers that use
-Bayesian methods for deep learning, 
+Future work will evaluate integrating sequence taggers built on
+Bayesian deep learning, 
 which may improve active learning.
 We will also investigate
-alternative data selection strategies to bootstrap active learning, 
-and how to set priors for %reduce over-confidence in predictions by including
+%alternative data selection strategies to bootstrap active learning, 
+%and 
+how to set priors for %reduce over-confidence in predictions by including
 the reliability of black-box methods by testing them
 on other training sets of similar size.
 

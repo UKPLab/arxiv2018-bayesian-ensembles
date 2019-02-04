@@ -1,5 +1,5 @@
 \section{A Model for Bayesian Sequence Combination}\label{sec:model}
-
+%TODO do we state the obvious: that the annotator models effectively weight good annotators more heavily and discard spammers?
 The generative story for our approach, \emph{Bayesian sequence combination (BSC)}, is as follows.
 We assume a transition matrix, $\bs T$, where each entry is $T_{j,\iota} = p(t_{\tau} = \iota | t_{\tau-1} = j)$.
 We draw each row of the transition matrix, $T_j \sim \mathrm{Dir}(\bs \gamma_j)$, where $\mathrm{Dir}$ is the Dirichlet distribution. 
@@ -17,19 +17,19 @@ while for \emph{CV} we draw $J$ independent values of $\pi_j^{(k)}$,
 and for \emph{CM}  
 we draw a vector $\bs\pi^{(k)}_j$ of size $J$ for each true label value $j\in \{1,...,J\}$; in the case of \emph{seq}, 
 we draw vectors $\bs\pi^{(k)}_{j,\iota}$ for each true label value 
-and each previous label value, $\iota$.\
+for each previous label value, $\iota$.\
 All parameters of these annotator models are probabilities, 
 so are drawn from Dirichlet priors. We refer to the set of hyperparameters 
 for $k$'s annotator model as $\bs\alpha^{(k)}$.
 Given its parameters, the annotator model defines a likelihood function,
-$A^{(k)}(t_{n,\tau}, \bs c_{n,\tau}, \bs c_{n,\tau-1})$.
+$A^{(k)}(t_{n,\tau}, \bs c_{n,\tau}, \bs c_{n,\tau-1})$, where $\bs c_{n,\tau}$ is the $\tau$th label of document $n$.
 The argument $\bs c_{n,\tau-1}$ is only required if $A^{(k)}$ is an instance
 of \emph{seq} and is ignored by the other annotator models.
 We draw annotator $k$'s label for each token $\tau$ in each document $n$ 
 according to:
 \begin{flalign}
 & c^{(k)}_{n,\tau} \sim \mathrm{Cat}( [A^{(k)}(t_{n,\tau}, 1, \bs c_{n,\tau-1}^{(k)}), ..., & \nonumber \\
-& \hspace{3.4cm} A^{(k)}(t_{n,\tau}, J, \bs c_{n,\tau-1}^{(k)}) ]). &
+& \hspace{3cm} A^{(k)}(t_{n,\tau}, J, \bs c_{n,\tau-1}^{(k)}) ]). &
 \end{flalign}
 The annotators are assumed to be conditionally independent of one another given the true labels,
 $\bs t$, which means that their errors are assumed to be uncorrelated. This is a strong assumption
@@ -39,22 +39,22 @@ most probable label to change~\citep{zhang2004optimality}, hence the performance
 is only slightly degraded, while avoiding the complexity of modeling dependencies between annotators~\citep{kim2012bayesian}.
 
 \textbf{Black-box Sequence Taggers}:
-As an optional extension to our model, we can integrate $S$ automated methods as
+As an extension to our model, we can integrate $S$ automated methods as
 additional noisy annotators. 
  In comparison to human annotators,
 sequence taggers can quickly label large numbers of documents, 
 providing a cheap source of additional annotations across the whole dataset.
 We model each sequence tagger, $s$, 
 using an annotator model, $B^{(s)}$,
-of one of the types described in Section \ref{sec:annomodels} (analagous to $A^{(k)}$ for a human annotator),
+of one of the types described in Section \ref{sec:annomodels} (analogous to $A^{(k)}$ for a human annotator),
 with hyperparameters $\bs \beta^{(s)}$.
 Each sequence tagger generates a sequence of labels, $\bs d_{n}^{(s)}$, for each document $n$ 
-(analogous to $\bs c_n^{(k)}$ produced by annotators)
+(analogous to $\bs c_n^{(k)}$ produced by human annotators)
  according to: 
  \begin{flalign}
  & d_{n,\tau}^{(s)} \sim \mathrm{Cat}(
 [B^{(s)}(\bs t_{n,\tau}, 1, d_{n,\tau-1}^{(s)}), ..., && \nonumber \\
-& \hspace{3.4cm} B^{(s)}(\bs t_{n,\tau}, J, d_{n,\tau-1}^{(s)})]). &&
+& \hspace{3.0cm} B^{(s)}(\bs t_{n,\tau}, J, d_{n,\tau-1}^{(s)})]). &&
 \end{flalign}
 
 % *** Check that this is right. Ideally, we could have a discriminative model here. If it's right add a comment about independence of ds from multiple sequence taggers. DO I already mention that the use of B means we can compensate
@@ -73,24 +73,26 @@ In the next section, we explain how we can avoid computing this likelihood expli
 and instead use only the sequence tagger's existing training and prediction functions to learn
 $\bs\theta^{(s)}$ in parallel with the parameters of the BSC model.
 Like the human annotators, each sequence tagger is assumed to produce labels that are conditionally independent 
-of the other sequence taggers given $\bs t$. Due to the fact that sequence taggers will typically use
-the same features, i.e. the text of the documents, this independence assumption may be violated, 
-yet
-%as with the human annotators, 
-this assumption in other models
- has been shown not to hamper performance in 
-many practical situations~\citep{zhang2004optimality}.
+of the other sequence taggers given $\bs t$. 
+%Due to the fact that sequence taggers will typically use
+%the same features, i.e. the text of the documents, this independence assumption may be violated, 
+%yet
+%%as with the human annotators, 
+%this assumption in other models
+% has been shown not to hamper performance in 
+%many practical situations~\citep{zhang2004optimality}.
 
 \textbf{Joint distribution}: the complete model can be represented by the
-joint distribution over its random variables, given by:
+joint distribution, given by:
 \begin{flalign}
 & p(\bs t, \bs A, \bs B, \bs T, \bs\theta, \bs c, \bs d, \bs x | \bs \alpha, \bs \beta, \bs\gamma ) & \label{eq:joint} \\
 %  & \approx q(\bs t, \bs A, \bs B, \bs\A^{(1)},...,\bs\A^{(K)},\bs\A^{(1)},...,\bs\A^{(S)}, \bs d^{(1)}, ...,\bs d^{(S)}) = q(\bs B) \prod_{n=1}^N q(\bs t_n) & \nonumber \\
 & = \prod_{k=1}^K \left\{ p(A^{(k)} | \bs \alpha^{(k)}) \prod_{n=1}^N p(\bs c_n^{(k)} | A^{(k)}, \bs t)  \right\}
 & \nonumber \\
 & \prod_{j=1}^J p(\bs T_j | \bs\gamma_j)  \prod_{n=1}^N \prod_{\tau=1}^{L_n} p(\bs t_n | \bs T_{t_{n,\tau-1}}) \prod_{s=1}^S \bigg\{ p(\bs \theta^{(s)})  \nonumber \\
-& p(B^{(s)} | \bs\beta^{(s)}) \prod_{n=1}^N \! \left\{ p(\bs x | \bs d^{(s)}, \bs \theta^{(s)}) p(\bs d^{(s)} | B^{(s)}, \bs t)  \right\} \!\! \bigg\} \nonumber
+& p(B^{(s)} | \bs\beta^{(s)}) \! \! \prod_{n=1}^N \!\! \left\{ p(\bs x | \bs d^{(s)}, \bs \theta^{(s)}) p(\bs d^{(s)} | B^{(s)}, \bs t)  \right\} \!\! \bigg\}, \nonumber
 \end{flalign}
+where each term is defined by the distributions of the generative model described in this section.
 
 %\begin{flalign}
 %& 
@@ -107,8 +109,5 @@ joint distribution over its random variables, given by:
 %where the first term on the right-hand side is defined by the annotator model
 %with parameters $A^{(s)}$, and 
 %of the sequence tagger, $s$.
-
-%TODO have we mentioned that the sequence taggers have their own \pi?
-
 %integrating existing sequence taggers using the learning
 %procedure described in the next section.

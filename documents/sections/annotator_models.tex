@@ -2,7 +2,7 @@
 
 When combining multiple annotators with varying skill levels, we can improve performance by modeling their individual reliability. Here, we describe several existing models 
 that do not consider dependencies between annotations in a sequence,
-then provide an extension that captures sequential dependencies. Each of the approaches presented employs a particular function, $A$, to model the likelihood of the annotator choosing the label $c_{\tau}$
+then provide an extension that captures sequential dependencies. Each of the approaches presented employs a different function, $A$, to model the likelihood of the annotator choosing the label $c_{\tau}$
 given the true label, $t_{\tau}$, for token $\tau$.
 
 \textbf{Accuracy model (acc)}: simply models the annotator's accuracy, $\pi$, as follows: 
@@ -28,9 +28,9 @@ have a high $\pi$.
 %& A = p(c_{\tau}, c_{\tau-1}, t_{\tau}) = p( c_{\tau} \!\!=\! i | c_{\tau-1}, t_{\tau} \!=\! j, \bs\pi ),&&
 %\end{flalign}
 
-\textbf{MACE spamming model}~\cite{hovy2013learning}:
-assumes a constant annotator accuracy, $\pi$,
-but that when annotators are incorrect, they label according to 
+\textbf{MACE}~\cite{hovy2013learning}:
+assumes constant accuracy, $\pi$,
+but when an annotator is incorrect, they label according to 
 a spamming distribution, $\bs\xi$, that is independent of the true label, $t_{\tau}$.
 \begin{flalign}
 A & = p( c_{\tau} = i | t_{\tau} = j, \pi, \bs\xi) && \nonumber \\
@@ -63,7 +63,7 @@ using parameter vector, $\bs\pi$, of size $J$:
 %For the incorrect label cases where $i \! \neq \! j$,
 % $p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi )$ is constant for all values of $i$.
 % Therefore, t
-This model does not explicitly capture spamming
+This model does not capture spamming
 patterns where one of the incorrect labels has a much higher likelihood than the others.
 
 \textbf{Confusion matrix (CM)}~\cite{dawid_maximum_1979}:
@@ -78,7 +78,7 @@ of the confusion vector.
 CM %represents the probability of each mistake, so it 
 can model spammers who frequently chose one label regardless
 of the ground truth, 
-as well as annotators in sequence tagging tasks with different error rates for `B-x', `I-x' and `O' labels.
+as well as annotators with different error rates for each type of `B-x', `I-x' and `O' label.
 For example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently mis-label the start of a span as `O' when the true label is `B-x', but are otherwise accurate.
 However, the confusion matrix ignores dependencies between annotations in a sequence, % that affect these probabilities.
 such as the fact that an `I' cannot immediately follow an `O'.
@@ -103,7 +103,7 @@ $\pi_{O,O,O} > \pi_{O,I,O}$,
 or a tendency to split spans by inserting `B' in place of `I' by increasing the value of
 $\pi_{I,I,B}$ without affecting $\pi_{I,B,B}$ and $\pi_{I,O,B}$.
 
-Many commonly-used annotator models can therefore be seen as extensions of one another.
+The annotator models  we presented, which include the most widespread models for NLP annotation tasks, can therefore be seen as extensions of one another.
 The next section shows how these models can be used as part of 
 a model for aggregating sequential annotations. 
 The experiments in Section \ref{sec:expts_all} 

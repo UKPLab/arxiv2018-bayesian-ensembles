@@ -1,0 +1,251 @@
+Shadi Albarqouni, Christoph Baur, Felix Achilles,
+Vasileios Belagiannis, Stefanie Demirci, and
+Nassir Navab. 2016. Aggnet: deep learning
+from crowds for mitosis detection in breast can-
+cer histology images. IEEE transactions on
+medical imaging, 35(5):1313–1321.
+
+Hagai Attias. 2000. A variational Bayesian frame-
+work for graphical models. In Advances in Neu-
+ral Information Processing Systems 12, pages
+209–215. MIT Press.
+
+Yoram Bachrach, Tom Minka, John Guiver, and
+Thore Graepel. 2012. How to grade a test with-
+out knowing the answers: a Bayesian graphi-
+cal model for adaptive crowdsourcing and apti-
+tude testing. In Proceedings of the 29th Interna-
+tional Coference on International Conference
+on Machine Learning, pages 819–826. Omni-
+press.
+
+Alan Joseph Bekker and Jacob Goldberger. 2016.
+Training deep neural-networks based on unre-
+liable labels. In Acoustics, Speech and Signal
+Processing (ICASSP), 2016 IEEE International
+Conference on, pages 2682–2686. IEEE.
+
+C. M. Bishop. 2006. Pattern recognition and ma-
+chine learning, 4th edition. Information Sci-
+ence and Statistics. Springer.
+
+A. P. Dawid and A. M. Skene. 1979. Maximum
+likelihood estimation of observer error-rates us-
+ing the EM algorithm. Journal of the Royal
+Statistical Society. Series C (Applied Statistics),
+28(1):20–28.
+
+A. P. Dempster, N. M. Laird, and D. B. Rubin.
+1977. Maximum likelihood from incomplete
+data via the EM algorithm. Journal of the Royal
+Statistical Society. Series B (Methodological),
+39(1):1–38.
+
+Pinar Donmez, Jaime Carbonell, and Jeff Schnei-
+der. 2010. A probabilistic framework to learn
+from multiple annotators with time-varying ac-
+curacy. In Proceedings of the 2010 SIAM In-
+ternational Conference on Data Mining, pages
+826–837. SIAM.
+
+Paul Felt, Eric K. Ringger, and Kevin D. Seppi.
+2016. Semantic annotation aggregation with
+conditional crowdsourcing models and word embeddings. In International Conference on
+Computational Linguistics, pages 1787–1796.
+
+Zoubin Ghahramani. 2001. An introduction to
+hidden markov models and Bayesian networks.
+International Journal of Pattern Recognition
+and Artificial Intelligence, 15(01):9–42.
+
+Matthew R. Gormley, Margaret Mitchell, Ben-
+jamin Van Durme, and Mark Dredze. 2014.
+Low-resource semantic role labeling. In Pro-
+ceedings of the 52nd Annual Meeting of the As-
+sociation for Computational Linguistics (Vol-
+ume 1: Long Papers), pages 1177–1187. Asso-
+ciation for Computational Linguistics.
+
+Dirk Hovy, Taylor Berg-Kirkpatrick, Ashish
+Vaswani, and Eduard H Hovy. 2013. Learn-
+ing whom to trust with MACE. In HLT-NAACL,
+pages 1120–1130.
+
+Hyun-chul Kim and Zoubin Ghahramani. 2012.
+Bayesian classifier combination. In Interna-
+tional Conference on Artificial Intelligence and
+Statistics, pages 619–627. 1269
+
+Guillaume Lample, Miguel Ballesteros, Sandeep
+Subramanian, Kazuya Kawakami, and Chris
+Dyer. 2016. Neural architectures for named
+entity recognition. In Proceedings of NAACL-
+HLT, pages 260–270. 1274
+
+Xuezhe Ma and Eduard Hovy. 2016. End-to-
+end sequence labeling via bi-directional LSTM-
+CNNs-CRF. In Proceedings of the 54th Annual
+Meeting of the Association for Computational
+Linguistics (Volume 1: Long Papers), volume 1,
+pages 1064–1074.
+
+Pablo G. Moreno, Yee Whye Teh, and Fernando
+Perez-Cruz. 2015. Bayesian nonparametric
+crowdsourcing. Journal of Machine Learning
+Research, 16:1607–1627.
+
+An T Nguyen, Byron C Wallace, Junyi Jessy Li,
+Ani Nenkova, and Matthew Lease. 2017. Ag-
+gregating and predicting sequence labels from
+crowd annotations. In Proceedings of the con-
+ference. Association for Computational Lin-
+guistics. Meeting, volume 2017, page 299. NIH
+Public Access.
+
+Quoc Viet Hung Nguyen, Tam Nguyen Thanh,
+Ngoc Tran Lam, and Karl Aberer. 2013. An
+evaluation of aggregation techniques in crowd-
+sourcing. In International Conference on Web
+Information Systems Engineering, pages 1–15.
+Springer. 
+
+Aashish Sheshadri and Matthew Lease. 2013.
+Square: A benchmark for research on comput-
+ing crowd consensus. In First AAAI Conference
+on Human Computation and Crowdsourcing. 
+
+Silviu Paun, Bob Carpenter, Jon Chamberlain,
+Dirk Hovy, Udo Kruschwitz, and Massimo Poe-
+sio. 2018. Comparing bayesian models of an-
+notation. Transactions of the Association for
+Computational Linguistics, 6:571–585. 
+
+E. Simpson, S. Roberts, I. Psorakis, and A. Smith.
+2013. Dynamic Bayesian combination of mul-
+tiple imperfect classifiers. Intelligent Systems
+Reference Library series, Decision Making with
+Imperfect Decision Makers:1–35. 
+
+Barbara Plank, Dirk Hovy, and Anders Søgaard.
+2014. Learning part-of-speech taggers with
+inter-annotator agreement loss. In Proceedings
+of the 14th Conference of the European Chapter
+of the Association for Computational Linguis-
+tics, pages 742–751. 
+
+Edwin D Simpson, Matteo Venanzi, Steven
+Reece, Pushmeet Kohli, John Guiver, Stephen J
+Roberts, and Nicholas R Jennings. 2015. Lan-
+guage understanding in the wild: Combining
+crowdsourcing and machine learning. In Pro-
+ceedings of the 24th International Conference
+on World Wide Web, pages 992–1002. Interna-
+tional World Wide Web Conferences Steering
+Committee.
+
+Nitish Srivastava, Geoffrey Hinton, Alex
+Krizhevsky, Ilya Sutskever, and Ruslan
+Salakhutdinov. 2014. Dropout: a simple way
+to prevent neural networks from overfitting.
+The Journal of Machine Learning Research,
+15(1):1929–1958. 
+
+Pushpendre Rastogi, Ryan Cotterell, and Jason
+Eisner. 2016. Weighting finite-state transduc-
+tions with neural context. In Proceedings of the
+2016 Conference of the North American Chap-
+ter of the Association for Computational Lin-
+guistics: Human Language Technologies, pages
+623–633.
+
+V. C. Raykar, S. Yu, L. H. Zhao, G. H. Valadez,
+C. Florin, L. Bogoni, and L. Moy. 2010. Learn-
+ing from crowds. Journal of Machine Learning
+Research, 11:1297–1322.
+
+Nils Reimers and Iryna Gurevych. 2017. Op-
+timal hyperparameters for deep lstm-networks
+for sequence labeling tasks. arXiv preprint
+arXiv:1707.06799. 
+
+Erik F Tjong Kim Sang and Fien De Meul-
+der. 2003. Introduction to the CoNLL-2003
+shared task: Language-independent named en-
+tity recognition. In Proceedings of the sev-
+enth conference on Natural language learning
+at HLT-NAACL 2003-Volume 4, pages 142–147.
+Association for Computational Linguistics.
+
+Filipe Rodrigues, Francisco Pereira, and
+Bernardete Ribeiro. 2013.
+Learning from
+multiple annotators: distinguishing good from
+random labelers. Pattern Recognition Letters,
+34(12):1428–1436. 
+
+Matteo Venanzi, John Guiver, Gabriella Kazai,
+Pushmeet Kohli, and Milad Shokouhi. 2014.
+Community-based Bayesian aggregation mod-
+els for crowdsourcing. In 23rd international
+conference on World wide web, pages 155–164.
+
+Filipe Rodrigues, Francisco Pereira, and
+Bernardete Ribeiro. 2014.
+Sequence la-
+beling with multiple annotators.
+Machine
+learning, 95(2):165–181. 
+
+Matteo Venanzi, John Guiver, Pushmeet Kohli,
+and Nicholas R Jennings. 2016. Time-sensitive
+Bayesian information aggregation for crowd-
+sourcing systems. Journal of Artificial Intelli-
+gence Research, 56:517–545.
+
+Filipe Rodrigues and Francisco Camara Pereira.
+2018. Deep learning from crowds. In The
+Thirty-Second AAAI Conference on Artificial
+Intelligence (AAAI), 2018.
+
+Burr Settles. 2010. Active learning literature sur-
+vey. University of Wisconsin, Madison, 52(55-
+66):11.
+
+Andrew Viterbi. 1967. Error bounds for convo-
+lutional codes and an asymptotically optimum
+decoding algorithm. IEEE transactions on In-
+formation Theory, 13(2):260–269.
+
+Jacob Whitehill, Ting-fan Wu, Jacob Bergsma,
+Javier R Movellan, and Paul L Ruvolo. 2009.
+Whose vote should count more: Optimal inte-
+gration of labels from labelers of unknown ex-
+pertise. In Advances in neural information pro-
+cessing systems, pages 2035–2043.
+
+Hui Yuan Xiong, Yoseph Barash, and Brendan J
+Frey. 2011. Bayesian prediction of tissue-
+regulated splicing using rna sequence and cellu-
+lar context. Bioinformatics, 27(18):2554–2562.
+
+Jie Yang, Thomas Drake, Andreas Damianou, and
+Yoelle Maarek. 2018. Leveraging crowdsourc-
+ing data for deep active learning an applica-
+tion: Learning intents in Alexa. In Proceed-
+ings of the 2018 World Wide Web Conference
+on World Wide Web, pages 23–32. International
+World Wide Web Conferences Steering Com-
+mittee. 
+
+Harry Zhang. 2004. The optimality of naïve
+Bayes. In Proceedings of the Seventeenth In-
+ternational Florida Artificial Intelligence Re-
+search Society Conference, FLAIRS 2004.
+AAAI Press. 
+
+Barret Zoph, Deniz Yuret, Jonathan May, and
+Kevin Knight. 2016. Transfer learning for low-
+resource neural machine translation. In Pro-
+ceedings of the 2016 Conference on Empiri-
+cal Methods in Natural Language Processing,
+pages 1568–1575.
