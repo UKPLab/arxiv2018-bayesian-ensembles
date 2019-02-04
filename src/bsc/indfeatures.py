@@ -33,16 +33,6 @@ class IndependentFeatures:
 
         # set this to trust the model completely
         alpha0_data = np.copy(alpha0_data) #
-
-        # alpha0_data = np.ones_like(alpha0_data)
-        #
-        # alpha0_data[:] = 0.001
-        # if alpha0_data.ndim == 2:
-        #     alpha0_data *= (nclasses - 1)
-        #     alpha0_data[1, 0] = 1000
-        # elif alpha0_data.ndim >= 3:
-        #     alpha0_data[np.arange(nclasses), np.arange(nclasses), 0] = 1000
-
         alpha_data = np.copy(alpha0_data)
 
         self.alpha0_data = alpha0_data

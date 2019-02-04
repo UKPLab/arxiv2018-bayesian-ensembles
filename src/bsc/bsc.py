@@ -1,31 +1,5 @@
 '''
-Error analysis -- cases include:
-- Assuming an annotation provided by only one base classifier ( p(O | B or I ) = high for other base classifiers)
-- Switching from I-O-O-O to I-O-B-I -- hard to see why this would occur unless transition matrix contains
- p(B | prev_I) < p(B | prev_O) and confusion matrices contain p( I | B ) > p(I | O). 
- Another cause: p( c=O | c_prev = O, t=B) = high (missing an annotation is quite common), 
- p( c=O | c_prev = I, t=B) = low (missing a new annotation straight after another is rare). 
- This error occurs when
- some annotators continue the annotation for longer than others; BAC decides there are two annotations,
- one that agrees with the other combination methods, and one that contains the tail of the overly long
- annotations.  
-
-Possible solution to these two cases is to reduce the prior on missing an annotation, i.e. p( c=O | c_next=whatever, t=B)?
-reduce alpha0[2, 1, 1, :], reduce alpha0[2,0,0,:], perhaps increase alpha0[2,2,:,:] to compensate?
-
-Example error:
--- line 2600, argmin binary experiment
--- Some annotators start the annotation early
--- The annotation is split because the B labels are well trusted
--- But the early annotation is marked because there is a high chance of missing annotations by some annotators.
--- Better model might assume lower chance of I-B transition + lower change of missing something?
-
-TODO: task 1 from the HMM Crowd paper looks like it might work well with BAC because Dawid and Skene beats MACE -->
-confusion matrix is useful, but HMM_Crowd beats D&S --> sequence is good.
-
-Created on Jan 28, 2017
-
-@author: Melvin Laux
+Bayesian sequence combination, variational Bayes implementation.
 '''
 import datetime
 
@@ -36,19 +10,16 @@ from joblib import Parallel, delayed, cpu_count, effective_n_jobs
 import warnings
 
 #from lample_lstm_tagger.loader import tag_mapping
-from algorithm.acc import AccuracyWorker
-from algorithm.cm import ConfusionMatrixWorker
-from algorithm.cv import VectorWorker
-from algorithm.indfeatures import IndependentFeatures
-from algorithm.lstm import LSTM
-from algorithm.mace import MACEWorker
-from algorithm.seq import SequentialWorker
+from bsc.acc import AccuracyWorker
+from bsc.cm import ConfusionMatrixWorker
+from bsc.cv import VectorWorker
+from bsc.indfeatures import IndependentFeatures
+from bsc.lstm import LSTM
+from bsc.mace import MACEWorker
+from bsc.seq import SequentialWorker
 
 
-class BAC(object):
-    '''
-    classdocs
-    '''
+class BSC(object):
 
     K = None  # number of annotators
     L = None  # number of class labels
@@ -71,12 +42,7 @@ class BAC(object):
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, nu0_factor=1.0,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM'):
-        '''
-        Constructor
 
-        beginning_labels should correspond in order to inside labels.
-
-        '''
         self.rare_transition_pseudocount = np.min([np.min(nu0_factor), alpha0_diags, alpha0_factor]) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
@@ -368,6 +334,9 @@ class BAC(object):
                                                                  model.alpha_data,
                                                                  model.lnPi)
 
+            lnpPi += lnpPi_model
+            lnqPi += lnqPi_model
+
         # E[ln p(A | nu_0)]
         x = (self.beta0 - 1) * self.lnB
         gammaln_nu0 = gammaln(self.beta0)
@@ -439,7 +408,7 @@ class BAC(object):
 
     def _update_t(self, parallel, C, C_data, lnPi_data, doc_start):
 
-        # calculate alphas and betas using forward-backward algorithm
+        # calculate alphas and betas using forward-backward bsc
         self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
                                            self.lnB[0:self.L, :], self.lnPi, lnPi_data,
                                            self.lnB[self.before_doc_idx, :], doc_start, self.nscores,
@@ -487,7 +456,7 @@ class BAC(object):
 
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[]):
         '''
-        Runs the BAC algorithm with the given annotations and list of document starts.
+        Runs the BAC bsc with the given annotations and list of document starts.
 
         '''
         # initialise the hyperparameters to correct sizes
@@ -602,7 +571,7 @@ class BAC(object):
                 if self.verbose:
                     print("BAC iteration %i: updated worker models" % self.iter)
 
-                # Note: we are not using this to check convergence -- it's only here to check correctness of algorithm
+                # Note: we are not using this to check convergence -- it's only here to check correctness of bsc
                 # Can be commented out to save computational costs.
                 # lb = self.lowerbound()
                 # print('Iter %i, lower bound = %.5f, diff = %.5f' % (self.iter, lb, lb - oldlb))
@@ -707,8 +676,8 @@ class BAC(object):
 
     def _converged(self):
         '''
-        Calculates whether the algorithm has _converged or the maximum number of iterations is reached.
-        The algorithm has _converged when the maximum difference of an entry of q_t between two iterations is 
+        Calculates whether the bsc has _converged or the maximum number of iterations is reached.
+        The bsc has _converged when the maximum difference of an entry of q_t between two iterations is
         smaller than the given epsilon.
         '''
         if self.verbose:
@@ -826,7 +795,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
 
 def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
     '''
-    Perform the forward pass of the Forward-Backward algorithm (for a single document).
+    Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
     T = C.shape[0]  # infer number of tokens
     L = lnB.shape[0]  # infer number of labels
@@ -887,7 +856,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
 def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
                            before_doc_idx=1, skip=True):
     '''
-    Perform the forward pass of the Forward-Backward algorithm (for multiple documents in parallel).
+    Perform the forward pass of the Forward-Backward bsc (for multiple documents in parallel).
     '''
     # split into documents
     C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
@@ -922,7 +891,7 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
 
 def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
     '''
-    Perform the backward pass of the Forward-Backward algorithm (for a single document).
+    Perform the backward pass of the Forward-Backward bsc (for a single document).
     '''
     # infer number of tokens, labels, and annotators
     T = C.shape[0]
@@ -982,7 +951,7 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
 def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start, nscores, worker_model,
                             before_doc_idx=1, skip=True):
     '''
-    Perform the backward pass of the Forward-Backward algorithm (for multiple documents in parallel).
+    Perform the backward pass of the Forward-Backward bsc (for multiple documents in parallel).
     '''
     # split into documents
     docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)

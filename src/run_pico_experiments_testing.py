@@ -38,9 +38,9 @@ exp.methods =  [#'majority',
                 # 'best', 'worst',
                 #'ibcc', 'bac_acc', 'bac_mace', 'bac_ibcc', 'bac_seq',
                 #'HMM_crowd', 'HMM_crowd_then_LSTM', 'bac_ibcc_then_LSTM',
-                # 'bac_mace_integrateBOF',
+                # 'bac_mace_integrateIF',
                 #'bac_ibcc_integrateLSTM'
-                best_bac_wm + '_integrateBOF',
+                best_bac_wm + '_integrateIF',
                ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof

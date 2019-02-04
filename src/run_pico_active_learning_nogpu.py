@@ -47,7 +47,7 @@ for rep in range(num_reps):
     #
     # exp.methods = [
     #     'majority',
-    #     # 'bac_seq_integrateBOF',
+    #     # 'bac_seq_integrateIF',
     #     # 'HMM_crowd'
     # ]
     #
@@ -76,7 +76,7 @@ for rep in range(num_reps):
 
     exp.methods = [
         'majority',
-        # 'bac_seq_integrateBOF',
+        # 'bac_seq_integrateIF',
         # 'HMM_crowd'
     ]
 
@@ -103,7 +103,7 @@ for rep in range(num_reps):
     # exp.alpha0_factor = 0.1
     #
     # exp.methods = [
-    #     'bac_ibcc_integrateBOF',
+    #     'bac_ibcc_integrateIF',
     # ]
     #
     # exp.save_results = True
@@ -157,7 +157,7 @@ for rep in range(num_reps):
     # exp.alpha0_factor = 0.1
     #
     # exp.methods = [
-    #     'bac_vec_integrateBOF',
+    #     'bac_vec_integrateIF',
     # ]
     #
     # exp.save_results = True
@@ -183,7 +183,7 @@ for rep in range(num_reps):
     # exp.alpha0_factor = 0.1
     #
     # exp.methods = [
-    #     'bac_ibcc_integrateBOF',
+    #     'bac_ibcc_integrateIF',
     # ]
     #
     # exp.save_results = True

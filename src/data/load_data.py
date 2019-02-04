@@ -1,4 +1,7 @@
 '''
+
+Scripts for loading various experimental datasets.
+
 Created on Jul 6, 2017
 
 @author: Melvin Laux

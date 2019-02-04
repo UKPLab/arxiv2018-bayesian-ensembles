@@ -38,7 +38,7 @@ for rep in range(2, num_reps):
     #
     # # run all the methods that don't require tuning here
     # exp.methods =  [
-    #     'bac_seq_integrateBOF',
+    #     'bac_seq_integrateIF',
     #     'HMM_crowd',
     #                 ]
     #
@@ -59,7 +59,7 @@ for rep in range(2, num_reps):
     #
     # # run all the methods that don't require tuning here
     # exp.methods =  [
-    #     'bac_ibcc_integrateBOF',
+    #     'bac_ibcc_integrateIF',
     #                 ]
     #
     # results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -79,7 +79,7 @@ for rep in range(2, num_reps):
 
     # run all the methods that don't require tuning here
     exp.methods =  [
-        'bac_vec_integrateBOF',
+        'bac_vec_integrateIF',
                     ]
 
     results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -126,8 +126,8 @@ for rep in range(2, num_reps):
     #
     # # run all the methods that don't require tuning here
     # exp.methods =  [
-    #     'bac_ibcc_integrateBOF',
-    #     'bac_seq_integrateBOF',
+    #     'bac_ibcc_integrateIF',
+    #     'bac_seq_integrateIF',
     #     'HMM_crowd',
     #     'majority',
     #                 ]
@@ -155,7 +155,7 @@ for rep in range(2, num_reps):
     #
     # # run all the methods that don't require tuning here
     # exp.methods =  [
-    #     'bac_ibcc_integrateBOF',
+    #     'bac_ibcc_integrateIF',
     #                 ]
     #
     # results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -181,7 +181,7 @@ for rep in range(2, num_reps):
     #
     # # run all the methods that don't require tuning here
     # exp.methods =  [
-    #     'bac_ibcc_integrateBOF',
+    #     'bac_ibcc_integrateIF',
     #                 ]
     #
     # exp.random_sampling = True

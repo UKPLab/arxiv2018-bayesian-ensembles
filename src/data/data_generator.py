@@ -1,4 +1,7 @@
 '''
+
+Simulated data generation.
+
 Created on Oct 18, 2016
 
 @author: Melvin Laux

@@ -38,8 +38,8 @@ for rep in range(num_reps):
 
     # run all the methods that don't require tuning here
     exp.methods =  [
-        'bac_seq_integrateBOF_integrateLSTM_atEnd',
-        'bac_seq_integrateBOF_then_LSTM',
+        'bac_seq_integrateIF_integrateLSTM_atEnd',
+        'bac_seq_integrateIF_then_LSTM',
         #'HMM_crowd_then_LSTM'
                     ]
 
@@ -66,8 +66,8 @@ for rep in range(num_reps):
     #
     # # run all the methods that don't require tuning here
     # exp.methods =  [
-    #     'bac_seq_integrateBOF_integrateLSTM_atEnd',
-    #     'bac_seq_integrateBOF_then_LSTM',
+    #     'bac_seq_integrateIF_integrateLSTM_atEnd',
+    #     'bac_seq_integrateIF_then_LSTM',
     #     'HMM_crowd_then_LSTM'
     #                 ]
     #

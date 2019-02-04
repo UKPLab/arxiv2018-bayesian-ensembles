@@ -44,7 +44,7 @@ for rep in range(1, num_reps):
     # exp.alpha0_factor = 1
     #
     # exp.methods = [
-    #     'bac_seq_integrateBOF_integrateLSTM_atEnd',
+    #     'bac_seq_integrateIF_integrateLSTM_atEnd',
     #                ]
     #
     # exp.save_results = True
@@ -70,7 +70,7 @@ for rep in range(1, num_reps):
     exp.alpha0_factor = 1
 
     exp.methods = [
-        'bac_seq_integrateBOF_integrateLSTM_atEnd'
+        'bac_seq_integrateIF_integrateLSTM_atEnd'
                    ]
 
     exp.save_results = True
@@ -96,7 +96,7 @@ for rep in range(1, num_reps):
     exp.alpha0_factor = 1
 
     exp.methods = [
-        'bac_seq_integrateBOF_then_LSTM',
+        'bac_seq_integrateIF_then_LSTM',
         #'HMM_crowd_then_LSTM'
     ]
 
@@ -123,7 +123,7 @@ for rep in range(1, num_reps):
     # exp.alpha0_factor = 1
     #
     # exp.methods = [
-    #     'bac_seq_integrateBOF_then_LSTM',
+    #     'bac_seq_integrateIF_then_LSTM',
     #     'HMM_crowd_then_LSTM'
     # ]
     #

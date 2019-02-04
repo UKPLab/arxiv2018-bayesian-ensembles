@@ -181,11 +181,11 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         'ibcc',
         'HMM_crowd',
         #'HMM_crowd_then_LSTM',
-        'bac_vec_integrateBOF',
-        'bac_ibcc_integrateBOF',
-        'bac_seq_integrateBOF',
-        'bac_seq_integrateBOF_then_LSTM',
-        'bac_seq_integrateBOF_integrateLSTM_atEnd',
+        'bac_vec_integrateIF',
+        'bac_ibcc_integrateIF',
+        'bac_seq_integrateIF',
+        'bac_seq_integrateIF_then_LSTM',
+        'bac_seq_integrateIF_integrateLSTM_atEnd',
     ])
 
     method_names = np.array([

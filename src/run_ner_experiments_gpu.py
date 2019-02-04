@@ -44,7 +44,7 @@ best_bac_wm_score = -np.inf
 # # acc_biases = [1, 10, 100]
 #
 # methods_to_tune = [
-#                    'bac_seq_integrateBOF_integrateLSTM_atEnd',
+#                    'bac_seq_integrateIF_integrateLSTM_atEnd',
 #                    ]
 # # in this case, tune with the full dataset because LSTM doesn't work otherwise
 #
@@ -99,7 +99,7 @@ best_bac_wm_score = -np.inf
 
 # Niter = 10 !!!!!!!!!!!!!!!!!!!!!!!!!
 
-niter = 3
+niter = 20
 
 # --------------------
 exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
@@ -113,7 +113,7 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                best_bac_wm + '_integrateBOF_then_LSTM',
+                best_bac_wm + '_integrateIF_then_LSTM',
 ]
 
 # should run both task 1 and 2.
@@ -186,8 +186,8 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                #best_bac_wm + '_integrateBOF_integrateLSTM',
+                best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
+                #best_bac_wm + '_integrateIF_integrateLSTM',
 ]
 
 # should run both task 1 and 2.

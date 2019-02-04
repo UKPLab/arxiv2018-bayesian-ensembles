@@ -84,16 +84,16 @@ exp.alpha0_acc_bias = best_acc_bias
 # # # acc_biases = [1, 10, 100]
 # #
 # methods_to_tune = [
-#                     #'bac_ibcc_integrateBOF_noHMM',
-#                     'bac_seq_integrateBOF_noHMM',
+#                     #'bac_ibcc_integrateIF_noHMM',
+#                     'bac_seq_integrateIF_noHMM',
 #                     # 'bac_ibcc',
 #                     # 'bac_mace'
 # #                    'ibcc',
-# #                    'bac_vec_integrateBOF',
-# #                    'bac_ibcc_integrateBOF',
-# #                    'bac_seq_integrateBOF',
-# #                    'bac_acc_integrateBOF',
-# #                    'bac_mace_integrateBOF'
+# #                    'bac_vec_integrateIF',
+# #                    'bac_ibcc_integrateIF',
+# #                    'bac_seq_integrateIF',
+# #                    'bac_acc_integrateIF',
+# #                    'bac_mace_integrateIF'
 #                    ]
 #
 # # tune with small dataset to save time
@@ -177,7 +177,7 @@ exp.alpha0_acc_bias = best_acc_bias
 #                 # 'best',
 #                 # 'worst',
 #                 # best_bac_wm,
-#                 # 'bac_mace_integrateBOF'
+#                 # 'bac_mace_integrateIF'
 # ]
 #
 # # should run both task 1 and 2.
@@ -201,7 +201,7 @@ exp.alpha0_acc_bias = best_acc_bias
 # # run all the methods that don't require tuning here
 # exp.methods =  [
 #                 #'HMM_crowd',
-#                 'bac_seq_integrateBOF_noHMM'
+#                 'bac_seq_integrateIF_noHMM'
 # ]
 #
 # # should run both task 1 and 2.
@@ -230,7 +230,7 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    'bac_ibcc_integrateBOF_noHMM',
+    'bac_ibcc_integrateIF_noHMM',
     'bac_ibcc',
 ]
 

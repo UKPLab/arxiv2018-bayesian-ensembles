@@ -76,11 +76,11 @@ exp.methods =  [
                 # # 'ds',
                 # #'gt_then_LSTM',
                 # #best_bac_wm
-                # # best_bac_wm + '_integrateBOF',
-                best_bac_wm + '_integrateBOF_integrateLSTM_atEnd',
-                # # best_bac_wm + '_integrateBOF_then_LSTM',
-                # best_bac_wm + '_integrateBOF_integrateLSTM',
-                # #best_bac_wm + '_integrateBOF_noHMM',
+                # # best_bac_wm + '_integrateIF',
+                best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
+                # # best_bac_wm + '_integrateIF_then_LSTM',
+                # best_bac_wm + '_integrateIF_integrateLSTM',
+                # #best_bac_wm + '_integrateIF_noHMM',
                 # #best_bac_wm + '_noHMM'
                 # 'HMM_crowd',
                 # 'HMM_crowd_then_LSTM',

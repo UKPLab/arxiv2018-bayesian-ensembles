@@ -38,16 +38,16 @@ factors = [0.1, 1, 10]
 
 methods_to_tune = [
                 'bac_ibcc',
-                'bac_ibcc_integrateBOF_noHMM',
-                #'bac_seq_integrateBOF_noHMM',
+                'bac_ibcc_integrateIF_noHMM',
+                #'bac_seq_integrateIF_noHMM',
                     # 'bac_ibcc',
                     # 'bac_mace',
                    # 'ibcc',
-                   # 'bac_vec_integrateBOF',
-                   # 'bac_seq_integrateBOF',
-                   # 'bac_ibcc_integrateBOF',
-                   # 'bac_acc_integrateBOF',
-                   # 'bac_mace_integrateBOF'
+                   # 'bac_vec_integrateIF',
+                   # 'bac_seq_integrateIF',
+                   # 'bac_ibcc_integrateIF',
+                   # 'bac_acc_integrateIF',
+                   # 'bac_mace_integrateIF'
                    ]
 
 best_bac_wm_score = -np.inf
@@ -106,7 +106,7 @@ for m, method in enumerate(methods_to_tune):
 #                 # 'ds',
 #                 # #'best',
 #                 # #'worst',
-#                 best_bac_wm + '_integrateBOF',
+#                 best_bac_wm + '_integrateIF',
 #
 # ]
 #

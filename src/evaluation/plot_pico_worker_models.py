@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 
-from algorithm.bsc import BAC
+from bsc.bsc import BSC
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 import data.load_data as load_data
 import numpy as np
@@ -98,7 +98,7 @@ for w, worker_model in enumerate(worker_models):
 
     data_model = data_models[w]
 
-    model = BAC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
+    model = BSC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
                 beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0=nu0,
                 before_doc_idx=1, worker_model=worker_model, tagging_scheme='IOB2',
                 data_model=data_model, transition_model='HMM')

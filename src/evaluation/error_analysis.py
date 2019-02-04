@@ -291,15 +291,6 @@ if __name__ == '__main__':
     dataroot = os.path.expanduser('~/data/bayesian_annotator_combination/')
 
     # Analyse the errors introduced by our method that the baselines did not make.
-    # prior_str = 'Krusty_task2_plainpriors_proposederrors'
-    # error_analysis(dataroot + '/data/bio/gt.csv',
-    #                dataroot + '/data/bio/annos.csv',
-    #                dataroot + '/data/bio/doc_start.csv',
-    #                dataroot + '/output/bio_task2/pred_nocrowd_started-2018-08-27-13-58-22-Nseen55712.csv',
-    #                dataroot + '/output/bio_task2/analysis_%s' % prior_str,
-    #                dataroot + '/output/bio_task2/analysis_counts_%s' % prior_str,
-    #                0, [0])
-
     outroot = os.path.expanduser('./data/error_analysis/')
 
     # NER ----------------------------------------------------------------------

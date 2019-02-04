@@ -1,4 +1,4 @@
-from algorithm.lstm import LSTM
+from bsc.lstm import LSTM
 import numpy as np
 from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
 import pandas as pd
@@ -47,7 +47,7 @@ n_epochs = 30
 lstm.init(None, N, text, doc_start, nclasses, n_epochs, dev_sentences,)
 
 for n in range(n_epochs):
-    prob = lstm.fit_predict(Et, compute_dev_score=True)
+    prob = lstm.fit_predict(Et)
     print('training set accuracy = %f' % accuracy_score(gt.flatten(), np.argmax(prob, 1)))
 
 print(prob)

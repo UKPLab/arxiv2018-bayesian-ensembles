@@ -20,7 +20,7 @@ from evaluation.plots import SCORE_NAMES, plot_results
 from baselines.hmm import HMM_crowd
 from baselines.util import crowd_data, crowdlab, instance
 from baselines import ibcc, clustering, majority_voting
-from algorithm import bsc
+from bsc import bsc
 from data import data_utils
 from evaluation.span_level_f1 import precision, recall, f1, strict_span_metrics_2
 
@@ -542,12 +542,12 @@ class Experiment(object):
         if use_BOF:
             data_model.append('IF')
 
-        bac_model = bsc.BAC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
-                    inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
-                    alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
-                    nu0_factor=self.nu0_factor,
-                    exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
-                    tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model)
+        bac_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+                            inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
+                            alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
+                            nu0_factor=self.nu0_factor,
+                            exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
+                            tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model)
 
         bac_model.verbose = True
 
@@ -967,7 +967,7 @@ class Experiment(object):
                     else:
                         use_LSTM = 0
 
-                    if len(method_bits) > 2 and 'integrateBOF' in method_bits:
+                    if len(method_bits) > 2 and 'integrateIF' in method_bits:
 
                         use_BOF = True
                     else:

@@ -15,7 +15,7 @@ class IBCC(object):
     verbose = False
     keeprunning = True # set to false causes the combine_classifications method to exit without completing if another 
     # thread is checking whether IBCC is taking too long. Probably won't work well if the optimize_hyperparams is true.    
-# Configuration for variational Bayes (VB) algorithm for approximate inference -------------------------------------
+# Configuration for variational Bayes (VB) bsc for approximate inference -------------------------------------
     # determine convergence by calculating lower bound? Quicker to set=False so we check convergence of target variables
     uselowerbound = False
     min_iterations = 1
@@ -340,7 +340,7 @@ class IBCC(object):
         self.E_t_sparse = self.E_t  # save the sparse version
         self.E_t = E_t_full
         
-# Run the inference algorithm --------------------------------------------------------------------------------------    
+# Run the inference bsc --------------------------------------------------------------------------------------
     def combine_classifications(self, crowdlabels, goldlabels=None, testidxs=None, optimise_hyperparams=0, maxiter=200, 
                                 table_format=False):
         '''
@@ -371,7 +371,7 @@ class IBCC(object):
             Optional array of boolean values indicating which indices require predictions. If not set, all idxs will be
             predicted. 
         optimise_hyperparams : bool
-            Optimise nu0 and alpha0 using the Nelder-Mead algorithm.
+            Optimise nu0 and alpha0 using the Nelder-Mead bsc.
         max_iter : int
             maximum number of iterations permitted
         table_format : bool
@@ -485,7 +485,7 @@ class IBCC(object):
                 counts = self.Ctest[l].T.dot(Tj).reshape(-1)
                 self.alpha[j, l, :] = self.alpha_tr[j, l, :] + counts
 
-# Expectations: methods for calculating expectations with respect to parameters for the VB algorithm ------------------
+# Expectations: methods for calculating expectations with respect to parameters for the VB bsc ------------------
     def _expec_t(self):
         self.lnjoint()
         joint = self.lnpCT
@@ -660,7 +660,7 @@ class IBCC(object):
         
         #ensure new alpha0 and nu0 values are used when updating E_t
         self.init_params(force_reset=True)
-        #run inference algorithm
+        #run inference bsc
         self.run_inference() 
         
         #calculate likelihood from the fitted model

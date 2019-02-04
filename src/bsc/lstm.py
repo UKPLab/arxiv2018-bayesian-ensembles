@@ -50,14 +50,10 @@ class LSTM:
 
         return alpha_data
 
-    def fit_predict(self, labels, compute_dev_score=False):
+    def fit_predict(self, labels):
 
         if self.train_type == 'Bayes':
             labels = np.argmax(labels, axis=1) # uses the mode
-
-            # try sampling the posterior distribution. With enough iterations, this should work, but didn't in our tests with 20 iterations.
-            #rvsunif = np.random.rand(labels.shape[0], 1)
-            #labels = (rvsunif < np.cumsum(labels, axis=1)).argmax(1)
 
         l = 0
         labels_by_sen = []

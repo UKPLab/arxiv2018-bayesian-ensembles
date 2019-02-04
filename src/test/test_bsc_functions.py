@@ -9,7 +9,7 @@ import numpy as np
 from joblib import Parallel
 
 from src.baselines import ibcc
-from src.algorithm import bsc, seq
+from src.bsc import bsc, seq
 from src.data.data_generator import DataGenerator
 
     
@@ -221,7 +221,7 @@ class Test(unittest.TestCase):
         doc_start = np.zeros((5,1))
         doc_start[[0,2]] = 1
         
-        myBac = bsc.BAC(L=3, K=10)
+        myBac = bsc.BSC(L=3, K=10)
         
         result, _ =  myBac.run(C, doc_start)
         target = np.zeros((5,3))
@@ -239,7 +239,7 @@ class Test(unittest.TestCase):
         doc_start = np.zeros((20,1))
         doc_start[[0,10]] = 1
         
-        myBac = bsc.BAC(L=3, K=10)
+        myBac = bsc.BSC(L=3, K=10)
         
         _, result = myBac.run(C, doc_start)
         

@@ -1,11 +1,14 @@
 '''
+
+Simulated data generation
+
 Created on Oct 25, 2016
 
 @author: Melvin Laux
 '''
 
 from data.load_data import load_crowdsourcing_data
-import algorithm.bsc
+import bsc.bsc
 import baselines.majority_voting
 import numpy as np
 import data.data_utils as data_utils

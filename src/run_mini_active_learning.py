@@ -35,9 +35,9 @@ exp.methods =  [
     #'majority',
     #'majority',
     #'HMM_crowd'
-    'bac_seq_integrateBOF',
+    'bac_seq_integrateIF',
     #'HMM_crowd_then_LSTM',
-    #'bac_seq_integrateBOF_then_LSTM',
+    #'bac_seq_integrateIF_then_LSTM',
                 ]
 
 #exp.random_sampling = True
@@ -59,7 +59,7 @@ results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_m
 #
 # exp.methods =  [
 #     'HMM_crowd_then_LSTM',
-#     'bac_seq_integrateBOF_integrateLSTM_atEnd',
+#     'bac_seq_integrateIF_integrateLSTM_atEnd',
 #                 ]
 #
 # results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
