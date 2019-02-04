@@ -164,29 +164,29 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # print('best BAC method tested here = %s' % best_bac_wm)
 #
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-exp.alpha0_acc_bias = best_acc_bias
-
-# run all the methods that don't require tuning here
-exp.methods =  [
-                # 'majority',
-                # 'mace',
-                'ds',
-                # 'best',
-                # 'worst',
-                # best_bac_wm,
-                # 'bac_mace_integrateBOF'
-]
-
-# should run both task 1 and 2.
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data
-)
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+# exp.alpha0_acc_bias = best_acc_bias
+#
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 # 'majority',
+#                 # 'mace',
+#                 # 'ds',
+#                 # 'best',
+#                 # 'worst',
+#                 # best_bac_wm,
+#                 # 'bac_mace_integrateBOF'
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     new_data=regen_data
+# )
 
 # # ------------------------------------------------------------------------------------------------
 # exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
@@ -215,29 +215,29 @@ exp.run_methods(
 #
 #
 # # ------------------------------------------------------------------------------------------------
-# best_nu0factor = 0.1 # changed for MACE...
-# best_diags = 1
-# best_factor = 0.1
-#
-# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-#
-# exp.alpha0_diags = best_diags
-# exp.alpha0_factor = best_factor
-# exp.nu0_factor = best_nu0factor
-# exp.alpha0_acc_bias = best_acc_bias
-#
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#     'bac_ibcc_integrateBOF_noHMM',
-#     'bac_ibcc',
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(
-#     annos, gt, doc_start, output_dir, text,
-#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     new_data=regen_data
-# )
+best_nu0factor = 0.1 # changed for MACE...
+best_diags = 100
+best_factor = 0.1
+
+exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
+exp.save_results = True
+exp.opt_hyper = False#True
+
+exp.alpha0_diags = best_diags
+exp.alpha0_factor = best_factor
+exp.nu0_factor = best_nu0factor
+exp.alpha0_acc_bias = best_acc_bias
+
+# run all the methods that don't require tuning here
+exp.methods =  [
+    'bac_ibcc_integrateBOF_noHMM',
+    'bac_ibcc',
+]
+
+# should run both task 1 and 2.
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)

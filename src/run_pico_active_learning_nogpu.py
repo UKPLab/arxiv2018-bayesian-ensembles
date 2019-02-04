@@ -32,32 +32,31 @@ text_dev = text_dev[:100]
 num_reps = 10
 for rep in range(num_reps):
 
-    # if rep == 0:
-    #     output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
-    #     if not os.path.isdir(output_dir):
-    #         os.mkdir(output_dir)
+    # output_dir = '../../data/bayesian_annotator_combination/output/bio_rand_small/'
+    # if not os.path.isdir(output_dir):
+    #     os.mkdir(output_dir)
     #
-    #     exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
+    # exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
     #
-    #     exp.save_results = True
-    #     exp.opt_hyper = False #True
+    # exp.save_results = True
+    # exp.opt_hyper = False #True
     #
-    #     exp.nu0_factor = 100
-    #     exp.alpha0_diags = 1
-    #     exp.alpha0_factor = 1
+    # exp.nu0_factor = 100
+    # exp.alpha0_diags = 1
+    # exp.alpha0_factor = 1
     #
-    #     exp.methods = [
-    #         'majority',
-    #         'bac_seq_integrateBOF',
-    #         'HMM_crowd'
-    #     ]
+    # exp.methods = [
+    #     'majority',
+    #     # 'bac_seq_integrateBOF',
+    #     # 'HMM_crowd'
+    # ]
     #
-    #     exp.save_results = True
-    #     exp.opt_hyper = False #True
-    #     exp.random_sampling = True
-    #     exp.run_methods(annos, gt, doc_start, output_dir, text,
-    #                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-    #                     active_learning=True, AL_batch_fraction=1.0)
+    # exp.save_results = True
+    # exp.opt_hyper = False #True
+    # exp.random_sampling = True
+    # exp.run_methods(annos, gt, doc_start, output_dir, text,
+    #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+    #                 active_learning=True, AL_batch_fraction=1.0)
 
 
     # ------------------------------------------------------------------------------
@@ -76,9 +75,9 @@ for rep in range(num_reps):
     exp.alpha0_factor = 1
 
     exp.methods = [
-        #'majority',
-        'bac_seq_integrateBOF',
-        'HMM_crowd'
+        'majority',
+        # 'bac_seq_integrateBOF',
+        # 'HMM_crowd'
     ]
 
     exp.save_results = True
@@ -88,31 +87,31 @@ for rep in range(num_reps):
                     ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
                     active_learning=True, AL_batch_fraction=1)
 
-    # ------------------------
-
-    output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
-
-    exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.nu0_factor = 0.1
-    exp.alpha0_diags = 100
-    exp.alpha0_factor = 0.1
-
-    exp.methods = [
-        'bac_ibcc_integrateBOF',
-    ]
-
-    exp.save_results = True
-    exp.opt_hyper = False  # True
-
-    exp.run_methods(annos, gt, doc_start, output_dir, text,
-                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    active_learning=True, AL_batch_fraction=1)
+    # # ------------------------
+    #
+    # output_dir = '../../data/bayesian_annotator_combination/output/bio_al_small/'
+    # if not os.path.isdir(output_dir):
+    #     os.mkdir(output_dir)
+    #
+    # exp = Experiment(None, 3, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
+    #
+    # exp.save_results = True
+    # exp.opt_hyper = False  # True
+    #
+    # exp.nu0_factor = 0.1
+    # exp.alpha0_diags = 100
+    # exp.alpha0_factor = 0.1
+    #
+    # exp.methods = [
+    #     'bac_ibcc_integrateBOF',
+    # ]
+    #
+    # exp.save_results = True
+    # exp.opt_hyper = False  # True
+    #
+    # exp.run_methods(annos, gt, doc_start, output_dir, text,
+    #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+    #                 active_learning=True, AL_batch_fraction=1)
 
 
     # ------------------------

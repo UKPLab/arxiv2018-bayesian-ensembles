@@ -12,6 +12,7 @@ import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.ticker as plticker
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -65,17 +66,28 @@ def nice_names(methods):
 
     return names
 
-def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=None):
+def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=None, thickness=1,
+              colors=None, legend_on=True):
 
-    styles = ['-', '--', '-.', ':']
-    markers = ['o', 'v', 's', 'p', '*']
+    styles = ['-', '--', '-.']
+    markers = ['o', 'v', 's', 'x', 'p', '*']
 
-    matplotlib.rcParams.update({'font.size': 12})
+    matplotlib.rcParams.update({'font.size': 18})
+
+    plt.figure(figsize=(6,5))
 
     for j in range(len(methods)):
-        plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%4], marker=markers[j%5])
 
-    plt.legend(loc='lower right') #loc='best')
+        if colors is not None:
+            colj = colors[j]
+        else:
+            colj = None
+
+        plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%len(styles)], marker=markers[j%5],
+                 linewidth=thickness, markersize=thickness*3, color=colj)
+
+    if legend_on:
+        plt.legend(loc='lower right') #loc='best')
 
     if title is not None:
         plt.title(title)
@@ -83,19 +95,21 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
     plt.ylabel(ylabel)
     plt.xlabel(PARAM_NAMES[param_idx])
     #plt.xticks(x_vals, x_ticks_labels)
-    plt.grid(True)
-    plt.grid(True, which='Minor', axis='y')
+    plt.gca().set_yticks(np.arange(10) / 10.0, minor=True)
+
+    plt.grid(True, alpha=0.5)
+    plt.grid(True, which='Minor', axis='y', alpha=0.5)
 
     if np.min(y_vals) < 0:
         plt.ylim([np.min(y_vals), np.max([1, np.max(y_vals)])])
     #elif not np.isinf(np.max(y_vals)) and not np.isnan(np.max(y_vals)):
     #    plt.ylim([0, np.max([1, np.max(y_vals)])])
 
-    #plt.tight_layout()
+    plt.tight_layout()
 
 
 def plot_results(param_values, methods, param_idx, results, show_plot=False, save_plot=False, output_dir='/output/',
-                 score_names=None, title=None):
+                 score_names=None, title=None, ylim=None, thickness=1, colors=None, legend_on=True):
     # Plots the results for varying the parameter specified by param_idx
 
     methods = nice_names(methods)
@@ -119,7 +133,11 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
     x_ticks_labels = list(map(str, param_values))
 
     for i in range(len(score_names)):
-        make_plot(methods, param_idx, x_vals, results[:,i,:,:], x_ticks_labels, score_names[i], title)
+        make_plot(methods, param_idx, x_vals, results[:,i,:,:], x_ticks_labels, score_names[i], title, thickness,
+                  colors, legend_on)
+
+        if ylim:
+            plt.ylim(ylim)
 
         if save_plot:
             print('Saving plot...')
@@ -158,7 +176,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         ndocs = np.array([384, 764, 1132, 1488, 1834, 2132, 2300]) # [162,324,486,648,810,972,1134,1296,1458,1620])#
 
     methods = np.array([
-        #'majority',
+        'majority',
         'ds',
         'ibcc',
         'HMM_crowd',
@@ -171,7 +189,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
     ])
 
     method_names = np.array([
-        #'MV',
+        'MV',
         'DS',
         'IBCC',
         'HMMcrowd',
@@ -261,12 +279,31 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
             continue
 
     output_pool_dir = os.path.join(output_dir, 'pool/')
+    output_pool_dir2 = os.path.join(output_dir, 'pool2/')
     output_test_dir = os.path.join(output_dir, 'test/')
 
-    plot_results(ndocs, method_names[plot_methods], 6, results[:, :, plot_methods, :], False, True, output_pool_dir, SCORE_NAMES)#,
-                 #title='Active Learning: Pool Data')
-    plot_results(ndocs, method_names[plot_methods], 6, results_nocrowd[:, :, plot_methods, :], False, True, output_test_dir, SCORE_NAMES)#,
-                 #title='Active Learning: Test Data')
+    if intervals == 'PICOsmall':
+        ylim = (0.3, 0.78)
+    elif intervals == 'NER':
+        ylim = (0, 0.78)
+    else:
+        ylim = None
+
+    # split the pool data results in two
+    plot_results(ndocs, method_names[plot_methods & (np.arange(len(plot_methods))<5)], 6, results[:, :,
+                 plot_methods & (np.arange(len(plot_methods))<5), :], False, True,
+                 output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=4, legend_on=intervals=='NER')
+
+
+    plot_results(ndocs, method_names[plot_methods& (np.arange(len(plot_methods))>=5)], 6, results[:, :,
+                 plot_methods & (np.arange(len(plot_methods))>=5), :], False, True,
+                 output_pool_dir2, SCORE_NAMES, ylim=ylim, thickness=4,
+                 colors=['#8c564b', '#e377c2', '#7f7f7f', '#bcbd22'], legend_on=intervals=='NER')
+
+
+    # plot_results(ndocs, method_names[plot_methods], 6, results_nocrowd[:, :, plot_methods, :], False, True,
+    #              output_test_dir, SCORE_NAMES, ylim=ylim, thickness=4)#,
+    #              title='Active Learning: Test Data')
 
     print('Counts of runs with results on pool data:')
     print(run_counts[0, 0, :, 0])
