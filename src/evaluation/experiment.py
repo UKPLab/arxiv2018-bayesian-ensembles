@@ -646,7 +646,7 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
+                        IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter,
                         crf_probs=self.crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences
