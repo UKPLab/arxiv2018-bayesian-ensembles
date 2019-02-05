@@ -7,11 +7,11 @@ class LSTM:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, max_epochs=20):
 
-        self.max_epochs = 5 # sets the total number of training epochs allowed. After this, it will just let the BSC
+        self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
-        self.n_epochs_per_vb_iter = 1
+        self.n_epochs_per_vb_iter = 0
 
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
@@ -75,7 +75,7 @@ class LSTM:
                                                                  self.dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=1,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=n_epochs)
+                                                                 max_niter_no_imprv=2)
 
             self.completed_epochs = n_epochs
             model_updated = True
@@ -88,7 +88,7 @@ class LSTM:
             best_dev = self.LSTMWrapper.best_dev
             last_score = self.LSTMWrapper.last_score
 
-            niter_no_imprv = 0
+            niter_no_imprv = 2
 
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,

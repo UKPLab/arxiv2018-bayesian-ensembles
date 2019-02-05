@@ -245,6 +245,7 @@ class Experiment(object):
         self.alpha0_factor = alpha0_factor
         self.alpha0_diags = alpha0_diags
         self.nu0_factor = beta0_factor
+        self.bsc_nepochs = 20
 
         # save results from methods here. If we use compound methods, we can reuse these results in different
         # combinations of methods.
@@ -514,12 +515,12 @@ class Experiment(object):
 
         return agg, probs, ibc
 
-    def _run_bac(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
+    def _run_bsc(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM',
                  doc_start_unseen=None, text_unseen=None, active_learning=False):
 
-        self.bac_worker_model = method.split('_')[1]
+        self.bsc_worker_model = method.split('_')[1]
         L = self.num_classes
 
         num_types = (self.num_classes - 1) / 2
@@ -542,35 +543,37 @@ class Experiment(object):
         if use_BOF:
             data_model.append('IF')
 
-        bac_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
                             inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
                             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
                             nu0_factor=self.nu0_factor,
-                            exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bac_worker_model,
+                            exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bsc_worker_model,
                             tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model)
 
-        bac_model.verbose = True
+        bsc_model.verbose = True
+
+        bsc_model.max_internal_iters = self.bsc_nepochs
 
         if not active_learning:
             np.random.seed(592)  # for reproducibility
 
         if self.opt_hyper:
-            probs, agg = bac_model.optimize(annotations, doc_start, text, maxfun=1000,
+            probs, agg = bsc_model.optimize(annotations, doc_start, text, maxfun=1000,
                                       converge_workers_first=use_LSTM==2, dev_sentences=dev_sentences)
         else:
-            probs, agg = bac_model.run(annotations, doc_start, text,
+            probs, agg = bsc_model.run(annotations, doc_start, text,
                              converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs, dev_sentences=dev_sentences)
 
-        model = bac_model
+        model = bsc_model
 
         if ground_truth_nocrowd is not None and '_thenLSTM' not in method:
-            probs_nocrowd, agg_nocrowd = bac_model.predict(doc_start_nocrowd, text_nocrowd)
+            probs_nocrowd, agg_nocrowd = bsc_model.predict(doc_start_nocrowd, text_nocrowd)
         else:
             probs_nocrowd = None
             agg_nocrowd = None
 
         if '_thenLSTM' not in method and doc_start_unseen is not None and len(doc_start_unseen) > 0:
-            probs_unseen, agg_unseen = bac_model.predict(doc_start_unseen, text_unseen)
+            probs_unseen, agg_unseen = bsc_model.predict(doc_start_unseen, text_unseen)
         else:
             probs_unseen = None
             agg_unseen = None
@@ -643,8 +646,8 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter,
-                        crf_probs=self.crf_probs, max_niter_no_imprv=self.max_iter)
+                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
+                        crf_probs=self.crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
@@ -847,7 +850,7 @@ class Experiment(object):
         doc_start_all = doc_start
         text_all = text
 
-        self.bac_nu0 = np.ones((self.num_classes + 1, self.num_classes)) * self.nu0_factor
+        self.bsc_nu0 = np.ones((self.num_classes + 1, self.num_classes)) * self.nu0_factor
         self.ibcc_nu0 = np.ones(self.num_classes) * self.nu0_factor
 
         # indicates presence of annotations for each document from each annotator
@@ -974,7 +977,7 @@ class Experiment(object):
                         use_BOF = False
 
                     if method not in self.aggs or rerun_all:
-                        agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_bac(
+                        agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_bsc(
                                     annotations, doc_start, text,
                                     method, use_LSTM=use_LSTM, use_BOF=use_BOF,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,

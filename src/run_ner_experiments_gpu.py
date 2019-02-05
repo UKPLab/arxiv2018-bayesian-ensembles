@@ -96,7 +96,7 @@ best_bac_wm_score = -np.inf
 # print('best BAC method tested here = %s' % best_bac_wm)
 
 # --------------------
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -119,7 +119,7 @@ exp.run_methods(
 )
 
 # # reset to free memory? ------------------------------------------------------------------------------------------------
-# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
+# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 # exp.save_results = True
 # exp.opt_hyper = False#True
 #
@@ -142,7 +142,7 @@ exp.run_methods(
 # )
 
 # # reset ------------------------------------------------------------------------------------------------
-# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
+# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 # exp.save_results = True
 # exp.opt_hyper = False#True
 #
@@ -169,7 +169,7 @@ exp.run_methods(
 
 niter = 20
 
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=niter)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -177,6 +177,7 @@ exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
+exp.bsc_nepochs = 3
 
 # run all the methods that don't require tuning here
 exp.methods =  [

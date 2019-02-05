@@ -8,7 +8,8 @@ class IndependentFeatures:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_iters_after_workers_converge, crf_probs, dev_sentences):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_iters_after_workers_converge,
+             crf_probs, dev_sentences, max_internal_iters):
 
         self.N = N
 

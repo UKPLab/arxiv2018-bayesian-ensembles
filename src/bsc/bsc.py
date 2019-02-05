@@ -117,6 +117,7 @@ class BSC(object):
         self.max_iter = max_iter - self.max_data_updates_at_end  # maximum number of iterations before training data models
         self.eps = eps  # threshold for convergence
         self.iter = 0
+        self.max_internal_iters = 20
 
         self.verbose = False  # can change this if you want progress updates to be printed
 
@@ -494,7 +495,7 @@ class BSC(object):
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L,
                                   self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
-                                  dev_sentences)
+                                  dev_sentences, self.max_internal_iters)
             model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
         for model in self.data_model:
