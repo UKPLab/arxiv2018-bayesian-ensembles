@@ -11,7 +11,7 @@ class LSTM:
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
-        self.n_epochs_per_vb_iter = 0
+        self.n_epochs_per_vb_iter = 1
 
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
@@ -64,6 +64,8 @@ class LSTM:
                 sen_labels.append(self.IOB_label[labels[l]])
                 l += 1
 
+        model_updated = False
+
         if self.LSTMWrapper.model is None:
             # the first update needs more epochs to reach a useful level -- use all allowed epochs
             n_epochs = self.max_epochs - ((self.max_vb_iters-1) * self.n_epochs_per_vb_iter) # the first iteration needs a bit more to move off the random initialisation
@@ -75,7 +77,7 @@ class LSTM:
                                                                  self.dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=1,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=2)
+                                                                 max_niter_no_imprv=n_epochs)
 
             self.completed_epochs = n_epochs
             model_updated = True
@@ -94,13 +96,12 @@ class LSTM:
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
                                     best_dev, last_score, compute_dev=True)
 
+                model_updated = True
+
             if self.LSTMWrapper.best_model_saved: # check that we are actually saving models before loading the best one so far
                 self.LSTMWrapper.model.reload()
 
             self.completed_epochs += n_epochs
-            model_updated = True
-        else:
-            model_updated = False
 
         # now make predictions for all sentences
         if model_updated:

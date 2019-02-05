@@ -96,7 +96,7 @@ class LSTMWrapper(object):
             new_cost = self.f_train(*input)
             epoch_costs.append(new_cost)
 
-            if i % 50 == 0 and i > 0 == 0:
+            if i % 500 == 0 and i > 0 == 0:
                 print("%i, cost average: %f" % (i, np.mean(epoch_costs[-50:])))
 
         if compute_dev:
