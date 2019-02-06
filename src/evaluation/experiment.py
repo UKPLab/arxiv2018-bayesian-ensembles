@@ -515,7 +515,7 @@ class Experiment(object):
 
         return agg, probs, ibc
 
-    def _run_bsc(self, annotations, doc_start, text, method, use_LSTM=0, use_BOF=False,
+    def _run_bsc(self, annotations, doc_start, text, method, use_LSTM=0, use_IF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
                  ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None, transition_model='HMM',
                  doc_start_unseen=None, text_unseen=None, active_learning=False):
@@ -540,7 +540,7 @@ class Experiment(object):
                 dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(ground_truth_val), text_val,
                                                                    doc_start_val, ground_truth_val)
 
-        if use_BOF:
+        if use_IF:
             data_model.append('IF')
 
         bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
@@ -646,8 +646,8 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_iter,
-                        crf_probs=self.crf_probs, max_niter_no_imprv=self.max_iter) # for PICo set to freq_eval=5 and max_niter_no_imprv=2
+                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
+                        crf_probs=self.crf_probs, max_niter_no_imprv=2) # for PICo set to freq_eval=5 and max_niter_no_imprv=2
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)
@@ -979,7 +979,7 @@ class Experiment(object):
                     if method not in self.aggs or rerun_all:
                         agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_bsc(
                                     annotations, doc_start, text,
-                                    method, use_LSTM=use_LSTM, use_BOF=use_BOF,
+                                    method, use_LSTM=use_LSTM, use_IF=use_BOF,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
                                     ground_truth_nocrowd=ground_truth_nocrowd,
                                     doc_start_nocrowd=doc_start_nocrowd,
