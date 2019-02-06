@@ -11,7 +11,7 @@ class LSTM:
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
-        self.n_epochs_per_vb_iter = 1
+        self.n_epochs_per_vb_iter = 0
 
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
