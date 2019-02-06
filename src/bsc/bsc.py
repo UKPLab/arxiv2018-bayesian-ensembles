@@ -40,10 +40,10 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, nu0_factor=1.0,
+                 before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM'):
 
-        self.rare_transition_pseudocount = np.min([np.min(nu0_factor), alpha0_diags, alpha0_factor]) / 10.0 # this makes the rare transition much less likely than
+        self.rare_transition_pseudocount = np.min([np.min(beta0_factor), alpha0_diags, alpha0_factor]) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
 
@@ -59,7 +59,7 @@ class BSC(object):
         self.beginning_labels = beginning_labels
         self.exclusions = exclusions
 
-        self.beta0 = np.ones((self.L + 1, self.L)) * nu0_factor
+        self.beta0 = np.ones((self.L + 1, self.L)) * beta0_factor
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':

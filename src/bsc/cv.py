@@ -9,11 +9,11 @@ class VectorWorker():
 # are summed together to compute lnPi_incorrect, then exp(lnPi_incorrect) is divided by nclasses - 1.
 
     def _init_alpha0(alpha0_diags, alpha0_factor, L):
-        alpha0_factor = alpha0_factor / ((L - 1) / 2)
-        alpha0_diags = alpha0_diags + alpha0_factor * ((L-1)/2 - 1)
+        alpha0_base = alpha0_factor / ((L - 1) / 2)
+        alpha0_correct = alpha0_diags + alpha0_base * ((L-1)/2 - 1)
 
-        alpha0 = alpha0_factor * np.ones((L, L)) + \
-                          alpha0_diags * np.eye(L)
+        alpha0 = alpha0_base * np.ones((L, L)) + \
+                 alpha0_correct * np.eye(L)
 
         alpha0_data = np.copy(alpha0)
         alpha0_data[:] = alpha0_factor / ((L - 1) / 2) + np.eye(L) * (
