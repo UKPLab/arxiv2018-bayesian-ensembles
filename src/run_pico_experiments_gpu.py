@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_sequence_combination/output/pico'
+output_dir = '../../data/bayesian_sequence_combination/output/pico/'
 
 regen_data = False
 
