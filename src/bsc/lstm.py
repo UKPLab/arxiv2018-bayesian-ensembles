@@ -5,7 +5,7 @@ import numpy as np
 
 class LSTM:
 
-    train_type = 'MLEs'#'Bayes'
+    train_type = 'MLE'#'Bayes'
 
     def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, max_epochs=20):
 
