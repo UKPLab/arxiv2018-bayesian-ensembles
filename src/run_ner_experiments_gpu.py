@@ -177,7 +177,7 @@ exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
-exp.bsc_nepochs = 3
+#exp.bsc_nepochs = 3
 
 # run all the methods that don't require tuning here
 exp.methods =  [
