@@ -66,6 +66,9 @@ class LSTM:
 
         model_updated = False
 
+        niter_no_imprv = 2
+        freq_eval = 5
+
         if self.LSTMWrapper.model is None:
             # the first update can use more epochs if we have allowed them
             n_epochs = self.max_epochs - ((self.max_vb_iters-1) * self.n_epochs_per_vb_iter) # the first iteration needs a bit more to move off the random initialisation
@@ -75,9 +78,9 @@ class LSTM:
             # don't need to use an dev set here for early stopping as this may break EM
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, self.dev_sentences,
                                                                  self.dev_labels, self.IOB_map, self.IOB_label,
-                                                                 self.nclasses, n_epochs, freq_eval=1,
+                                                                 self.nclasses, n_epochs, freq_eval=freq_eval,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=n_epochs)
+                                                                 max_niter_no_imprv=niter_no_imprv)
 
             self.completed_epochs = n_epochs
             model_updated = True
@@ -85,16 +88,13 @@ class LSTM:
         elif self.completed_epochs <= self.max_epochs:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
 
-            # best_dev = -np.inf
-            # last_score = best_dev
             best_dev = self.LSTMWrapper.best_dev
             last_score = self.LSTMWrapper.last_score
 
-            niter_no_imprv = 2
-
             for epoch in range(n_epochs):
                 niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
-                                    best_dev, last_score, compute_dev=True)
+                                                    best_dev, last_score,
+                                                    compute_dev=((epoch + self.completed_epochs + 1) % freq_eval)==0)
 
                 model_updated = True
 
