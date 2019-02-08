@@ -111,10 +111,13 @@ class LSTMWrapper(object):
                 print("Saving model to disk...")
                 self.model.save()
                 self.best_model_saved = True
-
+                self.best_dev = best_dev
                 niter_no_imprv = 0
+
             elif dev_score <= last_score:
                 niter_no_imprv += 1
+
+            self.last_score = last_score
         else:
             dev_score = last_score
 
@@ -221,9 +224,6 @@ class LSTMWrapper(object):
 
         if self.best_model_saved:
             model.reload()
-
-        self.best_dev = best_dev
-        self.last_score = last_score
 
         return model, f_eval
 

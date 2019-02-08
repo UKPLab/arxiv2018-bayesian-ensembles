@@ -11,7 +11,7 @@ class LSTM:
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
-        self.n_epochs_per_vb_iter = 1
+        self.n_epochs_per_vb_iter = 5
 
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
@@ -67,10 +67,10 @@ class LSTM:
         model_updated = False
 
         if self.LSTMWrapper.model is None:
-            # the first update needs more epochs to reach a useful level -- use all allowed epochs
+            # the first update can use more epochs if we have allowed them
             n_epochs = self.max_epochs - ((self.max_vb_iters-1) * self.n_epochs_per_vb_iter) # the first iteration needs a bit more to move off the random initialisation
-            if n_epochs < 1:
-                n_epochs = 1
+            if n_epochs < self.n_epochs_per_vb_iter:
+                n_epochs = self.n_epochs_per_vb_iter
 
             # don't need to use an dev set here for early stopping as this may break EM
             self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, self.dev_sentences,

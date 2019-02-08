@@ -1,50 +1,6 @@
 '''
 Created on April 27, 2018
 
-determine whether the confusion matrix for the LSTM is reasonable. -- currently running with atEnd computation,
-same priors as workers, to save conf mats as npy file -- now looks okay but results are still same.
-
-The performance drop when integrating the LSTM should not occur if the model is set up correctly,
-since the LSTM should reinforce the existing predictions in most cases. It may cause a problem if
-its labels push the E_t values towards one for data points that were
-previously uncertain. This could, in turn, change the sequence.
-But it's not clear why that wouldn't simply tend toward the LSTM's predictions instead -- perhaps
-in cases where there are multiple possible sequences, we get a mishmash of both?
-TODO: error analysis to see what the differences between the integratedLSTM, thenLSTM, and BSC predictions are.
-A solution would be to soften all confusion matrices
-by increasing the alpha0 factor. This should be tuned on the validation set.
-
-Overfitting the LSTM should reinforce the existing predictions as mentioned above.
-However, underfitting should not be an issue as it was not an issue for thenLSTM.
-
-Another possible problem may be the confusion matrices -- is there something strange in there for some rare label
-transitions? Strong priors should help here -- use validation set to tune.
-
-Could also try the LSTM with totally flat prior (no disallowed counts etc).
-
-Using a flat prior with very high counts does stop the LSTM from affecting results much.
-Results with very informative, reliable prior should be like thenLSTM, but are still extremely similar
-to the results with soft priors on the LSTM. Perhaps over-confidence in the label distributions is causing
-some of the sequence labels to change. E.g. O->I
-
-Check results with moderate counts for a flat prior - tune on validation -- validation didn't work well with the small training set.
-Exclude the BOF part when using +LSTM because the text features shouldn't get used twice? -- this does seem to help.
-Tried: try more iterations to allow proper convergence? -- does not help.
-
-Fixed: comparison between results on air and krusty -- still same? Numerical differences? Did our latest prior changes
-reduce performance from the values in the table? After this is dones, go through the ideas below.
-- Current priors have reduced f1 score by 1% over the values in the table. Find the date of these results and find out
-how priors were previously set.
-- In current setup, f1scores are only slightly lower than those without the LSTM
-- However, on the test data, the performance has decreased further by just over one percent (may be due to priors again)
-- We aim to get better performance on the test data than with HMMCrowd or non-integrated method, even if no improvement on training data
-
-run with prior biasing away from outside labels. -- ran, it caused big problems, except with bias set to one did little damage.
-
-Run with one iteration per VB iteration -- did very poorly
-Can we get LSTM to give us probabilities when integrated? -- tried, didn't make much difference, maybe worse when running at end?
-MaybeTODO: Can we train LSTM on probabilities?
-
 @author: Edwin Simpson
 '''
 

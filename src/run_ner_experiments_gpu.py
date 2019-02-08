@@ -165,7 +165,15 @@ best_bac_wm_score = -np.inf
 #     new_data=regen_data, ground_truth_all_points=gt_all
 # )
 
-# --------------------
+# # -------------------- debug with subset -------
+# s = 100
+# idxs = np.argwhere(gt!=-1)[:s, 0]
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# text = text[idxs]
+# gt_task1_val = gt_task1_val[idxs]
+# # -------------------------
 
 niter = 20
 
@@ -177,7 +185,7 @@ exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
-#exp.bsc_nepochs = 3
+#exp.bsc_nepochs = 1
 
 # run all the methods that don't require tuning here
 exp.methods =  [

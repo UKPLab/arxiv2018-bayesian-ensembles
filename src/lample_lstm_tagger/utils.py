@@ -5,9 +5,9 @@ import numpy as np
 import theano
 
 
-models_path = "./models"
+models_path = "./tmp/models"
 eval_path = "./evaluation"
-eval_temp = os.path.join(eval_path, "temp")
+eval_temp = os.path.join(eval_path, "tmp")
 eval_script = os.path.join(eval_path, "conlleval")
 
 

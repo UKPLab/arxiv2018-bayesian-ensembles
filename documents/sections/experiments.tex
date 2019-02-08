@@ -299,7 +299,12 @@ training on a small subset of 250 documents for NER and 500 documents for PICO.
 For the integrated BSC-seq+LSTM,  
 we found better validation set performance for both our datasets if the LSTM is first excluded while 
 the other parameters converge before training the LSTM. 
-This likely reduces over-fitting resulting from the maximum likelihood step used to integrate the LSTM as a black-box sequence tagger.
+Note that we use the dev set at each VB iteration to select the best
+LSTM model after each epoch. 
+%this means that in some iterations, we might reject all the latest epochs so a model would get stuck, potentially in a local maximum. But if we don't do it, we would overshoot the optimum.
+% the resolution would be to have multiple epochs per VB iteration, or to keep each LSTM update and
+% use the dev set to choose the best VB iteration to stop at.
+These steps reduce over-fitting resulting from the maximum likelihood step used to integrate the LSTM as a black-box sequence tagger.
 
 The results of the aggregation task are shown in Table \ref{tab:aggregation_results}.
 Although DS and IBCC do not consider sequence information nor the text itself, 
