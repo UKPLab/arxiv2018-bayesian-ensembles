@@ -67,7 +67,7 @@ class LSTM:
         model_updated = False
 
         niter_no_imprv = 2
-        freq_eval = 5
+        freq_eval = 1
 
         if self.LSTMWrapper.model is None:
             # the first update can use more epochs if we have allowed them
