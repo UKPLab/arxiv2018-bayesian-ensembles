@@ -80,6 +80,8 @@ class LSTMWrapper(object):
     def __init__(self, models_path_alt=None):
         self.model = None
         self.best_model_saved = False # flag to tell us whether the best model on dev was saved to disk
+        self.best_dev = -np.inf
+        self.last_score = -np.inf
 
         if models_path is None:
             self.models_path = models_path
