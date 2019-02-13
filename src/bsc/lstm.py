@@ -7,7 +7,7 @@ class LSTM:
 
     train_type = 'MLE'#'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=20):
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
@@ -79,7 +79,7 @@ class LSTM:
         model_updated = False
 
         niter_no_imprv = 2
-        freq_eval = 1
+        freq_eval = 5
 
         if self.LSTMWrapper.model is None:
             # the first update can use more epochs if we have allowed them
