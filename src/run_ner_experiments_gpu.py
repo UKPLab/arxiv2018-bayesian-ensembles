@@ -177,7 +177,7 @@ best_bac_wm_score = -np.inf
 
 niter = 20 # variational inference iterations
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter, max_internal_iter=3)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
@@ -188,8 +188,8 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                #best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
-                best_bac_wm + '_integrateIF_then_LSTM',
+                best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
+                #best_bac_wm + '_integrateIF_then_LSTM',
 ]
 
 # should run both task 1 and 2.

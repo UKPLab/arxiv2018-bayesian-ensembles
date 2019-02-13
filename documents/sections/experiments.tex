@@ -135,8 +135,6 @@ IBCC & 79.0 & 70.4 & 74.4 & %77.1 & .9550 &
 HMM-crowd & 80.5 & 69.4 & 74.6 & %77.0 & .9762 & 
 1.04 & 0 & .1 & 0 & 76.5 & 66.2 & 71.0 & %77.9 & \textbf{.944} & 
 0.79 & 0 & .1 & 0 \\ 
-%HMM-crowd$\Arrow{0.2cm}$LSTMp & 81.3 & 68.6 & 74.4 & %76.1 & .9887 & 
-%0.25 & 134 &  \\ 
 HMM-crowd$\Arrow{0.2cm}$LSTM & 81.8 & 69.5 & 75.2 & %77.3 & .8972 & 
 12.2 & 0 & .1 & 0 & 76.5 & 66.5 & 71.2 & %78.2 & .868 & 
 13.0 & 0 & .1 & 0\\ 
@@ -168,16 +166,13 @@ BSC-seq-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 &
  0.73 & .1 & .1 & .1\\ 
 BSC-seq$\backslash\bs T$ & 60.5 & 42.3 & 49.8 & 0.93 & .1 & 1 & 1 & 51.2 & 70.4 & 59.8 & 1.04 & .1 & .1 & 1\\\midrule
 
-%BSC-seq$\Arrow{0.2cm}$LSTMp & 80.3 & 74.6 & 77.3 & %78.6 & .9910 & 
-%0.20 & 129 & .1, 1, 1 \\
-BSC-seq$\Arrow{0.2cm}$LSTM & 80.2 & 75.3 & 77.7 & %79.6 & .9262 & 
-11.0 & .1 & 1 & 1 & 
+BSC-seq$\Arrow{0.2cm}$LSTM & %82.5 & 76.0 & 79.1 & 10.4 % scores if testing on dev set at every iteration
+80.2 & 75.3 & 77.7 & 11.0 
+& .1 & 1 & 1 & 
 75.7 & 75.4 & 75.5 & %51.6 & .821 & 
 25.5 & 100 & 1 & 1 \\
-%BSC-seq+LSTMp & 81.2 & 75.3 & 78.1 & %79.3 & .9574 & 
-%0.54 & 0 & .1, 1, 1 \\
 BSC-seq+LSTM & 
-82.3 & \textbf{75.9} & \textbf{78.9} & 0.59 %79.6 & .9513 & % this requires 3 epochs then no changes to the model
+82.2 & \textbf{76.0} & \textbf{79.0} & 0.76 %79.6 & .9513 & % this requires 3 epochs then no changes to the model
 %81.5 & \textbf{75.5} & \textbf{78.4} & 0.74 
 & .1 & 1 & 1 & 
 78.7 & \textbf{78.6} & \textbf{78.7} & %51.9 & .934 & 
@@ -423,11 +418,13 @@ annotator models.
 HMM-crowd$\Arrow{0.2cm}$LSTM & \textbf{78.7} & 59.0 & 67.5 &% 69.4 & .8642 &
  15.9  & \textbf{75.6} & 61.6 & 67.9 & % \textbf{76.4} & .8380 &
 13.5 \\
-BSC-seq$\Arrow{0.2cm}$LSTM & 74.3 & \textbf{62.8} & \textbf{68.1} & %69.7 & .8868 & 
-15.65  & 82.3 & \textbf{66.4} & \textbf{73.5} & %58.2 & .8349 &
+BSC-seq$\Arrow{0.2cm}$LSTM & 76.9 & 64.1 & \textbf{69.9} & %74.3 & \textbf{62.8} & \textbf{68.1} & %69.7 & .8868 & 
+%15.65  
+14.54 & 82.3 & \textbf{66.4} & \textbf{73.5} & %58.2 & .8349 &
  19.6  \\
-BSC-seq+LSTM & 72.3 & 64.2 & 68.0 &% 67.6 & .9589 &
- \textbf{0.6} & \textbf{87.4} & 57.9 & 69.7 & \textbf{0.9} \\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
+BSC-seq+LSTM & 78.6 & 59.8 & 67.9 %72.3 & 64.2 & 68.0 &% 67.6 & .9589 &
+% \textbf{0.6} 
+& \textbf{0.55} & \textbf{87.4} & 57.9 & 69.7 & \textbf{0.9} \\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
 %BCC-seq+LSTM &\\
 % Results on current code
 % 69.6 & 60.3 & 64.6 ????

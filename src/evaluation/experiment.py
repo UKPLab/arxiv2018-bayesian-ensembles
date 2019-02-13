@@ -224,7 +224,7 @@ class Experiment(object):
     random_sampling = False
 
     def __init__(self, generator, nclasses=None, nannotators=None, config=None, alpha0_factor=1.0, alpha0_diags=1.0,
-                 beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0, max_internal_iter=10):
+                 beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0, max_internal_iter=20):
 
         self.output_dir = '~/data/bayesian_sequence_combination/output/'
 
@@ -646,8 +646,8 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=1, n_epochs=self.max_internal_iter,
-                        crf_probs=self.crf_probs, max_niter_no_imprv=2) # for PICo set to freq_eval=5 and max_niter_no_imprv=2
+                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_internal_iter,
+                        crf_probs=self.crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)

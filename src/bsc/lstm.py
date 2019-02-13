@@ -7,11 +7,11 @@ class LSTM:
 
     train_type = 'MLE'#'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, max_epochs=10):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
-        self.n_epochs_per_vb_iter = 1
+        self.n_epochs_per_vb_iter = 0
 
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
@@ -35,6 +35,7 @@ class LSTM:
 
         alpha_data = np.copy(alpha0_data)
         self.alpha0_data = np.copy(alpha0_data)
+        self.alpha0_data_prior = np.copy(alpha0_data)
 
         self.dev_sentences = dev_sentences
         if dev_sentences is not None:
@@ -46,6 +47,17 @@ class LSTM:
             self.dev_labels = dev_gold
         else:
             self.all_sentences = self.sentences
+
+        self.tdev = np.zeros((len(self.dev_labels), self.nclasses))
+        self.tdev[np.arange(self.tdev.shape[0]), self.dev_labels] = 1
+        self.doc_start_dev = np.zeros((self.tdev.shape[0], 1))
+        pointer = 0
+        for sen in self.dev_sentences:
+            self.doc_start_dev[pointer] = 1
+            pointer += len(sen)
+
+
+        self.A = A
 
         return alpha_data
 
@@ -107,9 +119,15 @@ class LSTM:
         if model_updated:
             agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
             self.probs = probs
+
+            _, self.dev_probs  = self.LSTMWrapper.predict_LSTM(self.dev_sentences)
+
             print('LSTM assigned class labels %s' % str(np.unique(agg)) )
         else:
             probs = self.probs
+
+        self.alpha0_data = self.A._post_alpha_data(self.tdev, self.dev_probs, self.alpha0_data_prior, self.alpha0_data,
+                                                   self.doc_start_dev, self.nclasses, -1)
 
         return probs
 

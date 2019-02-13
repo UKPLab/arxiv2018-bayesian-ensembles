@@ -495,7 +495,7 @@ class BSC(object):
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L,
                                   self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
-                                  dev_sentences, self.max_internal_iters)
+                                  dev_sentences, self.A, self.max_internal_iters)
             model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
         for model in self.data_model:
@@ -554,11 +554,12 @@ class BSC(object):
                                   (self.iter, type(model)))
 
                         model.alpha_data = self.A._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
-                                                                   model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                                                       model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.A._calc_q_pi(model.alpha_data)
 
                         if self.verbose:
-                            print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
+                            print("BAC iteration %i: updated model for feature-based predictor of type %s" %
+                                  (self.iter, str(type(model))) )
 
                         if type(model) == LSTM:
                            np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
