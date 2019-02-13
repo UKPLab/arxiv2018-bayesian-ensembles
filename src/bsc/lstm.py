@@ -126,8 +126,8 @@ class LSTM:
         else:
             probs = self.probs
 
-        self.alpha0_data = self.A._post_alpha_data(self.tdev, self.dev_probs, self.alpha0_data_prior, self.alpha0_data,
-                                                   self.doc_start_dev, self.nclasses, -1)
+        # self.alpha0_data = self.A._post_alpha_data(self.tdev, self.dev_probs, self.alpha0_data_prior, self.alpha0_data,
+        #                                            self.doc_start_dev, self.nclasses, -1)
 
         return probs
 
