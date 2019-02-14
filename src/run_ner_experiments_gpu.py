@@ -177,7 +177,7 @@ best_bac_wm_score = -np.inf
 
 niter = 20 # variational inference iterations
 
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)#, max_internal_iter=2)
 exp.save_results = True
 exp.opt_hyper = False#True
 

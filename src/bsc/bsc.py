@@ -537,7 +537,7 @@ class BSC(object):
                 for model in self.data_model:
                     if (type(model) != LSTM and not self.workers_converged)\
                             or not converge_workers_first \
-                            or (type(model) == LSTM and self.workers_converged):
+                            or self.workers_converged: # TODO: test with type(model) == LSTM removed from condition
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         if model.train_type == 'Bayes':
