@@ -7,11 +7,11 @@ class LSTM:
 
     train_type = 'MLE'#'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=20):
+    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
-        self.n_epochs_per_vb_iter = 0
+        self.n_epochs_per_vb_iter = 1
 
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
@@ -35,7 +35,7 @@ class LSTM:
 
         alpha_data = np.copy(alpha0_data)
         self.alpha0_data = np.copy(alpha0_data)
-        self.alpha0_data_prior = np.copy(alpha0_data)
+        #self.alpha0_data_prior = np.copy(alpha0_data)
 
         self.dev_sentences = dev_sentences
         if dev_sentences is not None:
