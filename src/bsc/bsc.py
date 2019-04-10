@@ -418,14 +418,14 @@ class BSC(object):
         if self.verbose:
             print("BAC iteration %i: completed forward pass" % self.iter)
 
-        lnLambd = _parallel_backward_pass(parallel, C, C_data,
+        self.lnLambd = _parallel_backward_pass(parallel, C, C_data,
                                           self.lnB[0:self.L, :], self.lnPi, lnPi_data,
                                           doc_start, self.nscores, self.A, self.before_doc_idx)
         if self.verbose:
             print("BAC iteration %i: completed backward pass" % self.iter)
 
         # update q_t and q_t_joint
-        self.q_t_joint = _expec_joint_t(self.lnR_, lnLambd, self.lnB, self.lnPi, lnPi_data, C, C_data,
+        self.q_t_joint = _expec_joint_t(self.lnR_, self.lnLambd, self.lnB, self.lnPi, lnPi_data, C, C_data,
                                         doc_start, self.nscores, self.A, self.before_doc_idx)
 
         self.q_t = np.sum(self.q_t_joint, axis=1)
@@ -495,7 +495,7 @@ class BSC(object):
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L,
                                   self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
-                                  dev_sentences, self.max_internal_iters)
+                                  dev_sentences, self.A, self.max_internal_iters)
             model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
         for model in self.data_model:
@@ -537,7 +537,7 @@ class BSC(object):
                 for model in self.data_model:
                     if (type(model) != LSTM and not self.workers_converged)\
                             or not converge_workers_first \
-                            or (type(model) == LSTM and self.workers_converged):
+                            or self.workers_converged: # TODO: test with type(model) == LSTM removed from condition
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         if model.train_type == 'Bayes':
@@ -554,11 +554,12 @@ class BSC(object):
                                   (self.iter, type(model)))
 
                         model.alpha_data = self.A._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
-                                                                   model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
+                                                       model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.A._calc_q_pi(model.alpha_data)
 
                         if self.verbose:
-                            print("BAC iteration %i: updated model for feature-based predictor of type %s" % (self.iter, str(type(model))) )
+                            print("BAC iteration %i: updated model for feature-based predictor of type %s" %
+                                  (self.iter, str(type(model))) )
 
                         if type(model) == LSTM:
                            np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
@@ -722,7 +723,7 @@ def _expec_t(lnR_, lnLambda):
 
 
 def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
-                   before_doc_idx=-1, skip=True):
+                   before_doc_idx=-1):
     '''
     Calculate joint label probabilities for each pair of tokens.
     '''
@@ -733,9 +734,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
 
     lnS = np.repeat(lnLambda[:, None, :], L + 1, 1)
 
-    mask = np.ones_like(C)
-    if skip:
-        mask = (C != 0)
+    mask = (C != 0)
 
     C = C - 1
 
@@ -744,10 +743,8 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
     flags[np.where(doc_start == 1)[0], before_doc_idx, :] = 0
     flags[np.where(doc_start == 0)[0], :L, :] = 0
 
-    Cprev = np.copy(C)
-    Cprev[doc_start.flatten(), :] = before_doc_idx
-    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, Cprev[:-1, :], axis=0)
-    Cprev[Cprev == 0] = before_doc_idx
+    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, C[:-1, :], axis=0)
+    Cprev[Cprev == -1] = before_doc_idx
 
     for l in range(L):
 
@@ -757,8 +754,6 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
             lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
 
             for model in range(len(C_data)):
-                C_data_prev = np.copy(C_data[model])
-                C_data_prev[doc_start.flatten(), before_doc_idx] = 1
                 C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
                 C_data_prev[0, before_doc_idx] = 1
 
@@ -794,7 +789,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
     return np.exp(lnS)
 
 
-def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1, skip=True):
+def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1):
     '''
     Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -806,9 +801,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
     # initialise variables
     lnR_ = np.zeros((T, L))
 
-    mask = np.ones_like(C)
-    if skip:
-        mask = (C != 0)
+    mask = C != 0
 
     # For the first data point
     lnPi_terms = worker_model._read_lnPi(lnPi, None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], nscores)
@@ -845,7 +838,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
     for t in range(1, T):
         # iterate through all possible labels
         # prev_idx = Cprev[t - 1, :]
-        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB, axis=0) + likelihood_next[:, t - 1]
+        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB, axis=0) + likelihood_next[:, t-1][None, :]
         # , np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
 
         # normalise
@@ -855,7 +848,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
 
 
 def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
-                           before_doc_idx=1, skip=True):
+                           before_doc_idx=1):
     '''
     Perform the forward pass of the Forward-Backward bsc (for multiple documents in parallel).
     '''
@@ -873,11 +866,11 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
             C_data_by_doc = list(zip(*C_data_by_doc))
 
         res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB, lnPi, lnPi_data, initProbs,
-                                                  nscores, worker_model, before_doc_idx, skip)
+                                                  nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
     else:
         res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB, lnPi, lnPi_data, initProbs,
-                                                  nscores, worker_model, before_doc_idx, skip)
+                                                  nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
 
     # res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnB, lnPi, lnPi_data, initProbs, nscores, worker_model,
@@ -890,7 +883,7 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
     return lnR_
 
 
-def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1, skip=True):
+def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1):
     '''
     Perform the backward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -903,10 +896,7 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
     # initialise variables
     lnLambda = np.zeros((T, L))
 
-    mask = np.ones_like(C)
-
-    if skip:
-        mask = (C != 0)
+    mask = (C != 0)
 
     Ccurr = C - 1
     Ccurr[Ccurr == -1] = before_doc_idx
@@ -933,11 +923,8 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
 
     # iterate through all tokens, starting at the end going backwards
     for t in range(T - 2, -1, -1):
-        # prev_idx = Cprev[t, :]
-
         # logsumexp over the L classes of the next timestep
         lnLambda_t = logsumexp(lnB + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
-        # np.sum(mask[t + 1, :] * lnPi[:, C[t + 1, :] - 1, prev_idx, Krange], axis=1)[None, :], axis = 1)
 
         # logsumexp over the L classes of the current timestep to normalise
         lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
@@ -950,7 +937,7 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
 
 
 def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start, nscores, worker_model,
-                            before_doc_idx=1, skip=True):
+                            before_doc_idx=1):
     '''
     Perform the backward pass of the Forward-Backward bsc (for multiple documents in parallel).
     '''
@@ -967,10 +954,10 @@ def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start
 
     if C_data is not None and len(C_data) > 0:
         res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnB, lnPi, lnPi_data, nscores, worker_model,
-                                                   before_doc_idx, skip) for d, doc in enumerate(docs))
+                                                   before_doc_idx) for d, doc in enumerate(docs))
     else:
         res = parallel(delayed(_doc_backward_pass)(doc, None, lnB, lnPi, lnPi_data, nscores, worker_model,
-                                                   before_doc_idx, skip) for d, doc in enumerate(docs))
+                                                   before_doc_idx) for d, doc in enumerate(docs))
 
     # reformat results
     lnLambda = np.concatenate(res, axis=0)

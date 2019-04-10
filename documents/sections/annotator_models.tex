@@ -104,8 +104,16 @@ or a tendency to split spans by inserting `B' in place of `I' by increasing the 
 $\pi_{I,I,B}$ without affecting $\pi_{I,B,B}$ and $\pi_{I,O,B}$.
 
 The annotator models  we presented, which include the most widespread models for NLP annotation tasks, can therefore be seen as extensions of one another.
+The choice of annotator model for a particular annotator
+ depends on the developer's understanding of the annotation task: 
+ if the annotations have sequential dependencies, this suggests the \emph{seq} model;
+for non-sequential classifications \emph{CM} may be effective with small ($\leq 5$) 
+numbers of classes; \emph{MACE} may be more suitable if there are more classes. 
+However, there is also a trade-off between the expressiveness of the model and the
+number of parameters that must be learned. Simpler models with fewer parameters, such as \emph{acc}, which may be effective if there are only small numbers of annotations from each annotator. 
+Our experiments in Section \ref{sec:expts_all} investigate this trade-off on NLP tasks involving sequential annotation.
 The next section shows how these models can be used as part of 
 a model for aggregating sequential annotations. 
-The experiments in Section \ref{sec:expts_all} 
- test whether the more expressive seq annotator model,
-which has more parameters to learn, is beneficial in a realistic setting.
+%The experiments in Section \ref{sec:expts_all} 
+% test whether the more expressive seq annotator model,
+%which has more parameters to learn, is beneficial in a realistic setting.

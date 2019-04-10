@@ -360,15 +360,15 @@ if __name__ == '__main__':
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
-
-    prior_str = 'pico_task1_bac_seq_IF'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/pred_started-2018-08-25-18-08-57-Nseen56858.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0, remove_val=True)
+    #
+    # prior_str = 'pico_task1_bac_seq_IF'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/pico/pred_started-2018-08-25-18-08-57-Nseen56858.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
     #
     # # Analyse the errors that our method did not make but the baselines did.
     # prior_str = 'pico_task1_HMMCrowd'
@@ -389,3 +389,12 @@ if __name__ == '__main__':
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
+
+    prior_str = 'pico_task1_bac_seq_IF_noLSTM'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   outroot + '/pico-debug/pred_started-2019-03-07-16-27-21-Nseen198.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0, remove_val=True)

@@ -223,8 +223,8 @@ class Experiment(object):
 
     random_sampling = False
 
-    def __init__(self, generator, nclasses=None, nannotators=None, config=None,
-                 alpha0_factor=1.0, alpha0_diags=1.0, beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0):
+    def __init__(self, generator, nclasses=None, nannotators=None, config=None, alpha0_factor=1.0, alpha0_diags=1.0,
+                 beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0, max_internal_iter=20):
 
         self.output_dir = '~/data/bayesian_sequence_combination/output/'
 
@@ -245,7 +245,7 @@ class Experiment(object):
         self.alpha0_factor = alpha0_factor
         self.alpha0_diags = alpha0_diags
         self.nu0_factor = beta0_factor
-        self.bsc_nepochs = 20
+        self.max_internal_iter = max_internal_iter
 
         # save results from methods here. If we use compound methods, we can reuse these results in different
         # combinations of methods.
@@ -552,7 +552,7 @@ class Experiment(object):
 
         bsc_model.verbose = True
 
-        bsc_model.max_internal_iters = self.bsc_nepochs
+        bsc_model.max_internal_iters = self.max_internal_iter
 
         if not active_learning:
             np.random.seed(592)  # for reproducibility
@@ -646,8 +646,8 @@ class Experiment(object):
         print('Running LSTM with crf probs = %s' % self.crf_probs)
 
         lstm.train_LSTM(all_sentences, train_sentences, dev_sentences, ground_truth_val, IOB_map,
-                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_iter,
-                        crf_probs=self.crf_probs, max_niter_no_imprv=2) # for PICo set to freq_eval=5 and max_niter_no_imprv=2
+                        IOB_label, self.num_classes, freq_eval=5, n_epochs=self.max_internal_iter,
+                        crf_probs=self.crf_probs, max_niter_no_imprv=2)
 
         # now make predictions for all sentences
         agg, probs = lstm.predict_LSTM(labelled_sentences)

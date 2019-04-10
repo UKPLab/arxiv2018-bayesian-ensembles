@@ -175,7 +175,7 @@ best_bac_wm_score = -np.inf
 # gt_task1_val = gt_task1_val[idxs]
 # # -------------------------
 
-niter = 20
+niter = 20 # variational inference iterations
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
@@ -185,12 +185,11 @@ exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
-#exp.bsc_nepochs = 1
 
 # run all the methods that don't require tuning here
 exp.methods =  [
                 best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
-                #best_bac_wm + '_integrateIF_integrateLSTM',
+                #best_bac_wm + '_integrateIF_then_LSTM',
 ]
 
 # should run both task 1 and 2.

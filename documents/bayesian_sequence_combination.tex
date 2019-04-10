@@ -3,7 +3,12 @@
 \usepackage{latexsym}
 \usepackage{url}
 \usepackage[T1]{fontenc}
-\usepackage[]{tacl2018v2}
+
+% anonymous version
+%\usepackage[]{tacl2018v2}
+
+%version with authors displayed
+\usepackage[acceptedWithA]{tacl2018v2}
 
 %%%%
 %%%% Material in this block can be removed by TACL authors.
@@ -73,13 +78,13 @@ the annotators are unreliable.
 %and aggregation techniques are required.
 To address this, we develop
  a modular Bayesian method for aggregating sequence labels from multiple annotators
- and evaluate different models of annotator reliability.
+ and evaluate different models of annotator errors and labeling biases.
 %and propose a technique to boost performance by integrating existing black-box sequence taggers.
 %Typically, the process of data collection, aggregation and training a sequence tagger 
 %is a pipeline of discrete steps.
 Our approach integrates 
 %these steps by training 
-black-box sequence taggers as components in the aggregation model
+black-box sequence taggers as components in the model
 to improve the quality of predictions.
 We evaluate our model on crowdsourced data for named entity recognition and information extraction tasks,
 showing that our sequential annotator model outperforms previous methods.
@@ -87,7 +92,7 @@ showing that our sequential annotator model outperforms previous methods.
 %are encountered at the beginning of a crowdsourcing process.
 %Our experiments show that by integrating the training and aggregation steps into a Bayesian framework, 
 %we can use active learning techniques to obtain data more efficiently without modifying the black-box method.
-We publish our code to encourage adaptation and reuse.
+%We publish our code to encourage adaptation and reuse.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

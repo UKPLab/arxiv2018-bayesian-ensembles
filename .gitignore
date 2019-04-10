@@ -1,3 +1,6 @@
+data/pico-debug*
+bayesian_sequence_combination.zip
+documents\ 2.zip
 LSTM_worker_model*.npy
 models_*
 documents/figures/*_OLD*

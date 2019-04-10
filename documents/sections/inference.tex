@@ -81,11 +81,15 @@ which makes use of the update equations for the log variational factors given be
  %$\mathbb{E}\left[\ln \bs A \right]$, $\mathbb{E}\left[\ln \bs B \right]$ and $\mathbb{E}\left[\ln \bs T \right]$
  using forward-backward algorithm\;%~\cite{ghahramani2001introduction}\;
  %\nl Set current true label predictions $\mathbb{E}\left[t_{n,\tau}=j\right] = r_{j,n,\tau}$ \;
- \nl Retrain all sequence taggers using $\tilde{\bs d}^{(s)}$ as training labels for tagger $s$\;
+ \nl Retrain all sequence taggers using $\tilde{\bs d}^{(s)}$ as training labels for 
+ each tagger $s$\;
  \nl Use sequence taggers to predict $\hat{d}^{(s)}_{n,\tau}(i)$, $\forall s,\forall n,\forall \tau,\forall i$\;
- \nl Update $\ln q(A^{(k)})$ and $\mathbb{E}\ln A^{(k)},\forall k$ \;%given current $\bs c$, $r_{j,n,\tau}$\;
- \nl Update $\ln q(B^{(s)})$ and $\mathbb{E}\ln B^{(s)},\forall s$ \;%given current $\hat{\bs d}$, $r_{j,n,\tau}$\;
- \nl Update $\ln q(\bs T_j)$ and $\mathbb{E}\ln T_{j,\iota},\forall j,\forall \iota$ \;%given current $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$\;
+ \nl Update $\ln q(A^{(k)})$ and $\mathbb{E}\ln A^{(k)},\forall k$, 
+ given current $\bs c$, $r_{j,n,\tau}$\;
+ \nl Update $\ln q(B^{(s)})$ and $\mathbb{E}\ln B^{(s)},\forall s$ ,
+ given current $\hat{\bs d}$, $r_{j,n,\tau}$\;
+ \nl Update $\ln q(\bs T_j)$ and $\mathbb{E}\ln T_{j,\iota},\forall j,\forall \iota$, 
+ given current $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$\;
  }
 \KwOut{ Label posteriors, $r_{n,\tau,j},\forall n,\forall \tau, \forall j$, %\mathbb{E}[\bs t]$, 
 most probable sequence of labels, $\hat{\bs t}_n,\forall n$ using Viterbi algorithm }

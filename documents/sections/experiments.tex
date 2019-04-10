@@ -135,8 +135,6 @@ IBCC & 79.0 & 70.4 & 74.4 & %77.1 & .9550 &
 HMM-crowd & 80.5 & 69.4 & 74.6 & %77.0 & .9762 & 
 1.04 & 0 & .1 & 0 & 76.5 & 66.2 & 71.0 & %77.9 & \textbf{.944} & 
 0.79 & 0 & .1 & 0 \\ 
-%HMM-crowd$\Arrow{0.2cm}$LSTMp & 81.3 & 68.6 & 74.4 & %76.1 & .9887 & 
-%0.25 & 134 &  \\ 
 HMM-crowd$\Arrow{0.2cm}$LSTM & 81.8 & 69.5 & 75.2 & %77.3 & .8972 & 
 12.2 & 0 & .1 & 0 & 76.5 & 66.5 & 71.2 & %78.2 & .868 & 
 13.0 & 0 & .1 & 0\\ 
@@ -168,16 +166,14 @@ BSC-seq-notext & 81.0 & 69.8 & 75.0 & %76.9 & .9420 &
  0.73 & .1 & .1 & .1\\ 
 BSC-seq$\backslash\bs T$ & 60.5 & 42.3 & 49.8 & 0.93 & .1 & 1 & 1 & 51.2 & 70.4 & 59.8 & 1.04 & .1 & .1 & 1\\\midrule
 
-%BSC-seq$\Arrow{0.2cm}$LSTMp & 80.3 & 74.6 & 77.3 & %78.6 & .9910 & 
-%0.20 & 129 & .1, 1, 1 \\
-BSC-seq$\Arrow{0.2cm}$LSTM & 80.2 & 75.3 & 77.7 & %79.6 & .9262 & 
-11.0 & .1 & 1 & 1 & 
+BSC-seq$\Arrow{0.2cm}$LSTM & %82.5 & 76.0 & 79.1 & 10.4 % scores if testing on dev set at every iteration
+80.2 & 75.3 & 77.7 & 11.0 
+& .1 & 1 & 1 & 
 75.7 & 75.4 & 75.5 & %51.6 & .821 & 
 25.5 & 100 & 1 & 1 \\
-%BSC-seq+LSTMp & 81.2 & 75.3 & 78.1 & %79.3 & .9574 & 
-%0.54 & 0 & .1, 1, 1 \\
 BSC-seq+LSTM & 
-82.3 & \textbf{75.9} & \textbf{78.9} & 0.59 %79.6 & .9513 & % this requires 3 epochs then no changes to the model
+80.0 & \textbf{76.0} & \textbf{78.0} & 0.99 % now we use the same freq_eval and niter_no_imprv as for -> LSTM. The improvement is very small.
+%82.2 & \textbf{76.0} & \textbf{79.0} & 0.76 %79.6 & .9513 & % this requires 3 epochs then no changes to the model
 %81.5 & \textbf{75.5} & \textbf{78.4} & 0.74 
 & .1 & 1 & 1 & 
 78.7 & \textbf{78.6} & \textbf{78.7} & %51.9 & .934 & 
@@ -191,6 +187,9 @@ BSC-seq+LSTM &
 Simulated data allows us to test the effect of one  
 type of error in the crowdsourced data,
 while keeping other characteristics of the data constant.
+This can be seen as a sanity check to ensure that both our model and 
+the proposed inference method can handle certain types of error when we know them
+to be present.
 We generate crowds of 10 annotators for four experiments, which  
 test the effect of varying
 (a) average annotator accuracy,
@@ -211,6 +210,8 @@ Where annotator accuracy is high, majority voting is less accurate than  methods
 Among the BSC variants, performance increases with the complexity of the annotator model, from BSC-acc to BSC-seq,
 suggesting that the richer seq model can be successfully learned on a small dataset. 
 There are some benefits for the Bayesian approaches, IBCC and BSC-CV, over the similar  models, DS and HMM-crowd, respectively, in handling all four types of annotator error.
+This experiment on simulated data showed that our inference technique was able to handle certain types of error when generated from a BSC model. The following sections
+describe experiments test whether the benefits apply when BSC is used with real crowdsourced data.
 % low annotator accuracy, crowds with few good workers, short span bias and some degree of missed span bias.
 %MACE mostly performs only slightly better than majority vote.
 %, its spammer model
@@ -299,6 +300,8 @@ training on a small subset of 250 documents for NER and 500 documents for PICO.
 For the integrated BSC-seq+LSTM,  
 we found better validation set performance for both our datasets if the LSTM is first excluded while 
 the other parameters converge before training the LSTM. 
+This simply means that we follow Algorithm \ref{al:vb_bac}, but omit steps 3, 
+4 and 6 in the first few iterations.
 Note that we use the dev set at each VB iteration to select the best
 LSTM model after each epoch. 
 %this means that in some iterations, we might reject all the latest epochs so a model would get stuck, potentially in a local maximum. But if we don't do it, we would overshoot the optimum.
@@ -423,11 +426,13 @@ annotator models.
 HMM-crowd$\Arrow{0.2cm}$LSTM & \textbf{78.7} & 59.0 & 67.5 &% 69.4 & .8642 &
  15.9  & \textbf{75.6} & 61.6 & 67.9 & % \textbf{76.4} & .8380 &
 13.5 \\
-BSC-seq$\Arrow{0.2cm}$LSTM & 74.3 & \textbf{62.8} & \textbf{68.1} & %69.7 & .8868 & 
-15.65  & 82.3 & \textbf{66.4} & \textbf{73.5} & %58.2 & .8349 &
+BSC-seq$\Arrow{0.2cm}$LSTM & 76.9 & 64.1 & \textbf{69.9} & %74.3 & \textbf{62.8} & \textbf{68.1} & %69.7 & .8868 & 
+%15.65  
+14.54 & 82.3 & \textbf{66.4} & \textbf{73.5} & %58.2 & .8349 &
  19.6  \\
-BSC-seq+LSTM & 72.3 & 64.2 & 68.0 &% 67.6 & .9589 &
- \textbf{0.6} & \textbf{87.4} & 57.9 & 69.7 & \textbf{0.9} \\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
+BSC-seq+LSTM & 78.6 & 59.8 & 67.9 %72.3 & 64.2 & 68.0 &% 67.6 & .9589 &
+% \textbf{0.6} 
+& \textbf{0.55} & \textbf{87.4} & 57.9 & 69.7 & \textbf{0.9} \\%60.7 & 52.8 & 56.4 & 54.0 & \textbf{.899} & \textbf{0.48} & 0\\
 %BCC-seq+LSTM &\\
 % Results on current code
 % 69.6 & 60.3 & 64.6 ????
@@ -444,8 +449,7 @@ LSTM trained on gold labels & %76.4 & 77.0 & 76.7 & 11.10 %77.3 & .9563 & %this 
 \end{table*}
 Active learning iteratively selects informative data points to be labeled so that a model can be trained
 using less labeled data. Posterior probabilities output by Bayesian methods 
-account for uncertainty in the model parameters, hence can be used to choose data points 
-that most rapidly reduce that uncertainty. 
+account for uncertainty in the model parameters, hence can be used to choose data points that rapidly reduce uncertainty. 
 %In contrast, frequentist methods
 %such as maximum likelihood output probabilities that do not account for parameter uncertainty due to 
 %small datasets or noisy labels. 
@@ -463,7 +467,10 @@ in an active learning scenario.
 %the first tests our methods on random subsamples of crowdsourced data of increasing size;
 %the second starts with a random initial subsample,
 %To test these hypotheses, we
-We simulate active learning using \emph{uncertainty sampling}~\cite{settles2010active},
+While various active learning methods could be applied here, in this paper we wish
+to demonstrate only that BSC may serve as a good foundation for active learning,
+and defer a deeper investigation of active learning techniques to future work.
+We therefore simulate active learning using a well-established technique, \emph{uncertainty sampling}~\cite{settles2008analysis,settles2010active},
 as described in Algorithm \ref{al:uncertainty_sampling}.
 \begin{algorithm}
 \DontPrintSemicolon

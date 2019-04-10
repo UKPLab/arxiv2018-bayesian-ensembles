@@ -59,7 +59,6 @@ class SequentialWorker(VectorWorker):
 
             for l in range(dims[1]):
 
-
                 counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
                 alpha[j, l, before_doc_idx, :] += counts
 
