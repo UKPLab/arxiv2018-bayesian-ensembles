@@ -299,6 +299,10 @@ class Experiment(object):
                     outputdir, text, tune_lstm=False, metric_idx_to_optimise=8,
                     ground_truth_val=None, doc_start_val=None, text_val=None):
 
+        if outputdir is not None:
+            if not os.path.exists(outputdir):
+                os.mkdir(outputdir)
+
         self.methods = [method]
 
         scores = np.zeros((len(nu0factor_proposals) * len(alpha0diag_proposals), len(alpha0factor_proposals)))

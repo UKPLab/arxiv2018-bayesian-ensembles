@@ -908,7 +908,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     # annotated_idxs = np.argwhere(np.any(annos_v != -1, axis=1)).flatten()
     # annos_v = annos_v.iloc[annotated_idxs, :]
 
-    annos = pd.concat((annos, annos_v), axis=0)
+    annos = pd.concat((annos, annos_v), axis=0, sort=False)
     annos = annos.fillna(-1)
     annos = annos.values
     print('loaded annotations for %i tokens' % annos.shape[0])
