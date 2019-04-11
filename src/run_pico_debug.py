@@ -66,7 +66,6 @@ exp.methods =  [
     'bac_seq_integrateIF',
     'bac_ibcc_integrateIF',
     'majority'
-
 ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof

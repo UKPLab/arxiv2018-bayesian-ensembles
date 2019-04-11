@@ -74,24 +74,20 @@ tune_text = text[idxs]
 tune_gt_task1_val = gt_task1_val[idxs]
 
 for m, method in enumerate(methods_to_tune):
-    print('TUNING %s' % method)
-
-    best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, tune_annos, tune_gt_task1_val, tune_doc_start,
-                                  output_dir, tune_text)
-
-    # best_scores = exp.tune_alpha0(lstm_diags, lstm_factors, nu_factors, method, tune_annos, tune_gt_task1_val, tune_doc_start,
-    #                               output_dir, tune_text, tune_lstm=True,
-    #                               ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val)
-
-    best_idxs = best_scores[1:].astype(int)
-    exp.nu0_factor = nu_factors[best_idxs[0]]
-    exp.alpha0_diags = diags[best_idxs[1]]
-    exp.alpha0_factor = factors[best_idxs[2]]
-
-    # exp.alpha0_diags_lstm = diags[best_idxs[1]]
-    # exp.alpha0_factor_lstm = factors[best_idxs[2]]
-
-    print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+    # print('TUNING %s' % method)
+    #
+    # best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, tune_annos, tune_gt_task1_val, tune_doc_start,
+    #                               output_dir, tune_text)
+    #
+    # best_idxs = best_scores[1:].astype(int)
+    # exp.nu0_factor = nu_factors[best_idxs[0]]
+    # exp.alpha0_diags = diags[best_idxs[1]]
+    # exp.alpha0_factor = factors[best_idxs[2]]
+    #
+    # # exp.alpha0_diags_lstm = diags[best_idxs[1]]
+    # # exp.alpha0_factor_lstm = factors[best_idxs[2]]
+    #
+    # print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
     # best_score, best_idx = exp.tune_acc_bias(acc_biases, method, tune_annos, tune_gt_task1_val, tune_doc_start,
     #                               output_dir, tune_text)
@@ -105,18 +101,13 @@ for m, method in enumerate(methods_to_tune):
                 new_data=regen_data
                 )
 
-    best_score = best_scores[0]
-    if 'bac_seq' in method and best_score > best_bac_wm_score:
-        best_bac_wm = 'bac_' + method.split('_')[1]
-        best_bac_wm_score = best_score
-        best_diags = exp.alpha0_diags
-        best_factor = exp.alpha0_factor
-        best_nu0factor = exp.nu0_factor
-#     #
-#     # if 'bac_seq' in method and best_score > best_bac_wm_score:
-#     #     best_bac_wm_score = best_score
-#     #     best_acc_bias = exp.alpha0_acc_bias
-#     #     best_bac_wm = 'bac_' + method.split('_')[1]
+    # best_score = best_scores[0]
+    # if 'bac_seq' in method and best_score > best_bac_wm_score:
+    #     best_bac_wm = 'bac_' + method.split('_')[1]
+    #     best_bac_wm_score = best_score
+    #     best_diags = exp.alpha0_diags
+    #     best_factor = exp.alpha0_factor
+    #     best_nu0factor = exp.nu0_factor
 
 # print('best BAC method tested here = %s' % best_bac_wm)
 #
