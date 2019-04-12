@@ -90,7 +90,7 @@ This paper provides the following contributions:
  \item A technique for wrapping existing black-box sequence taggers into the aggregation model to improve 
  the quality of aggregated labels
  \item Theoretical and empirical comparisons of annotator models 
-  for sequence tagging, including the novel \emph{seq} model of sequential annotations
+  for sequence tagging, including a novel model that captures sequential dependencies between annotations (referred to later as \emph{seq})
 \end{itemize}
 The following sections discuss related work, 
 annotator models for sequence tagging,
@@ -106,7 +106,7 @@ and benefits from the inclusion of automated sequence taggers.
 %analyze types of errors, and visualize the annotator models learned by our method.
 We make 
 %the modular implementation of our proposed method freely available, along with 
-all of our code freely available\footnote{\url{http://github.com/******}}%ukplab/arxiv2018-bayesian-ensembles}}.
+all of our code freely available\footnote{\url{http://github.com/\iftaclpubformat ukplab/arxiv2018-bayesian-ensembles\else ******\fi}}.
 
 \subsection{Related Work}
 %A number of works have investigated methods for aggregating non-sequential

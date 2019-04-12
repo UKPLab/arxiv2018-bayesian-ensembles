@@ -7,6 +7,7 @@ For each document, $n$, in a set of $N$ documents, we draw a sequence of class l
 $\bs t_n = [t_{n,1}, ..., t_{n, L_n}]$, of length $L_n$, from a categorical distribution:
 $t_{n,\tau} \sim \mathrm{Cat}(\bs T_{t_{n,\tau-1}})$. The set of all labels for all documents is referred to as $\bs t = \{\bs t_1,...,\bs t_N\}$.
 
+%TODO mention the text features!
 In the generative model, we assume one of the annotator 
 models described in Section \ref{sec:annomodels} for each of $K$ annotators.
 The number of parameters depends on the choice of annotator model:
@@ -37,58 +38,60 @@ when considering that the annotators have to make their decisions based
 on the same input data. However, in practice, dependencies do not usually cause the 
 most probable label to change~\citep{zhang2004optimality}, hence the performance of classifier combination methods 
 is only slightly degraded, while avoiding the complexity of modeling dependencies between annotators~\citep{kim2012bayesian}.
-
-\textbf{Black-box Sequence Taggers}:
-As an extension to our model, we can integrate $S$ automated methods as
-additional noisy annotators. 
- In comparison to human annotators,
-sequence taggers can quickly label large numbers of documents, 
-providing a cheap source of additional annotations across the whole dataset.
-We model each sequence tagger, $s$, 
-using an annotator model, $B^{(s)}$,
-of one of the types described in Section \ref{sec:annomodels} (analogous to $A^{(k)}$ for a human annotator),
-with hyperparameters $\bs \beta^{(s)}$.
-
-We extend the generative model for BSC with additional steps as follows.
-Each sequence tagger generates a sequence of labels, $\bs d_{n}^{(s)}$, for each document $n$ 
-(analogous to $\bs c_n^{(k)}$ produced by human annotators)
- according to: 
- \begin{flalign}
- & d_{n,\tau}^{(s)} \sim \mathrm{Cat}(
-[B^{(s)}(\bs t_{n,\tau}, 1, d_{n,\tau-1}^{(s)}), ..., && \nonumber \\
-& \hspace{3.0cm} B^{(s)}(\bs t_{n,\tau}, J, d_{n,\tau-1}^{(s)})]). &&
-\end{flalign}
-
-In the generative model, we draw a sequence of text tokens, $\bs x_n$, 
-from a likelihood, $p \left(\bs x_n | \bs d_{n}^{(s)}, \bs\theta^{(s)} \right) $,
- given internal parameters, $\bs\theta^{(s)}$, and
-label sequence, $\bs d_{n}^{(s)}$.
-This likelihood is defined by the black-box sequence tagger.
-If the sequence tagger is Bayesian, its parameters, $\bs\theta^{(s)}$, may also be drawn from 
-an unknown prior distribution.
-However, since we are treating the tagger as a black box, we do not need to know these internal details.
-In the next section, we explain how we can avoid computing this likelihood explicitly during inference,
-and instead use only the sequence tagger's existing training and prediction functions to learn
-$\bs\theta^{(s)}$ in parallel with the parameters of the BSC model.
-Like the human annotators, each sequence tagger is assumed to produce labels that are conditionally independent 
-of the other sequence taggers given $\bs t$. 
-%Due to the fact that sequence taggers will typically use
-%the same features, i.e. the text of the documents, this independence assumption may be violated, 
-%yet
-%%as with the human annotators, 
-%this assumption in other models
-% has been shown not to hamper performance in 
-%many practical situations~\citep{zhang2004optimality}.
+%
+% \textbf{Black-box Sequence Taggers}:
+% As an extension to our model, we can integrate $S$ automated methods as
+% additional noisy annotators. 
+%  In comparison to human annotators,
+% sequence taggers can quickly label large numbers of documents, 
+% providing a cheap source of additional annotations across the whole dataset.
+% We model each sequence tagger, $s$, 
+% using an annotator model, $B^{(s)}$,
+% of one of the types described in Section \ref{sec:annomodels} (analogous to $A^{(k)}$ for a human annotator),
+% with hyperparameters $\bs \beta^{(s)}$.
+%
+% We extend the generative model for BSC with additional steps as follows.
+% Each sequence tagger generates a sequence of labels, $\bs d_{n}^{(s)}$, for each document $n$ 
+% (analogous to $\bs c_n^{(k)}$ produced by human annotators)
+%  according to: 
+%  \begin{flalign}
+%  & d_{n,\tau}^{(s)} \sim \mathrm{Cat}(
+% [B^{(s)}(\bs t_{n,\tau}, 1, d_{n,\tau-1}^{(s)}), ..., && \nonumber \\
+% & \hspace{3.0cm} B^{(s)}(\bs t_{n,\tau}, J, d_{n,\tau-1}^{(s)})]). &&
+% \end{flalign}
+%
+% In the generative model, we draw a sequence of text tokens, $\bs x_n$, 
+% from a likelihood, $p \left(\bs x_n | \bs d_{n}^{(s)}, \bs\theta^{(s)} \right) $,
+%  given internal parameters, $\bs\theta^{(s)}$, and
+% label sequence, $\bs d_{n}^{(s)}$.
+% This likelihood is defined by the black-box sequence tagger.
+% If the sequence tagger is Bayesian, its parameters, $\bs\theta^{(s)}$, may also be drawn from 
+% an unknown prior distribution.
+% However, since we are treating the tagger as a black box, we do not need to know these internal details.
+% In the next section, we explain how we can avoid computing this likelihood explicitly during inference,
+% and instead use only the sequence tagger's existing training and prediction functions to learn
+% $\bs\theta^{(s)}$ in parallel with the parameters of the BSC model.
+% Like the human annotators, each sequence tagger is assumed to produce labels that are conditionally independent 
+% of the other sequence taggers given $\bs t$. 
+% %Due to the fact that sequence taggers will typically use
+% %the same features, i.e. the text of the documents, this independence assumption may be violated, 
+% %yet
+% %%as with the human annotators, 
+% %this assumption in other models
+% % has been shown not to hamper performance in 
+% %many practical situations~\citep{zhang2004optimality}.
 
 \textbf{Joint distribution}: the complete model can be represented by the
 joint distribution, given by:
 \begin{flalign}
-& p(\bs t, \bs A, \bs B, \bs T, \bs\theta, \bs c, \bs d, \bs x | \bs \alpha, \bs \beta, \bs\gamma ) & \label{eq:joint} \\
+& p(\bs t, \bs A, \bs B, \bs T, \bs\theta, \bs c, \bs d, \bs x | \bs \alpha, \bs \beta, \bs\gamma ) &  \\
 %  & \approx q(\bs t, \bs A, \bs B, \bs\A^{(1)},...,\bs\A^{(K)},\bs\A^{(1)},...,\bs\A^{(S)}, \bs d^{(1)}, ...,\bs d^{(S)}) = q(\bs B) \prod_{n=1}^N q(\bs t_n) & \nonumber \\
 & = \prod_{k=1}^K \left\{ p(A^{(k)} | \bs \alpha^{(k)}) \prod_{n=1}^N p(\bs c_n^{(k)} | A^{(k)}, \bs t)  \right\}
 & \nonumber \\
-& \prod_{j=1}^J p(\bs T_j | \bs\gamma_j)  \prod_{n=1}^N \prod_{\tau=1}^{L_n} p(\bs t_n | \bs T_{t_{n,\tau-1}}) \prod_{s=1}^S \bigg\{ p(\bs \theta^{(s)})  \nonumber \\
-& p(B^{(s)} | \bs\beta^{(s)}) \! \! \prod_{n=1}^N \!\! \left\{ p(\bs x | \bs d^{(s)}, \bs \theta^{(s)}) p(\bs d^{(s)} | B^{(s)}, \bs t)  \right\} \!\! \bigg\}, \nonumber
+& \prod_{j=1}^J p(\bs T_j | \bs\gamma_j)  \prod_{n=1}^N \prod_{\tau=1}^{L_n} p(\bs t_n | \bs T_{t_{n,\tau-1}}) 
+%\prod_{s=1}^S \bigg\{ p(\bs \theta^{(s)})  \nonumber \\
+%& p(B^{(s)} | \bs\beta^{(s)}) \! \! \prod_{n=1}^N \!\! \left\{ p(\bs x | \bs d^{(s)}, \bs \theta^{(s)}) p(\bs d^{(s)} | B^{(s)}, \bs t)  \right\} \!\! \bigg\}, \nonumber
+& \label{eq:joint}
 \end{flalign}
 where each term is defined by the distributions of the generative model described in this section.
 

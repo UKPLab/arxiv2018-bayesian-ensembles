@@ -1,0 +1,45 @@
+\section{Update Equations for the Forward-Backward Algorithm}
+% TODO move all this to the appendix
+ The forward-backward algorithm consists of two passes. 
+ The \emph{forward pass} for each document, $n$, starts from $\tau=1$
+ and computes:% for each value of $\tau$:
+ % the posterior given crowdsourced annotations for tokens $\leq\tau$. 
+ \begin{flalign}
+   & \ln r^{-}_{n,\tau,j} = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau-1,\iota} \mathrm{e}^{\mathbb{E}\ln T_{\iota,j}} \right\} + ll_{n,\tau}(j), & \nonumber \\
+% \end{flalign}
+%  where the log likelihood $ll(j,n,\tau)$ of the annotations for token $\tau$ in document $n$ given
+%  label $j$ is:
+% \begin{flalign} 
+   & ll_{n,\tau}(j) = \sum_{k=1}^K \mathbb{E}%_{\bs A}
+   \ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right) & 
+   %+  \sum_{s=1}^S
+%    & \nonumber \\
+%    &  \sum_{i=1}^J\sum_{\iota=1}^J \mathbb{E}%_{\bs B}
+%    \ln B^{(s)} \!\left(j, i, \iota \right)  
+%    \hat{d}_{n,\tau}^{(s)}(i) \hat{d}_{n,\tau-1}^{(s)}(\iota), & 
+ \end{flalign}
+ %where $\hat{d}_{n,\tau}^{(s)}(i)$ is %the probability of label $d_{n,\tau}^{(s)}$ produced 
+% by the sequence tagger $s$, which we explain in more detail below (see Equation \ref{eq:hatp}).
+%defined below in Equation \ref{eq:hatp}, and 
+where $r^{-}_{n,0,\iota}  = 1$ where $\iota=$`O' and $0$ otherwise.
+The \emph{backwards pass} starts from $\tau=L_n$ and scrolls backwards, computing:
+%at each token computing the likelihoods of the annotations from $\tau+1$ to $L_n$:
+ \begin{flalign}
+  & \ln \lambda_{n,L_n,j} = 0, \hspace{1cm}
+   \ln \lambda_{n,\tau,j} = \ln\sum_{\iota=1}^J \exp \big\{ 
+   & \nonumber \\
+& \ln \lambda_{i,\tau+1,\iota} + \mathbb{E}\ln T_{j,\iota} + ll_{n,\tau+1}(\iota) \big\} .&
+ \end{flalign}
+% To avoid $r^{-}_{n,\tau,j}$ and $\lambda_{n,\tau,j}$ becoming too small over a long sequence, we normalize them after each iteration of the forward and backward pass
+% by dividing by their sum over $j$.
+ By %taking the exponents and 
+ applying Bayes' rule, we arrive at $r_{n,\tau,j}$ and $s_{n,\tau,j,\iota}$:
+ \begin{flalign}
+  & r_{n,\tau,j} = \frac{r^{-}_{n,\tau,j}\lambda_{n,\tau,j}}{\sum_{j'=1}^J r^{-}_{n,\tau,j'}\lambda_{n,\tau,j'}} &\\
+%} {\sum_{\iota=1}^J \sum_{\iota'=1}^J  
+%  r^{-}_{n,\tau\!-\!1,\iota}\lambda_{n,\tau,\iota'} \exp\mathbb{E}[\ln T_{\iota,\iota'}] 
+% + ll(\iota',n,\tau)  } . &
+& s_{n,\tau,j,\iota} = \frac{ \tilde{s}_{n,\tau,j,\iota} }{ \sum_{j'=1}^J\sum_{\iota'=1}^J  \tilde{s}_{n,\tau,j',\iota'} } & \\
+  & \tilde{s}_{n,\tau,j,\iota} =  r^{-}_{n,\tau-1,j} \lambda_{n,\tau,\iota} \exp\{\mathbb{E}\ln T_{j,\iota}
++ ll_{n,\tau}(\iota)\}. & \nonumber 
+ \end{flalign}

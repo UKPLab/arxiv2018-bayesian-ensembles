@@ -8,7 +8,7 @@
 %\usepackage[]{tacl2018v2}
 
 %version with authors displayed
-\usepackage[acceptedWithA]{tacl2018v2}
+\usepackage[]{tacl2018v2}
 
 %%%%
 %%%% Material in this block can be removed by TACL authors.
@@ -82,10 +82,10 @@ To address this, we develop
 %and propose a technique to boost performance by integrating existing black-box sequence taggers.
 %Typically, the process of data collection, aggregation and training a sequence tagger 
 %is a pipeline of discrete steps.
-Our approach integrates 
-%these steps by training 
-black-box sequence taggers as components in the model
-to improve the quality of predictions.
+% Our approach integrates 
+% %these steps by training 
+% black-box sequence taggers as components in the model
+% to improve the quality of predictions.
 We evaluate our model on crowdsourced data for named entity recognition and information extraction tasks,
 showing that our sequential annotator model outperforms previous methods.
 %particularly in small data scenarios that
@@ -114,5 +114,8 @@ showing that our sequential annotator model outperforms previous methods.
 % \bibliographystyle{IEEEtran}
 \bibliographystyle{acl_natbib}
 \bibliography{simpson}
+
+\appendix
+\input{sections/appendix}
 
 \end{document}

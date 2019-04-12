@@ -1,40 +1,41 @@
-\subsection{Modular Implementation of Variational Inference} \label{seq:modular}
- 
-The variational inference method described in Section  \ref{sec:vb}
-is naturally suited to a modular implementation. We divide the BSC model, 
-as defined in Section \ref{sec:model} and Equation \ref{eq:joint}, into 
-three modules: 
-(a) the true label model, which defines the distribution over sequences of labels, $q(\bs t_n)$;
-(b) the annotator model, which may be one of those described in Section \ref{sec:annomodels} and implements $q(A^{(k)})$ and $q(B^{(s)})$;
-and (c) black-box sequence taggers, which
-% The true label model , 
-% %and implements lines 2, 3 and 8 in Algorithm \ref{al:vb_bac}. 
-% The annotator model 
-%  lines 6 and 7.
-%The black-box sequence taggers 
-are existing implementations that provide training and prediction functions
-to predict true labels given text tokens, $\bs x$.
-% and are used in lines 4 and 5.
-The true label model exposes methods to compute 
-$r_{n,\tau,j}$ and $s_{n,\tau,j,\iota}$, $\forall n,\forall \tau,\forall j,\forall \iota$,
-%given $\bs c$.
-%$\mathbb{E}[p( c_{n,\tau} \!\!=\! i | c_{n,\tau-1}, t_{n,\tau} \!=\! j, \bs\pi )]$.
-%In BSC, the true label model learns a transition matrix,
-%$\bs B$, which assumes a first-order Markov chain, but true label models with longer memory 
-%could also be used, as long as they provide the terms $r_{n,\tau,j}$ and $s_{n,\tau,j,\iota}$
-%required by the other components.
-while the annotator models provide methods to initialize and update $q(A^{(k)})$ and $q(B^{(s)})$,
-%update $q(\bs A)$ and $q(\bs B)$ during the VB algorithm,
-and compute expectations according to Equation \ref{eq:elna}.
-%involving $\bs A$ and $\bs B$ required for other parts of the model.
-%As discussed in Section \ref{sec:annomodels}, various annotator models are possible.
-%given $\bs c$, $\hat{p}\bs{d}}$, and $\mathbb{E}[\bs t]$, and
-%compute $\mathbb{E}[p( c_{n,\tau} \!\!=\! i | c_{n,\tau-1}, t_{n,\tau} \!=\! j, \bs\pi )]$.
-By allowing individual functions to be replaced without rewriting the inference
-method, the modular implementation makes it easier to adapt the model to different types of annotations,
-and to test each component part.
-For example, new annotator models could, in future, be introduced to aggregate 
-continuous-valued ratings or pairwise preferences.
+%TODO see if any of this is still useful -- modularity can be mentioned elsewhere as a motivation for VB and for defining the annotator models separately.
+% \subsection{Modular Implementation of Variational Inference} \label{seq:modular}
+%  
+% The variational inference method described in Section  \ref{sec:vb}
+% is naturally suited to a modular implementation. We divide the BSC model, 
+% as defined in Section \ref{sec:model} and Equation \ref{eq:joint}, into 
+% three modules: 
+% (a) the true label model, which defines the distribution over sequences of labels, $q(\bs t_n)$;
+% (b) the annotator model, which may be one of those described in Section \ref{sec:annomodels} and implements $q(A^{(k)})$ and $q(B^{(s)})$;
+% and (c) black-box sequence taggers, which
+% % The true label model , 
+% % %and implements lines 2, 3 and 8 in Algorithm \ref{al:vb_bac}. 
+% % The annotator model 
+% %  lines 6 and 7.
+% %The black-box sequence taggers 
+% are existing implementations that provide training and prediction functions
+% to predict true labels given text tokens, $\bs x$.
+% % and are used in lines 4 and 5.
+% The true label model exposes methods to compute 
+% $r_{n,\tau,j}$ and $s_{n,\tau,j,\iota}$, $\forall n,\forall \tau,\forall j,\forall \iota$,
+% %given $\bs c$.
+% %$\mathbb{E}[p( c_{n,\tau} \!\!=\! i | c_{n,\tau-1}, t_{n,\tau} \!=\! j, \bs\pi )]$.
+% %In BSC, the true label model learns a transition matrix,
+% %$\bs B$, which assumes a first-order Markov chain, but true label models with longer memory 
+% %could also be used, as long as they provide the terms $r_{n,\tau,j}$ and $s_{n,\tau,j,\iota}$
+% %required by the other components.
+% while the annotator models provide methods to initialize and update $q(A^{(k)})$ and $q(B^{(s)})$,
+% %update $q(\bs A)$ and $q(\bs B)$ during the VB algorithm,
+% and compute expectations according to Equation \ref{eq:elna}.
+% %involving $\bs A$ and $\bs B$ required for other parts of the model.
+% %As discussed in Section \ref{sec:annomodels}, various annotator models are possible.
+% %given $\bs c$, $\hat{p}\bs{d}}$, and $\mathbb{E}[\bs t]$, and
+% %compute $\mathbb{E}[p( c_{n,\tau} \!\!=\! i | c_{n,\tau-1}, t_{n,\tau} \!=\! j, \bs\pi )]$.
+% By allowing individual functions to be replaced without rewriting the inference
+% method, the modular implementation makes it easier to adapt the model to different types of annotations,
+% and to test each component part.
+% For example, new annotator models could, in future, be introduced to aggregate 
+% continuous-valued ratings or pairwise preferences.
 
 % \rough
 % \section{Modelling Text Span Annotations}\label{sec:model}
