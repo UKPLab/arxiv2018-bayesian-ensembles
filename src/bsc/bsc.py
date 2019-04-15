@@ -177,6 +177,16 @@ class BSC(object):
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
                 if typeid == i:  # same type is allowed
+                    # if self.alpha0.shape[0] == 3:
+                    #
+                    #
+                    #     disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
+                    #     self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
+                    #     self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
+                    #
+                    #     disallowed_count = self.beta0[restricted_label, other_unrestricted_label] * 0.5
+                    #     self.beta0[restricted_label, other_unrestricted_label] *= 0.5
+                    #     self.beta0[restricted_label, restricted_label] += disallowed_count
                     continue
 
                 disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
@@ -744,6 +754,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
     flags[np.where(doc_start == 0)[0], :L, :] = 0
 
     Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, C[:-1, :], axis=0)
+    Cprev[doc_start.flatten(), :] = before_doc_idx
     Cprev[Cprev == -1] = before_doc_idx
 
     for l in range(L):
@@ -755,6 +766,8 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
 
             for model in range(len(C_data)):
                 C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model][:-1, :], axis=0)
+                C_data_prev[doc_start.flatten(), :] = 0
+                C_data_prev[doc_start.flatten(), before_doc_idx] = 1
                 C_data_prev[0, before_doc_idx] = 1
 
                 for m in range(L):

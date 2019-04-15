@@ -41,8 +41,8 @@ exp.alpha0_diags = 100
 exp.alpha0_factor = 9
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
-best_nu0factor = 100
-best_diags = 1
+best_nu0factor = 0.1#100
+best_diags = 10
 best_factor = 1
 
 nu_factors = [0.1, 10, 100]
@@ -64,8 +64,8 @@ exp.nu0_factor = best_nu0factor
 # # run all the methods that don't require tuning here
 exp.methods =  [
     'bac_seq_integrateIF',
-    'bac_ibcc_integrateIF',
-    'majority'
+    #'bac_ibcc_integrateIF',
+    #'majority'
 ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof

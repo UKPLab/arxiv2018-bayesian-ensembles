@@ -390,11 +390,20 @@ if __name__ == '__main__':
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
 
-    prior_str = 'pico_task1_bac_seq_IF_noLSTM'
+    # prior_str = 'pico_task1_bac_seq_IF_noLSTM'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/pico/pred_started-2019-04-12-15-54-45-Nseen56858.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
+
+    prior_str = 'picodebug_task1_bac_seq_IF_noLSTM'
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/pred_started-2019-04-12-15-54-45-Nseen56858.csv',
+                   outroot + '/pico-debug/pred_started-2019-04-15-17-32-42-Nseen2134.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
