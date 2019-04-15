@@ -514,7 +514,7 @@ class BSC(object):
         timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
         # main inference loop
-        with Parallel(n_jobs=-1) as parallel:
+        with Parallel(n_jobs=-1, backend='threading') as parallel:
 
             while not self._converged() or not self.workers_converged:
 
@@ -653,7 +653,7 @@ class BSC(object):
 
     def predict(self, doc_start, text):
 
-        with Parallel(n_jobs=-1) as parallel:
+        with Parallel(n_jobs=-1, backend='threading') as parallel:
 
             doc_start = doc_start.astype(bool)
             C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank

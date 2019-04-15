@@ -77,13 +77,13 @@ for m, method in enumerate(methods_to_tune):
                 new_data=regen_data
     )
 
-    best_score = np.max(best_scores)
-    if 'bac' in method and best_score > best_bac_wm_score:
-        best_bac_wm = method
-        best_bac_wm_score = best_score
-        best_diags = exp.alpha0_diags
-        best_factor = exp.alpha0_factor
-        best_nu0factor = exp.nu0_factor
+    # best_score = np.max(best_scores)
+    # if 'bac' in method and best_score > best_bac_wm_score:
+    #     best_bac_wm = method
+    #     best_bac_wm_score = best_score
+    #     best_diags = exp.alpha0_diags
+    #     best_factor = exp.alpha0_factor
+    #     best_nu0factor = exp.nu0_factor
 
 print('best BAC method = %s' % best_bac_wm)
 
