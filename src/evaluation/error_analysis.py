@@ -291,7 +291,7 @@ if __name__ == '__main__':
     dataroot = os.path.expanduser('~/data/bayesian_sequence_combination/')
 
     # Analyse the errors introduced by our method that the baselines did not make.
-    outroot = os.path.expanduser('./data/error_analysis/')
+    outroot = os.path.expanduser('~/data/bayesian_sequence_combination/output/')
 
     # NER ----------------------------------------------------------------------
 
@@ -394,7 +394,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico-debug/pred_started-2019-04-12-15-54-45-Nseen56858.csv',
+                   outroot + '/pico/pred_started-2019-04-12-15-54-45-Nseen56858.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
