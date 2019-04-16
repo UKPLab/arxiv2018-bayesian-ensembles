@@ -350,23 +350,23 @@ if __name__ == '__main__':
 
     # PICO --------------------------------------------------------------------
 
-    prior_str = 'pico_task1_bac_ibcc_IF'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/bio_task1/pred_started-2018-07-11-01-09-52-Nseen9480.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0, remove_val=True)
-
-    prior_str = 'pico_task1_bac_vec_IF'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/bio_task1/pred_started-2018-06-13-01-43-11-Nseen9480.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0, remove_val=True)
+    # prior_str = 'pico_task1_bac_ibcc_IF'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/bio_task1/pred_started-2018-07-11-01-09-52-Nseen9480.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
+    #
+    # prior_str = 'pico_task1_bac_vec_IF'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/bio_task1/pred_started-2018-06-13-01-43-11-Nseen9480.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
 
     # prior_str = 'pico_task1_bac_seq_IF'
     # error_analysis(dataroot + '/data/bio/gt.csv',
@@ -410,7 +410,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico-debug/pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/pico-debug/pred_started-2019-04-16-10-05-05-Nseen2134.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
