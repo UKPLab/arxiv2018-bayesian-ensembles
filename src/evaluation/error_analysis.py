@@ -96,6 +96,9 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     error_counts = np.zeros(len(error_count_labels))
 
     g_spans = []
+
+    n_all_g_spans = 0
+
     span_start = -1
     for i, gtok in enumerate(gt):
 
@@ -107,7 +110,10 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
             if span_start > -1:
                 span_end = i
                 g_spans.append((span_start, span_end))
-            span_start = i
+            if i not in error_idxs:
+                span_start = i
+
+            n_all_g_spans += 1
 
         if gtok == 1 and span_start > -1:
             span_end = i
@@ -121,6 +127,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
 
     error_counts[0] += len(g_spans)
     print('No. gold spans with no errors = %i' % error_counts[0])
+    print('Total number of spans in the gold data = %i' % n_all_g_spans)
 
     analysis_header = 'tok_idx, proposed_pred, gold, doc_start'
     if annos != None:
@@ -343,39 +350,39 @@ if __name__ == '__main__':
 
     # PICO --------------------------------------------------------------------
 
-    # prior_str = 'pico_task1_bac_ibcc_IF'
-    # error_analysis(dataroot + '/data/bio/gt.csv',
-    #                dataroot + '/data/bio/annos.csv',
-    #                dataroot + '/data/bio/doc_start.csv',
-    #                outroot + '/pico/pred_started-2018-07-11-01-09-52-Nseen9480.csv',
-    #                outroot + '/analysis_%s' % prior_str,
-    #                outroot + '/analysis_counts_%s' % prior_str,
-    #                0, remove_val=True)
-    #
-    # prior_str = 'pico_task1_bac_vec_IF'
-    # error_analysis(dataroot + '/data/bio/gt.csv',
-    #                dataroot + '/data/bio/annos.csv',
-    #                dataroot + '/data/bio/doc_start.csv',
-    #                outroot + '/pico/pred_started-2018-06-13-01-43-11-Nseen9480.csv',
-    #                outroot + '/analysis_%s' % prior_str,
-    #                outroot + '/analysis_counts_%s' % prior_str,
-    #                0, remove_val=True)
-    #
+    prior_str = 'pico_task1_bac_ibcc_IF'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   outroot + '/bio_task1/pred_started-2018-07-11-01-09-52-Nseen9480.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0, remove_val=True)
+
+    prior_str = 'pico_task1_bac_vec_IF'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   outroot + '/bio_task1/pred_started-2018-06-13-01-43-11-Nseen9480.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0, remove_val=True)
+
     # prior_str = 'pico_task1_bac_seq_IF'
     # error_analysis(dataroot + '/data/bio/gt.csv',
     #                dataroot + '/data/bio/annos.csv',
     #                dataroot + '/data/bio/doc_start.csv',
-    #                outroot + '/pico/pred_started-2018-08-25-18-08-57-Nseen56858.csv',
+    #                outroot + '/bio_task1/pred_started-2018-08-25-18-08-57-Nseen56858.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
-    #
-    # # Analyse the errors that our method did not make but the baselines did.
+
+    # Analyse the errors that our method did not make but the baselines did.
     # prior_str = 'pico_task1_HMMCrowd'
     # error_analysis(dataroot + '/data/bio/gt.csv',
     #                dataroot + '/data/bio/annos.csv',
     #                dataroot + '/data/bio/doc_start.csv',
-    #                outroot + '/pico/pred_started-2018-08-25-23-55-53-Nseen56858.csv',
+    #                outroot + '/bio_task1/pred_started-2018-08-25-23-55-53-Nseen56858.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
@@ -385,11 +392,11 @@ if __name__ == '__main__':
     # error_analysis(dataroot + '/data/bio/gt.csv',
     #                dataroot + '/data/bio/annos.csv',
     #                dataroot + '/data/bio/doc_start.csv',
-    #                outroot + '/pico/pred_started-2018-08-29-20-26-38-Nseen56858.csv',
+    #                outroot + '/bio_task1/pred_started-2018-08-29-20-26-38-Nseen56858.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
-
+    #
     # prior_str = 'pico_task1_bac_seq_IF_noLSTM'
     # error_analysis(dataroot + '/data/bio/gt.csv',
     #                dataroot + '/data/bio/annos.csv',
