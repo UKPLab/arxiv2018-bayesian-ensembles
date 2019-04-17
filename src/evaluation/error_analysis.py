@@ -96,38 +96,61 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     error_counts = np.zeros(len(error_count_labels))
 
     g_spans = []
-
-    n_all_g_spans = 0
+    g_spans_with_error = []
+    g_span_partial_match = []
 
     span_start = -1
+
+    has_error = False
+    partial_match = False
+
     for i, gtok in enumerate(gt):
 
-        if i in error_idxs:
-            # exclude this span
-            span_start = -1
-
         if gtok in [2, 4, 6, 8]:
+            # this is the end of any current spans
             if span_start > -1:
                 span_end = i
                 g_spans.append((span_start, span_end))
-            if i not in error_idxs:
-                span_start = i
+                g_spans_with_error.append(has_error)
+                g_span_partial_match.append(
+                    partial_match and has_error)  # include spans with some matching tokens but some errors
+            # this is the beginning of a new span
+            span_start = i
+            if i in error_idxs: # record if the prediction contains an error
+                has_error = True
+                partial_match = False
+            else:
+                partial_match = True
+                has_error = False
 
-            n_all_g_spans += 1
-
-        if gtok == 1 and span_start > -1:
+        elif gtok == 1 and span_start > -1:
+            # an O token -- end any current spans
             span_end = i
             g_spans.append((span_start, span_end))
+            g_spans_with_error.append(has_error)
+            g_span_partial_match.append(
+                partial_match and has_error) #include spans with some matching tokens but some errors
             span_start = -1
+
+        elif span_start > -1 and i in error_idxs:
+            # we have a gold I token and an error in the prediction
+            has_error = True
+
+        elif span_start > -1:
+            partial_match = True # this I token matches, so there is a partial match at least
 
     # didn't finish inside the tokens
     if span_start > -1:
         span_end = i + 1
         g_spans.append((span_start, span_end))
+        g_spans_with_error.append(has_error)
+        g_span_partial_match.append(
+            partial_match and has_error)  # include spans with some matching tokens but some errors
 
-    error_counts[0] += len(g_spans)
-    print('No. gold spans with no errors = %i' % error_counts[0])
-    print('Total number of spans in the gold data = %i' % n_all_g_spans)
+    error_counts[error_count_labels == 'exact match'] = len(g_spans) - np.sum(g_spans_with_error)
+    error_counts[error_count_labels == 'partial match'] = np.sum(g_span_partial_match)
+    print('No. gold spans with no errors = %i' % error_counts[error_count_labels == 'exact match'])
+    print('Total number of spans in the gold data = %i' % len(g_spans))
 
     analysis_header = 'tok_idx, proposed_pred, gold, doc_start'
     if annos != None:
@@ -264,12 +287,6 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
                 if pstart < span_end and pend > span_start:
                     span_matched = True
 
-            if not span_matched:
-                error_counts[error_count_labels == 'missed'] += 1
-                missed += 1
-            else:
-                error_counts[error_count_labels == 'partial match'] += 1
-
         for i, (span_start, span_end) in enumerate(p_spans):
                 # is there an exact match in p_spans?
             if (span_start, span_end) in g_spans:
@@ -289,10 +306,11 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
         error_counts[error_count_labels == 'fused together'] += (span_count_diff > 0)
         error_counts[error_count_labels == 'extra splits'] += (span_count_diff < 0)
 
-    error_counts[error_count_labels == 'partial match'] = n_all_g_spans - error_counts[0] - error_counts[error_count_labels == 'missed']
-    print(n_all_g_spans - error_counts[0] - error_counts[error_count_labels == 'missed'])
+    error_counts[error_count_labels == 'missed'] = np.sum(g_spans_with_error) - np.sum(g_span_partial_match) \
+                                                   - error_counts[error_count_labels == 'wrong type']
 
-    print('No. gold spans with errors = %i' % count_gspans)
+    print(error_count_labels)
+    print(error_counts)
 
     np.savetxt(output_path, analysis, delimiter=',', fmt='%i', header=analysis_header)
     np.savetxt(output_counts_path, error_counts[None, :], delimiter=',', fmt='%i', header=', '.join(error_count_labels))
