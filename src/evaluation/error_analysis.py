@@ -287,6 +287,9 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
                 if pstart < span_end and pend > span_start:
                     span_matched = True
 
+            if not span_matched:
+                missed += 1
+
         for i, (span_start, span_end) in enumerate(p_spans):
                 # is there an exact match in p_spans?
             if (span_start, span_end) in g_spans:
