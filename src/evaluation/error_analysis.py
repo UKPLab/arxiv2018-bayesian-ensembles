@@ -289,6 +289,9 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
         error_counts[error_count_labels == 'fused together'] += (span_count_diff > 0)
         error_counts[error_count_labels == 'extra splits'] += (span_count_diff < 0)
 
+    error_counts[error_count_labels == 'partial match'] = n_all_g_spans - error_counts[0] - error_counts[error_count_labels == 'missed']
+    print(n_all_g_spans - error_counts[0] - error_counts[error_count_labels == 'missed'])
+
     print('No. gold spans with errors = %i' % count_gspans)
 
     np.savetxt(output_path, analysis, delimiter=',', fmt='%i', header=analysis_header)
@@ -306,7 +309,7 @@ if __name__ == '__main__':
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
     #                dataroot + '/data/ner/task1_test_annos.csv',
     #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/ner/pred_started-2018-07-12-02-42-00-Nseen6056.csv',
+    #                outroot + '/from_krusty/ner-by-sentence_1/pred_started-2018-07-12-02-42-00-Nseen6056.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
@@ -314,26 +317,26 @@ if __name__ == '__main__':
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
     #                dataroot + '/data/ner/task1_test_annos.csv',
     #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/ner/pred_started-2018-07-12-01-45-22-Nseen6056.csv',
+    #                outroot + '/from_krusty/ner-by-sentence_1/pred_started-2018-07-12-01-45-22-Nseen6056.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
     #
-    # prior_str = 'ner_task1_bac_seq_IF'
-    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-    #                dataroot + '/data/ner/task1_test_annos.csv',
-    #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/ner/pred_started-2018-08-09-02-19-46-Nseen6056.csv',
-    #                outroot + '/analysis_%s' % prior_str,
-    #                outroot + '/analysis_counts_%s' % prior_str,
-    #                0)
-    #
+    # # prior_str = 'ner_task1_bac_seq_IF'
+    # # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+    # #                dataroot + '/data/ner/task1_test_annos.csv',
+    # #                dataroot + '/data/ner/task1_test_doc_start.csv',
+    # #                outroot + '/ner/pred_started-2018-08-09-02-19-46-Nseen6056.csv',
+    # #                outroot + '/analysis_%s' % prior_str,
+    # #                outroot + '/analysis_counts_%s' % prior_str,
+    # #                0)
+    # #
     # # Analyse the errors that our method did not make but the baselines did.
     # prior_str = 'ner_task1_HMMCrowd'
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
     #                dataroot + '/data/ner/task1_test_annos.csv',
     #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/ner/pred_started-2018-07-06-22-24-18-Nseen6056.csv',
+    #                outroot + '/from_krusty/ner-by-sentence_1/pred_started-2018-07-06-22-24-18-Nseen6056.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
@@ -358,7 +361,7 @@ if __name__ == '__main__':
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
-    #
+
     # prior_str = 'pico_task1_bac_vec_IF'
     # error_analysis(dataroot + '/data/bio/gt.csv',
     #                dataroot + '/data/bio/annos.csv',
@@ -406,11 +409,11 @@ if __name__ == '__main__':
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
 
-    prior_str = 'picodebug_task1_bac_seq_IF_noLSTM'
+    prior_str = 'pico_task1_bac_seq_IF_noLSTM'
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico-debug/pred_started-2019-04-16-10-05-05-Nseen2134.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/pico/pred_started-2019-04-11-14-18-37-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
