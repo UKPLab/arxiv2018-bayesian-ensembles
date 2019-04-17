@@ -156,8 +156,6 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     if annos != None:
         analysis_header += ', crowd_labels'
 
-    count_gspans = 0
-
     for gidx, g in groupby(enumerate(error_idxs), lambda i_x:i_x[0] - i_x[1]):
         # for each error, get the predictions +/- windowsize additional tokens
         idxs = list(map(itemgetter(1), g))
@@ -244,8 +242,6 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
         missed = 0
 
         for i, (span_start, span_end) in enumerate(g_spans):
-
-            count_gspans += 1
 
             # is there an exact match in p_spans?
             if (span_start, span_end) in p_spans:
@@ -434,7 +430,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/pred_started-2019-04-15-18-45-29-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/pico/pred_started-2019-04-11-14-18-37-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
