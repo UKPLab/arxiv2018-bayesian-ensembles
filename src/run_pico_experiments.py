@@ -82,42 +82,46 @@ for m, method in enumerate(methods_to_tune):
 #         best_diags = exp.alpha0_diags
 #         best_factor = exp.alpha0_factor
 #         best_nu0factor = exp.nu0_factor
-#
+
+#  ------------------------------------------------------------------------------------------------
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+
+exp.save_results = True
+exp.opt_hyper = False
+
 # exp.alpha0_diags = best_diags
 # exp.alpha0_factor = best_factor
 # exp.nu0_factor = best_nu0factor
 #
-# # # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 #'majority',
-#                 # 'mace',
-#                 # 'ds',
-#                 # #'best',
-#                 # #'worst',
-#                 'bac_seq',
-#                 'bac_seq_integrateIF_noHMM'
-#
-# ]
-#
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-# exp.run_methods(annos, gt, doc_start, output_dir, text,
-#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-#                 new_data=regen_data
-#                 )
+# # run all the methods that don't require tuning here
+exp.methods =  [
+                'majority',
+                # 'mace',
+                # 'ds',
+                # #'best',
+                # #'worst',
+
+]
+
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(annos, gt, doc_start, output_dir, text,
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+                )
 
 
-# #  ------------------------------------------------------------------------------------------------
-# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-#
-# exp.save_results = True
-# exp.opt_hyper = False
-#
-# exp.methods =  [
-#                 #'HMM_crowd',
-# ]
-#
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-# exp.run_methods(annos, gt, doc_start, output_dir, text,
-#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-#                 new_data=regen_data
-#                 )
+#  ------------------------------------------------------------------------------------------------
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+
+exp.save_results = True
+exp.opt_hyper = False
+
+exp.methods =  [
+                'HMM_crowd',
+]
+
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(annos, gt, doc_start, output_dir, text,
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+                )
