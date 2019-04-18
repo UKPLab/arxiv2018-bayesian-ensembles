@@ -545,14 +545,19 @@ class Experiment(object):
                                                                    doc_start_val, ground_truth_val)
 
         if use_IF:
-            data_model.append('IF')
+            # data_model.append('IF')
+            # no_words = True
+            no_words = False
+        else:
+            no_words = True
 
         bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
                             inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
                             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
                             beta0_factor=self.nu0_factor,
                             exclusions=self.exclusions, before_doc_idx=1, worker_model=self.bsc_worker_model,
-                            tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model)
+                            tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model,
+                            no_words=no_words)
 
         bsc_model.verbose = True
 
@@ -795,7 +800,7 @@ class Experiment(object):
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
                     active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
-                    bootstrapping=True, ground_truth_all_points=None):
+                    bootstrapping=False, ground_truth_all_points=None):
         '''
         Run the aggregation methods and evaluate them.
         :param annotations:
@@ -1233,7 +1238,7 @@ class Experiment(object):
 
     def calculate_scores(self, agg, gt, probs, doc_start, bootstrapping=True):
         return calculate_scores(self.num_classes, self.postprocess, agg, gt, probs, doc_start,
-                                bootstrapping)
+                                bootstrapping, print_per_class_results=True)
 
 # CODE RELATING TO SYNTHETIC DATA EXPERIMENTS --------------------------------------------------------------------------
     def create_experiment_data(self):

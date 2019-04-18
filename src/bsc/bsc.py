@@ -4,6 +4,7 @@ Bayesian sequence combination, variational Bayes implementation.
 import datetime
 
 import numpy as np
+from scipy.sparse.coo import coo_matrix
 from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
 from joblib import Parallel, delayed, cpu_count, effective_n_jobs
@@ -41,7 +42,7 @@ class BSC(object):
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0,
-                 worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM'):
+                 worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False):
 
         self.rare_transition_pseudocount = np.min([np.min(beta0_factor), alpha0_diags, alpha0_factor]) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
@@ -69,6 +70,8 @@ class BSC(object):
 
         # choose data model
         self.max_data_updates_at_end = 0  # no data model to be updated after everything else has converged.
+
+        self.no_words = no_words
 
         if data_model is None:
             self.data_model = []
@@ -138,9 +141,11 @@ class BSC(object):
                 # Move pseudo count to unrestricted label of same type.
                 disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
+                # self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
+                #self.alpha0[:, outside_label, outside_label, :] += disallowed_count
 
-                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
+
+                #disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
                 self.alpha0_data[:, unrestricted_labels[i], outside_label, :] += disallowed_count
                 # self.alpha0_data[:, outside_label, outside_label, :] += disallowed_count # this is bad because outside label can be -1 and late start to annotation likely to mean higher probability of a b label
 
@@ -150,9 +155,9 @@ class BSC(object):
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
-                disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
+                #disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                #self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
 
             for typeid, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
@@ -228,8 +233,8 @@ class BSC(object):
 
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            #disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
+            #self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
             self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # cannot jump from one type to another
@@ -261,6 +266,7 @@ class BSC(object):
             nu0_sum = psi(np.sum(self.beta0))
 
         self.lnB = psi(self.beta0) - nu0_sum
+        self.lnB = np.tile(self.lnB, (self.N, 1, 1))
 
     def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
@@ -288,7 +294,7 @@ class BSC(object):
         return lnpPi, lnqPi
 
     def _lnpt(self):
-        lnpt = self.lnB.copy()[None, :, :]
+        lnpt = self.lnB.copy()
         lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
         lnpt = lnpt * self.q_t_joint
 
@@ -349,6 +355,7 @@ class BSC(object):
             lnqPi += lnqPi_model
 
         # E[ln p(A | nu_0)]
+        # TODO this is wrong since lnB is now transition matrix + word observation likelihood
         x = (self.beta0 - 1) * self.lnB
         gammaln_nu0 = gammaln(self.beta0)
         invalid_nus = np.isinf(gammaln_nu0) | np.isinf(x) | np.isnan(x)
@@ -360,6 +367,7 @@ class BSC(object):
         lnpA = np.sum(x + z) 
         
         # E[ln q(A)]
+        # TODO this is wrong since lnB is now transition matrix + word observation likelihood
         x = (self.beta - 1) * self.lnB
         x[np.isinf(x)] = 0
         gammaln_nu = gammaln(self.beta)
@@ -421,15 +429,15 @@ class BSC(object):
 
         # calculate alphas and betas using forward-backward bsc
         self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
-                                           self.lnB[0:self.L, :], self.lnPi, lnPi_data,
-                                           self.lnB[self.before_doc_idx, :], doc_start, self.nscores,
+                                           self.lnB[:, 0:self.L, :], self.lnPi, lnPi_data,
+                                           self.lnB[0, self.before_doc_idx, :], doc_start, self.nscores,
                                            self.A, self.before_doc_idx)
 
         if self.verbose:
             print("BAC iteration %i: completed forward pass" % self.iter)
 
         self.lnLambd = _parallel_backward_pass(parallel, C, C_data,
-                                          self.lnB[0:self.L, :], self.lnPi, lnPi_data,
+                                          self.lnB[:, 0:self.L, :], self.lnPi, lnPi_data,
                                           doc_start, self.nscores, self.A, self.before_doc_idx)
         if self.verbose:
             print("BAC iteration %i: completed backward pass" % self.iter)
@@ -442,12 +450,56 @@ class BSC(object):
 
         return self.q_t
 
+    def _init_words(self, text):
+
+        if self.no_words:
+            return
+
+        N = len(text)
+        self.feat_map = {} # map text tokens to indices
+        self.features = []  # list of mapped index values for each token
+
+        for feat in text.flatten():
+            if feat not in self.feat_map:
+                self.feat_map[feat] = len(self.feat_map)
+
+            self.features.append( self.feat_map[feat] )
+
+        self.features = np.array(self.features).astype(int)
+
+        # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
+        self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
+
+        self.nu0 = 0.1 * self.N
+        # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
+        # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
+        # of class even in the limit of infinite data.
+
+
+    def _update_words(self):
+        if self.no_words:
+            return np.zeros((self.N, self.L))
+
+        self.nu = self.nu0 + self.features_mat.dot(self.q_t) # nfeatures x nclasses
+
+        # update the expected log word likelihoods
+        self.ElnRho = psi(self.nu) - psi(np.sum(self.nu, 0)[None, :])
+
+        # get the expected log word likelihoods of each token
+        lnptext_given_t = self.ElnRho[self.features, :]
+        lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
+
+        return lnptext_given_t # N x nclasses where N is number of tokens/data points
+
     def _update_B_trans(self):
         '''
         Update the transition model.
         '''
         self.beta = self.beta0 + np.sum(self.q_t_joint, 0)
         self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+
+        ln_word_likelihood = self._update_words()
+        self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
 
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
@@ -461,6 +513,9 @@ class BSC(object):
         '''
         self.beta = self.beta0 + np.sum(np.sum(self.q_t_joint, 0), 0)[None, :]
         self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+
+        ln_word_likelihood = self._update_words()
+        self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
 
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
@@ -483,12 +538,14 @@ class BSC(object):
         # transform input data to desired format: unannotated tokens represented as zeros
         C = C.astype(int) + 1
         doc_start = doc_start.astype(bool)
+        self.N = doc_start.size
 
         if self.iter == 0:
             # try without any transition constraints
             self._set_transition_constraints()
 
             # initialise transition and confusion matrices
+            self._init_words(features)
             self._initB()
             self.alpha, self.lnPi = self.A._init_lnPi(self.alpha0)
 
@@ -601,7 +658,7 @@ class BSC(object):
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
             print('BAC final transition matrix: ')
-            print(np.exp(self.lnB))
+            print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
 
         return self.q_t, seq
 
@@ -622,6 +679,18 @@ class BSC(object):
         lnEA = np.zeros_like(EA)
         lnEA[EA != 0] = np.log(EA[EA != 0])
         lnEA[EA == 0] = -np.inf
+
+        # update the expected log word likelihoods
+        if self.no_words:
+            lnEA = np.tile(lnEA[None, :, :], (self.N, 1, 1))
+        else:
+            ERho = self.nu / np.sum(self.nu, 0)[None, :] # nfeatures x nclasses
+            lnERho = np.zeros_like(ERho)
+            lnERho[ERho != 0] = np.log(ERho[ERho != 0])
+            lnERho[ERho == 0] = -np.inf
+            word_ll = lnERho[self.features, :]
+
+            lnEA = lnEA[None, :, :] + word_ll[:, None, :]
 
         EPi = self.A._calc_EPi(self.alpha)
         lnEPi = np.zeros_like(EPi)
@@ -738,7 +807,6 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
     Calculate joint label probabilities for each pair of tokens.
     '''
     # initialise variables
-    T = lnR_.shape[0]
     L = lnB.shape[-1]
     K = lnPi.shape[-1]
 
@@ -784,7 +852,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
 
         # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
         # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
-        lnS[:, :, l] += loglikelihood_l + lnB[:, l][None, :]
+        lnS[:, :, l] += loglikelihood_l + lnB[:, :, l]
         lnS[1:, :L, l] += lnR_[:-1, :]
 
     # print('_expec_joint_t_quick: Normalising...')
@@ -807,7 +875,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
     Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
     T = C.shape[0]  # infer number of tokens
-    L = lnB.shape[0]  # infer number of labels
+    L = lnB.shape[-1]  # infer number of labels
     K = lnPi.shape[-1]  # infer number of annotators
     Krange = np.arange(K)
 
@@ -851,7 +919,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
     for t in range(1, T):
         # iterate through all possible labels
         # prev_idx = Cprev[t - 1, :]
-        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB, axis=0) + likelihood_next[:, t-1][None, :]
+        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB[t, :, :], axis=0) + likelihood_next[:, t-1][None, :]
         # , np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
 
         # normalise
@@ -902,7 +970,7 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
     '''
     # infer number of tokens, labels, and annotators
     T = C.shape[0]
-    L = lnB.shape[0]
+    L = lnB.shape[-1]
     K = lnPi.shape[-1]
     Krange = np.arange(K)
 
@@ -937,7 +1005,7 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
     # iterate through all tokens, starting at the end going backwards
     for t in range(T - 2, -1, -1):
         # logsumexp over the L classes of the next timestep
-        lnLambda_t = logsumexp(lnB + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
+        lnLambda_t = logsumexp(lnB[t, :, :] + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
 
         # logsumexp over the L classes of the current timestep to normalise
         lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
@@ -1001,7 +1069,7 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
 
         likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
 
-        lnV[t, l] = lnEA[before_doc_idx, l] + likelihood_current
+        lnV[t, l] = lnEA[t, before_doc_idx, l] + likelihood_current
 
     Cprev = np.copy(C)
     Cprev[C == 0] = before_doc_idx
@@ -1019,11 +1087,11 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
 
                     lnPi_data_terms += terms_mn
 
-    likelihood_current = np.sum(mask[1:, :][None, :, :] * lnPi_terms, axis=2) + lnPi_data_terms
+    likelihood_next = np.sum(mask[1:, :][None, :, :] * lnPi_terms, axis=2) + lnPi_data_terms
 
     for t in range(1, C.shape[0]):
         for l in range(L):
-            p_current = lnV[t - 1, :] + lnEA[:L, l] + likelihood_current[l, t - 1]
+            p_current = lnV[t - 1, :] + lnEA[t, :L, l] + likelihood_next[l, t - 1]
             lnV[t, l] = np.max(p_current)
             prev[t, l] = np.argmax(p_current, axis=0)
 
@@ -1038,9 +1106,10 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
 
     for t in range(C.shape[0] - 2, -1, -1):
         seq[t] = prev[t + 1, seq[t + 1]]
-        pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]] - lnEA[prev[t + 1, :],
-                                                                                        np.arange(lnEA.shape[1])])[None,
-                                        :] + lnEA[:lnV.shape[1]], axis=1)
+        pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]]
+                        - lnEA[t+1, prev[t + 1, :], np.arange(lnEA.shape[2])])[None, :] + lnEA[t+1, :lnV.shape[1]],
+                        axis=1)
+
         pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
 
     return pseq, seq

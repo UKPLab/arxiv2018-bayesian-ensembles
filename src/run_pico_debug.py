@@ -13,7 +13,7 @@ output_dir = '../../data/bayesian_sequence_combination/output/pico-debug/'
 regen_data = False
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-   load_data.load_biomedical_data(regen_data, debug_subset_size=50000)
+   load_data.load_biomedical_data(regen_data, debug_subset_size=10000)
 
 # gt = np.array([2, 0, 0, 0, 1])
 # annos = np.array([[2, 2, 2],
@@ -63,7 +63,9 @@ exp.nu0_factor = best_nu0factor
 #
 # # run all the methods that don't require tuning here
 exp.methods =  [
+    #'HMM_crowd',
     'bac_seq_integrateIF',
+    #'bac_vec_integrateIF',
     #'bac_ibcc_integrateIF',
     #'majority'
 ]
