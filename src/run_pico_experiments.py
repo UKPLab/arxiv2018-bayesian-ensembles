@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_sequence_combination/output/pico/'
+output_dir = '../../data/bayesian_sequence_combination/output/pico2/'
 
 regen_data = False
 
@@ -38,7 +38,7 @@ methods_to_tune = [
                 'bac_vec_integrateIF',
                 'bac_ibcc_integrateIF',
                 'bac_acc_integrateIF',
-                'bac_mace_integrateIF'
+                'bac_mace_integrateIF',
                 'bac_ibcc',
                 'bac_ibcc_integrateIF_noHMM',
                 'bac_seq',
