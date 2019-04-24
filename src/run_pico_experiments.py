@@ -28,9 +28,9 @@ best_nu0factor = 0.1
 best_diags = 10
 best_factor = 1
 
-nu_factors = [0.1]#[0.1, 10, 100]
+nu_factors = [10]#[0.1, 10, 100]
 diags = [10]#[0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-factors = [1]#[0.1, 1, 10]
+factors = [10]#[0.1, 1, 10]
 
 methods_to_tune = [
                 # 'ibcc',
