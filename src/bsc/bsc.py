@@ -471,7 +471,7 @@ class BSC(object):
         # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
         self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
 
-        self.nu0 = 0.1 * self.N
+        self.nu0 = 0.001 # * self.N
         # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
         # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
         # of class even in the limit of infinite data.
