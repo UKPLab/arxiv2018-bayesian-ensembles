@@ -28,21 +28,21 @@ best_nu0factor = 0.1
 best_diags = 10
 best_factor = 1
 
-nu_factors = [0.1, 10, 100]
-diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-factors = [0.1, 1, 10]
+nu_factors = [0.1]#[0.1, 10, 100]
+diags = [10]#[0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
+factors = [1]#[0.1, 1, 10]
 
 methods_to_tune = [
                 # 'ibcc',
                 'bac_seq_integrateIF',
-                'bac_vec_integrateIF',
-                'bac_ibcc_integrateIF',
-                'bac_acc_integrateIF',
-                'bac_mace_integrateIF',
-                'bac_ibcc',
-                'bac_ibcc_integrateIF_noHMM',
-                'bac_seq',
-                'bac_seq_integrateIF_noHMM',
+                # 'bac_vec_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # 'bac_acc_integrateIF',
+                # 'bac_mace_integrateIF',
+                # 'bac_ibcc',
+                # 'bac_ibcc_integrateIF_noHMM',
+                # 'bac_seq',
+                # 'bac_seq_integrateIF_noHMM',
                    ]
 
 best_bac_wm_score = -np.inf
@@ -69,59 +69,59 @@ for m, method in enumerate(methods_to_tune):
 
     print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
-    # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-    exp.methods = [method]
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                new_data=regen_data
-    )
-
-#     if 'bac_seq' in method and best_score > best_bac_wm_score:
-#         best_bac_wm = method
-#         best_bac_wm_score = best_score
-#         best_diags = exp.alpha0_diags
-#         best_factor = exp.alpha0_factor
-#         best_nu0factor = exp.nu0_factor
-
-#  ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False
-
-# exp.alpha0_diags = best_diags
-# exp.alpha0_factor = best_factor
-# exp.nu0_factor = best_nu0factor
+#     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+#     exp.methods = [method]
+#     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                 new_data=regen_data
+#     )
 #
-# # run all the methods that don't require tuning here
-exp.methods =  [
-                'majority',
-                # 'mace',
-                # 'ds',
-                # #'best',
-                # #'worst',
-
-]
-
-# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                new_data=regen_data
-                )
-
-
-#  ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False
-
-exp.methods =  [
-                'HMM_crowd',
-]
-
-# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                new_data=regen_data
-                )
+# #     if 'bac_seq' in method and best_score > best_bac_wm_score:
+# #         best_bac_wm = method
+# #         best_bac_wm_score = best_score
+# #         best_diags = exp.alpha0_diags
+# #         best_factor = exp.alpha0_factor
+# #         best_nu0factor = exp.nu0_factor
+#
+# #  ------------------------------------------------------------------------------------------------
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False
+#
+# # exp.alpha0_diags = best_diags
+# # exp.alpha0_factor = best_factor
+# # exp.nu0_factor = best_nu0factor
+# #
+# # # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 'majority',
+#                 # 'mace',
+#                 # 'ds',
+#                 # #'best',
+#                 # #'worst',
+#
+# ]
+#
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(annos, gt, doc_start, output_dir, text,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                 new_data=regen_data
+#                 )
+#
+#
+# #  ------------------------------------------------------------------------------------------------
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.save_results = True
+# exp.opt_hyper = False
+#
+# exp.methods =  [
+#                 'HMM_crowd',
+# ]
+#
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(annos, gt, doc_start, output_dir, text,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                 new_data=regen_data
+#                 )
