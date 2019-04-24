@@ -145,7 +145,7 @@ class BSC(object):
                 # self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
                 self.alpha0[:, outside_label, outside_label, :] += disallowed_count
 
-                # disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
+                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
                 # self.alpha0_data[:, unrestricted_labels[i], outside_label, :] += disallowed_count
                 self.alpha0_data[:, outside_label, outside_label, :] += disallowed_count # this is bad because outside label can be -1 and late start to annotation likely to mean higher probability of a b label
 
