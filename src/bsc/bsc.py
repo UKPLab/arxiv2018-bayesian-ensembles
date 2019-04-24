@@ -159,8 +159,8 @@ class BSC(object):
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
 
-                self.beta0[unrestricted_labels[i], restricted_label] += disallowed_count
-                self.beta0[restricted_label, restricted_label] += disallowed_count
+                self.beta0[unrestricted_labels[i], restricted_label] += 1
+                self.beta0[restricted_label, restricted_label] += 1
 
             for typeid, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
