@@ -233,8 +233,8 @@ class BSC(object):
 
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            #disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            #self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
+            self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
             self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # cannot jump from one type to another
