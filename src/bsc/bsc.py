@@ -142,10 +142,10 @@ class BSC(object):
                 # Move pseudo count to unrestricted label of same type.
                 disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
+                # self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, unrestricted_labels[i], outside_label, :] += disallowed_count
+                # self.alpha0_data[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
@@ -164,12 +164,12 @@ class BSC(object):
                 if other_restricted_label == restricted_label:
                     continue
 
-                disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
-
-                disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
+                # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+                #
+                # disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
@@ -177,30 +177,20 @@ class BSC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
+                    # self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
                     self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
                 if typeid == i:  # same type is allowed
-                    # if self.alpha0.shape[0] == 3:
-                    #
-                    #
-                    #     disallowed_count = self.alpha0[other_unrestricted_label, restricted_label, restricted_label] * 0.5
-                    #     self.alpha0[other_unrestricted_label, other_unrestricted_label, restricted_label] += disallowed_count
-                    #     self.alpha0[other_unrestricted_label, restricted_label, restricted_label] *= 0.5
-                    #
-                    #     disallowed_count = self.beta0[restricted_label, other_unrestricted_label] * 0.5
-                    #     self.beta0[restricted_label, other_unrestricted_label] *= 0.5
-                    #     self.beta0[restricted_label, restricted_label] += disallowed_count
                     continue
 
-                disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
-                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                self.alpha0[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count
-
-                disallowed_count = self.alpha0_data[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count # sticks to wrong type
+                # disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
+                # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                # self.alpha0[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count
+                #
+                # disallowed_count = self.alpha0_data[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
+                # self.alpha0_data[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count # sticks to wrong type
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
@@ -208,7 +198,7 @@ class BSC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                    self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
+                    # self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
                     self.beta0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
@@ -471,7 +461,7 @@ class BSC(object):
         # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
         self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
 
-        self.nu0 = 0.1 * self.N
+        self.nu0 = self.N / float(self.L)
         # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
         # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
         # of class even in the limit of infinite data.
@@ -602,6 +592,9 @@ class BSC(object):
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
+                print('BAC transition matrix: ')
+                print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
+
                 for model in self.data_model:
                     if (type(model) != LSTM and not self.workers_converged)\
                             or not converge_workers_first \
@@ -672,18 +665,18 @@ class BSC(object):
         Using most probable sequence would result in [0, 0].
         '''
         if self.beta.ndim >= 2:
-            EA = self.beta / np.sum(self.beta, axis=1)[:, None]
+            EB = self.beta / np.sum(self.beta, axis=1)[:, None]
         else:
-            EA = self.beta / np.sum(self.beta)
-            EA = np.tile(EA[None, :], (self.L+1, 1))
+            EB = self.beta / np.sum(self.beta)
+            EB = np.tile(EB[None, :], (self.L+1, 1))
 
-        lnEA = np.zeros_like(EA)
-        lnEA[EA != 0] = np.log(EA[EA != 0])
-        lnEA[EA == 0] = -np.inf
+        lnEB = np.zeros_like(EB)
+        lnEB[EB != 0] = np.log(EB[EB != 0])
+        lnEB[EB == 0] = -np.inf
 
         # update the expected log word likelihoods
         if self.no_words:
-            lnEA = np.tile(lnEA[None, :, :], (self.N, 1, 1))
+            lnEB = np.tile(lnEB[None, :, :], (self.N, 1, 1))
         else:
             ERho = self.nu / np.sum(self.nu, 0)[None, :] # nfeatures x nclasses
             lnERho = np.zeros_like(ERho)
@@ -691,7 +684,7 @@ class BSC(object):
             lnERho[ERho == 0] = -np.inf
             word_ll = lnERho[self.features, :]
 
-            lnEA = lnEA[None, :, :] + word_ll[:, None, :]
+            lnEB = lnEB[None, :, :] + word_ll[:, None, :]
 
         EPi = self.A._calc_EPi(self.alpha)
         lnEPi = np.zeros_like(EPi)
@@ -709,6 +702,7 @@ class BSC(object):
 
         # split into documents
         docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+        lnEB_by_doc = np.split(lnEB, np.where(doc_start == 1)[0][1:], axis=0)
 
         C_data_by_doc = []
         for C_data_m in C_data:
@@ -719,12 +713,14 @@ class BSC(object):
         # docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
         # run forward pass for each doc concurrently
         if len(self.data_model):
-            res = parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEA, lnEPi, lnEPi_data, self.L,
-                                                                self.nscores, self.K, self.A, self.before_doc_idx) for d, doc in enumerate(docs))
+            res = parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEB_by_doc[d], lnEPi,
+                        lnEPi_data, self.L, self.nscores, self.K, self.A, self.before_doc_idx)
+                           for d, doc in enumerate(docs))
         else:
-            res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEA, lnEPi, lnEPi_data, self.L,
-                                                                self.nscores, self.K, self.A,
-                                                                self.before_doc_idx) for d, doc in enumerate(docs))
+            res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB, lnEPi, lnEPi_data, self.L,
+                        self.nscores, self.K, self.A, self.before_doc_idx)
+                           for d, doc in enumerate(docs))
+
         # reformat results
         pseq = np.concatenate(list(zip(*res))[0], axis=0)
         seq = np.concatenate(list(zip(*res))[1], axis=0)
@@ -936,6 +932,7 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
     '''
     # split into documents
     C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+    lnB_by_doc = np.split(lnB, np.where(doc_start==1)[0][1:], axis=0)
 
     C_data_by_doc = []
 
@@ -947,11 +944,11 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
         if len(Cdata) >= 1:
             C_data_by_doc = list(zip(*C_data_by_doc))
 
-        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB, lnPi, lnPi_data, initProbs,
+        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB_by_doc[d], lnPi, lnPi_data, initProbs,
                                                   nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
     else:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB, lnPi, lnPi_data, initProbs,
+        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB_by_doc[d], lnPi, lnPi_data, initProbs,
                                                   nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
 
@@ -1006,7 +1003,7 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
     # iterate through all tokens, starting at the end going backwards
     for t in range(T - 2, -1, -1):
         # logsumexp over the L classes of the next timestep
-        lnLambda_t = logsumexp(lnB[t, :, :] + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
+        lnLambda_t = logsumexp(lnB[t+1, :, :] + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
 
         # logsumexp over the L classes of the current timestep to normalise
         lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
@@ -1025,6 +1022,7 @@ def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start
     '''
     # split into documents
     docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
+    lnB_by_doc = np.split(lnB, np.where(doc_start==1)[0][1:], axis=0)
 
     C_data_by_doc = []
 
@@ -1035,10 +1033,10 @@ def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start
             C_data_by_doc = list(zip(*C_data_by_doc))
 
     if C_data is not None and len(C_data) > 0:
-        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnB, lnPi, lnPi_data, nscores, worker_model,
+        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnB_by_doc[d], lnPi, lnPi_data, nscores, worker_model,
                                                    before_doc_idx) for d, doc in enumerate(docs))
     else:
-        res = parallel(delayed(_doc_backward_pass)(doc, None, lnB, lnPi, lnPi_data, nscores, worker_model,
+        res = parallel(delayed(_doc_backward_pass)(doc, None, lnB_by_doc[d], lnPi, lnPi_data, nscores, worker_model,
                                                    before_doc_idx) for d, doc in enumerate(docs))
 
     # reformat results
@@ -1047,7 +1045,7 @@ def _parallel_backward_pass(parallel, C, C_data, lnB, lnPi, lnPi_data, doc_start
     return lnLambda
 
 
-def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, K, worker_model, before_doc_idx):
+def _doc_most_probable_sequence(C, C_data, lnEB, lnEPi, lnEPi_data, L, nscores, K, worker_model, before_doc_idx):
     lnV = np.zeros((C.shape[0], L))
     prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
 
@@ -1070,12 +1068,14 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
 
         likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
 
-        lnV[t, l] = lnEA[t, before_doc_idx, l] + likelihood_current
+        lnV[t, l] = lnEB[t, before_doc_idx, l] + likelihood_current
 
-    Cprev = np.copy(C)
-    Cprev[C == 0] = before_doc_idx
 
-    lnPi_terms = worker_model._read_lnPi(lnEPi, None, C[1:, :] - 1, Cprev[:-1, :] - 1, np.arange(K), nscores)
+    Cnext = C[1:, :] - 1
+    Cprev = C[:-1, :] - 1
+    Cprev[Cprev == -1] = before_doc_idx
+
+    lnPi_terms = worker_model._read_lnPi(lnEPi, None, Cnext, Cprev, np.arange(K), nscores)
     lnPi_data_terms = 0
     if C_data is not None:
         for model, C_data_m in enumerate(C_data):
@@ -1092,7 +1092,7 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
 
     for t in range(1, C.shape[0]):
         for l in range(L):
-            p_current = lnV[t - 1, :] + lnEA[t, :L, l] + likelihood_next[l, t - 1]
+            p_current = lnV[t - 1, :] + lnEB[t, :L, l] + likelihood_next[l, t - 1]
             lnV[t, l] = np.max(p_current)
             prev[t, l] = np.argmax(p_current, axis=0)
 
@@ -1108,8 +1108,8 @@ def _doc_most_probable_sequence(C, C_data, lnEA, lnEPi, lnEPi_data, L, nscores, 
     for t in range(C.shape[0] - 2, -1, -1):
         seq[t] = prev[t + 1, seq[t + 1]]
         pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]]
-                        - lnEA[t+1, prev[t + 1, :], np.arange(lnEA.shape[2])])[None, :] + lnEA[t+1, :lnV.shape[1]],
-                        axis=1)
+                                         - lnEB[t + 1, prev[t + 1, :], np.arange(lnEB.shape[2])])[None, :] + lnEB[t + 1, :lnV.shape[1]],
+                                        axis=1)
 
         pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
 

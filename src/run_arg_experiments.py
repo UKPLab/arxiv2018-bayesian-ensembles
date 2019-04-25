@@ -9,7 +9,7 @@ output_dir = '../../data/bayesian_sequence_combination/output/arg_LMU/'
 
 regen_data = True
 
-def load_arg_sentences():
+def load_arg_sentences(debug_size=0):
     data_dir = '../../data/bayesian_sequence_combination/data/argmin_LMU/'
 
     expert_file = data_dir + 'expert.csv'
@@ -55,9 +55,15 @@ def load_arg_sentences():
     doc_start = np.concatenate((gold_doc_start, nogold_doc_start))
     text = np.concatenate((gold_text, nogold_text))
 
+    if debug_size:
+        gt = gt[:debug_size]
+        annos = annos[:debug_size]
+        doc_start = doc_start[:debug_size]
+        text = text[:debug_size]
+
     return gt, annos, doc_start, text
 
-gt, annos, doc_start, text = load_arg_sentences()
+gt, annos, doc_start, text = load_arg_sentences(10000)
 
 exp = Experiment(None, 5, annos.shape[1], None, max_iter=20)
 
@@ -65,7 +71,7 @@ exp.save_results = True
 exp.opt_hyper = False #True
 
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
-best_nu0factor = 1
+best_nu0factor = 0.1
 best_diags = 1
 best_factor = 1
 
@@ -80,11 +86,11 @@ factors = [0.1, 1, 10]
 # # run all the methods that don't require tuning here
 exp.methods =  [
                 'majority',
-                # 'mace',
-                # 'ds',
+                # # 'mace',
+                # # 'ds',
                 'ibcc',
-                'best',
-                'worst',
+                # 'best',
+                # 'worst',
                 'bac_seq_integrateIF'
 ]
 
