@@ -232,7 +232,7 @@ class Experiment(object):
 
         self.generator = generator
 
-        if not (config == None):
+        if config is not None:
             self.config_file = config
             self.read_config_file()
 
@@ -828,9 +828,6 @@ class Experiment(object):
         scores_allmethods = np.zeros((len(SCORE_NAMES), len(self.methods)))
         score_std_allmethods = np.zeros((len(SCORE_NAMES)-3, len(self.methods)))
 
-        preds_allmethods = -np.ones((annotations.shape[0], len(self.methods)))
-        probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
-
         # a second test set with no crowd labels was supplied directly
         if ground_truth_nocrowd is not None and text_nocrowd is not None and doc_start_nocrowd is not None:
             test_no_crowd = True
@@ -839,6 +836,9 @@ class Experiment(object):
         else:
             doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, doc_start, \
             ground_truth, text, N_withcrowd = self._get_nocrowd_test_data(annotations, doc_start, ground_truth, text)
+
+        preds_allmethods = -np.ones((annotations.shape[0], len(self.methods)))
+        probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))
 
         # for the additional test set with no crowd labels
         scores_nocrowd = np.zeros((len(SCORE_NAMES), len(self.methods)))
