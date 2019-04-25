@@ -63,7 +63,7 @@ def load_arg_sentences(debug_size=0):
 
     return gt, annos, doc_start, text
 
-gt, annos, doc_start, text = load_arg_sentences(10000)
+gt, annos, doc_start, text = load_arg_sentences()
 
 exp = Experiment(None, 5, annos.shape[1], None, max_iter=20)
 
@@ -86,17 +86,17 @@ factors = [0.1, 1, 10]
 # # run all the methods that don't require tuning here
 exp.methods =  [
                 'majority',
-                # # 'mace',
-                # # 'ds',
+                'mace',
+                'ds',
                 'ibcc',
-                # 'best',
-                # 'worst',
-                'bac_seq_integrateIF'
+                'best',
+                'worst',
+                'bac_seq_integrateIF',
+                'HMM_crowd',
 ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(annos, gt, doc_start, output_dir, text, new_data=regen_data
-                )
+exp.run_methods(annos, gt, doc_start, output_dir, text, new_data=regen_data)
 
 #
 # #  ------------------------------------------------------------------------------------------------
