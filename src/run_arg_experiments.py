@@ -73,7 +73,7 @@ exp.opt_hyper = False #True
 best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
 best_nu0factor = 0.1
 best_diags = 1
-best_factor = 1
+best_factor = 100000
 
 exp.nu0_factor = best_nu0factor
 exp.alpha0_diags = best_diags
@@ -85,14 +85,14 @@ factors = [0.1, 1, 10]
 
 # # run all the methods that don't require tuning here
 exp.methods =  [
-                'majority',
-                'mace',
-                'ds',
-                'ibcc',
-                'best',
-                'worst',
+                # 'majority',
+                # 'mace',
+                # 'ds',
+                # 'ibcc',
+                # 'best',
+                # 'worst',
                 'bac_seq_integrateIF',
-                'HMM_crowd',
+                # 'HMM_crowd',
 ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
