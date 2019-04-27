@@ -660,20 +660,21 @@ class BSC(object):
 
             print('BAC final transition matrix: ')
             print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
-
-        import pandas as pd
-        betatable = np.around(self.beta / np.sum(self.beta, axis=1)[:, None], 2)
-        betatable = pd.DataFrame(betatable)
-        betatable.to_csv('./beta_%i.csv' % C.shape[0])
-
-        flatalpha = np.swapaxes(np.around(self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :], 2), 0, -1).swapaxes(-1, 1
-                     ).swapaxes(-1,2).reshape(self.K, self.L*self.L*(self.L + 1))
-
-        headers = np.unravel_index(np.arange((self.L+1)*self.L*self.L), dims=(self.L, self.L, self.L+1))
-        columns = ["%i_%i_%i" % (headers[0][i], headers[1][i], headers[2][i])
-                   for i in range(len(headers[0]))]
-        flatalpha = pd.DataFrame(flatalpha, columns=columns)
-        flatalpha.to_csv('./alpha_%i.csv' % C.shape[0])
+            
+        # Some code for saving the Seq model to a reasonably readable format
+        # import pandas as pd
+        # betatable = np.around(self.beta / np.sum(self.beta, axis=1)[:, None], 2)
+        # betatable = pd.DataFrame(betatable)
+        # betatable.to_csv('./beta_%i.csv' % C.shape[0])
+        #
+        # flatalpha = np.swapaxes(np.around(self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :], 2), 0, -1).swapaxes(-1, 1
+        #              ).swapaxes(-1,2).reshape(self.K, self.L*self.L*(self.L + 1))
+        #
+        # headers = np.unravel_index(np.arange((self.L+1)*self.L*self.L), dims=(self.L, self.L, self.L+1))
+        # columns = ["%i_%i_%i" % (headers[0][i], headers[1][i], headers[2][i])
+        #            for i in range(len(headers[0]))]
+        # flatalpha = pd.DataFrame(flatalpha, columns=columns)
+        # flatalpha.to_csv('./alpha_%i.csv' % C.shape[0])
 
         return self.q_t, seq
 
