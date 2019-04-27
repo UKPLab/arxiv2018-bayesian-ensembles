@@ -1,4 +1,5 @@
 import os
+import sys
 
 from baselines.majority_voting import MajorityVoting
 from data import data_utils
@@ -13,7 +14,7 @@ regen_data = True
 
 # TODO try the simple BIO task as well as 5-class thing
 
-def load_arg_sentences(debug_size=0, regen_data=False):
+def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only=False):
     data_dir = '../../data/bayesian_sequence_combination/data/argmin_LMU/'
 
     if not regen_data and os.path.exists(data_dir + 'evaluation_gold.csv'):
@@ -22,6 +23,9 @@ def load_arg_sentences(debug_size=0, regen_data=False):
         crowd = pd.read_csv(data_dir + 'evaluation_crowd.csv').values[:, 1:].astype(int)
         doc_start = pd.read_csv(data_dir + 'evaluation_doc_start.csv', usecols=[1]).values.astype(int)
         text = pd.read_csv(data_dir + 'evaluation_text.csv', usecols=[1]).values
+
+        if second_batch_workers_only:
+            crowd = crowd[:, 26:]
 
         # idxs = gt.flatten() != -1
         # gt = gt[idxs]
@@ -111,10 +115,20 @@ def load_arg_sentences(debug_size=0, regen_data=False):
     pd.DataFrame(doc_start).to_csv(data_dir + 'evaluation_doc_start.csv')
     pd.DataFrame(text).to_csv(data_dir + 'evaluation_text.csv')
 
+    if second_batch_workers_only:
+        crowd = crowd[:, 26:]
+
     return gt, crowd, doc_start, text
 
+if __name__ == '__main__':
+
+    if len(sys.argv) > 1:
+        second_batch_workers_only = bool(sys.argv)
+    else:
+        second_batch_workers_only = False
+
 N = 0 #4521 # set to 0 to use all
-gt, annos, doc_start, text = load_arg_sentences(N, True) #4521 will train only on the gold-labelled stuff
+gt, annos, doc_start, text = load_arg_sentences(N, True, second_batch_workers_only) #4521 will train only on the gold-labelled stuff
 N = float(len(gt))
 
 valid_workers = np.any(annos != -1, axis=0)
