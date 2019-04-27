@@ -422,7 +422,8 @@ class Experiment(object):
             if not np.any(valididxs):
                 continue
 
-            f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
+            f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], labels=range(self.num_classes),
+                                       average=None)
             f1_w = np.mean(f1_by_class[np.unique(gt[valididxs]).astype(int)])
 
             #print(f1_w)
@@ -450,7 +451,8 @@ class Experiment(object):
             if not np.any(valididxs):
                 continue
 
-            f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], average=None)
+            f1_by_class = skm.f1_score(gt.flatten()[valididxs], annos[valididxs, w], labels=range(self.num_classes),
+                                       average=None)
             f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(gt[valididxs]).astype(int)])
 
         worst_idxs = np.argmin(f1scores, axis=1)

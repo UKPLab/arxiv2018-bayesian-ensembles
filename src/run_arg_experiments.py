@@ -13,15 +13,21 @@ regen_data = True
 
 # TODO try the simple BIO task as well as 5-class thing
 
-def load_arg_sentences(debug_size=0):
+def load_arg_sentences(debug_size=0, regen_data=False):
     data_dir = '../../data/bayesian_sequence_combination/data/argmin_LMU/'
 
-    if os.path.exists(data_dir + 'evaluation_gold.csv'):
+    if not regen_data and os.path.exists(data_dir + 'evaluation_gold.csv'):
         #reload the data for the experiments from cache files
         gt = pd.read_csv(data_dir + 'evaluation_gold.csv', usecols=[1]).values.astype(int)
-        crowd = pd.read_csv(data_dir + 'evaluation_crowd.csv', usecols=[1]).values.astype(int)
+        crowd = pd.read_csv(data_dir + 'evaluation_crowd.csv').values[:, 1:].astype(int)
         doc_start = pd.read_csv(data_dir + 'evaluation_doc_start.csv', usecols=[1]).values.astype(int)
         text = pd.read_csv(data_dir + 'evaluation_text.csv', usecols=[1]).values
+
+        # idxs = gt.flatten() != -1
+        # gt = gt[idxs]
+        # crowd = crowd[idxs, :]
+        # doc_start = doc_start[idxs]
+        # text = text[idxs]
 
         return gt, crowd, doc_start, text
 
@@ -55,6 +61,9 @@ def load_arg_sentences(debug_size=0):
     crowd = np.zeros((N, crowd_on_gold.shape[1] + crowd_without_gold.shape[1]), dtype=int) - 1
     crowd[:, crowd_on_gold.shape[1]:] = crowd_without_gold
 
+    # crowd_labels_present = np.any(crowd != -1, axis=1)
+    # N_withcrowd = np.sum(crowd_labels_present)
+
     gt = np.zeros(N) - 1
 
     gold_docs = np.split(gold_text, np.where(gold_doc_start == 1)[0][1:], axis=0)
@@ -80,10 +89,10 @@ def load_arg_sentences(debug_size=0):
         crowd[locs_in_nogold, :crowd_on_gold.shape[1]] = gold_crowd[d]
 
     # we need to flip 3 and 4 to fit our scheme here
-    ICon_idxs = gold == 4
-    BCon_idxs = gold == 3
-    gold[ICon_idxs] = 3
-    gold[BCon_idxs] = 4
+    ICon_idxs = gt == 4
+    BCon_idxs = gt == 3
+    gt[ICon_idxs] = 3
+    gt[BCon_idxs] = 4
 
     ICon_idxs = crowd == 4
     BCon_idxs = crowd == 3
@@ -105,7 +114,7 @@ def load_arg_sentences(debug_size=0):
     return gt, crowd, doc_start, text
 
 N = 0 #4521 # set to 0 to use all
-gt, annos, doc_start, text = load_arg_sentences(N) #4521 will train only on the gold-labelled stuff
+gt, annos, doc_start, text = load_arg_sentences(N, True) #4521 will train only on the gold-labelled stuff
 N = float(len(gt))
 
 valid_workers = np.any(annos != -1, axis=0)
@@ -135,7 +144,7 @@ exp.methods =  [
                 'bac_seq_integrateIF_noHMM',
 ]
 
-# exp.run_methods(annos, gt, doc_start, output_dir, text, new_data=regen_data)
+exp.run_methods(annos, gt, doc_start, output_dir, text, new_data=regen_data)
 
 best_nu0factor = 1
 best_diags = 1

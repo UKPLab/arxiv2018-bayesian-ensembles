@@ -660,7 +660,7 @@ class BSC(object):
 
             print('BAC final transition matrix: ')
             print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
-            
+
         # Some code for saving the Seq model to a reasonably readable format
         # import pandas as pd
         # betatable = np.around(self.beta / np.sum(self.beta, axis=1)[:, None], 2)
