@@ -36,7 +36,7 @@ class SequentialWorker(VectorWorker):
 
             for l in range(dims[1]):
                 counts = ((C == l + 1) * doc_start).T.dot(Tj).reshape(-1)
-                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0)).T.dot(Tj[1:]) # add counts of where
+                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0) * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
                 # previous tokens are missing.
 
                 alpha[j, l, before_doc_idx, :] += counts

@@ -138,13 +138,13 @@ class BSC(object):
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             for outside_label in self.outside_labels:
-                # remove transition from outside to restricted label.
-                # Move pseudo count to unrestricted label of same type.
-                disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
+                # *** This seems to have a large detrimental effect
+                # remove transition from outside to restricted label -- Move pseudo count to unrestricted label of same type.
+                # disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
                 # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
                 # self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
-                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
+                # disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
                 # self.alpha0_data[:, unrestricted_labels[i], outside_label, :] += disallowed_count
 
                 # set the disallowed transition to as close to zero as possible
@@ -153,6 +153,7 @@ class BSC(object):
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
+                # *** This seems to have a small positive effect
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
@@ -164,6 +165,7 @@ class BSC(object):
                 if other_restricted_label == restricted_label:
                     continue
 
+                # *** These seem to have a slight detrimental effect
                 # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
                 # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
                 # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
@@ -176,7 +178,8 @@ class BSC(object):
                 self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
 
                 if self.beta0.ndim >= 2:
-                    disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
+                    # *** This has a slight detrimental effect
+                    # disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
                     # self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
                     self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
 
@@ -185,12 +188,13 @@ class BSC(object):
                 if typeid == i:  # same type is allowed
                     continue
 
-                # disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
+                # *** These seem to have a positive effect
+                disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
                 # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                # self.alpha0[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count
-                #
-                # disallowed_count = self.alpha0_data[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
-                # self.alpha0_data[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count # sticks to wrong type
+                self.alpha0[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count
+
+                disallowed_count = self.alpha0_data[:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_labels[typeid], other_unrestricted_label, :] += disallowed_count # sticks to wrong type
 
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_unrestricted_label, :] = self.rare_transition_pseudocount
@@ -198,7 +202,7 @@ class BSC(object):
 
                 if self.beta0.ndim >= 2:
                     disallowed_count = self.beta0[other_unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                    # self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
+                    self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
                     self.beta0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
@@ -240,8 +244,8 @@ class BSC(object):
             for j, other_inside_label in enumerate(restricted_labels):
                 if other_inside_label == restricted_label:
                     continue
-                disallowed_counts = self.beta0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
+                # disallowed_counts = self.beta0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
+                # self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
                 self.beta0[other_inside_label, restricted_label] = self.rare_transition_pseudocount
 
         if self.exclusions is not None:
@@ -461,7 +465,7 @@ class BSC(object):
         # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
         self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
 
-        self.nu0 = self.N / float(self.L)
+        self.nu0 = 1 # self.N / float(self.L)
         # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
         # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
         # of class even in the limit of infinite data.
@@ -595,6 +599,9 @@ class BSC(object):
                 print('BAC transition matrix: ')
                 print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
 
+                print('BAC transition matrix params: ')
+                print(np.around(self.beta[:self.L], 2))
+
                 for model in self.data_model:
                     if (type(model) != LSTM and not self.workers_converged)\
                             or not converge_workers_first \
@@ -653,6 +660,20 @@ class BSC(object):
 
             print('BAC final transition matrix: ')
             print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
+
+        import pandas as pd
+        betatable = np.around(self.beta / np.sum(self.beta, axis=1)[:, None], 2)
+        betatable = pd.DataFrame(betatable)
+        betatable.to_csv('./beta_%i.csv' % C.shape[0])
+
+        flatalpha = np.swapaxes(np.around(self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :], 2), 0, -1).swapaxes(-1, 1
+                     ).swapaxes(-1,2).reshape(self.K, self.L*self.L*(self.L + 1))
+
+        headers = np.unravel_index(np.arange((self.L+1)*self.L*self.L), dims=(self.L, self.L, self.L+1))
+        columns = ["%i_%i_%i" % (headers[0][i], headers[1][i], headers[2][i])
+                   for i in range(len(headers[0]))]
+        flatalpha = pd.DataFrame(flatalpha, columns=columns)
+        flatalpha.to_csv('./alpha_%i.csv' % C.shape[0])
 
         return self.q_t, seq
 
@@ -998,12 +1019,12 @@ def _doc_backward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, b
                     terms_mn[:, (C_data_next[:, m] * C_data_curr[:, n]) == 0] = 0
                     lnPi_data_terms += terms_mn
 
-    likelihood = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms
+    likelihood_next = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms
 
     # iterate through all tokens, starting at the end going backwards
     for t in range(T - 2, -1, -1):
         # logsumexp over the L classes of the next timestep
-        lnLambda_t = logsumexp(lnB[t+1, :, :] + lnLambda[t + 1, :][None, :] + likelihood[:, t][None, :], axis=1)
+        lnLambda_t = logsumexp(lnB[t+1, :, :] + lnLambda[t + 1, :][None, :] + likelihood_next[:, t][None, :], axis=1)
 
         # logsumexp over the L classes of the current timestep to normalise
         lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
