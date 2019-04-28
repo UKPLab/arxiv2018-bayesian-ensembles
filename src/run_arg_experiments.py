@@ -1,16 +1,18 @@
 import os
 import sys
 
+from baselines.ibcc import IBCC
 from baselines.majority_voting import MajorityVoting
+from bsc.bsc import BSC
 from data import data_utils
-from evaluation.experiment import Experiment
+from evaluation.experiment import Experiment, calculate_scores
 import data.load_data as load_data
 import numpy as np
 import pandas as pd
 
 output_dir = '../../data/bayesian_sequence_combination/output/arg_LMU_corrected_gold/'
 
-regen_data = True
+rerun_all = True
 
 # TODO try the simple BIO task as well as 5-class thing
 
@@ -127,16 +129,58 @@ if __name__ == '__main__':
     else:
         second_batch_workers_only = False
 
-    print('Running ' + ('with' if second_batch_workers_only else 'without') + 'second-batch workers only.')
+    print('Running ' + ('with' if second_batch_workers_only else 'without') + ' second-batch workers only.')
 
     N = 0 #4521 # set to 0 to use all
-    gt, annos, doc_start, text = load_arg_sentences(N, True, second_batch_workers_only) #4521 will train only on the gold-labelled stuff
+    gt, annos, doc_start, text = load_arg_sentences(N, False, second_batch_workers_only) #4521 will train only on the gold-labelled stuff
     N = float(len(gt))
 
     valid_workers = np.any(annos != -1, axis=0)
     print('Valid workers for this subset are %s' % str(np.argwhere(valid_workers).flatten()))
 
     nclasses = 5
+
+    # # produce a gold standard using IBCC for comparison ----------------------------------------------------------------
+    # best_nu0factor = 1.0
+    # best_diags = 1.0
+    # best_factor = 1.0
+    #
+    # ibcc_alpha0 = best_factor * np.ones((nclasses, nclasses)) + best_diags * np.eye(nclasses)
+    # ibc = IBCC(nclasses=nclasses, nscores=nclasses, nu0=np.ones(nclasses) * best_nu0factor, alpha0=ibcc_alpha0,
+    #            uselowerbound=False)
+    # ibc.verbose = True
+    # ibc.max_iterations = 20
+    # probs = ibc.combine_classifications(annos, table_format=True, goldlabels=gt.flatten())  # posterior class probabilities
+    # agg = probs.argmax(axis=1)  # aggregated class labels
+    #
+    # # test the performance of the predictions -- this means evaluating on the training set as a sanity check
+    # result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
+    #                              bootstrapping=True, print_per_class_results=True)
+    #
+    # pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
+
+    # # produce a gold standard using all available data -----------------------------------------------------------------
+    # best_nu0factor = N / nclasses * 0.1
+    # best_diags = N / nclasses * 0.1
+    # best_factor = N / nclasses * 0.1
+    #
+    # bsc_model = BSC(L=nclasses, K=annos.shape[1], max_iter=20, inside_labels=[0,3], outside_labels=[1],
+    #                 beginning_labels=[2,4], alpha0_diags=best_diags, alpha0_factor=best_factor,
+    #                 beta0_factor=best_nu0factor, exclusions=None, before_doc_idx=-1, worker_model='seq',
+    #                 tagging_scheme='IOB2', data_model=[], transition_model='HMM', no_words=False)
+    # bsc_model.verbose = True
+    # bsc_model.max_iter = 20
+    #
+    # probs, agg = bsc_model.run(annos, doc_start, text, gold_labels=gt)
+    #
+    # # test the performance of the predictions -- this means evaluating on the training set as a sanity check
+    # result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
+    #                              bootstrapping=True, print_per_class_results=True)
+    #
+    # pd.DataFrame(result, columns=['BSC_SEQ_GOLD']).to_csv(output_dir + '/gold_bsc_seq.csv')
+
+    # ------------------------------------------------------------------------------------------------------------------
+
     exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=20)
 
     exp.save_results = True
@@ -160,7 +204,7 @@ if __name__ == '__main__':
                     'bac_seq_integrateIF_noHMM',
     ]
 
-    exp.run_methods(annos, gt, doc_start, output_dir, text, new_data=regen_data)
+    # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=rerun_all)
 
     best_nu0factor = 1
     best_diags = 1
@@ -171,19 +215,19 @@ if __name__ == '__main__':
     exp.alpha0_factor = best_factor
 
     exp.methods =  [
-                    'majority',
-                    'mace',
-                    'ds',
-                    'ibcc',
-                    'best',
-                    'worst',
-                    'HMM_crowd',
-                    'bac_seq_integrateIF',
-                    'bac_ibcc_integrateIF',
-                    'bac_vec_integrateIF',
+                    # 'majority',
+                    # 'mace',
+                    # 'ds',
+                    # 'ibcc',
+                    # 'best',
+                    # 'worst',
+                    # 'HMM_crowd',
+                    'bac_seq_integrateIF_weakprior',
+                    'bac_ibcc_integrateIF_weakprior',
+                    'bac_vec_integrateIF_weakprior',
     ]
 
-    exp.run_methods(annos, gt, doc_start, output_dir, text, new_data=regen_data)
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=rerun_all)
 
     #
     # nu_factors = [0.1, 10, 100]

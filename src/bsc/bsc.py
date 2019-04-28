@@ -443,6 +443,15 @@ class BSC(object):
 
         self.q_t = np.sum(self.q_t_joint, axis=1)
 
+        if self.gold is not None:
+            goldidxs = self.gold != -1
+            self.q_t[goldidxs, :] = 0
+            self.q_t[goldidxs, self.gold[goldidxs]] = 1.0
+
+            self.q_t_joint[goldidxs, :, :] = 0
+            goldprev = np.append(([self.before_doc_idx], self.gold[:-1]))
+            self.q_t_joint[goldidxs, goldprev, self.gold] = 1.0
+
         return self.q_t
 
     def _init_words(self, text):
@@ -515,11 +524,16 @@ class BSC(object):
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[]):
+    def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
+            gold_labels=None):
         '''
         Runs the BAC bsc with the given annotations and list of document starts.
 
         '''
+
+        # if there are any gold labels, supply a vector or list of values with -1 for the missing ones
+        self.gold = np.array(gold_labels).flatten()
+
         # initialise the hyperparameters to correct sizes
         self.alpha0, self.alpha0_data = self.A._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
                                                               self.nscores)
