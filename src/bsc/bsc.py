@@ -449,7 +449,7 @@ class BSC(object):
             self.q_t[goldidxs, self.gold[goldidxs]] = 1.0
 
             self.q_t_joint[goldidxs, :, :] = 0
-            goldprev = np.append(([self.before_doc_idx], self.gold[:-1]))
+            goldprev = np.append([self.before_doc_idx], self.gold[:-1])
             self.q_t_joint[goldidxs, goldprev, self.gold] = 1.0
 
         return self.q_t
@@ -532,7 +532,10 @@ class BSC(object):
         '''
 
         # if there are any gold labels, supply a vector or list of values with -1 for the missing ones
-        self.gold = np.array(gold_labels).flatten()
+        if gold_labels is not None:
+            self.gold = np.array(gold_labels).flatten()
+        else:
+            self.gold = None
 
         # initialise the hyperparameters to correct sizes
         self.alpha0, self.alpha0_data = self.A._expand_alpha0(self.alpha0, self.alpha0_data, self.K,

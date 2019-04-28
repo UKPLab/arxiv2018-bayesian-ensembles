@@ -125,9 +125,14 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
-        second_batch_workers_only = bool(sys.argv)
+        second_batch_workers_only = bool(sys.argv[1])
     else:
         second_batch_workers_only = False
+
+    if len(sys.argv) > 2:
+        run_on_all = bool(sys.argv[2])
+    else:
+        run_on_all = False
 
     print('Running ' + ('with' if second_batch_workers_only else 'without') + ' second-batch workers only.')
 
@@ -140,44 +145,45 @@ if __name__ == '__main__':
 
     nclasses = 5
 
-    # # produce a gold standard using IBCC for comparison ----------------------------------------------------------------
-    # best_nu0factor = 1.0
-    # best_diags = 1.0
-    # best_factor = 1.0
-    #
-    # ibcc_alpha0 = best_factor * np.ones((nclasses, nclasses)) + best_diags * np.eye(nclasses)
-    # ibc = IBCC(nclasses=nclasses, nscores=nclasses, nu0=np.ones(nclasses) * best_nu0factor, alpha0=ibcc_alpha0,
-    #            uselowerbound=False)
-    # ibc.verbose = True
-    # ibc.max_iterations = 20
-    # probs = ibc.combine_classifications(annos, table_format=True, goldlabels=gt.flatten())  # posterior class probabilities
-    # agg = probs.argmax(axis=1)  # aggregated class labels
-    #
-    # # test the performance of the predictions -- this means evaluating on the training set as a sanity check
-    # result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
-    #                              bootstrapping=True, print_per_class_results=True)
-    #
-    # pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
+    if run_on_all:
+        # produce a gold standard using IBCC for comparison ----------------------------------------------------------------
+        best_nu0factor = 1.0
+        best_diags = 1.0
+        best_factor = 1.0
 
-    # # produce a gold standard using all available data -----------------------------------------------------------------
-    # best_nu0factor = N / nclasses * 0.1
-    # best_diags = N / nclasses * 0.1
-    # best_factor = N / nclasses * 0.1
-    #
-    # bsc_model = BSC(L=nclasses, K=annos.shape[1], max_iter=20, inside_labels=[0,3], outside_labels=[1],
-    #                 beginning_labels=[2,4], alpha0_diags=best_diags, alpha0_factor=best_factor,
-    #                 beta0_factor=best_nu0factor, exclusions=None, before_doc_idx=-1, worker_model='seq',
-    #                 tagging_scheme='IOB2', data_model=[], transition_model='HMM', no_words=False)
-    # bsc_model.verbose = True
-    # bsc_model.max_iter = 20
-    #
-    # probs, agg = bsc_model.run(annos, doc_start, text, gold_labels=gt)
-    #
-    # # test the performance of the predictions -- this means evaluating on the training set as a sanity check
-    # result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
-    #                              bootstrapping=True, print_per_class_results=True)
-    #
-    # pd.DataFrame(result, columns=['BSC_SEQ_GOLD']).to_csv(output_dir + '/gold_bsc_seq.csv')
+        ibcc_alpha0 = best_factor * np.ones((nclasses, nclasses)) + best_diags * np.eye(nclasses)
+        ibc = IBCC(nclasses=nclasses, nscores=nclasses, nu0=np.ones(nclasses) * best_nu0factor, alpha0=ibcc_alpha0,
+                   uselowerbound=False)
+        ibc.verbose = True
+        ibc.max_iterations = 20
+        probs = ibc.combine_classifications(annos, table_format=True, goldlabels=gt.flatten())  # posterior class probabilities
+        agg = probs.argmax(axis=1)  # aggregated class labels
+
+        # test the performance of the predictions -- this means evaluating on the training set as a sanity check
+        result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
+                                     bootstrapping=True, print_per_class_results=True)
+
+        pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
+
+        # produce a gold standard using all available data -----------------------------------------------------------------
+        best_nu0factor = N / nclasses * 0.1
+        best_diags = N / nclasses * 0.1
+        best_factor = N / nclasses * 0.1
+
+        bsc_model = BSC(L=nclasses, K=annos.shape[1], max_iter=20, inside_labels=[0,3], outside_labels=[1],
+                        beginning_labels=[2,4], alpha0_diags=best_diags, alpha0_factor=best_factor,
+                        beta0_factor=best_nu0factor, exclusions=None, before_doc_idx=-1, worker_model='seq',
+                        tagging_scheme='IOB2', data_model=[], transition_model='HMM', no_words=False)
+        bsc_model.verbose = True
+        bsc_model.max_iter = 20
+
+        probs, agg = bsc_model.run(annos, doc_start, text, gold_labels=gt)
+
+        # test the performance of the predictions -- this means evaluating on the training set as a sanity check
+        result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
+                                     bootstrapping=True, print_per_class_results=True)
+
+        pd.DataFrame(result, columns=['BSC_SEQ_GOLD']).to_csv(output_dir + '/gold_bsc_seq.csv')
 
     # ------------------------------------------------------------------------------------------------------------------
 
