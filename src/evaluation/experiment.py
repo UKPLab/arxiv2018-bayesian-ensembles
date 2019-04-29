@@ -201,8 +201,6 @@ class Experiment(object):
     alpha0 = None
     nu0 = None
 
-    exclusions = {}
-
     num_runs = None
     doc_length = None
     group_sizes = None
@@ -499,7 +497,7 @@ class Experiment(object):
 
     def _run_ibcc(self, annotations, use_ml=False):
         if use_ml:
-            alpha0 = np.ones((self.num_classes, self.num_classes)) # no prior information at all
+            alpha0 = np.ones((self.num_classes, self.num_classes)) + 0.1 # no prior information at all, just add a small regularization term
             ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=np.ones(self.num_classes),
                         alpha0=alpha0, uselowerbound=True, use_ml=True)
         else:
@@ -553,13 +551,11 @@ class Experiment(object):
         else:
             no_words = True
 
-        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
-                            inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
-                            alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
-                            beta0_factor=self.nu0_factor,
-                            exclusions=self.exclusions, before_doc_idx=-1, worker_model=self.bsc_worker_model,
-                            tagging_scheme='IOB2', data_model=data_model, transition_model=transition_model,
-                            no_words=no_words)
+        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, before_doc_idx=-1,
+            inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
+            alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, beta0_factor=self.nu0_factor,
+            worker_model=self.bsc_worker_model, tagging_scheme='IOB2', data_model=data_model,
+            transition_model=transition_model, no_words=no_words)
 
         bsc_model.verbose = True
 
@@ -600,8 +596,8 @@ class Experiment(object):
 
         data = crowd_data(sentences, crowd_labels)
         hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
-                       vb=[0.1, 0.1], ne=1)
-        hc.init(init_type='dw', wm_rep='cv2', dw_em=5, wm_smooth=0.1)
+                       vb=[self.nu0_factor, 0.1], smooth=self.alpha0_factor, ne=1)
+        hc.init(init_type='dw', wm_rep='cv', dw_em=5, wm_smooth=self.alpha0_factor)
 
         print('Running HMM-crowd inference...')
         hc.em(self.max_iter) # performance goes down with more iterations...?!

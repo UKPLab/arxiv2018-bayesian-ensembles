@@ -18,11 +18,18 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     
     # load data
     gt = np.genfromtxt(gt_path, delimiter=',')
-
+    if gt.ndim == 2 and gt.shape[1] == 2:
+        gt = gt[:, 1]
+        gt = gt[1:]
     #annos = np.genfromtxt(anno_path, delimiter=',') # can take too long to load
     annos = None
 
     doc_start = np.genfromtxt(doc_start_path, delimiter=',').astype(int)
+
+    if doc_start.ndim == 2 and doc_start.shape[1] == 2:
+        doc_start = doc_start[:, 1]
+        doc_start = doc_start[1:]
+
     preds1 = np.genfromtxt(prediction_path1, delimiter=',', skip_header=1) # the main set of predictions
     if preds1.ndim > 1:
         preds1 = preds1[:, main_method]
@@ -425,12 +432,66 @@ if __name__ == '__main__':
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
-
-    prior_str = 'pico_task1_bac_seq_IF_noLSTM'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico/pred_started-2019-04-11-14-18-37-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #
+    # prior_str = 'pico_task1_bac_seq_IF_noLSTM'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/pico/pred_started-2019-04-11-14-18-37-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
+    #
+    prior_str = 'arg_MV'
+    error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-04-28-02-30-18-Nseen41435.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
+
+    prior_str = 'arg_HMM_Crowd'
+    error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-04-28-02-30-18-Nseen41435.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   6, remove_val=True)
+
+    prior_str = 'arg_bac_seq_IF'
+    error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-04-28-02-30-18-Nseen41435.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   7, remove_val=True)
+
+    prior_str = 'arg_bac_CM_IF'
+    error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-04-28-13-34-11-Nseen41435.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   1, remove_val=True)
+
+    prior_str = 'arg_bac_VEC_IF'
+    error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-04-28-13-34-11-Nseen41435.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   2, remove_val=True)
+
+    prior_str = 'arg_IBCC'
+    error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-04-28-02-30-18-Nseen41435.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   3, remove_val=True)

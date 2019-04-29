@@ -41,7 +41,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, exclusions=None, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0,
+                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False):
 
         self.rare_transition_pseudocount = 1e-6
@@ -59,7 +59,6 @@ class BSC(object):
         self.inside_labels = inside_labels
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
-        self.exclusions = exclusions
 
         self.beta0 = np.ones((self.L + 1, self.L)) * beta0_factor
 
@@ -138,15 +137,6 @@ class BSC(object):
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             for outside_label in self.outside_labels:
-                # *** This seems to have a large detrimental effect
-                # remove transition from outside to restricted label -- Move pseudo count to unrestricted label of same type.
-                # disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                # self.alpha0[:, unrestricted_labels[i], outside_label, :] += disallowed_count
-
-                # disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                # self.alpha0_data[:, unrestricted_labels[i], outside_label, :] += disallowed_count
-
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
@@ -158,31 +148,7 @@ class BSC(object):
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
 
-                # self.beta0[unrestricted_labels[i], restricted_label] += 1
-                # self.beta0[restricted_label, restricted_label] += 1
-
-            for typeid, other_restricted_label in enumerate(restricted_labels):
-                if other_restricted_label == restricted_label:
-                    continue
-
-                # *** These seem to have a slight detrimental effect
-                # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
-                # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
-                #
-                # disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                # self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
-
-                # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-
-                if self.beta0.ndim >= 2:
-                    # *** This has a slight detrimental effect
-                    # disallowed_count = self.beta0[other_restricted_label, restricted_label] - self.rare_transition_pseudocount
-                    # self.beta0[other_restricted_label, other_restricted_label] += disallowed_count
-                    self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
-
+            # Ban jumps from a B of one type to an I of another type
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
                 # prevent transitions from unrestricted to restricted if they don't have the same types
                 if typeid == i:  # same type is allowed
@@ -205,13 +171,18 @@ class BSC(object):
                     self.beta0[other_unrestricted_label, restricted_labels[typeid]] += disallowed_count
                     self.beta0[other_unrestricted_label, restricted_label] = self.rare_transition_pseudocount
 
-        if self.exclusions is not None:
-            for label, excluded in dict(self.exclusions).items():
-                self.alpha0[:, excluded, label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, excluded, label, :] = self.rare_transition_pseudocount
+            # Ban jumps between Is of different types
+            for typeid, other_restricted_label in enumerate(restricted_labels):
+                if other_restricted_label == restricted_label:
+                    continue
 
-                if self.beta0.ndim == 2:
-                    self.beta0[label, excluded] = self.rare_transition_pseudocount
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+
+                if self.beta0.ndim >= 2:
+                    self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
+
 
     def _set_transition_constraints_betaonly(self):
 
@@ -244,13 +215,8 @@ class BSC(object):
             for j, other_inside_label in enumerate(restricted_labels):
                 if other_inside_label == restricted_label:
                     continue
-                # disallowed_counts = self.beta0[other_inside_label, restricted_label] - self.rare_transition_pseudocount
-                # self.beta0[other_inside_label, self.inside_labels[j]] += disallowed_counts
                 self.beta0[other_inside_label, restricted_label] = self.rare_transition_pseudocount
 
-        if self.exclusions is not None:
-            for label, excluded in dict(self.exclusions).items():
-                self.beta0[label, excluded] = self.rare_transition_pseudocount
 
     def _initB(self):
         self.beta = self.beta0
@@ -449,8 +415,10 @@ class BSC(object):
             self.q_t[goldidxs, self.gold[goldidxs]] = 1.0
 
             self.q_t_joint[goldidxs, :, :] = 0
-            goldprev = np.append([self.before_doc_idx], self.gold[:-1])
-            self.q_t_joint[goldidxs, goldprev, self.gold] = 1.0
+            if not hasattr(self, 'goldprev'):
+                self.goldprev = np.append([self.before_doc_idx], self.gold[:-1])[goldidxs]
+
+            self.q_t_joint[goldidxs, self.goldprev, self.gold[goldidxs]] = 1.0
 
         return self.q_t
 

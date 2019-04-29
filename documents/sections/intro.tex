@@ -47,7 +47,10 @@ integrates over all possible values of a parameter, weighted by a prior distribu
 The resulting posterior probabilities improve downstream decision making
 as they include the probability of errors due to a lack of knowledge. For example, 
 during active learning, posterior probabilities assist with selecting the most informative data points~\cite{settles2010active}.
-We therefore develop a Bayesian sequence combination method, building on prior work that has demonstrated the advantages of Bayesian inference for aggregating unreliable classifications~\cite{kim2012bayesian,simpsonlong,Felt2016SemanticAA,paun2018comparing}. 
+We therefore develop a Bayesian sequence combination method, building on prior work that has demonstrated the advantages of Bayesian inference for aggregating unreliable classifications~\cite{kim2012bayesian,simpsonlong,Felt2016SemanticAA,paun2018comparing}.
+We make 
+%the modular implementation of our proposed method freely available, along with 
+all of our code freely available\footnote{\url{http://github.com/\iftaclpubformat ukplab/arxiv2018-bayesian-ensembles\else *** \fi}}. 
 %Bayesian inference also facilitates composing a model from separate components,
 %which we exploit to construct ensembles of sequence taggers and to test different annotator models.
 
@@ -93,6 +96,8 @@ This paper provides the following contributions:
  \item Theoretical and empirical comparisons of annotator models 
   for sequence tagging, including a novel model that captures sequential dependencies between annotations (referred to later as \emph{seq})
 \end{itemize}
+
+
 The following sections discuss related work, 
 annotator models for sequence tagging,
 our BSC model, and our variational inference approach
@@ -105,9 +110,6 @@ and benefits from the inclusion of automated sequence taggers.
 % in an ensemble with human annotators.
 %Our experiments evaluate both active and passive learning scenarios with varying dataset sizes, 
 %analyze types of errors, and visualize the annotator models learned by our method.
-We make 
-%the modular implementation of our proposed method freely available, along with 
-all of our code freely available\footnote{\url{http://github.com/\iftaclpubformat ukplab/arxiv2018-bayesian-ensembles\else ******\fi}}.
 
 \subsection{Related Work}
 %A number of works have investigated methods for aggregating non-sequential
