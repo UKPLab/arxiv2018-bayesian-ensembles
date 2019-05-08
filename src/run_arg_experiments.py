@@ -14,7 +14,29 @@ output_dir = '../../data/bayesian_sequence_combination/output/arg_LMU_corrected_
 
 # TODO try the simple BIO task as well as 5-class thing
 
-def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only=False, gold_labelled_only=False):
+def cap_number_of_workers(crowd, doc_start, max_workers_per_doc):
+    print('Reducing number of workers per document to %i' % max_workers_per_doc)
+    doc_start_idxs = np.where(doc_start)[0]
+    for d, doc in enumerate(doc_start_idxs):
+        valid_workers = crowd[doc] != -1
+        worker_count = np.sum(valid_workers)
+        if worker_count > max_workers_per_doc:
+            valid_workers = np.argwhere(valid_workers).flatten()
+            drop_workers = valid_workers[max_workers_per_doc:]
+            # print('dropping workers %s' % str(drop_workers))
+            if d+1 < len(doc_start_idxs):
+                next_doc = doc_start_idxs[d + 1]
+                crowd[doc:next_doc, drop_workers] = -1
+            else:
+                crowd[doc:, drop_workers] = -1
+
+    used_workers = np.any(crowd != -1, 0)
+    crowd = crowd[:, used_workers]
+
+    return crowd
+
+def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only=False, gold_labelled_only=False,
+                       max_workers_per_doc=3):
     data_dir = '../../data/bayesian_sequence_combination/data/argmin_LMU/'
 
     if not regen_data and os.path.exists(data_dir + 'evaluation_gold.csv'):
@@ -33,6 +55,9 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
             crowd = crowd[idxs, :]
             doc_start = doc_start[idxs]
             text = text[idxs]
+
+        if max_workers_per_doc > 0:
+            crowd = cap_number_of_workers(crowd, doc_start, max_workers_per_doc)
 
         return gt, crowd, doc_start, text
 
@@ -128,6 +153,9 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
 
     gt = gt.astype(int)
 
+    if max_workers_per_doc > 0:
+        crowd = cap_number_of_workers(crowd, doc_start, max_workers_per_doc)
+
     return gt, crowd, doc_start, text
 
 if __name__ == '__main__':
@@ -184,9 +212,10 @@ if __name__ == '__main__':
         # pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
 
         # produce a gold standard using all available data -----------------------------------------------------------------
-        best_nu0factor = 10
-        best_diags = 10
-        best_factor = 10
+        N = annos.shape[0] * 0.5
+        best_nu0factor = 1 + N
+        best_diags = 1 + N
+        best_factor = 1 + N
 
         bsc_model = BSC(L=nclasses, K=annos.shape[1], max_iter=20, inside_labels=[0,3], outside_labels=[1],
                         beginning_labels=[2,4], alpha0_diags=best_diags, alpha0_factor=best_factor,
@@ -212,39 +241,36 @@ if __name__ == '__main__':
         exp.opt_hyper = False #True
 
         best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
-        best_nu0factor = 1
-        best_diags = 5
-        best_factor = 5
+        N = annos.shape[0] * 0.5
+        best_nu0factor = N
+        best_diags = N
+        best_factor = N
 
         exp.nu0_factor = best_nu0factor
         exp.alpha0_diags = best_diags
         exp.alpha0_factor = best_factor
 
         exp.methods =  [
-                        # 'bac_seq_integrateIF',
-                        # 'bac_ibcc_integrateIF',
-                        # 'bac_vec_integrateIF',
+                        'bac_seq_integrateIF',
+                        'bac_ibcc_integrateIF',
+                        'bac_vec_integrateIF',
                         'bac_seq',
                         # 'bac_seq_integrateIF_noHMM',
         ]
 
         exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
 
-        best_nu0factor = 1
-        best_diags = 1
-        best_factor = 1
-
         exp.nu0_factor = best_nu0factor
         exp.alpha0_diags = best_diags
         exp.alpha0_factor = best_factor
 
         exp.methods =  [
-                        # 'majority',
+                        'majority',
                         # 'mace',
-                        'ds',
-                        # 'ibcc',
-                        # 'best',
-                        # 'worst',
+                        # 'ds',
+                        'ibcc',
+                        'best',
+                        'worst',
                         # 'bac_seq_integrateIF_weakprior',
                         # 'bac_ibcc_integrateIF_weakprior',
                         # 'bac_vec_integrateIF_weakprior',
