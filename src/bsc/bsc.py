@@ -724,7 +724,7 @@ class BSC(object):
                         lnEPi_data, self.L, self.nscores, self.K, self.A, self.before_doc_idx)
                            for d, doc in enumerate(docs))
         else:
-            res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB, lnEPi, lnEPi_data, self.L,
+            res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], lnEPi, lnEPi_data, self.L,
                         self.nscores, self.K, self.A, self.before_doc_idx)
                            for d, doc in enumerate(docs))
 

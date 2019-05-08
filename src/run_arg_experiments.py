@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         bsc_model = BSC(L=nclasses, K=annos.shape[1], max_iter=20, inside_labels=[0,3], outside_labels=[1],
                         beginning_labels=[2,4], alpha0_diags=best_diags, alpha0_factor=best_factor,
-                        beta0_factor=best_nu0factor, exclusions=None, before_doc_idx=-1, worker_model='seq',
+                        beta0_factor=best_nu0factor, before_doc_idx=-1, worker_model='seq',
                         tagging_scheme='IOB2', data_model=[], transition_model='HMM', no_words=False)
         bsc_model.verbose = True
         bsc_model.max_iter = 20
@@ -226,7 +226,7 @@ if __name__ == '__main__':
                         # 'bac_seq_integrateIF_noHMM',
         ]
 
-        # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True)
+        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True)
 
         best_nu0factor = 1
         best_diags = 1
@@ -248,7 +248,7 @@ if __name__ == '__main__':
                         # 'bac_vec_integrateIF_weakprior',
         ]
 
-        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+        # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
 
 
         best_nu0factor = 0.1
