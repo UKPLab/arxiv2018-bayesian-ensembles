@@ -798,7 +798,7 @@ class Experiment(object):
                     ground_truth_val=None, doc_start_val=None, text_val=None,
                     return_model=False, rerun_all=False, new_data=False,
                     active_learning=False, AL_batch_fraction=0.05, max_AL_iters=10,
-                    bootstrapping=False, ground_truth_all_points=None):
+                    bootstrapping=False, ground_truth_all_points=None, test_no_crowd=True):
         '''
         Run the aggregation methods and evaluate them.
         :param annotations:
@@ -831,9 +831,11 @@ class Experiment(object):
             test_no_crowd = True
             N_withcrowd = annotations.shape[0]
             N_nocrowd = ground_truth_nocrowd.shape[0]
-        else:
+        elif test_no_crowd:
             doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, doc_start, \
             ground_truth, text, N_withcrowd = self._get_nocrowd_test_data(annotations, doc_start, ground_truth, text)
+        else:
+            N_nocrowd = 0
 
         preds_allmethods = -np.ones((annotations.shape[0], len(self.methods)))
         probs_allmethods = -np.ones((annotations.shape[0], self.num_classes, len(self.methods)))

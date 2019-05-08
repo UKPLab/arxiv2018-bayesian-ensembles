@@ -384,15 +384,14 @@ class BSC(object):
         for model in self.data_model:
             C_data.append(model.C_data)
 
-        return self.q_t, self._most_probable_sequence(C, C_data, doc_start)[1]
+        return self.q_t, self._most_probable_sequence(C, C_data, doc_start, self.features)[1]
 
     def _update_t(self, parallel, C, C_data, lnPi_data, doc_start):
 
         # calculate alphas and betas using forward-backward bsc
         self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
                                            self.lnB[:, 0:self.L, :], self.lnPi, lnPi_data,
-                                           self.lnB[0, self.before_doc_idx, :], doc_start, self.nscores,
-                                           self.A, self.before_doc_idx)
+                                           doc_start, self.nscores, self.A, self.before_doc_idx)
 
         if self.verbose:
             print("BAC iteration %i: completed forward pass" % self.iter)
@@ -424,12 +423,13 @@ class BSC(object):
 
     def _init_words(self, text):
 
+        self.feat_map = {} # map text tokens to indices
+        self.features = []  # list of mapped index values for each token
+
         if self.no_words:
             return
 
         N = len(text)
-        self.feat_map = {} # map text tokens to indices
-        self.features = []  # list of mapped index values for each token
 
         for feat in text.flatten():
             if feat not in self.feat_map:
@@ -498,6 +498,8 @@ class BSC(object):
         Runs the BAC bsc with the given annotations and list of document starts.
 
         '''
+
+        print('Run called with C shape = %s' % str(C.shape))
 
         # if there are any gold labels, supply a vector or list of values with -1 for the missing ones
         if gold_labels is not None:
@@ -572,6 +574,9 @@ class BSC(object):
                 self.q_t_old = self.q_t
                 lnPi_data = [model.lnPi_data for model in self.data_model]
                 C_data = [model.C_data for model in self.data_model]
+
+                print('Updating with C shape = %s' % str(C.shape))
+
                 self._update_t(parallel, C, C_data, lnPi_data, doc_start)
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
@@ -596,7 +601,7 @@ class BSC(object):
                         if model.train_type == 'Bayes':
                             model.C_data = model.fit_predict(self.q_t)
                         elif model.train_type == 'MLE':
-                            seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
+                            seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)[1]
                             model.C_data = model.fit_predict(seq)
 
                         if type(model) == LSTM:
@@ -639,7 +644,7 @@ class BSC(object):
                 print("BAC iteration %i: computing most probable sequence..." % self.iter)
 
             C_data = [model.C_data for model in self.data_model]
-            seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
+            seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)[1]
         if self.verbose:
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
@@ -663,7 +668,7 @@ class BSC(object):
 
         return self.q_t, seq
 
-    def _most_probable_sequence(self, C, C_data, doc_start, parallel):
+    def _most_probable_sequence(self, C, C_data, doc_start, features, parallel):
         '''
         Use Viterbi decoding to ensure we make a valid prediction. There
         are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
@@ -683,13 +688,13 @@ class BSC(object):
 
         # update the expected log word likelihoods
         if self.no_words:
-            lnEB = np.tile(lnEB[None, :, :], (self.N, 1, 1))
+            lnEB = np.tile(lnEB[None, :, :], (C.shape[0], 1, 1))
         else:
             ERho = self.nu / np.sum(self.nu, 0)[None, :] # nfeatures x nclasses
             lnERho = np.zeros_like(ERho)
             lnERho[ERho != 0] = np.log(ERho[ERho != 0])
             lnERho[ERho == 0] = -np.inf
-            word_ll = lnERho[self.features, :]
+            word_ll = lnERho[features, :]
 
             lnEB = lnEB[None, :, :] + word_ll[:, None, :]
 
@@ -741,6 +746,27 @@ class BSC(object):
             doc_start = doc_start.astype(bool)
             C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
 
+            self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+
+            if self.no_words:
+                lnptext_given_t = np.zeros((len(doc_start), self.L))
+                features = None
+            else:
+                # get the expected log word likelihoods of each token
+                features = []  # list of mapped index values for each token
+                available = []
+                for feat in text.flatten():
+                    if feat not in self.feat_map:
+                        available.append(0)
+                        features.append(0)
+                    else:
+                        available.append(1)
+                        features.append(self.feat_map[feat])
+                lnptext_given_t = self.ElnRho[features, :] + np.array(available)[:, None]
+                lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
+
+            self.lnB = self.lnB[None, :, :] + lnptext_given_t[:, None, :]
+
             C_data = []
             lnPi_data = []
             for model in self.data_model:
@@ -755,7 +781,7 @@ class BSC(object):
                 doc_start
             )
 
-            seq = self._most_probable_sequence(C, C_data, doc_start, parallel)[1]
+            seq = self._most_probable_sequence(C, C_data, doc_start, features, parallel)[1]
 
         return q_t, seq
 
@@ -874,7 +900,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
     return np.exp(lnS)
 
 
-def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worker_model, before_doc_idx=1):
+def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, nscores, worker_model, before_doc_idx=1):
     '''
     Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -898,7 +924,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
                 lnPi_data_terms += (worker_model._read_lnPi(lnPi_data[model], None, m, before_doc_idx, 0,
                                                             nscores)[:, :, 0] * C_data[model][0, m])[:, 0]
 
-    lnR_[0, :] = initProbs + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
+    lnR_[0, :] = lnB[0, before_doc_idx, :] + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
     lnR_[0, :] = lnR_[0, :] - logsumexp(lnR_[0, :])
 
     Cprev = C - 1
@@ -932,7 +958,7 @@ def _doc_forward_pass(C, C_data, lnB, lnPi, lnPi_data, initProbs, nscores, worke
     return lnR_
 
 
-def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, doc_start, nscores, worker_model,
+def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, doc_start, nscores, worker_model,
                            before_doc_idx=1):
     '''
     Perform the forward pass of the Forward-Backward bsc (for multiple documents in parallel).
@@ -940,6 +966,8 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
     # split into documents
     C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
     lnB_by_doc = np.split(lnB, np.where(doc_start==1)[0][1:], axis=0)
+
+    print('Complete size of C = %s and lnB = %s' % (str(C.shape), str(lnB.shape)))
 
     C_data_by_doc = []
 
@@ -951,11 +979,11 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, initProbs, 
         if len(Cdata) >= 1:
             C_data_by_doc = list(zip(*C_data_by_doc))
 
-        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB_by_doc[d], lnPi, lnPi_data, initProbs,
+        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB_by_doc[d], lnPi, lnPi_data,
                                                   nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
     else:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB_by_doc[d], lnPi, lnPi_data, initProbs,
+        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB_by_doc[d], lnPi, lnPi_data,
                                                   nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
 

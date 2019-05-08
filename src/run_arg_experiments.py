@@ -40,7 +40,7 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
 
     gold_text = pd.read_csv(expert_file, sep=',', usecols=[6]).values
     gold_doc_start = pd.read_csv(expert_file, sep=',', usecols=[1]).values
-    gold = pd.read_csv(expert_file, sep=',', usecols=[7]).values.flatten()
+    gold = pd.read_csv(expert_file, sep=',', usecols=[7]).values.astype(int).flatten()
 
     crowd_on_gold_file = data_dir + 'crowd_on_expert_labelled_sentences.csv'
     crowd_on_gold = pd.read_csv(crowd_on_gold_file, sep=',', usecols=range(2,28)).values
@@ -126,6 +126,8 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
         doc_start = doc_start[idxs]
         text = text[idxs]
 
+    gt = gt.astype(int)
+
     return gt, crowd, doc_start, text
 
 if __name__ == '__main__':
@@ -162,24 +164,24 @@ if __name__ == '__main__':
     nclasses = 5
 
     if run_on_all:
-        # produce a gold standard using IBCC for comparison ----------------------------------------------------------------
-        best_nu0factor = 1.0
-        best_diags = 1.0
-        best_factor = 1.0
-
-        ibcc_alpha0 = best_factor * np.ones((nclasses, nclasses)) + best_diags * np.eye(nclasses)
-        ibc = IBCC(nclasses=nclasses, nscores=nclasses, nu0=np.ones(nclasses) * best_nu0factor, alpha0=ibcc_alpha0,
-                   uselowerbound=False)
-        ibc.verbose = True
-        ibc.max_iterations = 20
-        probs = ibc.combine_classifications(annos, table_format=True, goldlabels=gt.flatten())  # posterior class probabilities
-        agg = probs.argmax(axis=1)  # aggregated class labels
-
-        # test the performance of the predictions -- this means evaluating on the training set as a sanity check
-        result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
-                                     bootstrapping=True, print_per_class_results=True)
-
-        pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
+        # # produce a gold standard using IBCC for comparison ----------------------------------------------------------------
+        # best_nu0factor = 1.0
+        # best_diags = 1.0
+        # best_factor = 1.0
+        #
+        # ibcc_alpha0 = best_factor * np.ones((nclasses, nclasses)) + best_diags * np.eye(nclasses)
+        # ibc = IBCC(nclasses=nclasses, nscores=nclasses, nu0=np.ones(nclasses) * best_nu0factor, alpha0=ibcc_alpha0,
+        #            uselowerbound=False)
+        # ibc.verbose = True
+        # ibc.max_iterations = 20
+        # probs = ibc.combine_classifications(annos, table_format=True, goldlabels=gt.flatten())  # posterior class probabilities
+        # agg = probs.argmax(axis=1)  # aggregated class labels
+        #
+        # # test the performance of the predictions -- this means evaluating on the training set as a sanity check
+        # result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
+        #                              bootstrapping=True, print_per_class_results=True)
+        #
+        # pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
 
         # produce a gold standard using all available data -----------------------------------------------------------------
         best_nu0factor = 10
@@ -219,14 +221,14 @@ if __name__ == '__main__':
         exp.alpha0_factor = best_factor
 
         exp.methods =  [
-                        'bac_seq_integrateIF',
+                        # 'bac_seq_integrateIF',
                         # 'bac_ibcc_integrateIF',
                         # 'bac_vec_integrateIF',
-                        # 'bac_seq',
+                        'bac_seq',
                         # 'bac_seq_integrateIF_noHMM',
         ]
 
-        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True)
+        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
 
         best_nu0factor = 1
         best_diags = 1
@@ -237,7 +239,7 @@ if __name__ == '__main__':
         exp.alpha0_factor = best_factor
 
         exp.methods =  [
-                        'majority',
+                        # 'majority',
                         # 'mace',
                         'ds',
                         # 'ibcc',
@@ -248,8 +250,7 @@ if __name__ == '__main__':
                         # 'bac_vec_integrateIF_weakprior',
         ]
 
-        # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
-
+        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
 
         best_nu0factor = 0.1
         best_diags = 0.1
