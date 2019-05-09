@@ -16,6 +16,7 @@ import glob
 
 import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 import evaluation.metrics as metrics
+from baselines.dawid_and_skene import ds, ibccvb
 from evaluation.plots import SCORE_NAMES, plot_results
 from baselines.hmm import HMM_crowd
 from baselines.util import crowd_data, crowdlab, instance
@@ -171,6 +172,7 @@ def calculate_scores(nclasses, postprocess, agg, gt, probs, doc_start, bootstrap
     result[len(sample_res) + 1] = metrics.num_invalid_labels(agg, doc_start)
     result[len(sample_res) + 2] = metrics.mean_length_error(agg, gt, doc_start)
 
+    print('CEE tokens = %f' % result[5])
     print('F1 score tokens = %f' % result[3])
     print('F1 score spans strict = %f' % result[8])
     print('F1 score spans relaxed = %f' % result[11])
@@ -472,6 +474,42 @@ class Experiment(object):
 
         return agg, probs
 
+    def _run_ds(self, annotations):
+        probs = ds(annotations, self.num_classes, self.nu0_factor, self.max_iter)
+        agg = np.argmax(probs, axis=1)
+        return agg, probs
+
+    def _run_ibcc(self, annotations, use_ml=False):
+        probs = ibccvb(annotations, self.num_classes, self.nu0_factor, self.alpha0_factor, self.alpha0_diags, self.max_iter)
+        agg = np.argmax(probs, axis=1)
+        return agg, probs
+
+
+    # def _run_ibcc(self, annotations, use_ml=False):
+    #     if use_ml:
+    #         alpha0 = np.ones((self.num_classes, self.num_classes)) + 0.1 # no prior information at all, just add a small regularization term
+    #         ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=np.ones(self.num_classes),
+    #                     alpha0=alpha0, uselowerbound=True, use_ml=True)
+    #     else:
+    #         self.ibcc_alpha0 = self.alpha0_factor * np.ones((self.num_classes, self.num_classes)) \
+    #                            + self.alpha0_diags * np.eye(self.num_classes)
+    #         ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
+    #                     alpha0=self.ibcc_alpha0, uselowerbound=False)
+    #
+    #     ibc.verbose = True
+    #     ibc.max_iterations = self.max_iter
+    #     # ibc.optimise_alpha0_diagonals = True
+    #
+    #     if self.opt_hyper:
+    #         probs = ibc.combine_classifications(annotations, table_format=True, optimise_hyperparams=True,
+    #                                             maxiter=10000)
+    #     else:
+    #         probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
+    #     agg = probs.argmax(axis=1)  # aggregated class labels
+    #
+    #     return agg, probs
+
+
     def _run_mace(self, anno_path, tmp_path, ground_truth, annotations):
 
         annotations = pd.DataFrame(annotations)
@@ -495,29 +533,6 @@ class Experiment(object):
 
         return agg, probs
 
-    def _run_ibcc(self, annotations, use_ml=False):
-        if use_ml:
-            alpha0 = np.ones((self.num_classes, self.num_classes)) + 0.1 # no prior information at all, just add a small regularization term
-            ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=np.ones(self.num_classes),
-                        alpha0=alpha0, uselowerbound=True, use_ml=True)
-        else:
-            self.ibcc_alpha0 = self.alpha0_factor * np.ones((self.num_classes, self.num_classes)) \
-                               + self.alpha0_diags * np.eye(self.num_classes)
-            ibc = ibcc.IBCC(nclasses=self.num_classes, nscores=self.num_classes, nu0=self.ibcc_nu0,
-                        alpha0=self.ibcc_alpha0, uselowerbound=False)
-
-        ibc.verbose = True
-        ibc.max_iterations = self.max_iter
-        # ibc.optimise_alpha0_diagonals = True
-
-        if self.opt_hyper:
-            probs = ibc.combine_classifications(annotations, table_format=True, optimise_hyperparams=True,
-                                                maxiter=10000)
-        else:
-            probs = ibc.combine_classifications(annotations, table_format=True)  # posterior class probabilities
-        agg = probs.argmax(axis=1)  # aggregated class labels
-
-        return agg, probs, ibc
 
     def _run_bsc(self, annotations, doc_start, text, method, use_LSTM=0, use_IF=False,
                  ground_truth_val=None, doc_start_val=None, text_val=None,
@@ -551,7 +566,7 @@ class Experiment(object):
         else:
             no_words = True
 
-        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, before_doc_idx=-1,
+        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, before_doc_idx=1,
             inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, beta0_factor=self.nu0_factor,
             worker_model=self.bsc_worker_model, tagging_scheme='IOB2', data_model=data_model,
@@ -955,10 +970,10 @@ class Experiment(object):
                     os.remove(anno_path) # clean up tmp file
 
                 elif  method.split('_')[0] == 'ds':
-                    agg, probs, model = self._run_ibcc(annotations, use_ml=True)
+                    agg, probs = self._run_ds(annotations)
 
                 elif  method.split('_')[0] == 'ibcc':
-                    agg, probs, model = self._run_ibcc(annotations)
+                    agg, probs = self._run_ibcc(annotations)
 
                 elif method.split('_')[0] == 'bac':
 

@@ -450,7 +450,8 @@ class HMM_crowd(HMM):
         sum_ll = 0
         for i, sentence in enumerate(self.data.sentences):
 
-            print('E-step, processing sentence %i of %i' % (i, len(self.data.sentences)))
+            if np.mod(i, 50) == 0:
+                print('E-step, processing sentence %i of %i' % (i, len(self.data.sentences)))
 
             if len(sentence) > 0:
                 sen_pos, trans_pos, ll = self.inference(sentence, self.data.crowdlabs[i])
@@ -473,7 +474,8 @@ class HMM_crowd(HMM):
         #self.prior = self.count_prior * 1.0 / np.sum(self.count_prior)
 
         for i in range(self.n):
-            print('M-step, processing class counts %i of %i' % (i, self.n))
+            if np.mod(i, 50) == 0:
+                print('M-step, processing class counts %i of %i' % (i, self.n))
             self.t[i] = self.count_t[i] * 1.0 / np.sum(self.count_t[i])
             self.e[i] = self.count_e[i] * 1.0 / np.sum(self.count_e[i])
 

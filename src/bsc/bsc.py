@@ -11,6 +11,7 @@ from joblib import Parallel, delayed, cpu_count, effective_n_jobs
 import warnings
 
 #from lample_lstm_tagger.loader import tag_mapping
+from baselines.dawid_and_skene import ds
 from bsc.acc import AccuracyWorker
 from bsc.cm import ConfusionMatrixWorker
 from bsc.cv import VectorWorker
@@ -41,7 +42,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0,
+                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False):
 
         self.rare_transition_pseudocount = 1e-6
@@ -61,12 +62,18 @@ class BSC(object):
         self.beginning_labels = beginning_labels
 
         self.beta0 = np.ones((self.L + 1, self.L)) * beta0_factor
+        self.nu0 = nu0 #self.N / float(self.L)
+        # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
+        # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
+        # of class even in the limit of infinite data.
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
             self._update_B = self._update_B_trans
+            self.use_ibcc_to_init = True
         else:
             self._update_B = self._update_B_notrans
+            self.use_ibcc_to_init = False
 
         # choose data model
         self.max_data_updates_at_end = 0  # no data model to be updated after everything else has converged.
@@ -138,15 +145,20 @@ class BSC(object):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             for outside_label in self.outside_labels:
                 # set the disallowed transition to as close to zero as possible
+                disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
+                self.alpha0[:, restricted_label, unrestricted_labels[i]] += disallowed_count
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
+
+                disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, unrestricted_labels[i]] += disallowed_count
                 self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
                 # *** This seems to have a small positive effect
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
                 self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
@@ -177,8 +189,8 @@ class BSC(object):
                     continue
 
                 # set the disallowed transition to as close to zero as possible
-                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                # self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                # self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
 
                 if self.beta0.ndim >= 2:
                     self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
@@ -386,6 +398,24 @@ class BSC(object):
 
         return self.q_t, self._most_probable_sequence(C, C_data, doc_start, self.features)[1]
 
+
+    def _init_t(self, C, doc_start):
+        C = C-1
+        doc_start = doc_start.flatten()
+
+        B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
+
+        self.q_t = ds(C, self.L, 0.1)
+        self.q_t_joint = np.zeros((self.N, self.L+1, self.L))
+        for l in range(self.L):
+            self.q_t_joint[1:, l, :] =  self.q_t[:-1, l][:, None] * self.q_t[1:, :] * B[l, :][None, :]
+
+        self.q_t_joint[doc_start, :, :] = 0
+        self.q_t_joint[doc_start, self.before_doc_idx, :] = self.q_t[doc_start, :] * B[self.before_doc_idx, :]
+
+        self.q_t_joint /= np.sum(self.q_t_joint, axis=(1,2))[:, None, None]
+
+
     def _update_t(self, parallel, C, C_data, lnPi_data, doc_start):
 
         # calculate alphas and betas using forward-backward bsc
@@ -441,11 +471,6 @@ class BSC(object):
 
         # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
         self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
-
-        self.nu0 = 1 # self.N / float(self.L)
-        # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
-        # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
-        # of class even in the limit of infinite data.
 
 
     def _update_words(self):
@@ -577,7 +602,11 @@ class BSC(object):
 
                 print('Updating with C shape = %s' % str(C.shape))
 
-                self._update_t(parallel, C, C_data, lnPi_data, doc_start)
+                if self.iter > 0 or not self.use_ibcc_to_init:
+                    self._update_t(parallel, C, C_data, lnPi_data, doc_start)
+                else:
+                    self._init_t(C, doc_start)
+
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
@@ -627,6 +656,7 @@ class BSC(object):
                 # update E_lnpi
                 self.alpha = self.A._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
                                                 self.nscores, self.before_doc_idx)
+
                 self.lnPi = self.A._calc_q_pi(self.alpha)
                 if self.verbose:
                     print("BAC iteration %i: updated worker models" % self.iter)

@@ -35,8 +35,39 @@ def cap_number_of_workers(crowd, doc_start, max_workers_per_doc):
 
     return crowd
 
+def split_dev_set(gt, crowd, text, doc_start):
+    all_doc_starts = np.where(doc_start)[0]
+    doc_starts = np.where(doc_start & (gt != -1))[0]
+    dev_starts = doc_starts[100:]
+
+    crowd_dev = []
+    gt_dev = []
+    text_dev = []
+    doc_start_dev = []
+    for dev_start in dev_starts:
+        next_doc_start = np.where(all_doc_starts == dev_start)[0][0] + 1
+        if next_doc_start < all_doc_starts.shape[0]:
+            doc_end = all_doc_starts[next_doc_start]
+        else:
+            doc_end = all_doc_starts.shape[0]
+
+        crowd_dev.append(crowd[dev_start:doc_end])
+
+        gt_dev.append(np.copy(gt[dev_start:doc_end]))
+        gt[dev_start:doc_end] = -1
+
+        text_dev.append(text[dev_start:doc_end])
+        doc_start_dev.append(doc_start[dev_start:doc_end])
+
+    crowd_dev = np.concatenate(crowd_dev, axis=0)
+    gt_dev = np.concatenate(gt_dev, axis=0)
+    text_dev = np.concatenate(text_dev, axis=0)
+    doc_start_dev = np.concatenate(doc_start_dev, axis=0)
+
+    return gt, crowd_dev, gt_dev, doc_start_dev, text_dev
+
 def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only=False, gold_labelled_only=False,
-                       max_workers_per_doc=3):
+                       max_workers_per_doc=5):
     data_dir = '../../data/bayesian_sequence_combination/data/argmin_LMU/'
 
     if not regen_data and os.path.exists(data_dir + 'evaluation_gold.csv'):
@@ -59,7 +90,10 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
         if max_workers_per_doc > 0:
             crowd = cap_number_of_workers(crowd, doc_start, max_workers_per_doc)
 
-        return gt, crowd, doc_start, text
+        # split dev set
+        gt, crowd_dev, gt_dev, doc_start_dev, text_dev = split_dev_set(gt, crowd, text, doc_start)
+
+        return gt, crowd, doc_start, text, crowd_dev, gt_dev, doc_start_dev, text_dev
 
     expert_file = data_dir + 'expert_corrected_disagreements.csv'
 
@@ -156,7 +190,9 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
     if max_workers_per_doc > 0:
         crowd = cap_number_of_workers(crowd, doc_start, max_workers_per_doc)
 
-    return gt, crowd, doc_start, text
+    gt, crowd_dev, gt_dev, doc_start_dev, text_dev = split_dev_set(gt, crowd, text, doc_start)
+
+    return gt, crowd, doc_start, text, crowd_dev, gt_dev, doc_start_dev, text_dev
 
 if __name__ == '__main__':
 
@@ -166,24 +202,20 @@ if __name__ == '__main__':
         second_batch_workers_only = False
 
     if len(sys.argv) > 2:
-        run_on_all = bool(int(sys.argv[2]))
-    else:
-        run_on_all = False
-
-    if len(sys.argv) > 3:
-        gold_labelled_only = bool(int(sys.argv[3]))
+        gold_labelled_only = bool(int(sys.argv[2]))
     else:
         gold_labelled_only = False
 
-    if len(sys.argv) > 4:
-        regen_data = bool(int(sys.argv[4]))
+    if len(sys.argv) > 3:
+        regen_data = bool(int(sys.argv[3]))
     else:
         regen_data = False
 
     print('Running ' + ('with' if second_batch_workers_only else 'without') + ' second-batch workers only.')
 
     N = 0 #4521 # set to 0 to use all
-    gt, annos, doc_start, text = load_arg_sentences(N, regen_data, second_batch_workers_only, gold_labelled_only)
+    gt, annos, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev = load_arg_sentences(
+        N, regen_data, second_batch_workers_only, gold_labelled_only)
     N = float(len(gt))
 
     valid_workers = np.any(annos != -1, axis=0)
@@ -191,162 +223,131 @@ if __name__ == '__main__':
 
     nclasses = 5
 
-    if run_on_all:
-        # # produce a gold standard using IBCC for comparison ----------------------------------------------------------------
-        # best_nu0factor = 1.0
-        # best_diags = 1.0
-        # best_factor = 1.0
-        #
-        # ibcc_alpha0 = best_factor * np.ones((nclasses, nclasses)) + best_diags * np.eye(nclasses)
-        # ibc = IBCC(nclasses=nclasses, nscores=nclasses, nu0=np.ones(nclasses) * best_nu0factor, alpha0=ibcc_alpha0,
-        #            uselowerbound=False)
-        # ibc.verbose = True
-        # ibc.max_iterations = 20
-        # probs = ibc.combine_classifications(annos, table_format=True, goldlabels=gt.flatten())  # posterior class probabilities
-        # agg = probs.argmax(axis=1)  # aggregated class labels
-        #
-        # # test the performance of the predictions -- this means evaluating on the training set as a sanity check
-        # result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
-        #                              bootstrapping=True, print_per_class_results=True)
-        #
-        # pd.DataFrame(result, columns=['IBCC_GOLD']).to_csv(output_dir + '/gold_ibcc.csv')
+    # ------------------------------------------------------------------------------------------------------------------
 
-        # produce a gold standard using all available data -----------------------------------------------------------------
-        N = annos.shape[0] * 0.5
-        best_nu0factor = 1 + N
-        best_diags = 1 + N
-        best_factor = 1 + N
+    nu_factors = [0.1, 10, 100]
+    diags = [0.1, 1, 10, 100]
+    factors = [0.1, 1, 10]
 
-        bsc_model = BSC(L=nclasses, K=annos.shape[1], max_iter=20, inside_labels=[0,3], outside_labels=[1],
-                        beginning_labels=[2,4], alpha0_diags=best_diags, alpha0_factor=best_factor,
-                        beta0_factor=best_nu0factor, before_doc_idx=-1, worker_model='seq',
-                        tagging_scheme='IOB2', data_model=[], transition_model='HMM', no_words=False)
-        bsc_model.verbose = True
-        bsc_model.max_iter = 20
+    #  ------------------------------------------------------------------------------------------------
 
-        probs, agg = bsc_model.run(annos, doc_start, text, gold_labels=gt)
+    exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=20)
 
-        # test the performance of the predictions -- this means evaluating on the training set as a sanity check
-        result, _ = calculate_scores(nclasses, False, agg, gt.flatten(), probs, doc_start,
-                                     bootstrapping=True, print_per_class_results=True)
+    methods_to_tune = [
+                    'ibcc',
+                    'bac_seq_integrateIF',
+                    'bac_vec_integrateIF',
+                    'HMM_crowd',
+                    'bac_ibcc_integrateIF',
+                    'bac_acc_integrateIF',
+                    'bac_mace_integrateIF',
+                    ]
 
-        pd.DataFrame(result, columns=['BSC_SEQ_GOLD']).to_csv(output_dir + '/gold_bsc_seq.csv')
-    else:
+    for m, method in enumerate(methods_to_tune):
+        print('TUNING %s' % method)
 
-        # ------------------------------------------------------------------------------------------------------------------
+        best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, annos_dev, gt_dev, doc_start_dev,
+                                      output_dir, text_dev, metric_idx_to_optimise=11)
+        best_idxs = best_scores[1:].astype(int)
+        exp.nu0_factor = nu_factors[best_idxs[0]]
+        exp.alpha0_diags = diags[best_idxs[1]]
+        exp.alpha0_factor = factors[best_idxs[2]]
 
-        exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=20)
+        print('Best values for %s: %f, %f, %f' % (method, exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
-        exp.save_results = True
-        exp.opt_hyper = False #True
+        # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+        exp.methods = [method]
+        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
+                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                    new_data=regen_data
+        )
 
-        best_bac_wm = 'bac_seq' # choose model with best score for the different BAC worker models
-        N = annos.shape[0] * 0.5
-        best_nu0factor = N
-        best_diags = N
-        best_factor = N
 
-        exp.nu0_factor = best_nu0factor
-        exp.alpha0_diags = best_diags
-        exp.alpha0_factor = best_factor
+    # ------------------------------------------------------------------------------------------------------------------
 
-        exp.methods =  [
-                        'bac_seq_integrateIF',
-                        'bac_ibcc_integrateIF',
-                        'bac_vec_integrateIF',
-                        'bac_seq',
-                        # 'bac_seq_integrateIF_noHMM',
-        ]
+    exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=50)
 
-        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
+    exp.save_results = True
+    exp.opt_hyper = False #True
 
-        exp.nu0_factor = best_nu0factor
-        exp.alpha0_diags = best_diags
-        exp.alpha0_factor = best_factor
+    best_nu0factor = 1
+    best_diags = 100
+    best_factor = 100
 
-        exp.methods =  [
-                        'majority',
-                        # 'mace',
-                        # 'ds',
-                        'ibcc',
-                        'best',
-                        'worst',
-                        # 'bac_seq_integrateIF_weakprior',
-                        # 'bac_ibcc_integrateIF_weakprior',
-                        # 'bac_vec_integrateIF_weakprior',
-        ]
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
 
-        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+    exp.methods =  [
+        'bac_seq_integrateIF',
+        'bac_seq',
+        'bac_seq_integrateIF_noHMM',
+    ]
 
-        best_nu0factor = 0.1
-        best_diags = 0.1
-        best_factor = 0.1
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
 
-        exp.nu0_factor = best_nu0factor
-        exp.alpha0_diags = best_diags
-        exp.alpha0_factor = best_factor
+    best_nu0factor = 1
+    best_diags = 0.1
+    best_factor = 0.1
 
-        exp.methods =  [
-                        'HMM_crowd',
-        ]
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
 
-        # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+    exp.methods =  [
+        'bac_mace_integrateIF',
+        'bac_acc_integrateIF',
+    ]
 
-        #
-        # nu_factors = [0.1, 10, 100]
-        # diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
-        # factors = [0.1, 1, 10]
-        #
-        # #  ------------------------------------------------------------------------------------------------
-        #
-        # methods_to_tune = [
-        #                 # 'ibcc',
-        #                 'bac_seq_integrateIF',
-        #                 # 'bac_vec_integrateIF',
-        #                 # 'bac_ibcc_integrateIF',
-        #                 # 'bac_acc_integrateIF',
-        #                 # 'bac_mace_integrateIF',
-        #                 # 'bac_ibcc',
-        #                 # 'bac_ibcc_integrateIF_noHMM',
-        #                 # 'bac_seq',
-        #                 # 'bac_seq_integrateIF_noHMM',
-        #                    ]
-        #
-        # best_bac_wm_score = -np.inf
-        #
-        # # tune with small dataset to save time
-        # idxs = np.argwhere(gt_task1_dev != -1)[:, 0]
-        # idxs = np.concatenate((idxs, np.argwhere(gt != -1)[:, 0]))
-        # idxs = np.concatenate((idxs, np.argwhere((gt == -1) & (gt_task1_dev == -1))[:300, 0]))  # 100 more to make sure the dataset is reasonable size
-        #
-        # tune_gt_dev = gt_task1_dev[idxs]
-        # tune_annos = annos[idxs]
-        # tune_doc_start = doc_start[idxs]
-        # tune_text = text[idxs]
-        #
-        # for m, method in enumerate(methods_to_tune):
-        #     print('TUNING %s' % method)
-        #
-        #     best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, tune_annos, tune_gt_dev, tune_doc_start,
-        #                                   output_dir, tune_text, metric_idx_to_optimise=11)
-        #     best_idxs = best_scores[1:].astype(int)
-        #     exp.nu0_factor = nu_factors[best_idxs[0]]
-        #     exp.alpha0_diags = diags[best_idxs[1]]
-        #     exp.alpha0_factor = factors[best_idxs[2]]
-        #
-        #     print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
 
-        #     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-        #     exp.methods = [method]
-        #     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
-        #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-        #                 new_data=regen_data
-        #     )
-        #
-        # #     if 'bac_seq' in method and best_score > best_bac_wm_score:
-        # #         best_bac_wm = method
-        # #         best_bac_wm_score = best_score
-        # #         best_diags = exp.alpha0_diags
-        # #         best_factor = exp.alpha0_factor
-        # #         best_nu0factor = exp.nu0_factor
-        #
+    best_nu0factor = 1
+    best_diags = 0.1
+    best_factor = 0.1
+
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
+
+    exp.methods =  [
+        'bac_ibcc_integrateIF',
+        'bac_ibcc',
+        'bac_ibcc_integrateIF_noHMM',
+    ]
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
+
+    best_nu0factor = 0.1
+    best_diags = 0.1
+    best_factor = 0.1
+
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
+
+    exp.methods =  [
+                    'majority',
+                    'mace',
+                    'ds',
+                    'ibcc',
+                    'best',
+                    'worst',
+                    # 'bac_seq_integrateIF_weakprior',
+                    # 'bac_ibcc_integrateIF_weakprior',
+                    # 'bac_vec_integrateIF_weakprior',
+    ]
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+
+    best_nu0factor = 0.1
+    best_diags = 0.1
+    best_factor = 0.1
+
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
+
+    exp.methods =  [
+        'bac_vec_integrateIF',
+        'HMM_crowd',
+    ]
