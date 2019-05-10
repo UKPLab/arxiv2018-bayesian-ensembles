@@ -196,7 +196,8 @@ class WorkerModel:
             self.cv = np.zeros((self.n_workers, self.n))
             for w in range(self.n_workers):
 
-                print('M-step, processing worker counts %i of %i' % (w, self.n_workers))
+                if np.mod(w, 100) == 0:
+                    print('M-step, processing worker counts %i of %i' % (w, self.n_workers))
 
                 for i in range(self.n):
                     self.cv[w][i] = count[w][i][i] * 1.0 / np.sum(count[w][i]) # accuracy for ne class
@@ -450,7 +451,7 @@ class HMM_crowd(HMM):
         sum_ll = 0
         for i, sentence in enumerate(self.data.sentences):
 
-            if np.mod(i, 50) == 0:
+            if np.mod(i, 100) == 0:
                 print('E-step, processing sentence %i of %i' % (i, len(self.data.sentences)))
 
             if len(sentence) > 0:
@@ -474,7 +475,7 @@ class HMM_crowd(HMM):
         #self.prior = self.count_prior * 1.0 / np.sum(self.count_prior)
 
         for i in range(self.n):
-            if np.mod(i, 50) == 0:
+            if np.mod(i, 100) == 0:
                 print('M-step, processing class counts %i of %i' % (i, self.n))
             self.t[i] = self.count_t[i] * 1.0 / np.sum(self.count_t[i])
             self.e[i] = self.count_e[i] * 1.0 / np.sum(self.count_e[i])
@@ -507,7 +508,8 @@ class HMM_crowd(HMM):
         f = lambda x: np.exp( scipy.special.digamma(x))
 
         for i in range(self.n):
-            print('VB M-step, processing class counts %i of %i' % (i, self.n))
+            if np.mod(i, 100) == 0:
+                print('VB M-step, processing class counts %i of %i' % (i, self.n))
 
             self.count_t[i] = self.count_t[i] - self.smooth + self.vb[0]
             self.count_e[i] = self.count_e[i] - self.smooth + self.vb[1]
@@ -816,7 +818,8 @@ class dw(HMM_crowd):
 
     def e_step(self):
         for i, sentence in enumerate(self.data.sentences):
-            print('dw e-step, sentence %i of %i' % (i, len(self.data.sentences)))
+            if np.mod(i, 100) == 0:
+                print('dw e-step, sentence %i of %i' % (i, len(self.data.sentences)))
             self.pos[i] = np.ones( (len(sentence), self.n) )
             for j in range(len(sentence)):
                 self.pos[i][j] = self.prior.copy()

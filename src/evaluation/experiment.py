@@ -297,7 +297,7 @@ class Experiment(object):
     def tune_alpha0(self, alpha0diag_proposals, alpha0factor_proposals, nu0factor_proposals, method,
                     annotations, ground_truth, doc_start,
                     outputdir, text, tune_lstm=False, metric_idx_to_optimise=8,
-                    ground_truth_val=None, doc_start_val=None, text_val=None):
+                    ground_truth_val=None, doc_start_val=None, text_val=None, new_data=False):
 
         if outputdir is not None:
             if not os.path.exists(outputdir):
@@ -340,7 +340,8 @@ class Experiment(object):
                                                                  ground_truth_val=ground_truth_val,
                                                                  doc_start_val=doc_start_val,
                                                                  text_val=text_val,
-                                                                 bootstrapping=False)
+                                                                 bootstrapping=False,
+                                                                 new_data=new_data)
                     scores[(h*len(alpha0diag_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
                     print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor,
                                                          scores[(h*len(alpha0diag_proposals)) + i, j]))

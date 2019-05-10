@@ -41,10 +41,10 @@ exp.nu0_factor = best_nu0factor
 
 # # run all the methods that don't require tuning here
 exp.methods =  [
-                'bac_seq_integrateIF'
-                'majority',
+                'bac_seq_integrateIF',
+                # 'majority',
                 # 'mace',
-                'ds',
+                # 'ds',
                 # #'best',
                 # #'worst',
 
@@ -56,25 +56,25 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                 new_data=regen_data
                 )
 
-#  ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.alpha0_diags = 0.1
-exp.alpha0_factor = 10
-exp.nu0_factor = 10
-
-exp.save_results = True
-exp.opt_hyper = False
-
-exp.methods =  [
-                'ibcc',
-]
-
-# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(annos, gt, doc_start, output_dir, text,
-                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                new_data=regen_data
-                )
+# #  ------------------------------------------------------------------------------------------------
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+#
+# exp.alpha0_diags = 0.1
+# exp.alpha0_factor = 10
+# exp.nu0_factor = 10
+#
+# exp.save_results = True
+# exp.opt_hyper = False
+#
+# exp.methods =  [
+#                 'ibcc',
+# ]
+#
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(annos, gt, doc_start, output_dir, text,
+#                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                 new_data=regen_data
+#                 )
 
 #  ------------------------------------------------------------------------------------------------
 
@@ -83,18 +83,18 @@ diags = [0.1, 1, 10, 100] #, 50, 100]#[1, 50, 100]#[1, 5, 10, 50]
 factors = [0.1, 1, 10]
 
 methods_to_tune = [
-                # 'ibcc',
-                # 'bac_seq_integrateIF',
-                'bac_vec_integrateIF',
-                'bac_ibcc_integrateIF',
-                'HMM_crowd',
-                'bac_acc_integrateIF',
-                'bac_mace_integrateIF',
-                # 'bac_ibcc',
-                # 'bac_ibcc_integrateIF_noHMM',
-                # 'bac_seq',
-                # 'bac_seq_integrateIF_noHMM',
-                'mace',
+                'ibcc',
+                # # 'bac_seq_integrateIF',
+                # 'bac_vec_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # 'HMM_crowd',
+                # 'bac_acc_integrateIF',
+                # 'bac_mace_integrateIF',
+                # # 'bac_ibcc',
+                # # 'bac_ibcc_integrateIF_noHMM',
+                # # 'bac_seq',
+                # # 'bac_seq_integrateIF_noHMM',
+                # 'mace',
                    ]
 
 best_bac_wm_score = -np.inf
