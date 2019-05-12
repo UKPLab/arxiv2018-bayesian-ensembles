@@ -189,8 +189,14 @@ class BSC(object):
                     continue
 
                 # set the disallowed transition to as close to zero as possible
-                # self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
-                # self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+
+                disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
+
+                self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
+                self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
 
                 if self.beta0.ndim >= 2:
                     self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
