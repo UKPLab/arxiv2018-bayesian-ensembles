@@ -680,7 +680,7 @@ class BSC(object):
                 print("BAC iteration %i: computing most probable sequence..." % self.iter)
 
             C_data = [model.C_data for model in self.data_model]
-            seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)[1]
+            pseq, seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)
         if self.verbose:
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
@@ -702,7 +702,7 @@ class BSC(object):
         # flatalpha = pd.DataFrame(flatalpha, columns=columns)
         # flatalpha.to_csv('./alpha_%i.csv' % C.shape[0])
 
-        return self.q_t, seq
+        return self.q_t, seq, pseq
 
     def _most_probable_sequence(self, C, C_data, doc_start, features, parallel):
         '''
@@ -770,7 +770,7 @@ class BSC(object):
                            for d, doc in enumerate(docs))
 
         # reformat results
-        pseq = np.concatenate(list(zip(*res))[0], axis=0)
+        pseq = np.array(list(zip(*res))[0])
         seq = np.concatenate(list(zip(*res))[1], axis=0)
 
         return pseq, seq
@@ -1169,19 +1169,13 @@ def _doc_most_probable_sequence(C, C_data, lnEB, lnEPi, lnEPi_data, L, nscores, 
 
     # decode
     seq = np.zeros(C.shape[0], dtype=int)
-    pseq = np.zeros((C.shape[0], L), dtype=float)
 
     t = C.shape[0] - 1
 
     seq[t] = np.argmax(lnV[t, :])
-    pseq[t, :] = lnV[t, :]
+    pseq = np.exp(np.max(lnV[t, :]))
 
     for t in range(C.shape[0] - 2, -1, -1):
         seq[t] = prev[t + 1, seq[t + 1]]
-        pseq[t, :] = lnV[t, :] + np.max((pseq[t + 1, :] - lnV[t, prev[t + 1, :]]
-                                         - lnEB[t + 1, prev[t + 1, :], np.arange(lnEB.shape[2])])[None, :] + lnEB[t + 1, :lnV.shape[1]],
-                                        axis=1)
-
-        pseq[t, :] = np.exp(pseq[t, :] - logsumexp(pseq[t, :]))
 
     return pseq, seq

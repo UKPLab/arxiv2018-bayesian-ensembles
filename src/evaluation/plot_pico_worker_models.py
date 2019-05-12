@@ -128,7 +128,7 @@ for w, worker_model in enumerate(worker_models):
     else:
         dev_sentences = None
 
-    probs, agg = model.run(annos, doc_start, text, converge_workers_first=2 if 'LSTM' in data_model else 0)
+    probs, agg, _ = model.run(annos, doc_start, text, converge_workers_first=2 if 'LSTM' in data_model else 0)
 
     print('completed training with worker model = %s and data models %s' % (worker_model, data_model))
 

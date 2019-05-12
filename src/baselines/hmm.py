@@ -86,12 +86,14 @@ class HMM:
                 p = c[l - 1][i]
                 res[l - 1] = i
 
+        seq_prob = p
+
         for t in range(l - 2, -1, -1):
             res[t] = b[int(t + 1), int(res[t + 1])]
 
         # print c
         # print b
-        return res
+        return res, seq_prob
 
     def learn(self, sentences, smooth=0.001):
         """
@@ -128,9 +130,11 @@ class HMM:
 
     def decode_all(self, sentences):
         self.res = []
+        self.res_prob = []
         for s in sentences:
-            mls = self.decode(util.get_obs(s))
+            mls, mls_prob = self.decode(util.get_obs(s))
             self.res.append(mls)
+            self.res_prob.append(mls_prob)
 
 ##########################################################################
 ##########################################################################
@@ -691,14 +695,17 @@ class HMM_crowd(HMM):
         :return:
         """
         self.res = []
+        self.res_prob = []
         for s, sentence in enumerate(self.data.sentences):
             if len(sentence) > 0:
                 self.current_list_cl = self.data.crowdlabs[s]
-                ml_states = self.decode(util.get_obs(
+                ml_states, ml_probs = self.decode(util.get_obs(
                     sentence), include_crowd_obs=True)
                 self.res.append(ml_states)
+                self.res_prob.append(ml_probs)
             else:
                 self.res.append([])
+                self.res_prob.append(1)
 
     def marginal_decode(self, th):
         """
@@ -716,7 +723,7 @@ class HMM_crowd(HMM):
         self.current_list_cl = self.data.crowdlabs[s]
         sentence = self.data.sentences[s]
 
-        ml_states = self.decode(util.get_obs(
+        ml_states, ml_probs = self.decode(util.get_obs(
             sentence), include_crowd_obs=True)
 
         return ml_states

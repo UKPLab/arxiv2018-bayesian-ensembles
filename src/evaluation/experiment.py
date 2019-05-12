@@ -584,7 +584,7 @@ class Experiment(object):
             probs, agg = bsc_model.optimize(annotations, doc_start, text, maxfun=1000,
                                       converge_workers_first=use_LSTM==2, dev_sentences=dev_sentences)
         else:
-            probs, agg = bsc_model.run(annotations, doc_start, text,
+            probs, agg, pseq = bsc_model.run(annotations, doc_start, text,
                              converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs, dev_sentences=dev_sentences)
 
         model = bsc_model
@@ -601,7 +601,7 @@ class Experiment(object):
             probs_unseen = None
             agg_unseen = None
 
-        return agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
+        return agg, probs, pseq, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
 
     def _run_hmmcrowd(self, annotations, text, doc_start, outputdir, doc_subset, nselected_by_doc,
                       overwrite_data_file=False):
@@ -730,7 +730,7 @@ class Experiment(object):
         return doc_start_nocrowd, ground_truth_nocrowd, text_nocrowd, test_no_crowd, N_nocrowd, annotations, \
                doc_start, ground_truth, text, N_withcrowd
 
-    def _uncertainty_sampling(self, annos_all, doc_start_all, text_all, batch_size, probs, annos_sofar, selected_toks, selected_docs):
+    def _uncertainty_sampling(self, annos_all, doc_start_all, text_all, batch_size, most_likely_probs, annos_sofar, selected_toks, selected_docs):
 
         unfinished_toks = np.ones(annos_all.shape[0], dtype=bool)
 
@@ -742,10 +742,10 @@ class Experiment(object):
         # random selection
         #new_selection = np.random.choice(unseen_docs, batch_size, replace=False)
 
-        probs = probs[unfinished_toks, :]
-        negentropy = np.log(probs) * probs
-        negentropy[probs == 0] = 0
-        negentropy = np.sum(negentropy, axis=1)
+        # probs = probs[unfinished_toks, :]
+        # negentropy = np.log(probs) * probs
+        # negentropy[probs == 0] = 0
+        # negentropy = np.sum(negentropy, axis=1)
 
         docids_by_tok = (np.cumsum(doc_start_all) - 1)[unfinished_toks]
 
@@ -755,21 +755,23 @@ class Experiment(object):
             new_selected_docs = np.random.choice(np.unique(docids_by_tok), batch_size, replace=False)
 
         else:
-            negentropy_docs = np.zeros(Ndocs, dtype=float)
-            count_unseen_toks = np.zeros(Ndocs, dtype=float)
+            # negentropy_docs = np.zeros(Ndocs, dtype=float)
+            # count_unseen_toks = np.zeros(Ndocs, dtype=float)
+            #
+            # # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
+            # for i, _ in enumerate(unfinished_toks):
+            #     # find doc ID for this tok
+            #     docid = docids_by_tok[i]
+            #
+            #     negentropy_docs[docid] += negentropy[i]
+            #     count_unseen_toks[docid] += 1
+            #
+            # negentropy_docs /= count_unseen_toks
+            #
+            # # assume that batch size is less than number of docs...
+            # new_selected_docs = np.argsort(negentropy_docs)[:batch_size]
+            new_selected_docs = np.argsort(most_likely_probs)[:batch_size]
 
-            # now sum up the entropy for each doc and normalise by length (otherwise we'll never label the short ones)
-            for i, _ in enumerate(unfinished_toks):
-                # find doc ID for this tok
-                docid = docids_by_tok[i]
-
-                negentropy_docs[docid] += negentropy[i]
-                count_unseen_toks[docid] += 1
-
-            negentropy_docs /= count_unseen_toks
-
-            # assume that batch size is less than number of docs...
-            new_selected_docs = np.argsort(negentropy_docs)[:batch_size]
 
         new_selected_toks = np.in1d(np.cumsum(doc_start_all) - 1, new_selected_docs)
 
@@ -905,7 +907,7 @@ class Experiment(object):
                     doc_start_all,
                     text_all,
                     batch_size,
-                    np.ones((annotations_all.shape[0], self.num_classes), dtype=float) / self.num_classes,
+                    np.ones(np.sum(doc_start_all), dtype=float) / self.num_classes,
                     None,
                     None,
                     None
@@ -949,6 +951,8 @@ class Experiment(object):
                     annotations_unseen = None
                     doc_start_unseen = None
                     text_unseen = None
+
+                most_likely_seq_probs = None
 
                 if  method.split('_')[0] == 'best':
                     agg, probs = self._run_best_worker(annotations, ground_truth, doc_start)
@@ -1002,7 +1006,8 @@ class Experiment(object):
                         use_BOF = False
 
                     if method not in self.aggs or rerun_all:
-                        agg, probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_bsc(
+                        agg, probs, most_likely_seq_probs, model, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen \
+                            = self._run_bsc(
                                     annotations, doc_start, text,
                                     method, use_LSTM=use_LSTM, use_IF=use_BOF,
                                     ground_truth_val=ground_truth_val, doc_start_val=doc_start_val, text_val=text_val,
@@ -1034,6 +1039,8 @@ class Experiment(object):
                     else:
                         agg = self.aggs['HMM_crowd']
                         probs = self.probs['HMM_crowd']
+
+                    most_likely_seq_probs = model.res_prob
 
                 elif 'gt' in method:
                     # for debugging
@@ -1114,12 +1121,17 @@ class Experiment(object):
                             pickle.dump(model, fh)
 
                 if active_learning and Nseen < Nannos:
+
+                    # non-sequential methods just provide independent label probabilities.
+                    if most_likely_seq_probs is None:
+                        most_likely_seq_probs = [np.prod(seq_prob) for seq_prob in np.split(probs, doc_start)]
+
                     annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
                             annotations_all,
                             doc_start_all,
                             text_all,
                             batch_size,
-                            probs,
+                            most_likely_seq_probs,
                             annotations,
                             selected_toks,
                             selected_docs
