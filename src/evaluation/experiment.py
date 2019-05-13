@@ -519,6 +519,9 @@ class Experiment(object):
 
         #np.savetxt(anno_path, annotations, delimiter=',')
 
+        # thetaPriors
+        # strategyPriors
+
         subprocess.call(['java', '-jar', './MACE/MACE.jar', '--distribution', '--prefix',
                         tmp_path + '/mace',
                         anno_path])  # , stdout = devnull, stderr = devnull)

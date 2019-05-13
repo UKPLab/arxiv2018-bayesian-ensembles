@@ -79,7 +79,7 @@ factors = [0.1, 1, 10]
 
 methods_to_tune = [
                 # 'ibcc',
-                'bac_seq_integrateIF',
+                # 'bac_seq_integrateIF',
                 # 'bac_vec_integrateIF',
                 # 'bac_ibcc_integrateIF',
                 # 'HMM_crowd',
@@ -90,6 +90,7 @@ methods_to_tune = [
                 # # 'bac_seq',
                 # # 'bac_seq_integrateIF_noHMM',
                 # 'mace',
+                'bac_mace_noHMM'
                    ]
 
 best_bac_wm_score = -np.inf
