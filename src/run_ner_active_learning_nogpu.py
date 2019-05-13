@@ -25,7 +25,7 @@ num_reps = 10
 batch_frac = 0.03
 AL_iters = 10
 
-for rep in range(num_reps):
+for rep in range(1, num_reps):
 
     output_dir = '../../data/bayesian_sequence_combination/output/ner_al_super_new/'
     if not os.path.isdir(output_dir):
@@ -89,6 +89,8 @@ for rep in range(num_reps):
                         ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
                         active_learning=True, AL_batch_fraction=batch_frac, max_AL_iters=AL_iters
     )
+
+for rep in range(num_reps):
 
     exp = Experiment(None, 9, annos.shape[1], None, max_iter=20, crf_probs=True, rep=rep)
     exp.save_results = True

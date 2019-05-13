@@ -1124,7 +1124,7 @@ class Experiment(object):
 
                     # non-sequential methods just provide independent label probabilities.
                     if most_likely_seq_probs is None:
-                        most_likely_seq_probs = [np.prod(seq_prob) for seq_prob in np.split(probs, doc_start)]
+                        most_likely_seq_probs = [np.prod(seq_prob) for seq_prob in np.split(probs, doc_start.flatten())]
 
                     annotations, doc_start, text, selected_docs, selected_toks, nselected_by_doc = self._uncertainty_sampling(
                             annotations_all,
