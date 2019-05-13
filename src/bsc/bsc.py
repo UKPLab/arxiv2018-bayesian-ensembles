@@ -146,11 +146,11 @@ class BSC(object):
             for outside_label in self.outside_labels:
                 # set the disallowed transition to as close to zero as possible
                 disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                self.alpha0[:, restricted_label, unrestricted_labels[i]] += disallowed_count
+                self.alpha0[:, unrestricted_labels[i], outside_label] += disallowed_count
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, restricted_label, unrestricted_labels[i]] += disallowed_count
+                self.alpha0_data[:, unrestricted_labels[i], outside_label] += disallowed_count
                 self.alpha0_data[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
@@ -189,11 +189,11 @@ class BSC(object):
                     continue
 
                 # set the disallowed transition to as close to zero as possible
-                disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+                # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
 
-                disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
+                # disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
 
                 self.alpha0[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
                 self.alpha0_data[:, restricted_label, other_restricted_label, :] = self.rare_transition_pseudocount
