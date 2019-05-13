@@ -31,7 +31,7 @@ for rep in range(num_reps):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
-    exp = Experiment(None, 9, annos.shape[1], None, max_iter=1, crf_probs=True, rep=rep)
+    exp = Experiment(None, 9, annos.shape[1], None, max_iter=20, crf_probs=True, rep=rep)
     exp.save_results = True
     exp.opt_hyper = False#True
 
@@ -41,7 +41,7 @@ for rep in range(num_reps):
 
     exp.methods =  [
         'bac_seq_integrateIF',
-        # 'HMM_crowd',
+        'HMM_crowd',
                     ]
 
     results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
@@ -71,7 +71,7 @@ for rep in range(num_reps):
     #                     active_learning=True, AL_batch_fraction=batch_frac, max_AL_iters=AL_iters
     # )
     #
-    exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
+    exp = Experiment(None, 9, annos.shape[1], None, max_iter=20, crf_probs=True, rep=rep)
     exp.save_results = True
     exp.opt_hyper = False#True
 
@@ -90,7 +90,7 @@ for rep in range(num_reps):
                         active_learning=True, AL_batch_fraction=batch_frac, max_AL_iters=AL_iters
     )
 
-    exp = Experiment(None, 9, annos.shape[1], None, max_iter=10, crf_probs=True, rep=rep)
+    exp = Experiment(None, 9, annos.shape[1], None, max_iter=20, crf_probs=True, rep=rep)
     exp.save_results = True
     exp.opt_hyper = False#True
 
