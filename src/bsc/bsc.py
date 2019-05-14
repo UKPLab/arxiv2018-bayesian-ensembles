@@ -45,11 +45,6 @@ class BSC(object):
                  before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False):
 
-        self.rare_transition_pseudocount = 1e-6
-        # np.min([np.min(beta0_factor), alpha0_diags, alpha0_factor]) / 10.0 # this makes the rare transition much less likely than
-        # any other, but still allows for cases where the data itself may contain errors.
-        # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
-
         self.tagging_scheme = tagging_scheme # may be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
         # that follow another start with B).
 
@@ -121,6 +116,10 @@ class BSC(object):
 
         self.alpha0, self.alpha0_data = self.A._init_alpha0(alpha0_diags, alpha0_factor, L)
 
+        # self.rare_transition_pseudocount = 1e-6
+        self.rare_transition_pseudocount = np.min(self.alpha0) / 10.0 # this makes the rare transition much less likely than
+        # any other, but still allows for cases where the data itself may contain errors.
+        # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
 
         self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
 
