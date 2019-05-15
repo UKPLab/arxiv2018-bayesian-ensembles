@@ -166,14 +166,15 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
     #ndocs = np.array([606, 1212, 1818, 2424, 3030, 3636, 4242, 4848, 5454, 6056])
     #ndocs = np.array([929, 1858, 2787])
 
-    # for NER
-    if intervals == 'NER':
-        ndocs = np.array([1486, 2972, 4458, 5944, 7430, 8916, 10402, 11888, 13374, 14860])
-    elif intervals == 'PICO':
-        # for PICO
-        ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
-    elif intervals == 'PICOsmall':
-        ndocs = np.array([384, 764, 1132, 1488, 1834, 2132, 2300]) # [162,324,486,648,810,972,1134,1296,1458,1620])#
+    # # for NER
+    # if intervals == 'NER':
+    #     #ndocs = np.array([1486, 2972, 4458, 5944, 7430, 8916, 10402, 11888, 13374, 14860])
+    #     #ndocs = np.array([892, 1354, 1738, 1739, 2084, 2086, 2415, 2418, 2725, 2728, 2983, 2986, 3202, 3205, 3354, 3357, 3423, 3426])
+    # elif intervals == 'PICO':
+    #     # for PICO
+    #     ndocs = np.array([2843, 5686, 8529, 11372, 14215, 17058, 19901, 22744, 25587, 28430])
+    # elif intervals == 'PICOsmall':
+    #     ndocs = np.array([384, 764, 1132, 1488, 1834, 2132, 2300]) # [162,324,486,648,810,972,1134,1296,1458,1620])#
 
     methods = np.array([
         'majority',
@@ -201,17 +202,46 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         'BSC-seq+LSTM',
     ])
 
+    AL_batch_fraction = 0.03
+    Nannos = 81526
+    batch_size = int(np.ceil(AL_batch_fraction * Nannos))
+
+    # get the numbers of labels
+    ndocs = (np.arange(10) + 1) * batch_size
+
+    resfiles = os.listdir(results_dir)
+
+    nlabels_per_method = {}
+
+    for resfile in resfiles:
+
+        splits = resfile.split('.csv')[0].split('Nseen')
+        tag = splits[0]
+
+        if tag not in nlabels_per_method:
+            nlabels_per_method[tag] = {}
+
+        nlabels = int(splits[-1])
+        if nlabels not in nlabels_per_method:
+            nlabels
+
+        df = pd.read_csv(resfile)
+
+        for method in df.columns:
+            if method not in nlabels_per_method[tag]:
+                nlabels_per_method[tag][method] = []
+
+            nlabels_per_method[tag][method].append(nlabels)
+
 
     plot_methods = np.zeros(len(methods), dtype=bool)
 
     # results: y-value, metric, methods, runs
-    results = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
-    results_nocrowd = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
+    results = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
+    results_nocrowd = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
 
-    run_counts = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
-    run_counts_nocrowd = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
-
-    resfiles = os.listdir(results_dir)
+    run_counts = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
+    run_counts_nocrowd = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
 
     for resfile in resfiles:
 
@@ -223,18 +253,16 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         elif result_str + 'std_nocrowd' in resfile:
             continue
 
-        ndocsidx = int(resfile.split('.csv')[0].split('Nseen')[-1])
-        print(ndocsidx)
-        if ndocsidx not in ndocs:
-            print('skipping this value of ndocs=%i' % ndocsidx)
-            continue
+        splits = resfile.split('.csv')[0].split('Nseen')
+        tag = splits[0]
 
-        ndocsidx = np.argwhere(ndocs == ndocsidx)[0][0]
+        nlabels = int(splits[-1])
 
         if resfile.split('.')[-1] == 'csv':
             res = pd.read_csv(os.path.join(results_dir, resfile))
 
             for col in res.columns:
+                ndocsidx = np.argwhere(nlabels_per_method[tag][thismethod] == nlabels)[0][0]
                 thismethod = col.strip("\\# '")
 
                 if thismethod in methods:
@@ -290,20 +318,8 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         ylim = None
 
     # split the pool data results in two
-    plot_results(ndocs, method_names[plot_methods & (np.arange(len(plot_methods))<5)], 6, results[:, :,
-                 plot_methods & (np.arange(len(plot_methods))<5), :], False, True,
+    plot_results(ndocs, method_names[plot_methods], 6, results[:, :, plot_methods, :], False, True,
                  output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=4, legend_on=intervals=='NER')
-
-
-    plot_results(ndocs, method_names[plot_methods& (np.arange(len(plot_methods))>=5)], 6, results[:, :,
-                 plot_methods & (np.arange(len(plot_methods))>=5), :], False, True,
-                 output_pool_dir2, SCORE_NAMES, ylim=ylim, thickness=4,
-                 colors=['#8c564b', '#e377c2', '#7f7f7f', '#bcbd22'], legend_on=intervals=='NER')
-
-
-    # plot_results(ndocs, method_names[plot_methods], 6, results_nocrowd[:, :, plot_methods, :], False, True,
-    #              output_test_dir, SCORE_NAMES, ylim=ylim, thickness=4)#,
-    #              title='Active Learning: Test Data')
 
     print('Counts of runs with results on pool data:')
     print(run_counts[0, 0, :, 0])
