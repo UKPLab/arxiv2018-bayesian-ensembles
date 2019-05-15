@@ -51,7 +51,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}%Multiple Unreliable Text Annotators}
+%\title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}
+%Multiple Unreliable Text Annotators}
+\title{Sequence Tagging with Multiple Annotators: A Bayesian Approach for Combining Crowdsourced Span Annotations}
 
 \author{Edwin Simpson and Iryna Gurevych\\
   Ubiquitous Knowledge Processing Lab \\
@@ -70,29 +72,23 @@
 % + one .tgz or .zip archive containing software, and one .tgz or .zip archive containing data
 % make sure that these are also anonymized.
 
-\begin{abstract}
-Current methods for sequence tagging, a core task in NLP, are data hungry.
-Crowdsourcing is a relatively cheap way to obtain labeled data, but
-the annotators are unreliable.
-%, so redundant labeling
-%and aggregation techniques are required.
-To address this, we develop
- a modular Bayesian method for aggregating sequence labels from multiple annotators
- and evaluate different models of annotator errors and labeling biases.
-%and propose a technique to boost performance by integrating existing black-box sequence taggers.
-%Typically, the process of data collection, aggregation and training a sequence tagger 
-%is a pipeline of discrete steps.
-% Our approach integrates 
-% %these steps by training 
-% black-box sequence taggers as components in the model
-% to improve the quality of predictions.
-We evaluate our model on crowdsourced data for named entity recognition and information extraction tasks,
-showing that our sequential annotator model outperforms previous methods.
-%particularly in small data scenarios that
-%are encountered at the beginning of a crowdsourcing process.
-%Our experiments show that by integrating the training and aggregation steps into a Bayesian framework, 
-%we can use active learning techniques to obtain data more efficiently without modifying the black-box method.
+% This paper shows how common annotator models for crowdsourcing can be seen as extensions of one another
+% particularly in small-data scenarios that occur at the beginning of a crowdsourcing process.
 %We publish our code to encourage adaptation and reuse.
+\begin{abstract}
+Current methods for sequence tagging, a core task in NLP, are data hungry,
+which motivates the use of crowdsourcing as a relatively cheap way to obtain labeled data.
+However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation error
+as they ignore sequential dependencies between annotators' labels.
+To address this, we propose a Bayesian method for aggregating sequential annotations 
+ that reduces errors by modelling sequential dependencies between the
+ annotations as well as ground-truth labels.
+By taking a Bayesian approach, we account for uncertainty in model due to errors in the annotations or a lack of data from crowdworkers who complete few tasks.
+We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining,
+showing that our sequential model outperforms the previous state-of-the-art, 
+and that Bayesian approaches outperform alternatives.
+We also find that our approach enables more effective active learning
+by better capturing uncertainty in the sequence labels when there are few annotations.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

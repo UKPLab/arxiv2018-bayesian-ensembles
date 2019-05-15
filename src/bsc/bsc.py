@@ -116,8 +116,8 @@ class BSC(object):
 
         self.alpha0, self.alpha0_data = self.A._init_alpha0(alpha0_diags, alpha0_factor, L)
 
-        # self.rare_transition_pseudocount = 1e-6
-        self.rare_transition_pseudocount = np.min(self.alpha0) / 10.0 # this makes the rare transition much less likely than
+        self.rare_transition_pseudocount = 1e-6
+        # self.rare_transition_pseudocount = np.min(self.alpha0) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
 
