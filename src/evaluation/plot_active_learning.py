@@ -4,7 +4,7 @@ from evaluation.plots import plot_active_learning_results
 if __name__ == '__main__':
     print('Plotting active learning results...')
 
-    results_dir = '../data/bayesian_sequence_combination/output/ner_al_super_new/'
+    results_dir = '../../data/bayesian_sequence_combination/output/ner_al_super_new/'
     output_dir = './documents/figures/NER_AL/'
     intervals = 'NER'
 

@@ -22,13 +22,13 @@ PARAM_NAMES = ['acc_bias',
                'num_docs',
                'doc_length',
                'group_sizes',
-               'no. labels'
+               'no. labelled documents'
                ]
 
 SCORE_NAMES = ['accuracy',
                'precision-tokens',
                'recall-tokens',
-               'f1-score-tokens',
+               'F1 score',
                'auc-score',
                'cross-entropy-error',
                'precision-spans-strict',
@@ -67,14 +67,14 @@ def nice_names(methods):
     return names
 
 def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=None, thickness=1,
-              colors=None, legend_on=True):
+              colors=None, legend_on=True, figsize=(6,5)):
 
     styles = ['-', '--', '-.']
     markers = ['o', 'v', 's', 'x', 'p', '*']
 
     matplotlib.rcParams.update({'font.size': 18})
 
-    plt.figure(figsize=(6,5))
+    plt.figure(figsize=figsize)
 
     for j in range(len(methods)):
 
@@ -87,7 +87,7 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
                  linewidth=thickness, markersize=thickness*3, color=colj)
 
     if legend_on:
-        plt.legend(loc='lower right') #loc='best')
+        plt.legend(loc='upper left', bbox_to_anchor=(1.01, 1)) # 'lower right') #
 
     if title is not None:
         plt.title(title)
@@ -109,7 +109,7 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
 
 
 def plot_results(param_values, methods, param_idx, results, show_plot=False, save_plot=False, output_dir='/output/',
-                 score_names=None, title=None, ylim=None, thickness=1, colors=None, legend_on=True):
+                 score_names=None, title=None, ylim=None, thickness=1, colors=None, legend_on=True, figsize=(6,5)):
     # Plots the results for varying the parameter specified by param_idx
 
     methods = nice_names(methods)
@@ -134,7 +134,7 @@ def plot_results(param_values, methods, param_idx, results, show_plot=False, sav
 
     for i in range(len(score_names)):
         make_plot(methods, param_idx, x_vals, results[:,i,:,:], x_ticks_labels, score_names[i], title, thickness,
-                  colors, legend_on)
+                  colors, legend_on, figsize=figsize)
 
         if ylim:
             plt.ylim(ylim)
@@ -203,7 +203,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
     ])
 
     AL_batch_fraction = 0.03
-    Nannos = 81526
+    Nannos = 6056
     batch_size = int(np.ceil(AL_batch_fraction * Nannos))
 
     # get the numbers of labels
@@ -215,6 +215,9 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
 
     for resfile in resfiles:
 
+        if resfile.split('.')[-1] != 'csv':
+            continue
+
         splits = resfile.split('.csv')[0].split('Nseen')
         tag = splits[0]
 
@@ -222,28 +225,30 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
             nlabels_per_method[tag] = {}
 
         nlabels = int(splits[-1])
-        if nlabels not in nlabels_per_method:
-            nlabels
 
-        df = pd.read_csv(resfile)
+        df = pd.read_csv(os.path.join(results_dir, resfile) )
 
         for method in df.columns:
             if method not in nlabels_per_method[tag]:
                 nlabels_per_method[tag][method] = []
 
             nlabels_per_method[tag][method].append(nlabels)
+            nlabels_per_method[tag][method] = sorted(nlabels_per_method[tag][method])
 
 
     plot_methods = np.zeros(len(methods), dtype=bool)
 
     # results: y-value, metric, methods, runs
-    results = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
-    results_nocrowd = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
+    results = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
+    results_nocrowd = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
 
-    run_counts = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
-    run_counts_nocrowd = np.zeros((len(nlabels_per_method), len(SCORE_NAMES), len(methods), 1))
+    run_counts = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
+    run_counts_nocrowd = np.zeros((len(ndocs), len(SCORE_NAMES), len(methods), 1))
 
     for resfile in resfiles:
+
+        if resfile.split('.')[-1] != 'csv':
+            continue
 
         if result_str not in resfile:
             continue
@@ -262,7 +267,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
             res = pd.read_csv(os.path.join(results_dir, resfile))
 
             for col in res.columns:
-                ndocsidx = np.argwhere(nlabels_per_method[tag][thismethod] == nlabels)[0][0]
+                ndocsidx = np.argwhere(np.array(nlabels_per_method[tag][col]) == nlabels)[0][0]
                 thismethod = col.strip("\\# '")
 
                 if thismethod in methods:
@@ -319,7 +324,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
 
     # split the pool data results in two
     plot_results(ndocs, method_names[plot_methods], 6, results[:, :, plot_methods, :], False, True,
-                 output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=4, legend_on=intervals=='NER')
+                 output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=4, legend_on=intervals=='NER', figsize=(10,5))
 
     print('Counts of runs with results on pool data:')
     print(run_counts[0, 0, :, 0])

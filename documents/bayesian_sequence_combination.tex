@@ -53,7 +53,7 @@
 
 %\title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}
 %Multiple Unreliable Text Annotators}
-\title{Sequence Tagging with Multiple Annotators: A Bayesian Approach for Combining Crowdsourced Span Annotations}
+\title{A Bayesian Approach for Sequence Tagging with Crowds}
 
 \author{Edwin Simpson and Iryna Gurevych\\
   Ubiquitous Knowledge Processing Lab \\
@@ -77,18 +77,21 @@
 %We publish our code to encourage adaptation and reuse.
 \begin{abstract}
 Current methods for sequence tagging, a core task in NLP, are data hungry,
-which motivates the use of crowdsourcing as a relatively cheap way to obtain labeled data.
-However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation error
-as they ignore sequential dependencies between annotators' labels.
-To address this, we propose a Bayesian method for aggregating sequential annotations 
+which motivates the use of crowdsourcing as a cheap way to obtain labelled data.
+However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation error.
+%, as they ignore sequential dependencies between annotators' labels.
+To address this, we propose a Bayesian method for aggregating sequence tags
  that reduces errors by modelling sequential dependencies between the
- annotations as well as ground-truth labels.
-By taking a Bayesian approach, we account for uncertainty in model due to errors in the annotations or a lack of data from crowdworkers who complete few tasks.
+ annotations as well as the ground-truth labels.
+By taking a Bayesian approach, we account for uncertainty in the model due to both
+annotator errors and 
+the lack of data for modelling annotators who complete few tasks.
 We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining,
 showing that our sequential model outperforms the previous state-of-the-art, 
-and that Bayesian approaches outperform alternatives.
-We also find that our approach enables more effective active learning
-by better capturing uncertainty in the sequence labels when there are few annotations.
+and that Bayesian approaches outperform non-Bayesian alternatives.
+We also find that our approach can reduce crowdsourcing costs through
+ more effective active learning, as it 
+better captures uncertainty in the sequence labels when there are few annotations.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
