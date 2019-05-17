@@ -30,7 +30,7 @@ exp.nu0_factor = best_nu0factor
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-    'HMM_Crowd',
+    'HMM_crowd',
 ]
 
 # should run both task 1 and 2.
