@@ -230,66 +230,66 @@ if __name__ == '__main__':
     factors = [0.1, 1, 10, 100]
 
     #  ------------------------------------------------------------------------------------------------
-
-    exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=20)
-
-    methods_to_tune = [
-                    'ibcc',
-                    'bac_vec_integrateIF',
-                    'bac_seq_integrateIF',
-                    # 'HMM_crowd',
-                    'bac_seq',
-                    'bac_seq_integrateIF_noHMM',
-                    'bac_ibcc',
-                    'bac_ibcc_integrateIF_noHMM',
-                    # 'bac_ibcc_integrateIF',
-                    # 'bac_acc_integrateIF',
-                    # 'bac_mace_integrateIF',
-                    ]
-
-    for m, method in enumerate(methods_to_tune):
-        print('TUNING %s' % method)
-
-        best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, annos_dev, gt_dev, doc_start_dev,
-                                      output_dir, text_dev, metric_idx_to_optimise=8, new_data=regen_data)
-        best_idxs = best_scores[1:].astype(int)
-        exp.nu0_factor = nu_factors[best_idxs[0]]
-        exp.alpha0_diags = diags[best_idxs[1]]
-        exp.alpha0_factor = factors[best_idxs[2]]
-
-        print('Best values for %s: %f, %f, %f' % (method, exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
-
-        # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-        exp.methods = [method]
-        exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
-                    ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-                    new_data=regen_data
-        )
+    #
+    # exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=20)
+    #
+    # methods_to_tune = [
+    #                 'ibcc',
+    #                 'bac_vec_integrateIF',
+    #                 'bac_seq_integrateIF',
+    #                 # 'HMM_crowd',
+    #                 'bac_seq',
+    #                 'bac_seq_integrateIF_noHMM',
+    #                 'bac_ibcc',
+    #                 'bac_ibcc_integrateIF_noHMM',
+    #                 # 'bac_ibcc_integrateIF',
+    #                 # 'bac_acc_integrateIF',
+    #                 # 'bac_mace_integrateIF',
+    #                 ]
+    #
+    # for m, method in enumerate(methods_to_tune):
+    #     print('TUNING %s' % method)
+    #
+    #     best_scores = exp.tune_alpha0(diags, factors, nu_factors, method, annos_dev, gt_dev, doc_start_dev,
+    #                                   output_dir, text_dev, metric_idx_to_optimise=8, new_data=regen_data)
+    #     best_idxs = best_scores[1:].astype(int)
+    #     exp.nu0_factor = nu_factors[best_idxs[0]]
+    #     exp.alpha0_diags = diags[best_idxs[1]]
+    #     exp.alpha0_factor = factors[best_idxs[2]]
+    #
+    #     print('Best values for %s: %f, %f, %f' % (method, exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+    #
+    #     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+    #     exp.methods = [method]
+    #     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=True,
+    #                 ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+    #                 new_data=regen_data
+    #     )
 
     # ------------------------------------------------------------------------------------------------------------------
 
     exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=50)
 
-    exp.save_results = True
-    exp.opt_hyper = False #True
-
-    # values obtained from tuning on dev:
-    best_nu0factor = 10#1
-    best_diags = 100
-    best_factor = 10#100
-
-    exp.nu0_factor = best_nu0factor
-    exp.alpha0_diags = best_diags
-    exp.alpha0_factor = best_factor
-
-    exp.methods =  [
-        # 'bac_seq_integrateIF',
-        'bac_seq',
-        'bac_seq_integrateIF_noHMM',
-    ]
-
+    # exp.save_results = True
+    # exp.opt_hyper = False #True
+    #
+    # # values obtained from tuning on dev:
+    # best_nu0factor = 10#1
+    # best_diags = 100
+    # best_factor = 10#100
+    #
+    # exp.nu0_factor = best_nu0factor
+    # exp.alpha0_diags = best_diags
+    # exp.alpha0_factor = best_factor
+    #
+    # exp.methods =  [
+    #     # 'bac_seq_integrateIF',
+    #     'bac_seq',
+    #     'bac_seq_integrateIF_noHMM',
+    # ]
+    #
     # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
-
+    #
     # # values obtained from tuning on dev:
     # best_nu0factor = 0.1
     # best_diags = 10
@@ -337,29 +337,29 @@ if __name__ == '__main__':
     #
     # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
     #
-    # # settings obtained from tuning on dev:
-    # best_nu0factor = 0.1
-    # best_diags = 0.1
-    # best_factor = 1.0
-    #
-    # exp.nu0_factor = best_nu0factor
-    # exp.alpha0_diags = best_diags
-    # exp.alpha0_factor = best_factor
-    #
-    # exp.methods =  [
-    #                 'majority',
-    #                 'mace',
-    #                 'ds',
-    #                 'ibcc',
-    #                 'best',
-    #                 'worst',
-    #                 # 'bac_seq_integrateIF_weakprior',
-    #                 # 'bac_ibcc_integrateIF_weakprior',
-    #                 # 'bac_vec_integrateIF_weakprior',
-    # ]
-    #
-    # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
-    #
+    # settings obtained from tuning on dev:
+    best_nu0factor = 0.1
+    best_diags = 0.1
+    best_factor = 1.0
+
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
+
+    exp.methods =  [
+                    # 'majority',
+                    # 'mace',
+                    # 'ds',
+                    'ibcc',
+                    # 'best',
+                    # 'worst',
+                    # 'bac_seq_integrateIF_weakprior',
+                    # 'bac_ibcc_integrateIF_weakprior',
+                    # 'bac_vec_integrateIF_weakprior',
+    ]
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+
     # # settings obtained from tuning on dev:
     # best_nu0factor = 0.1
     # best_diags = 0.1
