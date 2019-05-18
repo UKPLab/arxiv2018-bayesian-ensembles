@@ -50,7 +50,8 @@ during active learning, posterior probabilities assist with selecting the most i
 We therefore develop a Bayesian sequence combination method, building on prior work that has demonstrated the advantages of Bayesian inference for aggregating unreliable classifications~\cite{kim2012bayesian,simpsonlong,Felt2016SemanticAA,paun2018comparing}.
 We make 
 %the modular implementation of our proposed method freely available, along with 
-all of our code freely available\footnote{\url{http://github.com/\iftaclpubformat ukplab/arxiv2018-bayesian-ensembles\else *** \fi}}. 
+all of our code freely available\footnote{\url{http://github.com/*****}}
+%arxiv2018-bayesian-ensembles\else *** \fi}}. 
 %Bayesian inference also facilitates composing a model from separate components,
 %which we exploit to construct ensembles of sequence taggers and to test different annotator models.
 
@@ -112,6 +113,9 @@ and benefits from the inclusion of automated sequence taggers.
 %analyze types of errors, and visualize the annotator models learned by our method.
 
 \subsection{Related Work}
+%TODO: note that the HMM crowd study did not establish whether performance benefited from the text features,
+% sequence model, or a combination. In our experiments we perform ablation and establish that the combination is needed to realise benefits of the sequential model.
+
 %A number of works have investigated methods for aggregating non-sequential
 %classifications from crowds.
 Sheshadri and Lease~\shortcite{sheshadri2013square} benchmarked several 
