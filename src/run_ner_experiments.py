@@ -59,6 +59,26 @@ exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
 
+# run all the methods that don't require tuning here
+exp.methods =  [
+                # 'majority',
+                # 'mace',
+                'ds',
+                # 'best',
+                # 'worst',
+                # best_bac_wm,
+                # 'bac_mace_integrateIF'
+]
+
+# should run both task 1 and 2.
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    new_data=regen_data
+)
+
+
 # exp.alpha0_diags_lstm = 0.1
 # exp.alpha0_factor_lstm = 0.1
 #
@@ -75,7 +95,7 @@ methods_to_tune = [
 #                    'ibcc',
                    'bac_vec_integrateIF',
 #                    'bac_ibcc_integrateIF',
-                   'bac_seq_integrateIF',
+#                    'bac_seq_integrateIF',
 #                    'bac_acc_integrateIF',
 #                    'bac_mace_integrateIF'
                    ]
@@ -141,24 +161,7 @@ for m, method in enumerate(methods_to_tune):
 # exp.nu0_factor = best_nu0factor
 # exp.alpha0_acc_bias = best_acc_bias
 #
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 # 'majority',
-#                 # 'mace',
-#                 # 'ds',
-#                 # 'best',
-#                 # 'worst',
-#                 # best_bac_wm,
-#                 # 'bac_mace_integrateIF'
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(
-#     annos, gt, doc_start, output_dir, text,
-#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     new_data=regen_data
-# )
+
 
 # # ------------------------------------------------------------------------------------------------
 # exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
