@@ -351,7 +351,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/from_krusty/ner-by-sentence_1/pred_started-2019-05-19-05-05-08-Nseen29704.csv',
+                   outroot + '/ner/pred_started-2019-05-19-05-05-08-Nseen29704.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
