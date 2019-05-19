@@ -14,7 +14,7 @@ import sklearn.metrics as skm
 import numpy as np
 import glob
 
-import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
+#import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 import evaluation.metrics as metrics
 from baselines.dawid_and_skene import ds, ibccvb
 from evaluation.plots import SCORE_NAMES, plot_results

@@ -338,9 +338,9 @@ if __name__ == '__main__':
     # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
     #
     # settings obtained from tuning on dev:
-    best_nu0factor = 0.1
-    best_diags = 0.1
-    best_factor = 1.0
+    best_nu0factor = 1.0
+    best_diags = 1.0
+    best_factor = 5.0
 
     exp.nu0_factor = best_nu0factor
     exp.alpha0_diags = best_diags
