@@ -329,29 +329,29 @@ if __name__ == '__main__':
 
     # NER ----------------------------------------------------------------------
 
-    # prior_str = 'ner_task1_bac_ibcc_IF'
+    # prior_str = 'ner_task1_bac_vec_IF'
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
     #                dataroot + '/data/ner/task1_test_annos.csv',
     #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/from_krusty/ner-by-sentence_1/pred_started-2018-07-12-02-42-00-Nseen6056.csv',
+    #                outroot + '/ner/pred_started-2019-05-17-11-53-30-Nseen29704.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
-
-    prior_str = 'ner_task1_bac_vec_IF'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-17-11-53-30-Nseen29704.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
 
     prior_str = 'ner_task1_bac_seq_IF'
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-17-12-44-09-Nseen29704.csv',
+                   outroot + '/ner/pred_started-2019-04-11-10-24-38-Nseen29704.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
+
+    prior_str = 'ner_task1_bac_ibcc_IF'
+    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+                   dataroot + '/data/ner/task1_test_annos.csv',
+                   dataroot + '/data/ner/task1_test_doc_start.csv',
+                   outroot + '/from_krusty/ner-by-sentence_1/pred_started-2018-07-12-02-42-00-Nseen6056.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
@@ -365,25 +365,25 @@ if __name__ == '__main__':
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
 
-    # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'ner_task1_HMMCrowd'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-17-09-52-22-Nseen29704.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
-
     # # Analyse the errors that our method did not make but the baselines did.
-    # prior_str = 'ner_task1_majority'
+    # prior_str = 'ner_task1_HMMCrowd'
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
     #                dataroot + '/data/ner/task1_test_annos.csv',
     #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/ner/pred_started-2018-07-06-21-57-08-Nseen6056.csv',
+    #                outroot + '/ner/pred_started-2019-05-17-09-52-22-Nseen29704.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
+
+    # Analyse the errors that our method did not make but the baselines did.
+    prior_str = 'ner_task1_majority'
+    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+                   dataroot + '/data/ner/task1_test_annos.csv',
+                   dataroot + '/data/ner/task1_test_doc_start.csv',
+                   outroot + '/ner/pred_started-2018-07-06-21-57-08-Nseen6056.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
 
     # PICO --------------------------------------------------------------------
 
