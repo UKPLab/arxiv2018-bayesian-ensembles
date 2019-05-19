@@ -270,25 +270,25 @@ if __name__ == '__main__':
 
     exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=50)
 
-    # exp.save_results = True
-    # exp.opt_hyper = False #True
-    #
-    # # values obtained from tuning on dev:
-    # best_nu0factor = 10#1
-    # best_diags = 100
-    # best_factor = 10#100
-    #
-    # exp.nu0_factor = best_nu0factor
-    # exp.alpha0_diags = best_diags
-    # exp.alpha0_factor = best_factor
-    #
-    # exp.methods =  [
-    #     # 'bac_seq_integrateIF',
-    #     'bac_seq',
-    #     'bac_seq_integrateIF_noHMM',
-    # ]
-    #
-    # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
+    exp.save_results = True
+    exp.opt_hyper = False #True
+
+    # values obtained from tuning on dev:
+    best_nu0factor = 10#1
+    best_diags = 100
+    best_factor = 10#100
+
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
+
+    exp.methods =  [
+        # 'bac_seq_integrateIF',
+        # 'bac_seq',
+        'bac_seq_integrateIF_noHMM',
+    ]
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
     #
     # # values obtained from tuning on dev:
     # best_nu0factor = 0.1
@@ -338,27 +338,27 @@ if __name__ == '__main__':
     # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
     #
     # settings obtained from tuning on dev:
-    best_nu0factor = 1.0
-    best_diags = 1.0
-    best_factor = 5.0
-
-    exp.nu0_factor = best_nu0factor
-    exp.alpha0_diags = best_diags
-    exp.alpha0_factor = best_factor
-
-    exp.methods =  [
-                    # 'majority',
-                    # 'mace',
-                    # 'ds',
-                    'ibcc',
-                    # 'best',
-                    # 'worst',
-                    # 'bac_seq_integrateIF_weakprior',
-                    # 'bac_ibcc_integrateIF_weakprior',
-                    # 'bac_vec_integrateIF_weakprior',
-    ]
-
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+    # best_nu0factor = 1.0
+    # best_diags = 1.0
+    # best_factor = 5.0
+    #
+    # exp.nu0_factor = best_nu0factor
+    # exp.alpha0_diags = best_diags
+    # exp.alpha0_factor = best_factor
+    #
+    # exp.methods =  [
+    #                 # 'majority',
+    #                 # 'mace',
+    #                 # 'ds',
+    #                 'ibcc',
+    #                 # 'best',
+    #                 # 'worst',
+    #                 # 'bac_seq_integrateIF_weakprior',
+    #                 # 'bac_ibcc_integrateIF_weakprior',
+    #                 # 'bac_vec_integrateIF_weakprior',
+    # ]
+    #
+    # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
 
     # # settings obtained from tuning on dev:
     # best_nu0factor = 0.1
