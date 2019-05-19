@@ -325,7 +325,7 @@ if __name__ == '__main__':
     dataroot = os.path.expanduser('~/simpson/data/bayesian_sequence_combination/')
 
     # Analyse the errors introduced by our method that the baselines did not make.
-    outroot = os.path.expanduser('~/data/bayesian_sequence_combination/output/')
+    outroot = os.path.expanduser('~/simpson/data/bayesian_sequence_combination/output/')
 
     # NER ----------------------------------------------------------------------
 
