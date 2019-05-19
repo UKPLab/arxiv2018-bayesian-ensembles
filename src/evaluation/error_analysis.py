@@ -347,14 +347,14 @@ if __name__ == '__main__':
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
 
-    prior_str = 'ner_task1_bac_ibcc_IF'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-19-05-05-08-Nseen29704.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
+    # prior_str = 'ner_task1_bac_ibcc_IF'
+    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+    #                dataroot + '/data/ner/task1_test_annos.csv',
+    #                dataroot + '/data/ner/task1_test_doc_start.csv',
+    #                outroot + '/ner/pred_started-2019-05-19-05-05-08-Nseen29704.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0)
 
     # prior_str = 'ner_task1_ibcc'
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
@@ -380,7 +380,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-05-19-05-05-04-Nseen29704.csv',
+                   outroot + '/ner/pred_started-2019-05-19-05-05-04-Nseen29704.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
