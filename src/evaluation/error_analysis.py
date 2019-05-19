@@ -442,56 +442,66 @@ if __name__ == '__main__':
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
     #
-    prior_str = 'arg_MV'
-    error_analysis(dataroot + '/data/argmin_LMU_corrected_gold/evaluation_gold.csv',
-                   dataroot + '/data/argmin_LMU_corrected_gold/evaluation_crowd.csv',
-                   dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
-                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-05-11-00-25-58-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+
+    prior_str = 'pico_task1_bac_seq_IF_noLSTM'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   outroot + '/pico2/pred_started-2019-05-17-11-16-12-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
 
-    prior_str = 'arg_HMM_Crowd'
-    error_analysis(dataroot + '/data/argmin_LMU_final/evaluation_gold.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_crowd.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_doc_start.csv',
-                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-05-10-18-50-04-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   6, remove_val=True)
-
-    prior_str = 'arg_bac_seq_IF'
-    error_analysis(dataroot + '/data/argmin_LMU_final/evaluation_gold.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_crowd.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_doc_start.csv',
-                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-05-09-23-33-51-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   7, remove_val=True)
-
-    prior_str = 'arg_bac_CM_IF'
-    error_analysis(dataroot + '/data/argmin_LMU_final/evaluation_gold.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_crowd.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_doc_start.csv',
-                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-05-10-21-14-06-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   1, remove_val=True)
-
-    prior_str = 'arg_bac_VEC_IF'
-    error_analysis(dataroot + '/data/argmin_LMU_final/evaluation_gold.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_crowd.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_doc_start.csv',
-                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-05-10-22-26-46-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   2, remove_val=True)
-
-    prior_str = 'arg_IBCC'
-    error_analysis(dataroot + '/data/argmin_LMU_final/evaluation_gold.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_crowd.csv',
-                   dataroot + '/data/argmin_LMU_final/evaluation_doc_start.csv',
-                   outroot + '/arg_LMU_corrected_gold/pred_started-2019-05-19-01-47-32-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   3, remove_val=True)
+    # prior_str = 'arg_MV'
+    # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+    #                outroot + '/arg_LMU_final/pred_started-2019-05-11-00-25-58-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
+    #
+    # prior_str = 'arg_HMM_Crowd'
+    # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+    #                outroot + '/arg_LMU_final/pred_started-2019-05-10-18-50-04-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                6, remove_val=True)
+    #
+    # prior_str = 'arg_bac_seq_IF'
+    # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+    #                outroot + '/arg_LMU_final/pred_started-2019-05-09-23-33-51-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                7, remove_val=True)
+    #
+    # prior_str = 'arg_bac_CM_IF'
+    # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+    #                outroot + '/arg_LMU_final/pred_started-2019-05-10-21-14-06-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                1, remove_val=True)
+    #
+    # prior_str = 'arg_bac_VEC_IF'
+    # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+    #                outroot + '/arg_LMU_final/pred_started-2019-05-10-22-26-46-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                2, remove_val=True)
+    #
+    # prior_str = 'arg_IBCC'
+    # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_crowd.csv',
+    #                dataroot + '/data/argmin_LMU/evaluation_doc_start.csv',
+    #                outroot + '/arg_LMU_final/pred_started-2019-05-19-01-47-32-Nseen40000.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                3, remove_val=True)
