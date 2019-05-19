@@ -413,15 +413,15 @@ if __name__ == '__main__':
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0, remove_val=True)
 
-    # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'pico_task1_HMMCrowd'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/bio_task1/pred_started-2018-08-25-23-55-53-Nseen56858.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0, remove_val=True)
+    # # Analyse the errors that our method did not make but the baselines did.
+    # prior_str = 'pico_task1_HMMCrowd'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/bio_task1/pred_started-2018-08-25-23-55-53-Nseen56858.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
 
     # Analyse the errors that our method did not make but the baselines did.
     prior_str = 'pico_task1_majority'
