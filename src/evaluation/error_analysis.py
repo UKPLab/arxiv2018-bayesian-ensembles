@@ -390,7 +390,7 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/bio/gt.csv',
                    dataroot + '/data/bio/annos.csv',
                    dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/bio_task1/pred_started-2018-01-29-18-22-55-Nseen56858.csv',
+                   outroot + '/bio_task1/pred_started-2019-01-29-18-22-55-Nseen56858.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0, remove_val=True)
