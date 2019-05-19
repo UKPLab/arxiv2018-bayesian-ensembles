@@ -322,7 +322,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
     np.savetxt(output_counts_path, error_counts[None, :], delimiter=',', fmt='%i', header=', '.join(error_count_labels))
     
 if __name__ == '__main__':
-    dataroot = os.path.expanduser('~/data/bayesian_sequence_combination/')
+    dataroot = os.path.expanduser('~/simpson/data/bayesian_sequence_combination/')
 
     # Analyse the errors introduced by our method that the baselines did not make.
     outroot = os.path.expanduser('~/data/bayesian_sequence_combination/output/')
