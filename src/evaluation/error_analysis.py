@@ -376,16 +376,25 @@ if __name__ == '__main__':
     #                0)
 
     # Analyse the errors that our method did not make but the baselines did.
-    prior_str = 'ner_task1_majority'
-    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-                   dataroot + '/data/ner/task1_test_annos.csv',
-                   dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-19-05-05-04-Nseen29704.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0)
+    # prior_str = 'ner_task1_majority'
+    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+    #                dataroot + '/data/ner/task1_test_annos.csv',
+    #                dataroot + '/data/ner/task1_test_doc_start.csv',
+    #                outroot + '/ner/pred_started-2019-05-19-05-05-04-Nseen29704.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0)
 
     # PICO --------------------------------------------------------------------
+
+    prior_str = 'pico_task1_ibcc_IF'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   outroot + '/pico2/pred_started-2019-05-11-05-58-08-Nseen56858.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0, remove_val=True)
 
     # prior_str = 'pico_task1_bac_ibcc_IF'
     # error_analysis(dataroot + '/data/bio/gt.csv',
