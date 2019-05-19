@@ -377,14 +377,14 @@ if __name__ == '__main__':
 
     # PICO --------------------------------------------------------------------
 
-    # prior_str = 'pico_task1_bac_ibcc_IF'
-    # error_analysis(dataroot + '/data/bio/gt.csv',
-    #                dataroot + '/data/bio/annos.csv',
-    #                dataroot + '/data/bio/doc_start.csv',
-    #                outroot + '/bio_task1/pred_started-2018-07-11-01-09-52-Nseen9480.csv',
-    #                outroot + '/analysis_%s' % prior_str,
-    #                outroot + '/analysis_counts_%s' % prior_str,
-    #                0, remove_val=True)
+    prior_str = 'pico_task1_bac_ibcc_IF'
+    error_analysis(dataroot + '/data/bio/gt.csv',
+                   dataroot + '/data/bio/annos.csv',
+                   dataroot + '/data/bio/doc_start.csv',
+                   outroot + '/bio_task1/pred_started-2018-07-11-01-09-52-Nseen9480.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0, remove_val=True)
 
     # prior_str = 'pico_task1_bac_vec_IF'
     # error_analysis(dataroot + '/data/bio/gt.csv',
@@ -443,14 +443,14 @@ if __name__ == '__main__':
     #                0, remove_val=True)
     #
 
-    prior_str = 'pico_task1_bac_seq_IF_noLSTM'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico2/pred_started-2019-05-17-11-16-12-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0, remove_val=True)
+    # prior_str = 'pico_task1_bac_seq_IF_noLSTM'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/pico2/pred_started-2019-05-17-11-16-12-Nseen56858.csv', #pred_started-2019-04-15-17-32-42-Nseen2134.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
 
     # prior_str = 'arg_MV'
     # error_analysis(dataroot + '/data/argmin_LMU/evaluation_gold.csv',
