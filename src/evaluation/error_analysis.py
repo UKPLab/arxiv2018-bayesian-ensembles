@@ -342,38 +342,38 @@ if __name__ == '__main__':
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-19-00-58-58-Nseen29704.csv',
+                   outroot + '/ner/pred_started-2019-05-17-11-53-30-Nseen29704.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
 
-    # prior_str = 'ner_task1_bac_seq_IF'
-    # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
-    #                dataroot + '/data/ner/task1_test_annos.csv',
-    #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/ner/pred_started-2018-08-09-02-19-46-Nseen6056.csv',
-    #                outroot + '/analysis_%s' % prior_str,
-    #                outroot + '/analysis_counts_%s' % prior_str,
-    #                0)
-
-    prior_str = 'ner_task1_ibcc'
+    prior_str = 'ner_task1_bac_seq_IF'
     error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
                    dataroot + '/data/ner/task1_test_annos.csv',
                    dataroot + '/data/ner/task1_test_doc_start.csv',
-                   outroot + '/ner/pred_started-2019-05-19-00-51-30-Nseen29704.csv',
+                   outroot + '/ner/pred_started-2019-05-17-12-44-09-Nseen29704.csv',
                    outroot + '/analysis_%s' % prior_str,
                    outroot + '/analysis_counts_%s' % prior_str,
                    0)
 
-    # # Analyse the errors that our method did not make but the baselines did.
-    # prior_str = 'ner_task1_HMMCrowd'
+    # prior_str = 'ner_task1_ibcc'
     # error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
     #                dataroot + '/data/ner/task1_test_annos.csv',
     #                dataroot + '/data/ner/task1_test_doc_start.csv',
-    #                outroot + '/from_krusty/ner-by-sentence_1/pred_started-2018-07-06-22-24-18-Nseen6056.csv',
+    #                outroot + '/ner/pred_started-2019-05-19-00-51-30-Nseen29704.csv',
     #                outroot + '/analysis_%s' % prior_str,
     #                outroot + '/analysis_counts_%s' % prior_str,
     #                0)
+
+    # Analyse the errors that our method did not make but the baselines did.
+    prior_str = 'ner_task1_HMMCrowd'
+    error_analysis(dataroot + '/data/ner/task1_test_gt.csv',
+                   dataroot + '/data/ner/task1_test_annos.csv',
+                   dataroot + '/data/ner/task1_test_doc_start.csv',
+                   outroot + '/ner/pred_started-2019-05-17-09-52-22-Nseen29704.csv',
+                   outroot + '/analysis_%s' % prior_str,
+                   outroot + '/analysis_counts_%s' % prior_str,
+                   0)
 
     # # Analyse the errors that our method did not make but the baselines did.
     # prior_str = 'ner_task1_majority'
