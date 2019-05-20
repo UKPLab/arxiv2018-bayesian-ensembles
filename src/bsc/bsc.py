@@ -56,7 +56,6 @@ class BSC(object):
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
 
-        self.beta0 = np.ones((self.L + 1, self.L)) * beta0_factor
         self.nu0 = nu0 #self.N / float(self.L)
         # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
         # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
@@ -64,11 +63,15 @@ class BSC(object):
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
+            self.beta0 = np.ones((self.L + 1, self.L)) * beta0_factor
             self._update_B = self._update_B_trans
             self.use_ibcc_to_init = True
+            self.has_transition_constraints = True
         else:
+            self.beta0 = np.ones((self.L)) * beta0_factor
             self._update_B = self._update_B_notrans
             self.use_ibcc_to_init = False
+            self.has_transition_constraints = False
 
         # choose data model
         self.max_data_updates_at_end = 0  # no data model to be updated after everything else has converged.
@@ -106,7 +109,7 @@ class BSC(object):
 
         elif worker_model == 'seq':
             self.A = SequentialWorker
-            self._set_transition_constraints = self._set_transition_constraints_seq
+            self._set_transition_constraints = self._set_transition_constraints_seq if transition_model == 'HMM' else self._set_transition_constraints_betaonly
             self.alpha_shape = (self.L, self.nscores)
 
         elif worker_model == 'vec':
@@ -244,6 +247,10 @@ class BSC(object):
             nu0_sum = psi(np.sum(self.beta0))
 
         self.lnB = psi(self.beta0) - nu0_sum
+
+        if self.beta0.ndim == 1:
+            self.lnB = np.tile(self.lnB, (self.L + 1, 1))
+
         self.lnB = np.tile(self.lnB, (self.N, 1, 1))
 
     def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
@@ -513,8 +520,9 @@ class BSC(object):
         q_t_joint is N x L+1 x L. In this case, we just sum up over all previous label values, so the counts are
         independent of the previous labels.
         '''
-        self.beta = self.beta0 + np.sum(np.sum(self.q_t_joint, 0), 0)[None, :]
-        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+        self.beta = self.beta0 + np.sum(np.sum(self.q_t_joint, 0), 0)
+        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))
+        self.lnB = np.tile(self.lnB, (self.L+1, 1))
 
         ln_word_likelihood = self._update_words()
         self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
@@ -621,7 +629,8 @@ class BSC(object):
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
                 print('BAC transition matrix: ')
-                print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
+
+                print(np.around(self.beta / (np.sum(self.beta, -1)[:, None] if self.beta.ndim > 1 else np.sum(self.beta)), 2))
 
                 print('BAC transition matrix params: ')
                 print(np.around(self.beta[:self.L], 2))
@@ -684,7 +693,7 @@ class BSC(object):
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
             print('BAC final transition matrix: ')
-            print(np.around(self.beta / np.sum(self.beta, -1)[:, None], 2))
+            print(np.around(self.beta / (np.sum(self.beta, -1)[:, None] if self.beta.ndim > 1 else np.sum(self.beta)), 2))
 
         # Some code for saving the Seq model to a reasonably readable format
         # import pandas as pd
@@ -711,7 +720,7 @@ class BSC(object):
         Taking the most probable labels results in an illegal sequence of [0, 1]. 
         Using most probable sequence would result in [0, 0].
         '''
-        if self.beta.ndim >= 2:
+        if self.beta.ndim >= 2 and self.beta.shape[0] > 1:
             EB = self.beta / np.sum(self.beta, axis=1)[:, None]
         else:
             EB = self.beta / np.sum(self.beta)

@@ -268,15 +268,15 @@ if __name__ == '__main__':
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=50)
+    exp = Experiment(None, nclasses, annos.shape[1], None, max_iter=5)
 
     exp.save_results = True
     exp.opt_hyper = False #True
 
     # values obtained from tuning on dev:
-    best_nu0factor = 10#1
-    best_diags = 100
-    best_factor = 10#100
+    best_nu0factor = 1000#1
+    best_diags = 1000
+    best_factor = 0.1
 
     exp.nu0_factor = best_nu0factor
     exp.alpha0_diags = best_diags
