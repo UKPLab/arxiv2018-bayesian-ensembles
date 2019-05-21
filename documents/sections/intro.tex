@@ -87,30 +87,14 @@ all of our code freely available\footnote{\url{http://github.com/*****}}
 % with a tweak that should help performance by combining two existing ideas (the reliability model with the integrated learning using EM). Less about presenting a finished, robust method.
 % This needs some error analysis -- what are the confusion matrices learned for the seq tagger? E.g. do they
 % successfully capture reliability of it, or do they collapse?
-This paper provides the following contributions:
-\begin{itemize}
- \item We propose \emph{Bayesian sequence combination (BSC)}, 
- a method for aggregating sequence labels from multiple annotators 
- that models sequential dependencies between tags 
-%  \item A technique for wrapping existing black-box sequence taggers into the aggregation model to improve 
-%  the quality of aggregated labels
- \item Theoretical and empirical comparisons of annotator models 
-  for sequence tagging, including a novel model that captures sequential dependencies between annotations (referred to later as \emph{seq})
-\end{itemize}
-
-
-The following sections discuss related work, 
-annotator models for sequence tagging,
-our BSC model, and our variational inference approach
- that enables us to integrate existing sequence taggers. 
-Then, we evaluate a range of Bayesian and non-Bayesian aggregation methods
-with simulated annotators and two crowdsourced NLP datasets,
-showing that our sequential model consistently outperforms the previous state-of-the-art,
-%Our results show the benefits of a sequential annotator model and of
-and benefits from the inclusion of automated sequence taggers.
-% in an ensemble with human annotators.
-%Our experiments evaluate both active and passive learning scenarios with varying dataset sizes, 
-%analyze types of errors, and visualize the annotator models learned by our method.
+This paper introduces \emph{Bayesian sequence combination (BSC)}, 
+the first Bayesian method for aggregating sequence labels from multiple annotators.
+As a component of BSC, we also introduce the \emph{sequential confusion matrix (seq)},
+a probabilistic model of annotator noise and bias, 
+which goes beyond previous work by modelling sequential dependencies between annotators' labels.
+Further contributions include a theoretical comparison of the probabilistic models of annotator noise and bias,
+and an empirical evaluation on three sequence labelling tasks,
+in which \emph{BSC} with \emph{seq} consistently outperform the previous state of the art. 
 
 \subsection{Related Work}
 %TODO: note that the HMM crowd study did not establish whether performance benefited from the text features,
