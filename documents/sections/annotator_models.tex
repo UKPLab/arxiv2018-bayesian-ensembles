@@ -1,11 +1,20 @@
 \section{ Modeling Sequential Annotators }\label{sec:annomodels}
 
-When combining multiple annotators with varying skill levels, we can improve performance by modeling their individual reliability. Here, we describe several existing models 
+When combining multiple annotators with varying skill levels, we can improve performance by modelling their individual noise and bias using a probabilistic
+model.
+Here, we describe several models 
 that do not consider dependencies between annotations in a sequence,
-then provide an extension that captures sequential dependencies. Each of the approaches presented employs a different function, $A$, to model the likelihood of the annotator choosing the label $c_{\tau}$
-given the true label, $t_{\tau}$, for token $\tau$.
+before defining \emph{seq}, 
+a new extension that captures sequential dependencies. 
+Probabilistic annotator models 
+each define a different function, $A$, 
+for the likelihood that the annotator chooses label $c_{\tau}$
+given the true label, $t_{\tau}$, for the $\tau$th token in a sequence.
 
-\textbf{Accuracy model (acc)}: simply models the annotator's accuracy, $\pi$, as follows: 
+\textbf{Accuracy model (acc)}:
+ the basis of several previous methods~\cite{donmez2010probabilistic,rodrigues2013learning},
+\emph{acc} uses a single parameter for each 
+annotator's accuracy, $\pi$: 
 \begin{flalign}
  & A = p( c_{\tau} \! = \! i | t_{\tau} \! = \! j, \pi ) = \left.
 \begin{cases}
@@ -14,13 +23,15 @@ given the true label, $t_{\tau}$, for token $\tau$.
 \end{cases} 
 \right\} \!, &&
 \end{flalign}
-where $c_{\tau}$ is the label given by the annotator for token $\tau$, $t_{\tau}$ is its true label
-and $J$ is the number of classes.
-This is the basis of several previous methods~\cite{donmez2010probabilistic,rodrigues2013learning}. 
+where 
+%$c_{\tau}$ is the label given by the annotator for token $\tau$, $t_{\tau}$ is its true label
+%and 
+$J$ is the number of classes.
 %The limitation of this approach is that it
-It assumes reliability is constant,
-which means that when one class label is far more common than others, 
-a spammer who always selects the most common label will nonetheless 
+%It assumes reliability is constant,
+%which means that 
+This may be unsuitable when one class label dominates the data, 
+since a spammer who always selects the most common label will nonetheless 
 have a high $\pi$.
 %despite their labels being uninformative.
 %Annotator models define a likelihood... 
@@ -28,9 +39,10 @@ have a high $\pi$.
 %& A = p(c_{\tau}, c_{\tau-1}, t_{\tau}) = p( c_{\tau} \!\!=\! i | c_{\tau-1}, t_{\tau} \!=\! j, \bs\pi ),&&
 %\end{flalign}
 
-\textbf{MACE}~\cite{hovy2013learning}:
+\textbf{Spamming model (spam)}:
+proposed as part of MACE~\cite{hovy2013learning}, this model also
 assumes constant accuracy, $\pi$,
-but when an annotator is incorrect, they label according to 
+but that when an annotator is incorrect, they label according to 
 a spamming distribution, $\bs\xi$, that is independent of the true label, $t_{\tau}$.
 \begin{flalign}
 A & = p( c_{\tau} = i | t_{\tau} = j, \pi, \bs\xi) && \nonumber \\
@@ -41,13 +53,19 @@ A & = p( c_{\tau} = i | t_{\tau} = j, \pi, \bs\xi) && \nonumber \\
 \end{cases} 
 \right\}.
 \end{flalign}
-This addresses the case where spammers choose the most common label when the classes are imbalanced.
-While MACE can capture spamming patterns, it does not explicitly model 
-different rates of errors per class. This could be an issue for sequence tagging using the 
-BIO encoding, for example, if an annotator frequently labels longer spans
- than the true spans by starting the spans early. In this 
- case, they may more frequently
-mis-label the `B' tokens than the `I' or `O' tokens,  which cannot be modeled by MACE. 
+This addresses the case where spammers choose the dominant label
+% common label when the classes are imbalanced.
+%While MACE can capture spamming patterns, 
+but does not explicitly model 
+different error rates in each class. 
+%which
+%may be an issue for sequence tagging using the 
+%BIO encoding. For example, if an annotator frequently labels longer spans
+% than the true spans by starting the spans early. In this 
+% case, they may more frequently
+%mis-label the `B' tokens than the `I' or `O' tokens,  which cannot be modelled by MACE. 
+For example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently mis-label the start of a span as `O' when the true label is `B-x', 
+this would not be explicitly modelled by \emph{spam}.
 
 \textbf{Confusion vector (CV)}: this approach learns a separate accuracy 
  for each class label~\cite{nguyen2017aggregating}
@@ -75,12 +93,13 @@ $J\times J$ matrix with values given by:
 \end{flalign}
 This requires a larger number of parameters, $J^2$, compared to the $J+1$ parameters of MACE or $J$ parameters
 of the confusion vector.
-CM %represents the probability of each mistake, so it 
+Like \emph{spam}, 
+\emph{CM} %represents the probability of each mistake, so it 
 can model spammers who frequently chose one label regardless
-of the ground truth, 
-as well as annotators with different error rates for each type of `B-x', `I-x' and `O' label.
-For example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently mis-label the start of a span as `O' when the true label is `B-x', but are otherwise accurate.
-However, the confusion matrix ignores dependencies between annotations in a sequence, % that affect these probabilities.
+of the ground truth, but also
+models different error rates and biases for each class.
+%type of `B-x', `I-x' and `O' label.
+However, \emph{CM} ignores dependencies between annotations in a sequence, % that affect these probabilities.
 such as the fact that an `I' cannot immediately follow an `O'.
 % Consider the following example where this may be a problem: three annotators produce sequences of labels as follows:
 % O-B-I-I-I-O
@@ -96,24 +115,28 @@ giving the following likelihood:
   \pi_{j,\iota,i} ,&&
 \end{flalign}
 where $\bs\pi$ is now three-dimensional with size $J\times J\times J$.
-In the case of disallowed transitions, e.g. from $c_{\tau-1}=$`O' to $c_{\tau}=$`I', the value $\pi_{j,c_{\tau-1},c_{\tau}}=0$, $\forall j$
+In the case of disallowed transitions, e.g. from $c_{\tau-1}=$`O' to $c_{\tau}=$`I', the value $\pi_{j,c_{\tau-1},c_{\tau}}\approx 0$, $\forall j$
 is fixed \textit{a priori}. 
-The sequential model can capture phenomena such as a tendency toward overly long sequences, by learning that
-$\pi_{O,O,O} > \pi_{O,I,O}$,
-or a tendency to split spans by inserting `B' in place of `I' by increasing the value of
+The sequential model can capture phenomena such as a tendency toward overly long sequences, by learning that I is more likely to follow another I, so that
+$\pi_{O,I,I} > \pi_{O,I,O}$.
+A tendency to split spans by inserting `B' in place of `I' can be modelled
+by increasing the value of
 $\pi_{I,I,B}$ without affecting $\pi_{I,B,B}$ and $\pi_{I,O,B}$.
 
-The annotator models  we presented, which include the most widespread models for NLP annotation tasks, can therefore be seen as extensions of one another.
+The annotator models presented in this section 
+include the most widespread models for NLP annotation tasks, 
+and can be seen as extensions of one another.
 The choice of annotator model for a particular annotator
  depends on the developer's understanding of the annotation task: 
  if the annotations have sequential dependencies, this suggests the \emph{seq} model;
 for non-sequential classifications \emph{CM} may be effective with small ($\leq 5$) 
-numbers of classes; \emph{MACE} may be more suitable if there are more classes. 
+numbers of classes; \emph{MACE} may be more suitable if there are many classes. 
 However, there is also a trade-off between the expressiveness of the model and the
-number of parameters that must be learned. Simpler models with fewer parameters, such as \emph{acc}, which may be effective if there are only small numbers of annotations from each annotator. 
-Our experiments in Section \ref{sec:expts_all} investigate this trade-off on NLP tasks involving sequential annotation.
-The next section shows how these models can be used as part of 
-a model for aggregating sequential annotations. 
+number of parameters that must be learned. Simpler models with fewer parameters
+may be effective if there are only small numbers of annotations from each annotator. 
+%Our experiments in Section \ref{sec:expts_all} investigate this trade-off on NLP tasks involving sequential annotation.
+The next section shows how these annotator models can be used as components of 
+a complete model for aggregating sequential annotations. 
 %The experiments in Section \ref{sec:expts_all} 
 % test whether the more expressive seq annotator model,
 %which has more parameters to learn, is beneficial in a realistic setting.

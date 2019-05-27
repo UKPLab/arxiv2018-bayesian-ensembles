@@ -1,24 +1,31 @@
 \section{Inference using Variational Bayes} \label{sec:vb}
  
-Given a set of annotations, $\bs c=\{\bs c^{(1)}, .., \bs c^{(K)} \}$, from $K$ annotators,
-our aim is to obtain a posterior distribution over 
+Given a set of annotations, $\bs c$, 
+%=\{\bs c^{(1)}, .., \bs c^{(K)} \}$, from $K$ annotators,
+we obtain a posterior distribution over 
 %the parameters, 
 %$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},..,\bs\theta^{(S)} \}$, 
 %$\bs A=\{ A^{(1)},..,A^{(K)} \}$ and
 %$\bs B = \{ B^{(1)},..,B^{(S)} \}$, 
 %and thereby compute the posterior over 
-sequence labels, $\bs t$.
-To do this, we employ
+sequence labels, $\bs t$, using
 \emph{variational Bayes} (\emph{VB})~\cite{attias_advances_2000}.
+Unlike maximum likelihood methods such as standard expectation maximization (EM),
+VB considers prior distributions 
+and accounts for parameter uncertainty due to 
+noisy or sparse data.
 In comparison to other Bayesian approaches such as Markov chain Monte Carlo (MCMC),
 VB is often faster, readily allows incremental learning, and provides easier ways
 to determine convergence~\cite{Bishop2006}. 
-Unlike maximum likelihood methods such as standard expectation maximization (EM),
-VB considers prior distributions 
-and accounts for parameter uncertainty in a Bayesian manner.
-The trade-off is that VB requires us to approximate the posterior distribution.
-Here, we apply the \emph{mean field} assumption to assume a variational approximation that factorizes between subsets of parameters 
-or latent variables, so that each subset, $z$, has a \emph{variational factor}, $q(z)$:
+It has been successfully applied to a wide range of methods,
+including as the standard learning procedure for LDA~\cite{blei2003},
+and to combining non-sequential crowdsourced classifications~\cite{simpsonlong}.
+
+The trade-off is that we must approximate the posterior distribution with
+%the \emph{mean field} assumption,
+an approximation that
+factorises between subsets of latent variables:
+% so that each subset, $z$, has a \emph{variational factor}, $q(z)$:
 %over $\bs t$ and the model parameters, 
 %$\bs T$, $\bs\theta = \{ \bs\theta^{(1)},..,\bs\theta^{(S)} \}$, 
 %$\bs A=\{ A^{(1)},..,A^{(K)} \}$ and
@@ -26,41 +33,24 @@ or latent variables, so that each subset, $z$, has a \emph{variational factor}, 
 %The labels produced by the sequence taggers, $\bs d$, 
 %can be marginalized, so do not appear in the approximate posterior, which is given by:
 \begin{flalign} \label{eq:vb_posterior}
-& p(\bs t, \bs A, \bs B, \bs T, \bs\theta | \bs c, \bs x, \bs \alpha, \bs \beta, \bs\gamma ) &   \nonumber\\
-&  \approx \prod_{k=1}^K  q(A^{(k)}) \prod_{j=1}^J q(\bs T_j) \prod_{n=1}^N q(\bs t_n) .
-%\prod_{s=1}^S\Big\{ q(B^{(s)})  q(\bs\theta^{(s)}) \Big\}. & % q(\bs d^{(s)} )
+& p(\bs t, \bs A, \bs T, \bs\rho | \bs c, \bs x, \bs \alpha, \bs\gamma, \bs\kappa ) &   \nonumber\\
+&  \approx \prod_{k=1}^K  q(A^{(k)}) \prod_{j=1}^J \left\{
+q(\bs T_j) q(\bs \rho_j)\right\} \prod_{n=1}^N q(\bs t_n) .
 \end{flalign}
-% We optimise this distribution using Algorithm \ref{al:vb_bac} to obtain approximate posterior
-% distributions over $\bs t$, $\bs\pi^{(k)}, \forall k$ and $A_j, \forall j$.
-% The algorithm iteratively increases the lower bound on the model evidence, $\mathcal{L}$, 
-% by optimising one variational factor given the current estimates of the others.  
-% Convergence can be checked cheaply by comparing values of $\mathbb{E}[t_{i,\tau}]$ between iterations. 
-% However, a more reliable method is to check $\mathcal{L}$ for convergence. 
-%
-% Depending on the implementation of the text classifier, the training step of the text classifier 
-% may correspond to the maximisation step in an EM-algorithm, 
-% if the parameters of the classifier, $\theta_v$, are optimised to their maximum likelihood 
-% or maximum a-posteriori solution, as is typical of neural network methods.
-% In this case, our complete algorithm would incorporate a non-Bayesian text classification step.
-% In contrast, a Bayesian classifier integrates out the parameters $\theta_v$ and outputs
-% marginal probabilities over class labels. If a Bayesian classifier is integrated, 
-% retraining the text classifier becomes a VB step, in which a variational factor, $q(\bs c^{(b)}$, is updated,
-% making the complete algorithm a fully Bayesian approximation.
-The labels produced by the sequence taggers, $\bs d$, can be marginalized analytically so do not require
-a separate factor.
-Each variational factor has the form $\ln q(z) = \mathbb{E}[\ln p(z | \bs c, \neg z)]$, 
-where $\neg z$ contains all the latent variables except $z$.
-We perform approximate inference by
+VB performs approximate inference by
 %we optimize Equation \ref{eq:vb_posterior} 
-using coordinate ascent to update each variational factor, $q(z)$, in turn,
-taking expectations with respect to the current estimates of the other variational factors.
+%using coordinate ascent to 
+updating each variational factor, $q(z)$, in turn,  
+optimising the approximate posterior distribution until it converges.
+%taking expectations with respect to the current estimates of the other variational factors.
 %(see Algorithm \ref{al:vb_bac}).
-Each iteration reduces the KL-divergence between the true and approximate posteriors
-of Equation \ref{eq:vb_posterior}, and hence optimizes a lower bound on the 
-log marginal likelihood, also called the evidence lower bound or ELBO
-~\cite{Bishop2006,attias_advances_2000}.
-The complete VB algorithm is described in Algorithm \ref{al:vb_bac},
-which makes use of the update equations for the log variational factors given below.
+%Each iteration reduces the KL-divergence between the true and approximate posteriors
+%of Equation \ref{eq:vb_posterior}, and hence optimizes a lower bound on the 
+%log marginal likelihood, also called the evidence lower bound or ELBO
+Details of the theory are beyond the scope of this paper, but are  
+explained by ~\citet{Bishop2006}.
+The VB algorithm is described in Algorithm \ref{al:vb_bac},
+making use of update equations for the variational factors given below.
 % We now provide the variational factors,
 % which can be used to approximate the marginal posterior distributions for the parameters and sequence
 % labels,
@@ -69,28 +59,31 @@ which makes use of the update equations for the log variational factors given be
 %predict only sequence labels rather than full posterior distributions.
 \begin{algorithm}
 \DontPrintSemicolon
- \KwIn{ Annotations, $\bs c$}
- \nl Randomly initialize $\mathbb{E}\ln A^{(k)},\forall k$,
- %$\mathbb{E}\ln B^{(s)},\forall s$, 
+ \KwIn{ Annotations $\bs c$, words $\bs x$}
+ \nl Compute initial values of $\mathbb{E}\ln A^{(k)},\forall k$,
+ $\mathbb{E}\ln \rho_j,\forall j$, 
  $\mathbb{E}\ln \bs T_j,\forall j$ 
- %and $\hat{d}^{(s)}_{n,\tau}(i), \forall s,\forall n,\forall \tau,\forall i$.\;
-%  randomly or to expectations with respect to the priors\;
+ from their prior distributions.\;
  \While{$\mathrm{not\_converged}(r_{n,\tau,j},\forall n,\forall \tau, \forall j)$}
  {
  \nl Update $r_{j,n,\tau}$, $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$, $\forall j,\forall \tau,\forall i,\forall \iota$,
  %given $\bs c$, 
  %$\mathbb{E}\left[\ln \bs A \right]$, $\mathbb{E}\left[\ln \bs B \right]$ and $\mathbb{E}\left[\ln \bs T \right]$
- using forward-backward algorithm\;%~\cite{ghahramani2001introduction}\;
+ using forward-backward algorithm
+ given $\bs x$, $\bs c$, $\mathbb{E}\ln \bs T_j,\forall j$,
+ $\mathbb{E}\ln\bs\rho_j,\forall j$, 
+  $\mathbb{E}\ln\bs A^{(k)},\forall k$.\;%~\cite{ghahramani2001introduction}\;
  %\nl Set current true label predictions $\mathbb{E}\left[t_{n,\tau}=j\right] = r_{j,n,\tau}$ \;
 %  \nl Retrain all sequence taggers using $\tilde{\bs d}^{(s)}$ as training labels for 
 %  each tagger $s$\;
 %  \nl Use sequence taggers to predict $\hat{d}^{(s)}_{n,\tau}(i)$, $\forall s,\forall n,\forall \tau,\forall i$\;
- \nl Update $\ln q(A^{(k)})$ and $\mathbb{E}\ln A^{(k)},\forall k$, 
- given current $\bs c$, $r_{j,n,\tau}$\;
+ \nl Update $\mathbb{E}\ln A^{(k)},\forall k$, 
+ given $\bs c$, $r_{j,n,\tau}$.\;
 %  \nl Update $\ln q(B^{(s)})$ and $\mathbb{E}\ln B^{(s)},\forall s$ ,
 %  given current $\hat{\bs d}$, $r_{j,n,\tau}$\;
- \nl Update $\ln q(\bs T_j)$ and $\mathbb{E}\ln T_{j,\iota},\forall j,\forall \iota$, 
- given current $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$\;
+ \nl Update $\mathbb{E}\ln T_{j,\iota},\forall j,\forall \iota$, 
+ given $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$.\;
+ \nl Update $\mathbb{E}\ln \rho_j),\forall j$ given $\bs x$, $r_{j,n,\tau}$.
  }
 \KwOut{ Label posteriors, $r_{n,\tau,j},\forall n,\forall \tau, \forall j$, %\mathbb{E}[\bs t]$, 
 most probable sequence of labels, $\hat{\bs t}_n,\forall n$ using Viterbi algorithm }
@@ -99,28 +92,7 @@ most probable sequence of labels, $\hat{\bs t}_n,\forall n$ using Viterbi algori
 \label{al:vb_bac}
 \end{algorithm}
 
-The prior distributions chosen for our generative model are conjugate to the distributions over the
-latent variables and model parameters, 
-meaning that each $q(z)$ is the same type of distribution
-as the corresponding  prior distribution defined in Section \ref{sec:model}.
-The parameters of each variational distribution can be computed in terms  of 
-expectations over the other subsets of variables.
-For the true labels, $\bs t$, the variational factor is:
- \begin{flalign}
-& \ln q(\bs t_n) \!=\! 
-% \sum_{n=1}^N \sum_{\tau=1}^{L_n} 
-% \sum_{s=1}^S \mathbb{E}%_{\bs B,\bs d^{(s)}} \!\left[ 
-% \ln \!B^{(s)}\!\!\left(t_{n,\tau},d_{n,\tau}^{(s)},d_{n,\tau\!-\!1}^{(s)}\!\right) %\right]
-% %\bigg\{ \mathbb{E}%_{\bs T} \left[ 
-% %\ln T_{t_{n,\tau\!-\!1}, t_{n,\tau}} %\right] 
-% &&\nonumber \\
-%+ 
-\sum_{n=1}^N \sum_{\tau=1}^{L_n} \sum_{k=1}^K  \mathbb{E}%_{\bs A} \left[ 
-\ln \!A^{(k)}\left(t_{n,\tau},c_{n,\tau}^{(k)},c_{n,\tau-1}^{(k)}\right) %\right]  
-&\nonumber\\
-&+ \mathbb{E}\ln T_{t_{n,\tau-1}, t_{n,\tau}}+\mathrm{const}. & \label{eq:qstar_t}
- \end{flalign}
-From this factor, we compute the posterior probability of each true token label, 
+We compute the posterior probability of each true token label, 
 $r_{n,\tau,j}= \mathbb{E}[p(t_{n,\tau}=j | \bs c)]$,  %_{\bs T,\bs A,\bs B,\bs d}
 and of each label transition, $s_{n,\tau,j,\iota} = 
 \mathbb{E}%_{\bs T,\bs A,\bs B,\bs d}
@@ -131,58 +103,62 @@ and of each label transition, $s_{n,\tau,j,\iota} =
 % we require expectations for the individual 
 % true labels $r_{n,\tau,j} 
 using the forward-backward algorithm~\cite{ghahramani2001introduction}.
-Please see supplementary material for the detailed update equations. 
-
-%\textbf{Variational factor for} $\bs T$: e
-Each row of the transition matrix has the factor:
+In the forward pass, we compute:
 \begin{flalign}
-& \ln q(\bs T_{j}) 
-  %= \sum_{\iota=1}^J N_{j,\iota}  + \ln \mathrm{Dir}(\bs T_j | \bs\gamma_j) + \mathrm{const} & \nonumber\\
-= \ln \mathrm{Dir}\left(\left[ N_{j,\iota} + \gamma_{j,\iota}, \forall \iota \in \{1,..,J\} \right]\right), &
-\end{flalign}
-where $N_{j,\iota} = \sum_{n=1}^N \sum_{\tau=1}^{L_n}  s_{n,\tau,j,\iota}$ is the expected number of times that label $\iota$ follows label $j$.  
+   & \ln r^{-}_{n,\tau,j} = \ln \sum_{\iota=1}^J \left\{ r^{-}_{n,\tau-1,\iota} \mathrm{e}^{\mathbb{E}\ln T_{\iota,j}} \right\} + ll_{n,\tau}(j), & \nonumber \\
+% \end{flalign}
+%  where the log likelihood $ll(j,n,\tau)$ of the annotations for token $\tau$ in document $n$ given
+%  label $j$ is:
+% \begin{flalign} 
+   & ll_{n,\tau}(j) = \sum_{k=1}^K \mathbb{E}%_{\bs A}
+   \ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right)
+   \mathbb{E}\ln\rho_{j,x_{n,\tau}}, & 
+   %+  \sum_{s=1}^S
+%    & \nonumber \\
+%    &  \sum_{i=1}^J\sum_{\iota=1}^J \mathbb{E}%_{\bs B}
+%    \ln B^{(s)} \!\left(j, i, \iota \right)  
+%    \hat{d}_{n,\tau}^{(s)}(i) \hat{d}_{n,\tau-1}^{(s)}(\iota), & 
+ \end{flalign}
+ and in the backward pass we compute:
+  \begin{flalign}
+  %& \ln \lambda_{n,L_n,j} = 0, \hspace{1cm}
+   \ln \lambda_{n,\tau,j} & = \ln\sum_{\iota=1}^J \exp \big\{ 
+   \ln \lambda_{i,\tau+1,\iota}
+   & \nonumber \\
+&  + \mathbb{E}\ln T_{j,\iota} + ll_{n,\tau+1}(\iota) \big\} .&
+ \end{flalign}
+ Then we can calculate the posteriors as follows:
+ \begin{flalign}
+ r_{n,\tau,j} &\propto r^{-}_{n,\tau,j}\lambda_{n,\tau,j}, &\\
+ s_{n,\tau,j,\iota} &\propto  r^{-}_{n,\tau-1,j} \lambda_{n,\tau,\iota} \exp\{\mathbb{E}\ln T_{j,\iota}+ ll_{n,\tau}(\iota)\}. &
+ \end{flalign}
+ 
 %The variational factor $q(\bs t)$ requires the following expectation:
-The forward-backward algorithm requires expectations of $\ln \bs T$ that can be computed using standard equations for a Dirichlet distribution:
+The expectations of $\ln \bs T$ and $\ln\bs\rho$
+can be computed using standard equations for a Dirichlet distribution:
  \begin{flalign}
 & \mathbb{E}\ln T_{j,\iota} = \Psi\!\left(N_{j,\iota} \!\!+ \gamma_{j,\iota}\right) 
- - \Psi\!\left(\sum_{\iota=1}^J (N_{j,\iota} \!\!+ \gamma_{j,\iota}) \!\right), &
+ - \Psi\!\left(\sum_{i=1}^J (N_{j,i} \!\!+ \gamma_{j,i}) \!\right), & \\
+ & \mathbb{E} \ln\rho_j = \Psi\!\left(o_{j,w} \!\!+ \gamma_{j,w}\right) 
+ - \Psi\!\left(\sum_{v=1}^J (o_{j,v} \!\!+ \gamma_{j,v}) \!\right), &
 \end{flalign}
- where $\Psi$ is the digamma function.
- 
-%\textbf{Variational factors for} $\bs A$ and $\bs B$:
-The variational factor for each annotator model is a distribution over its parameters, 
-which differs between models.
-For \emph{seq}, the variational factor is:
- \begin{flalign}
-  & \ln q\!\left(\! A^{(k)}\!\right) %= \sum_{j=1}^J  \sum_{l=1}^J \bigg\{ \sum_{m=1}^J N_{j,l,m}^{(k)}\ln\pi_{j,l,m}^{(k)} & \nonumber\\
- % & \hspace{2.7cm} 
- % + \ln p\left(\bs\pi_{j,l}^{(k)} | \bs \alpha_{j,l}^{(k)} \right) \bigg\} + \mathrm{const}, & \nonumber \\
-  \!=\! \sum_{j=1}^J \! \sum_{l=1}^J \!\mathrm{Dir}\! \left(\left[ \bs N_{j,l,m}^{(k)} \! 
- %+ \alpha_{j,l,m}^{(k)}, \! 
- %\right.\right.\nonumber&\\
-%&  \hspace{3.5cm} \left.\left.
-\forall m \! \in \! \{1,..,J\} \!\right] \right) & \nonumber \\
-& N^{(k)}_{j,l,m} \!\!=\!  \alpha_{j,l,m}^{(k)} \!\!\! + \!\sum_{n=1}^N \!\sum_{\tau=1}^{L_n} \!
-r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau\!-\!1}}\!\delta_{m,c^{(k)}_{n, \!\tau}}, \!& 
-\end{flalign}
- where $\delta$ is the Kronecker delta. 
-% For the \emph{CM} model, the variational factor is simplified to:
-%  \begin{flalign}
-%   & \ln q\left( A^{(k)}\right) = \sum_{j=1}^J  \mathrm{Dir} \bigg( \bigg[ \sum_{n=1}^N \sum_{\tau=1}^{L_n} r_{n,\tau,j} \delta_{m,c^{(k)}_{n,\tau}} 
-%   & \nonumber \\ 
-% & \hspace{2.0cm} + \alpha_{j,m}^{(k)}, \! \forall m \! \in \! \{1,..,J\} \bigg] \bigg) .
-% \end{flalign}
-For \emph{CM}, \emph{MACE}, \emph{CV} and \emph{acc}, the factors follow a similar pattern of summing pseudo-counts of correct and incorrect answers. 
-%For reasons of space, we omit the equations for these variants. 
-The forward-backward passes
-% variational factor $q(\bs t)$ 
-also require the following expectation terms for \emph{seq},
-which are standard equations for Dirichlet distributions and can be simplified for the other annotator models:
+ where $\Psi$ is the digamma function,
+  $N_{j,\iota} = \sum_{n=1}^N \sum_{\tau=1}^{L_n}  s_{n,\tau,j,\iota}$ is the expected number of times that label $\iota$ follows label $j$,
+ and $o_{j,w}$ is the expected number of times that word $w$
+ occurs with sequence label $j$.
+Similarly, for the \emph{seq} annotator model, the expectation terms are:
  \begin{flalign}
  \label{eq:elna}
 & \mathbb{E}\ln \! A^{(k)}\!(j,l,m) \!=\! \Psi\!\left(\!N^{(k)}_{j,l,m}\!\right)
- \!-\! \Psi\!\left(\!\sum_{\;m'\!=1\!}^J \!\!\left( \!N^{(k)}_{j,l,m'} \!\right) \!\!\right)\!. &
+ \!-\! \Psi\!\left(\!\sum_{\;m'\!=1\!}^J \!\!\left( \!N^{(k)}_{j,l,m'} \!\right) \!\!\right)\!. & \\
+  & N^{(k)}_{j,l,m} \!\!=\!  \alpha_{j,l,m}^{(k)} \!\!\! + \!\sum_{n=1}^N \!\sum_{\tau=1}^{L_n} \!
+r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau\!-\!1}}\!\delta_{m,c^{(k)}_{n, \!\tau}}, \!& 
  \end{flalign}
+ where $\delta$ is the Kronecker delta. 
+For other annotator models, this equation is simplified as the values of
+the previous labels are ignored.
+% counts are be simplified for the other annotator models
+ 
 % For \emph{CM}, the equation can be adapted by omitting the $l$ subscripts on the right-hand side, which refer to the previous annotation in the sequence. 
 % The variational factor, $q(B^{(s)} )$, for each sequence tagger's annotator model
 %  has the same form as $q(A^{(k)} )$, substituting $\delta_{l,c^{(k)}_{n,\tau\!-\!1}}$ 
@@ -281,8 +257,8 @@ which are standard equations for Dirichlet distributions and can be simplified f
 The approximate posterior probabilities of the true labels, $r_{j,n,\tau}$, provide confidence estimates for the labels. However, it is often useful to  compute 
 the most probable sequence of labels, $\hat{\bs t}_n$, using the
 Viterbi algorithm~\cite{viterbi1967error}. 
-To apply the algorithm, we use the converged variational factors to compute 
-$\mathbb{E}[\bs T]$ and $\mathbb{E}[A^{(k)}],\forall k$. %$\mathbb{E}[B^{(s)}],\forall s$ and
+%To apply the algorithm, we use the converged variational factors to compute 
+%$\mathbb{E}[\bs T]$ and $\mathbb{E}[A^{(k)}],\forall k$. %$\mathbb{E}[B^{(s)}],\forall s$ and
 % $\hat{d}_{n,\tau}^{(s)}(i), \forall s, \forall n, \forall \tau, \forall i$.
 The most probable sequence is particularly useful because, unlike $r_{j,n,\tau}$,
 the sequence will be consistent with any transition 

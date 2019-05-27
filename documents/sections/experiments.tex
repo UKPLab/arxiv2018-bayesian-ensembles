@@ -117,7 +117,7 @@ BSC-acc &
 36.9 & 32.9 & 34.8 & %87.7 & 59.2 & 70.7 & 
 6.47
 \\ 
-BSC-MACE &
+BSC-spam &
 67.9 & 74.1 & 70.9 & 0.89 &
 46.7 & \textbf{84.4} & 60.1 & 1.98 & 
 55.7 & 53.4 & 54.5 & %85.8 & 77.3 & 81.3 & 
@@ -163,7 +163,7 @@ BSC-seq$\backslash\bs T$ &
 \\
 \bottomrule 
 \end{tabular}
-\caption{Aggregating crowdsourced labels: estimating true labels for documents labeled by the crowd.}
+\caption{Aggregating crowdsourced labels: estimating true labels for documents labelled by the crowd.}
 \label{tab:aggregation_results}
 \npnoround
 \end{table*}
@@ -187,7 +187,7 @@ BSC-seq,\\
 \end{minipage}
   \includegraphics[width=0.7\textwidth, clip=True, trim=20 17 0 28]{figures/worker_models/seq_prev2}
 \\
-\caption{Clusters of confusion matrix representations from each BSC-*** annotator model trained on PICO. 
+\caption{Clusters of confusion matrix representations from BSC-seq trained on PICO. 
 }
 \label{fig:conf_mat_clusters}
 \end{figure*}
@@ -211,17 +211,18 @@ Dataset statistics are shown in Table \ref{tab:datasets}.
 The datasets differ in typical span length, with argument components in ARG the longest, while named entities in NER spans are often only
 one token long.
 
-The gold-labeled documents were split into validation and test sets. 
+The gold-labelled documents are split into validation and test sets. 
 For NER, we use the split given by Nguyen et al. ~\shortcite{nguyen2017aggregating},
-while for PICO and ARG, we make random splits since there were not splits available from previous work.
-This means that the figures we obtain for PICO are not directly comparable to ~\shortcite{nguyen2017aggregating}.
+while for PICO and ARG, we make random splits since the splits from previous worker
+were not available\footnote{The data splits will be published upon publication.}
+\footnote{Since we use different splits, our results for PICO are not identical to ~\citet{nguyen2017aggregating}}.
 
 \paragraph{Evaluation metrics. }
 For NER and ARG we use the CoNLL 2003 F1-score, which considers only exact span matches %(type, start and end) 
 to be correct. Incomplete named entities are typically not useful, and for ARG, it is desirable to identify complete argumentative units that
 make sense on their own. 
 %This measure is intuitive because complete named entities must be marked to be of value. 
-For medical trial populations, partial matches still contain much of the information, so for PICO we use a relaxed F1-score, as in ~\citet{nguyen2017aggregating}, 
+For medical trial populations, partial matches still contain useful information, so for PICO we use a relaxed F1-score, as in ~\citet{nguyen2017aggregating}, 
 which counts the matching fractions of spans when computing precision and recall. 
 %Since the spans in PICO are longer than those of NER, 
  
@@ -230,71 +231,82 @@ We also compute the cross entropy error (\emph{CEE}, also known as log-loss).
 While this is a token-level rather than span-level metric, it evaluates the quality of the probability estimates produced by aggregation methods, which are useful for tasks such as active learning.
 
 \paragraph{Evaluated Methods. }
-Bayesian sequence combination (BSC) is designed to be combined with different annotator models,
-so we evaluate it in combination with all of the annotator models described in Section \ref{sec:model}.
+We evaluate BSC in combination with all of the annotator models described in Section \ref{sec:model}.
 %to assess whether the sequential annotator model, \emph{seq},
 %improves the quality of the inferred sequence tags. 
 As well-established non-sequential baselines, we include token-level majority voting (\emph{MV}), 
-\emph{MACE}~\cite{hovy2013learning}, 
+\emph{MACE}~\cite{hovy2013learning} which uses the \emph{spam} annotator
+model,
 Dawid-Skene (\emph{DS})~\cite{dawid_maximum_1979}, which uses the \emph{CM} annotator model,
  and independent Bayesian classifier combination (\emph{IBCC})~\cite{kim2012bayesian}, which is a Bayesian treatment of Dawid-Skene. 
 We also compare against the state-of-the-art sequential \emph{HMM-crowd} method \cite{nguyen2017aggregating}, which uses a combination of 
-maximum \emph{a posteriori} (or smoothed maximum likelihood) estimates for the confusion vector (CV) annotator model 
+maximum \emph{a posteriori} (or smoothed maximum likelihood) estimates for the \emph{CV} annotator model 
 and variational inference for an integrated hidden Markov model (HMM). 
 %  HMM-crowd is the current state-of-the-art and allows us to compare our approach against 
 %  a model without a fully Bayesian treatment. 
 %We also introduce a \emph{clustering} baseline,
 %that aggregates spans from multiple annotators by grouping them together
 %using kernel density estimation~\cite{rosenblatt1956remarks}.
-%MACE and IBCC are variants of BSC-MACE and BSC-CM, respectively, with non-sequential true label models.
+%MACE and IBCC are variants of BSC-spam and BSC-CM, respectively, with non-sequential true label models.
 %and serve to show the benefits of the sequential BSC model.
 HMM-Crowd and DS use non-Bayesian inference steps and can be compared with
 their Bayesian variants, BSC-CV and IBCC, respectively. 
 
-Besides the annotator models, BSC model also makes use of text features and a transition matrix, $\bs T$, over true labels.
+Besides the annotator models, BSC also makes use of text features and a transition matrix, $\bs T$, over true labels.
 We test the effect of these components by running BSC-CM and BSC-seq with no text features (\emph{notext}), 
 and without the transition matrix, which is
- replaced by simple independent class probabilities (labeled $\backslash \bs T$).
+ replaced by simple independent class probabilities (labelled $\backslash \bs T$).
  
-We tune the hyperparameters using the validation sets. To limit the number of hyperparameters to tune, 
+We tune the hyperparameters using grid search on the development sets. To limit the number of hyperparameters to tune, 
 we optimize only three values for BSC:
 hyperparameters of the transition matrix, $\bs\gamma_j$, are set to the same value, 
 $\gamma_0$, except for disallowed transitions, (O$\Arrow{0.2cm}$I, transitions between types, e.g. I-PER$\Arrow{0.2cm}$I-ORG), 
 which are set to $1e-6$; 
-for the annotator models (both $\bs A$ and $\bs B$),
+for the annotator models,
 all values are set to $\alpha_0$, except for disallowed transitions, which are set to $1e-6$,
 then $\epsilon_0$ is added to hyperparameters 
 corresponding to correct annotations (e.g. diagonal entries in a confusion matrix).
-We use $\epsilon_0$ to encode the prior assumption that annotators are more likely to have an accuracy greater than random. This avoids the non-identifiability problem, in which the class labels become switched around.
-We use validation set F1-scores to choose values from $[0.1, 1, 10, 100]$, 
-training on a small subset of 250 documents for NER and 350 documents for PICO. 
+This encodes the prior assumption that annotators are more likely to have an accuracy greater than random to avoid the non-identifiability problem, in which the class labels become switched around.
+%We use validation set F1-scores to choose values from $[0.1, 1, 10, 100]$, 
+%training on a small subset of 250 documents for NER and 350 documents for PICO. 
 
-\paragraph{Aggregation Task. }\label{sec:task1}
+\paragraph{Aggregation Results. }\label{sec:task1}
 
 This task is to combine multiple crowdsourced labels and predict the true labels.
 %For both datasets, we provide all the crowdsourced labels as input to the aggregation method. 
 The results are shown in Table \ref{tab:aggregation_results}.
-Although DS and IBCC do not consider sequence information nor the text itself, 
-they both perform well on both datasets,
-with IBCC reaching better cross entropy error than DS due to its Bayesian treatment.
+%Although DS and IBCC do not consider sequence information nor the text itself, 
+%they both perform well on both datasets,
+%with IBCC reaching better cross entropy error than DS due to its Bayesian treatment.
 %against HMM-crowd on NER,
 %and BSC-CM variants on PICO. 
-The improvement of DS over the results given 
-by Nguyen et al. ~\shortcite{nguyen2017aggregating} may be due to implementation differences. 
-Neither MACE, BSC-acc nor BSC-MACE perform strongly, with F1-scores sometimes falling below MV. 
-The acc and MACE annotator models may be a poor match for the sequence labeling task if annotator
-competence varies greatly depending on the true class label.
-
+%The improvement of DS over the results given 
+%by Nguyen et al. ~\shortcite{nguyen2017aggregating} may be due to implementation differences. 
+%Neither MACE, BSC-acc nor BSC-spam perform strongly, with F1-scores sometimes falling below MV. 
+%The acc and MACE annotator models may be a poor match for the sequence labelling task if annotator
+%competence varies greatly depending on the true class label.
 %The annotator models of BSC-CV and BSC-CM are better, although BSC-CM performs worse on PICO.
-BSC-seq outperforms the other approaches, although 
+BSC-seq outperforms the other approaches,
+including the previous state of the art, HMM-crowd (significant on all datasets
+ with $p\ll.01$ using a two-tailed Wilcoxon signed-rank test).
 %despite
 %having a larger number of parameters to learn.
-without the text model (BSC-seq-notext) or the transition matrix (BSC-seq$\backslash\bs T$),
-its performance decreases.
-However, for BSC-CM, the results are less clear: BSC-CM-notext differs from IBCC only in the 
-inclusion of the transition matrix, $\bs T$, yet IBCC outperforms BSC-CM-notext.
-This suggests that the combination of these elements is important: the seq annotator model is effective 
-in combination with the transition matrix and simple text model.
+Without the text model (BSC-seq-notext) or the transition matrix (BSC-seq$\backslash\bs T$),
+BSC-seq performance decreases heavily,
+while BSC-CM-notext and BSC-CM$\backslash\bs T$ in some cases outperform
+BSC-CM.
+This suggests that $\emph{seq}$, with its greater number of parameters to learn, 
+is most effective in combination with the transition matrix and simple text model.
+
+The performance of all methods across the three datasets varies greatly.
+With NER, the spans are short and the task is less subjective than PICO or ARG,
+hence its higher F1 scores. PICO uses a relaxed F1 score, meaning its scores are
+only slightly lower despite being a more ambiguous task. The constitution of an 
+argument is also ambiguous, so ARG scores are lower, particularly as they use  
+strict span-matching to compute the F1 scores. Raising the scores may be possible in future
+by using expert labels as training data, i.e. as known values of $\bs t$,
+which would help to put more weight on annotators with similar labelling 
+patterns to the experts.
 
 \begin{table*}[h]
 \small
@@ -331,70 +343,82 @@ BSC-Seq & ARG & 39 & 3 & 12 & 3 & 20 & 6 & 4 & 0 & 0 & 1 & 0 & 0 & 0.46 \\
 \caption{Counts of different types of span errors.}
 \label{tab:error_analysis}
 \end{table*}
-\todo{redo the BSC-seq line for NER -- the number of splits looks wrong}
 We categorize the errors made by key methods and list the
 counts for each category in Table \ref{tab:error_analysis}.
-All machine learning methods shown reduce the number of spans that were completely missed by majority voting. Note that BSC completely removes all ``invalid'' spans
-(O->I transitions) due to the sequential model and setting the priors hyperparameters
-to zero for those transitions. BSC-seq has much lower ``length error'', which is
-the mean difference in number of tokens between the predicted and gold spans. It also 
-reduces the number of missing spans, although in NER and ARG that comes at the cost of producing more false positives (predicting spans where there are none).
-From this, we can see that BSC-seq 
+All machine learning methods tested here reduce the number of spans that were completely missed by majority voting. Note that BSC completely removes all ``invalid'' spans
+(O$\Arrow{0.2cm}$I transitions) due to the sequential model and setting the priors hyperparameters
+to zero for those transitions.
+For PICO and ARG, which contain longer spans,
+BSC-seq has lower ``length error'' than other methods,
+ which is the mean difference in number of tokens between the predicted and gold spans. 
+ It also reduces the number of missing spans, although in NER and ARG that comes at the cost of producing more false positives (predicting spans where there are none).
+Overall, BSC-seq appears to be the best choice for identifying 
+exact span matches and reducing missed spans.
 
 % TODO: make this plot more compact and relevant by plotting only the means across the whole dataset, 
 %and the distribution of hellinger distances between the confusion matrices for each previous label case. Put on a single row.
 %Table \ref{tab:aggregation_results} shows a benefit of using the sequential annotator model over CM, CV and acc.
 \paragraph{Visualising Annotator Models. }
-To determine whether BSC-seq learns distinctive confusion matrices depending on the previous labels,
+To determine whether, in practice, BSC-seq really learns distinctive confusion matrices depending on the previous labels,
 we plot the learned annotator models for
 PICO as probabilistic confusion matrices in Figure \ref{fig:conf_mat_clusters}.
-As the dataset contains a large number of annotators, we clustered 
-the confusion matrices inferred by each model
+%As the dataset contains a large number of annotators, we 
+We clustered 
+the confusion matrices % inferred by each model
 into five groups by applying K-means to their posterior expected values,
 then plotted the means for each cluster.
-In all clusters, BSC-CV learns different accuracies for B, I and O (the diagonal entries). 
-These differences may explain its
-improvement over BSC-acc.
-BSC-CM differs from BSC-CV in that %has more distinctive clusters and 
-the first, fourth and fifth clusters 
-have off-diagonal values with different heights for the same true label value.
- The second 
-cluster for BSC-CM encodes likely spammers who usually choose 'O' regardless of the 
-ground truth. 
-%Unlike BSC-CM, BSC-seq improved performance on PICO over BSC-CV. 
-The confusion matrices for BSC-seq are
-very different depending on the worker's previous annotation. 
 Each column in the figure shows the confusion matrices corresponding to the same cluster of annotators. 
+In all clusters, BSC-seq learns different 
+%accuracies for
+confusion matrices depending on the previous label.
+% B, I and O (the diagonal entries),
+%which suggests that the data supports the use of this more complex model.
+% explain ho
+%These differences may explain its
+%improvement over BSC-acc.
+%BSC-CM differs from BSC-CV in that %has more distinctive clusters and 
+%the first, fourth and fifth clusters 
+%have off-diagonal values with different heights for the same true label value.
+% The second 
+%cluster for BSC-CM encodes likely spammers who usually choose 'O' regardless of the 
+%ground truth. 
+%Unlike BSC-CM, BSC-seq improved performance on PICO over BSC-CV. 
+%The confusion matrices for BSC-seq are
+%very different depending on the worker's previous annotation. 
+There are also large variations between the clusters.
 The first column, for example, shows
 annotators with a tendency toward I$\Arrow{0.2cm}$I or O$\Arrow{0.2cm}$O transitions, while the following clusters 
-indicate very different labeling behavior. The model therefore appears able to learn
-distinct confusion matrices for different workers given previous labels, which supports the use of sequential
+indicate very different labelling behaviour. The model therefore appears able to learn
+distinct confusion matrices for different workers given previous labels, 
+which supports the use of sequential
 annotator models.
 
  \paragraph{Active Learning. }
  \begin{figure}[h]
  \centering
    \includegraphics[width=1\columnwidth, clip=True, trim=40 22 22 15]{figures/NER_AL/pool/plot_f1-score-tokens.pdf}
- \caption{F1-scores for active learning simulations on NER using an uncertainty sampling strategy that selects the least-confident sequences.
+ \caption{F1-scores for active learning simulations on NER using least-confidence 
+ uncertainty sampling.
  %: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
  }
  \label{fig:alner}
  \end{figure}
- Active learning iteratively selects informative data points to be labeled so that a model can be trained
- using less labeled data. Posterior probabilities output by Bayesian methods 
+ Active learning iteratively selects informative data points to be labelled so that a model can be trained
+ using less labelled data. Posterior probabilities output by Bayesian methods 
  account for uncertainty in the model parameters, hence can be used to choose data points that rapidly reduce uncertainty. 
  %In contrast, frequentist methods
  %such as maximum likelihood output probabilities that do not account for parameter uncertainty due to 
  %small datasets or noisy labels. 
- We hypothesize that BSC will learn more quickly than non-sequential methods
+ We hypothesize that BSC will learn more quickly than non-sequential 
+ and non-Bayesian methods
  in an active learning scenario. 
- While various active learning methods could be applied here, in this paper we wish
- to demonstrate only that BSC may serve as a good foundation for active learning,
- and defer a deeper investigation of active learning techniques to future work.
- We therefore simulate active learning using 
+ %While various active learning methods could be applied here, in this paper we wish
+ %to demonstrate only that BSC may serve as a good foundation for active learning,
+ %and defer a deeper investigation of active learning techniques to future work.
+ We simulate active learning using 
  %a well-established technique, \emph{uncertainty sampling}
- the \emph{least confidence} strategy
- ~\cite{settles2008analysis},
+ the \emph{least confidence} strategy, shown to be effective by 
+ ~\citet{settles2008analysis},
  as described in Algorithm \ref{al:uncertainty_sampling}.
  %TODO does there need to be another index in t for the document?
  \begin{algorithm}
@@ -404,20 +428,21 @@ annotator models.
   \While{training set size $<max\_no\_labels$}
   {
   \nl Train model on $\bs c$ \;
-  \nl For all documents, compute $LC = 1-p(\bs t^*|\bs c)$, where $\bs t^*$ is the probability of the most likely sequence of labels 
-  for that document. \;
-  \nl Obtain annotations for the $batch\_size$ documents with the highest values of $LC$ (least confidence), and add them to $\bs c$\;
+  \nl For each document $n$, 
+  compute $LC_n = 1-p(\bs t_n^*|\bs c)$, where $\bs t_n^*$ is the probability of the most likely sequence of labels 
+  for $n$. \;
+  \nl Obtain annotations for $batch\_size$ documents with the highest values of $LC$ (least confidence), and add them to $\bs c$\;
   }
  \caption{Active learning simulation for each method using uncertainty sampling.}
  \label{al:uncertainty_sampling}
  \end{algorithm}
- Figure \ref{fig:alner} plots the mean F1 scores over ten repeats of the active learning simulation on the NER dataset (some methods
- are omitted for clarity).
- When the number of iterations is very small, neighter IBCC nor DS are able to outperform majority vote, and only produce a very small
+ 
+ Figure \ref{fig:alner} plots the mean F1 scores over ten repeats of the active learning simulation on the NER dataset (for clarity, we only plot key methods).
+ When the number of iterations is very small, neither IBCC nor DS are able to outperform majority vote, and only produce a very small
  benefit as the number of labels grows. This highlights the need for a sequential model such as BSC or HMM-crowd for
- effective active learning.
+ effective active learning with small numbers of labels.
  IBCC learns slightly quicker than DS,
  while BSC-CV clearly outperforms HMM-crowd: we believe this difference is due to the Bayesian treatment of IBCC and BSC,
- which means they are better able to estimate confidence than DS and HMM-crowd, which use maximum likelihood inference.
+ which means they are better able to estimate confidence than DS and HMM-crowd, which use maximum likelihood and maximum a posteriori inference.
  BSC-seq produces the best overall performance, and the gap grows as the number of labels increases, 
  since more data is required to learn the more complex model.  
