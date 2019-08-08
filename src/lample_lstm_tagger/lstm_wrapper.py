@@ -141,17 +141,19 @@ class LSTMWrapper(object):
         parameters['word_dim'] = 100
         parameters['word_lstm_dim'] = 100
         parameters['word_bidirect'] = 1
-        parameters['pre_emb'] = "" # as per Nguyen 2017, which we compare against.
-        # Would also be good to run with word embeddings included because:
-        # - comparison against results with gold training data
-        # -
+        parameters['pre_emb'] = '../../data/bayesian_sequence_combination/glove.840B.300d.txt'
+        # Nguyen 2017, which we compare against, seems not to have used embeddings as they are not mentioned
+        # and performance matches our performance without embeddings. It makes sense to include them so we can make
+        # the performance as realistic as possible, i.e., the performance you get if you really try to do transfer
+        # learning in this kind of context.
         parameters['all_emb'] = 0
         parameters['cap_dim'] = 0
         parameters['crf'] = 1
         parameters['crf_probs'] = crf_probs # output probability of most likely sequence or just sequence labels. Only
         # applies if using crf already.
         parameters['dropout'] = 0.5
-        parameters['lr_method'] = "adam-lr_.001"#"sgd-lr_.005"
+        parameters['lr_method'] = "adam-lr_.001"#"sgd-lr_.005" # this works better than the original set up according
+        # to Reimers and Gurevych 2017. We also found it improved performance, at least with a very small number of epochs.
 
         #lr_decay = 0.9 # not currently used
 
