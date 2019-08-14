@@ -77,7 +77,7 @@ def split_train_to_dev(gold_sentences):
 
 class LSTMWrapper(object):
 
-    def __init__(self, models_path_alt=None):
+    def __init__(self, models_path_alt=None, embeddings=None):
         self.model = None
         self.best_model_saved = False # flag to tell us whether the best model on dev was saved to disk
         self.best_dev = -np.inf
@@ -87,6 +87,8 @@ class LSTMWrapper(object):
             self.models_path = models_path
         else:
             self.models_path = models_path_alt
+
+        self.embeddings = embeddings
 
     def run_epoch(self, epoch, niter_no_imprv, best_dev, last_score, compute_dev=True):
         epoch_costs = []
@@ -138,10 +140,10 @@ class LSTMWrapper(object):
         parameters['char_dim'] = 25
         parameters['char_lstm_dim'] = 25
         parameters['char_bidirect'] = 1
-        parameters['word_dim'] = 100
+        parameters['word_dim'] = 300 # 100 --> this is the old setting
         parameters['word_lstm_dim'] = 100
         parameters['word_bidirect'] = 1
-        parameters['pre_emb'] = '../../data/bayesian_sequence_combination/glove.840B.300d.txt'
+        parameters['pre_emb'] = self.embeddings # '../../data/bayesian_sequence_combination/glove.840B.300d.txt'
         # Nguyen 2017, which we compare against, seems not to have used embeddings as they are not mentioned
         # and performance matches our performance without embeddings. It makes sense to include them so we can make
         # the performance as realistic as possible, i.e., the performance you get if you really try to do transfer
@@ -167,7 +169,6 @@ class LSTMWrapper(object):
         # Data parameters
         lower = parameters['lower']
 
-        # Following LSTM-CROWD, we don't load any pre-trained word embeddings.
         dico_words, word_to_id, id_to_word = word_mapping(all_sentences, lower)
         dico_words_train = dico_words
 
