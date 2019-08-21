@@ -206,7 +206,7 @@ class MACEWorker():
 
         return logsumexp([ll_correct, ll_incorrect], axis=0)
 
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores):
+    def _expand_alpha0(alpha0, alpha0_data, K, nscores, uniform_priors):
         '''
         Take the alpha0 for one worker and expand.
         :return:
@@ -221,6 +221,8 @@ class MACEWorker():
         else:
             alpha0 = alpha0[:, None]
             alpha0 = np.tile(alpha0, (1, K))
+
+        alpha0[:, uniform_priors] = alpha0[0, uniform_priors]
 
         if alpha0_data is None:
             alpha0_data = np.ones((nscores + 2, 1))

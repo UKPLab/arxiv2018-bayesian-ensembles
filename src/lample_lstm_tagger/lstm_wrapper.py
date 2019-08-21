@@ -230,7 +230,7 @@ class LSTMWrapper(object):
         if self.best_model_saved:
             model.reload()
 
-        return model, f_eval
+        return model, f_eval, best_dev
 
     def predict_LSTM(self, test_sentences):
         # Load existing model

@@ -109,7 +109,8 @@ class BSC(object):
 
         elif worker_model == 'seq':
             self.A = SequentialWorker
-            self._set_transition_constraints = self._set_transition_constraints_seq if transition_model == 'HMM' else self._set_transition_constraints_betaonly
+            self._set_transition_constraints = self._set_transition_constraints_seq if transition_model == 'HMM' \
+                else self._set_transition_constraints_betaonly
             self.alpha_shape = (self.L, self.nscores)
 
         elif worker_model == 'vec':
@@ -119,7 +120,7 @@ class BSC(object):
 
         self.alpha0, self.alpha0_data = self.A._init_alpha0(alpha0_diags, alpha0_factor, L)
 
-        self.rare_transition_pseudocount = 1e-6
+        self.rare_transition_pseudocount = 1e-10
         # self.rare_transition_pseudocount = np.min(self.alpha0) / 10.0 # this makes the rare transition much less likely than
         # any other, but still allows for cases where the data itself may contain errors.
         # self.rare_transition_pseudocount = np.nextafter(0, 1) # use this if the rare transitions are known to be impossible
@@ -142,13 +143,20 @@ class BSC(object):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
 
+        self.alpha0[self.outside_labels, self.outside_labels, :, :] *= 5 # because they are way more frequent
+
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             for outside_label in self.outside_labels:
                 # set the disallowed transition to as close to zero as possible
                 disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-                self.alpha0[:, unrestricted_labels[i], outside_label] += disallowed_count
+
+                # TODO: test this. It's meant to reduce likelihood of an I label given true class O.
+                # print('RESTRICTED LABEL: %i' % restricted_label)
+                # self.alpha0[restricted_label, restricted_label, restricted_label] += np.sum(disallowed_count)
+
+                self.alpha0[:, unrestricted_labels[i], outside_label] += disallowed_count # previous experiments use this
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount
 
                 disallowed_count = self.alpha0_data[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
@@ -159,7 +167,7 @@ class BSC(object):
             if self.beta0.ndim >= 2:
                 # *** This seems to have a small positive effect
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                self.beta0[self.outside_labels, outside_label] += disallowed_count
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
@@ -415,9 +423,21 @@ class BSC(object):
         C = C-1
         doc_start = doc_start.flatten()
 
-        B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
+        if self.beta0.ndim == 2:
+            B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
+            beta0 = np.mean(self.beta0, 0)
+        else:
+            B = np.tile((self.beta0 / np.sum(self.beta0))[None, :], (self.L, 1))
+            beta0 = self.beta0
 
-        self.q_t = ds(C, self.L, 0.1)
+        if self.use_ibcc_to_init:
+            self.q_t = ds(C, self.L, 0.1)
+        else:
+            self.q_t = np.zeros((C.shape[0], self.L)) + beta0
+            for l in range(self.L):
+                self.q_t[:, l] += np.sum(C == l, axis=1)
+            self.q_t /= np.sum(self.q_t, axis=1)[:, None]
+
         self.q_t_joint = np.zeros((self.N, self.L+1, self.L))
         for l in range(self.L):
             self.q_t_joint[1:, l, :] =  self.q_t[:-1, l][:, None] * self.q_t[1:, :] * B[l, :][None, :]
@@ -531,23 +551,24 @@ class BSC(object):
             print('_calc_q_A: nan value encountered!')
 
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
-            gold_labels=None):
+            gold_labels=None, uniform_priors=[]):
         '''
         Runs the BAC bsc with the given annotations and list of document starts.
 
         '''
 
-        print('Run called with C shape = %s' % str(C.shape))
+        if self.verbose:
+            print('BSC: run() called with C shape = %s' % str(C.shape))
 
         # if there are any gold labels, supply a vector or list of values with -1 for the missing ones
         if gold_labels is not None:
-            self.gold = np.array(gold_labels).flatten()
+            self.gold = np.array(gold_labels).flatten().astype(int)
         else:
             self.gold = None
 
         # initialise the hyperparameters to correct sizes
         self.alpha0, self.alpha0_data = self.A._expand_alpha0(self.alpha0, self.alpha0_data, self.K,
-                                                              self.nscores)
+                                                              self.nscores, uniform_priors)
 
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
@@ -558,6 +579,9 @@ class BSC(object):
         # transform input data to desired format: unannotated tokens represented as zeros
         C = C.astype(int) + 1
         doc_start = doc_start.astype(bool)
+        if doc_start.ndim == 1:
+            doc_start = doc_start[:, None]
+        
         self.N = doc_start.size
 
         if self.iter == 0:
@@ -613,9 +637,10 @@ class BSC(object):
                 lnPi_data = [model.lnPi_data for model in self.data_model]
                 C_data = [model.C_data for model in self.data_model]
 
-                print('Updating with C shape = %s' % str(C.shape))
+                if self.verbose:
+                    print('Updating with C shape = %s' % str(C.shape))
 
-                if self.iter > 0 or not self.use_ibcc_to_init:
+                if self.iter > 0:
                     self._update_t(parallel, C, C_data, lnPi_data, doc_start)
                 else:
                     self._init_t(C, doc_start)
@@ -628,12 +653,11 @@ class BSC(object):
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
-                print('BAC transition matrix: ')
+                    print('BAC transition matrix: ')
+                    print(np.around(self.beta / (np.sum(self.beta, -1)[:, None] if self.beta.ndim > 1 else np.sum(self.beta)), 2))
 
-                print(np.around(self.beta / (np.sum(self.beta, -1)[:, None] if self.beta.ndim > 1 else np.sum(self.beta)), 2))
-
-                print('BAC transition matrix params: ')
-                print(np.around(self.beta[:self.L], 2))
+                    print('BAC transition matrix params: ')
+                    print(np.around(self.beta[:self.L], 2))
 
                 for model in self.data_model:
                     if (type(model) != LSTM and not self.workers_converged)\
@@ -773,9 +797,13 @@ class BSC(object):
                         lnEPi_data, self.L, self.nscores, self.K, self.A, self.before_doc_idx)
                            for d, doc in enumerate(docs))
         else:
-            res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], lnEPi, lnEPi_data, self.L,
-                        self.nscores, self.K, self.A, self.before_doc_idx)
-                           for d, doc in enumerate(docs))
+            # res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], lnEPi, lnEPi_data, self.L,
+            #             self.nscores, self.K, self.A, self.before_doc_idx)
+            #                for d, doc in enumerate(docs))
+
+            res = [_doc_most_probable_sequence(doc, None, lnEB_by_doc[d], lnEPi, lnEPi_data, self.L,
+                                                                self.nscores, self.K, self.A, self.before_doc_idx)
+                           for d, doc in enumerate(docs)]
 
         # reformat results
         pseq = np.array(list(zip(*res))[0])
@@ -836,7 +864,7 @@ class BSC(object):
         smaller than the given epsilon.
         '''
         if self.verbose:
-            print("Difference in values at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
+            print("BSC: max. difference in posteriors at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
 
         if not self.workers_converged:
             converged = self.iter >= self.max_iter
@@ -1011,7 +1039,7 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, doc_start, 
     C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
     lnB_by_doc = np.split(lnB, np.where(doc_start==1)[0][1:], axis=0)
 
-    print('Complete size of C = %s and lnB = %s' % (str(C.shape), str(lnB.shape)))
+    #print('Complete size of C = %s and lnB = %s' % (str(C.shape), str(lnB.shape)))
 
     C_data_by_doc = []
 
@@ -1031,9 +1059,9 @@ def _parallel_forward_pass(parallel, C, Cdata, lnB, lnPi, lnPi_data, doc_start, 
                                                   nscores, worker_model, before_doc_idx)
                        for d, C_doc in enumerate(C_by_doc))
 
-    # res = [_doc_forward_pass(C_doc, Cdata_by_doc[d], lnB, lnPi, lnPi_data, initProbs, nscores, worker_model,
-    #                         before_doc_idx, skip)
-    #       for d, C_doc in enumerate(C_by_doc)]
+        # res = [_doc_forward_pass(C_doc, None, lnB_by_doc[d], lnPi, lnPi_data,
+        #                                           nscores, worker_model, before_doc_idx)
+        #                for d, C_doc in enumerate(C_by_doc)]
 
     # reformat results
     lnR_ = np.concatenate(res, axis=0)
@@ -1174,6 +1202,8 @@ def _doc_most_probable_sequence(C, C_data, lnEB, lnEPi, lnEPi_data, L, nscores, 
             p_current = lnV[t - 1, :] + lnEB[t, :L, l] + likelihood_next[l, t - 1]
             lnV[t, l] = np.max(p_current)
             prev[t, l] = np.argmax(p_current, axis=0)
+
+        lnV[t, :] -= logsumexp(lnV[t, :]) # normalise to prevent underflow in long sequences
 
     # decode
     seq = np.zeros(C.shape[0], dtype=int)
