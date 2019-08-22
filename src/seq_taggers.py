@@ -172,4 +172,3 @@ class lample:
         test_sentences, _, _ = data_to_lstm_format(Nte, text, doc_start, np.ones(Nte), self.nclasses)
         preds_s, _ = self.labeller.predict_LSTM(test_sentences)
         return preds_s
-

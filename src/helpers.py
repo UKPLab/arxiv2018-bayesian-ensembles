@@ -83,6 +83,9 @@ def get_anno_matrix(spantype, preds, didx, include_all=False):
 class Dataset:
 
     def __init__(self, datadir, classid, verbose=False):
+
+        print('loading data from %s' % datadir)
+
         subsets = sorted(os.listdir(datadir))
 
         self.trgold = {}

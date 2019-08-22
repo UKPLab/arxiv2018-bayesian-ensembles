@@ -3,7 +3,7 @@
 #SBATCH --mail-user=simpson@ukp.informatik.tu-darmstadt.de
 #SBATCH --mail-type=ALL
 #SBATCH -n 1
-#SBATCH -c 8
+#SBATCH -c 2
 #SBATCH --mem-per-cpu=8GB
 #SBATCH --gres=gpu:1
 
