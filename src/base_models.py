@@ -55,8 +55,6 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
-    nclasses = 9
-
     preds = {
         'a': [],
     }  # the predictions, with the base labeller's name as key. Each item is a list, where each entry is a list of
@@ -82,7 +80,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
         if base_model_str == 'crf':
             labeller_every = simple_crf()
         elif base_model_str == 'bilstm-crf':
-            labeller_every = lample(os.path.join(tmpdir, 'baseline_every'), nclasses)
+            labeller_every = lample(os.path.join(tmpdir, 'baseline_every'), 3)
         else:
             print('BASE: Not running pretrained models again')
 
@@ -163,7 +161,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
             if base_model_str == 'crf':
                 labeller = simple_crf()
             elif base_model_str == 'bilstm-crf':
-                labeller = lample(os.path.join(tmpdir, os.path.join(tmpdir, tedomain + '_baseline_z')))
+                labeller = lample(os.path.join(tmpdir, os.path.join(tmpdir, tedomain + '_baseline_z')), nclasses=3)
 
             labeller.train(trtext_allsources, trdocstart_allsources, trgold_allsources, detext_allsources,
                            dedocstart_allsources, degold_allsources)
@@ -229,7 +227,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
             if base_model_str == 'crf':
                 labeller = simple_crf()
             elif base_model_str == 'bilstm-crf':
-                labeller = lample(subsetdir, nclasses)
+                labeller = lample(subsetdir, 3)
             elif base_model_str == 'flair-ner':
                 labeller = flair_ner()
             elif base_model_str == 'flair-pos':

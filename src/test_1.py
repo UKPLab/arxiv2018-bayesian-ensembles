@@ -151,14 +151,6 @@ for classid in [0, 1, 2, 3]:
     print('*** Cross-domain F1 score for majority vote: ' + str(cross_f1))
     print('*** Average F1 score for majority vote: ' + str(np.mean(res['agg_MV'], axis=0)) )
 
-    # with open(predfile, 'w') as fh:
-    #     json.dump(preds, fh)
-    #
-    # with open(trpredfile, 'w') as fh:
-    #     json.dump(trpreds, fh)
-    #
-    # with open(resfile, 'w') as fh:
-    #     json.dump(res, fh)
 
     # Combination methods: IBCC and BSC-seq. Run the aggregation methods separately for each test domain. ------------------
     max_iter = 100
@@ -188,6 +180,16 @@ for classid in [0, 1, 2, 3]:
             res['agg_ibcc'].append(res_s)
 
             print('   Spantype %i: F1 score=%s for IBCC, tested on %s' % (classid, str(np.around(res_s, 2)), tedomain))
+
+            with open(predfile, 'w') as fh:
+                json.dump(preds, fh)
+
+            with open(trpredfile, 'w') as fh:
+                json.dump(trpreds, fh)
+
+            with open(resfile, 'w') as fh:
+                json.dump(res, fh)
+                
     else:
         for didx, tedomain in enumerate(dataset.domains):
             print('   Spantype %i: F1 score=%f for IBCC, tested on %s' % (classid, res['agg_ibcc'][didx], tedomain))
@@ -198,6 +200,8 @@ for classid in [0, 1, 2, 3]:
                         f1type='all')
     print('*** Cross-domain F1 score=%s for IBCC' % str(cross_f1) )
     print('*** Average F1 score=%s for IBCC' % str(np.mean(res['agg_ibcc'], axis=0)) )
+
+
 
 
     if rerun_aggregators or 'agg_bsc-seq' not in res or not len(res['agg_bsc-seq']):

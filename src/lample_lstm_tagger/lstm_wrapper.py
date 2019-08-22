@@ -130,7 +130,7 @@ class LSTMWrapper(object):
         return niter_no_imprv, best_dev, dev_score
 
     def train_LSTM(self, all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, IOB_label, nclasses,
-                   n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3, crf_probs=False):
+                   n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3, crf_probs=False, best_dev=-np.inf):
 
         # parameters
         parameters = OrderedDict()
@@ -153,7 +153,7 @@ class LSTMWrapper(object):
         parameters['crf'] = 1
         parameters['crf_probs'] = crf_probs # output probability of most likely sequence or just sequence labels. Only
         # applies if using crf already.
-        parameters['dropout'] = 0.5
+        parameters['dropout'] = 0.25
         parameters['lr_method'] = "adam-lr_.001"#"sgd-lr_.005" # this works better than the original set up according
         # to Reimers and Gurevych 2017. We also found it improved performance, at least with a very small number of epochs.
 
@@ -201,7 +201,6 @@ class LSTMWrapper(object):
         singletons = set([word_to_id[k] for k, v in list(dico_words_train.items()) if v == 1])
 
         # evaluate on dev every freq_eval steps
-        best_dev = -np.inf
         last_score = best_dev
         niter_no_imprv = 0 # for early stopping
 

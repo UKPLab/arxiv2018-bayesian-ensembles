@@ -154,8 +154,8 @@ class lample:
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
             _, _, dev_score = labeller.train_LSTM(all_sentences, train_sentences, dev_sentences, delabels,
-                                                  IOB_map, IOB_label, self.nclasses,
-                                                  n_epochs=100, freq_eval=1, max_niter_no_imprv=5, crf_probs=False)
+                                                  IOB_map, IOB_label, self.nclasses, n_epochs=100, freq_eval=1,
+                                                  max_niter_no_imprv=5, crf_probs=False)
 
             print('Dev score = %f' % dev_score)
             if dev_score > best_dev:
