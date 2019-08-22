@@ -5,8 +5,8 @@ import os
 import random
 
 import numpy as np
-from flair.data import Sentence
-from flair.models import SequenceTagger
+# from flair.data import Sentence
+# from flair.models import SequenceTagger
 from sklearn_crfsuite.estimator import CRF
 
 from lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
@@ -87,46 +87,46 @@ def convert_str_tag_to_num(tag, types):
 
     return num_tag, types
 
-
-class flair:
-
-    def train(self, model_str):
-        self.tagger = SequenceTagger.load(model_str)
-        # this is a pre-trained model, so do no more training here
-
-
-    def predict(self, text, doc_start):
-
-        docs = np.split(text, np.argwhere(doc_start).flatten())[1:]
-
-        docs = [Sentence(" ".join(doc), use_tokenizer=False) for doc in docs]
-        docs = self.tagger.predict(docs)
-
-        preds = []
-        types = []
-
-        for doc in docs:
-            for tok in doc:
-                print(tok)
-                tag = tok.get_tag('ner')
-                print(tag)
-
-                num_tag, types = convert_str_tag_to_num(tag, types)
-                preds.append(num_tag)
-
-        return np.array(preds)
-
-
-class flair_ner(flair):
-    def train(self, text, doc_start, labels, detext=None, dedoc_start=None, delabels=None):
-        super(flair_ner, self).train('de-pos')
-
-
-class flair_pos(flair):
-
-    def train(self, text, doc_start, labels, detext=None, dedoc_start=None, delabels=None):
-        super(flair_pos, self).train('de-pos')
-        # this is a pre-trained model, so do no more training here
+#
+# class flair:
+#
+#     def train(self, model_str):
+#         self.tagger = SequenceTagger.load(model_str)
+#         # this is a pre-trained model, so do no more training here
+#
+#
+#     def predict(self, text, doc_start):
+#
+#         docs = np.split(text, np.argwhere(doc_start).flatten())[1:]
+#
+#         docs = [Sentence(" ".join(doc), use_tokenizer=False) for doc in docs]
+#         docs = self.tagger.predict(docs)
+#
+#         preds = []
+#         types = []
+#
+#         for doc in docs:
+#             for tok in doc:
+#                 print(tok)
+#                 tag = tok.get_tag('ner')
+#                 print(tag)
+#
+#                 num_tag, types = convert_str_tag_to_num(tag, types)
+#                 preds.append(num_tag)
+#
+#         return np.array(preds)
+#
+#
+# class flair_ner(flair):
+#     def train(self, text, doc_start, labels, detext=None, dedoc_start=None, delabels=None):
+#         super(flair_ner, self).train('de-pos')
+#
+#
+# class flair_pos(flair):
+#
+#     def train(self, text, doc_start, labels, detext=None, dedoc_start=None, delabels=None):
+#         super(flair_pos, self).train('de-pos')
+#         # this is a pre-trained model, so do no more training here
 
 
 class lample:
