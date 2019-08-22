@@ -1,7 +1,7 @@
 import os, numpy as np, json
 
 from helpers import evaluate
-from seq_taggers import simple_crf, lample, flair_ner, flair_pos
+from seq_taggers import simple_crf, lample #, flair_ner, flair_pos
 
 '''
 Structure of data folder:
@@ -228,10 +228,10 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
                 labeller = simple_crf()
             elif base_model_str == 'bilstm-crf':
                 labeller = lample(subsetdir, 3)
-            elif base_model_str == 'flair-ner':
-                labeller = flair_ner()
-            elif base_model_str == 'flair-pos':
-                labeller = flair_pos()
+            # elif base_model_str == 'flair-ner':
+            #     labeller = flair_ner()
+            # elif base_model_str == 'flair-pos':
+            #     labeller = flair_pos()
             # elif base_model_str == 'flair':
             #     labeller = flair()
 
