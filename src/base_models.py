@@ -127,66 +127,63 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
 
         for tedomain in dataset.domains:
 
-            trtext_allsources = []
-            trdocstart_allsources = []
-            trgold_allsources = []
-
-            detext_allsources = []
-            dedocstart_allsources = []
-            degold_allsources = []
-
-            for trsubset in dataset.domains:
-                if trsubset[0] == '.':
-                    continue
-
-                if tedomain == trsubset:
-                    continue  # only test on cross-domain
-
-                trtext_allsources.append(dataset.trtext[trsubset].flatten())
-                trdocstart_allsources.append(dataset.trdocstart[trsubset].flatten())
-                trgold_allsources.append(dataset.trgold[trsubset].flatten())
-
-                detext_allsources.append(dataset.detext[trsubset].flatten())
-                dedocstart_allsources.append(dataset.dedocstart[trsubset].flatten())
-                degold_allsources.append(dataset.degold[trsubset].flatten())
-
-            trtext_allsources = np.concatenate(trtext_allsources)
-            trdocstart_allsources = np.concatenate(trdocstart_allsources)
-            trgold_allsources = np.concatenate(trgold_allsources)
-
-            detext_allsources = np.concatenate(detext_allsources)
-            dedocstart_allsources = np.concatenate(dedocstart_allsources)
-            degold_allsources = np.concatenate(degold_allsources)
-
-            if base_model_str == 'crf':
-                labeller = simple_crf()
-            elif base_model_str == 'bilstm-crf':
-                labeller = lample(os.path.join(tmpdir, os.path.join(tmpdir, tedomain + '_baseline_z')), nclasses=3)
-
-            labeller.train(trtext_allsources, trdocstart_allsources, trgold_allsources, detext_allsources,
-                           dedocstart_allsources, degold_allsources)
-
-            preds_s = labeller.predict(dataset.tetext[tedomain], dataset.tedocstart[tedomain])
-            trpreds_s = labeller.predict(dataset.trtext[tedomain], dataset.trdocstart[tedomain])
+            # trtext_allsources = []
+            # trdocstart_allsources = []
+            # trgold_allsources = []
+            #
+            # detext_allsources = []
+            # dedocstart_allsources = []
+            # degold_allsources = []
+            #
+            # for trsubset in dataset.domains:
+            #     if trsubset[0] == '.':
+            #         continue
+            #
+            #     if tedomain == trsubset:
+            #         continue  # only test on cross-domain
+            #
+            #     trtext_allsources.append(dataset.trtext[trsubset].flatten())
+            #     trdocstart_allsources.append(dataset.trdocstart[trsubset].flatten())
+            #     trgold_allsources.append(dataset.trgold[trsubset].flatten())
+            #
+            #     detext_allsources.append(dataset.detext[trsubset].flatten())
+            #     dedocstart_allsources.append(dataset.dedocstart[trsubset].flatten())
+            #     degold_allsources.append(dataset.degold[trsubset].flatten())
+            #
+            # trtext_allsources = np.concatenate(trtext_allsources)
+            # trdocstart_allsources = np.concatenate(trdocstart_allsources)
+            # trgold_allsources = np.concatenate(trgold_allsources)
+            #
+            # detext_allsources = np.concatenate(detext_allsources)
+            # dedocstart_allsources = np.concatenate(dedocstart_allsources)
+            # degold_allsources = np.concatenate(degold_allsources)
+            #
+            # if base_model_str == 'crf':
+            #     labeller = simple_crf()
+            # elif base_model_str == 'bilstm-crf':
+            #     labeller = lample(os.path.join(tmpdir, os.path.join(tmpdir, tedomain + '_baseline_z')), nclasses=3)
+            #
+            # labeller.train(trtext_allsources, trdocstart_allsources, trgold_allsources, detext_allsources,
+            #                dedocstart_allsources, degold_allsources)
+            #
+            # preds_s = labeller.predict(dataset.tetext[tedomain], dataset.tedocstart[tedomain])
+            # trpreds_s = labeller.predict(dataset.trtext[tedomain], dataset.trdocstart[tedomain])
+            #
+            # preds['baseline_z'].append(preds_s.tolist())
+            # trpreds['baseline_z'].append(trpreds_s.tolist())
+            # res_s = evaluate(preds_s, dataset.tegold[tedomain], dataset.tedocstart[tedomain])
+            # res['baseline_z'].append(res_s)
 
             preds_s_every = labeller_every.predict(dataset.tetext[tedomain], dataset.tedocstart[tedomain])
-
-            preds['baseline_z'].append(preds_s.tolist())
-            trpreds['baseline_z'].append(trpreds_s.tolist())
-
             preds['baseline_every'].append(preds_s_every.tolist())
-
-            res_s = evaluate(preds_s, dataset.tegold[tedomain], dataset.tedocstart[tedomain])
-            res['baseline_z'].append(res_s)
-
             res_every = evaluate(preds_s_every, dataset.tegold[tedomain], dataset.tedocstart[tedomain])
             res['baseline_every'].append(res_every)
 
             if verbose:
-                print('BASE: F1 score=%f for leave-one-out training, tested on %s' % (res_s, tedomain))
+                # print('BASE: F1 score=%f for leave-one-out training, tested on %s' % (res_s, tedomain))
                 print('BASE: F1 score=%f for model trained on all, tested on %s' % (res_every, tedomain))
 
-        print('BASE: Average F1 score=%f for baseline_z trained with leave-one-out' % np.mean(res['baseline_z']))
+        # print('BASE: Average F1 score=%f for baseline_z trained with leave-one-out' % np.mean(res['baseline_z']))
         print('BASE: Average F1 score=%f for baseline_every, which is trained on all' % np.mean(res['baseline_every']))
 
         with open(predfile, 'w') as fh:
