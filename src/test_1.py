@@ -189,7 +189,7 @@ for classid in [0, 1, 2, 3]:
 
             with open(resfile, 'w') as fh:
                 json.dump(res, fh)
-                
+
     else:
         for didx, tedomain in enumerate(dataset.domains):
             print('   Spantype %i: F1 score=%f for IBCC, tested on %s' % (classid, res['agg_ibcc'][didx], tedomain))
