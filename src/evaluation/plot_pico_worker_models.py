@@ -264,9 +264,11 @@ for wm in confmats:
 
     nsubfigs = len(cmwm)
 
-    f = plt.figure(figsize=(nsubfigs * 3, 3))
+    print('Number of clusters: %i' % nsubfigs)
 
-    for s in range(nsubfigs):
+    fig, axs = plt.subplots(1, nsubfigs)
+
+    for ax in axs: # range(nsubfigs):
 
         ax = plt.subplot(1, nsubfigs, s + 1) #, projection='3d')
         barslist = []
@@ -297,7 +299,7 @@ for wm in confmats:
 
         for i in range(L):
             for j in range(L):
-                text = ax.text(j, i, str(matrix[i, j]), ha="center", va="center", color="w")
+                text = ax.text(j, i, np.around(matrix[i, j], 2), ha="center", va="center", color="w")
 
         ax.set_title(wm + ' cluster %i' % (s))
 
