@@ -265,13 +265,6 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
                 print('BASE: Average F1 score=%f for base labeller trained on %s, tested on other domains' % (
                     np.mean(res[domain]), domain))
 
-        # method (a), in-domain performance (Ceiling, not a baseline)
-        res_out = []
-        for domain in dataset.domains:
-            res_out.append(res[domain])
-
-        print('BASE: Average F1 score=%f for out-of-domain performance' % np.mean(res_out))
-        print('BASE: Average F1 score=%f for in-domain performance' % np.mean(res['a']))
 
         with open(predfile, 'w') as fh:
             json.dump(preds, fh)
@@ -281,5 +274,12 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
 
         with open(resfile, 'w') as fh:
             json.dump(res, fh)
+
+    res_out = []
+    for domain in dataset.domains:
+        res_out.append(res[domain])
+
+    print('BASE: Average F1 score=%f for out-of-domain performance' % np.mean(res_out))
+    print('BASE: Average F1 score=%f for in-domain performance' % np.mean(res['a']))
 
     return preds, trpreds, res
