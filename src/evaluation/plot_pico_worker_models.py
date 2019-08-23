@@ -270,9 +270,9 @@ for wm in confmats:
 
     for ax in axs: # range(nsubfigs):
 
-        ax = plt.subplot(1, nsubfigs, s + 1) #, projection='3d')
-        barslist = []
-
+        #ax = plt.subplot(1, nsubfigs, s + 1) #, projection='3d')
+        #barslist = []
+        # 
         # for l in range(L):
         #
         #     # x = np.arange(L) / float(L+1)
