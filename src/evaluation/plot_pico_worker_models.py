@@ -220,6 +220,7 @@ for w, worker_model in enumerate(worker_models):
             EPi = np.array(EPi)
             if EPi.shape[-1] < nclusters:
                 nclusters = EPi.shape[-1]
+                print("We found only %i annotators" % nclusters)
 
             EPi_vec = np.swapaxes(EPi, 0, -1).reshape(EPi.shape[-1], int(EPi.size / EPi.shape[-1]))
             mbk = MiniBatchKMeans(init='k-means++', n_clusters=nclusters, batch_size=100,
@@ -272,7 +273,7 @@ for wm in confmats:
 
         #ax = plt.subplot(1, nsubfigs, s + 1) #, projection='3d')
         #barslist = []
-        # 
+        #
         # for l in range(L):
         #
         #     # x = np.arange(L) / float(L+1)
