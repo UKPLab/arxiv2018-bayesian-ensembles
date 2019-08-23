@@ -17,6 +17,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 # from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
+import matplotlib.patheffects as path_effects
 
 from bsc.bsc import BSC
 import data.load_data as load_data
@@ -28,7 +29,7 @@ if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 
 # debug with subset -------
-s = 1000
+s = 10000
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
@@ -64,7 +65,7 @@ else:
         # ['IF'],
         # ['IF'],
         # ['IF'],
-        ['IF'],
+        None #['IF'],
     ]
 
 inside_labels = [0]
@@ -125,14 +126,15 @@ for w, worker_model in enumerate(worker_models):
 
         model.max_iter = 20
 
-        if 'LSTM' in data_model:
+        if data_model is not None and 'LSTM' in data_model:
             import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
             dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(gt_dev), text_dev,
                                                                    doc_start_dev, gt_dev)
         else:
             dev_sentences = None
 
-        probs, agg, _ = model.run(annos, doc_start, text, converge_workers_first=2 if 'LSTM' in data_model else 0,
+        probs, agg, _ = model.run(annos, doc_start, text, converge_workers_first=2 if data_model is not None and
+                                                                                      'LSTM' in data_model else 0,
                                   gold_labels=gt)
 
         print('completed training with worker model = %s and data models %s' % (worker_model, data_model))
@@ -267,7 +269,7 @@ for wm in confmats:
 
     print('Number of clusters: %i' % nsubfigs)
 
-    fig, axs = plt.subplots(1, nsubfigs)
+    fig, axs = plt.subplots(1, nsubfigs, figsize=(8, 3))
 
     for s, ax in enumerate(axs): # range(nsubfigs):
 
@@ -300,9 +302,11 @@ for wm in confmats:
 
         for i in range(L):
             for j in range(L):
-                text = ax.text(j, i, np.around(matrix[i, j], 2), ha="center", va="center", color="w")
+                text = ax.text(j, i, np.around(matrix[i, j], 2), ha="center", va="center", color="w",
+                               path_effects=[path_effects.Stroke(linewidth=1.5, foreground='black'),
+                       path_effects.Normal()])
 
-        ax.set_title(wm + ' cluster %i' % (s))
+        ax.set_title('Cluster %i' % (s))
 
         ax.set_xticks(range(L))
         ax.set_yticks(range(L))
@@ -310,12 +314,13 @@ for wm in confmats:
         ax.set_xticklabels(labels)
         ax.set_yticklabels(labels)
 
-        ax.tick_params(axis='x', pad=-5)
-        ax.tick_params(axis='y', pad=-5)
-        ax.tick_params(axis='z', pad=-2)
+        ax.tick_params(axis='x') #, pad=-5)
+        ax.tick_params(axis='y') #, pad=-5)
+        # ax.tick_params(axis='z', pad=-2)
 
-        ax.set_xlabel('true label', labelpad=-5)
-        ax.set_ylabel('worker label', labelpad=-5)
+        if s==0:
+            ax.set_xlabel('true label') #, labelpad=-5)
+            ax.set_ylabel('worker label') #, labelpad=-5)
 
         # if s == nsubfigs -1 :
         #     ax.set_zlabel('p(worker label | true label)', labelpad=-3)
@@ -332,5 +337,5 @@ for wm in confmats:
     # save plots to file...
 
     savepath = './documents/figures/worker_models/'
-    plt.figure(f.number)
+    plt.figure(fig.number)
     plt.savefig(savepath + wm.replace(', prev. label=', '_prev') + '_heatmap.pdf')
