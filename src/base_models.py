@@ -71,6 +71,16 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
     trpredfile = os.path.join(resdir, 'trpreds.json')
     resfile = os.path.join(resdir, 'res.json')
 
+    if os.path.exists(predfile) and reload:
+        with open(predfile, 'r') as fh:
+            preds = json.load(fh)
+
+        with open(trpredfile, 'r') as fh:
+            trpreds = json.load(fh)
+
+        with open(resfile, 'r') as fh:
+            res = json.load(fh)
+
     np.random.seed(23409809)
 
     # BASELINE Z -- model trained on data from all source domains
@@ -195,30 +205,14 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
         with open(resfile, 'w') as fh:
             json.dump(res, fh)
 
-    if os.path.exists(predfile) and reload:
-        with open(predfile, 'r') as fh:
-            preds = json.load(fh)
 
-        with open(trpredfile, 'r') as fh:
-            trpreds = json.load(fh)
+    for domain in dataset.domains:
 
-        with open(resfile, 'r') as fh:
-            res = json.load(fh)
+        if domain in preds and reload:
+            if verbose:
+                print('BASE: reloading, Average F1 score=%f for labeller %s' % (np.mean(res[domain]), domain))
+        else:
 
-        if verbose:
-            for key in res:
-                print('BASE: Average F1 score=%f for labeller %s' % (np.mean(res[key]), key))
-
-        # method (a), in-domain performance (Ceiling, not a baseline)
-        res_out = []
-        for domain in dataset.domains:
-            res_out.append(res[domain])
-
-        print('BASE: Average F1 score=%f for out-of-domain performance' % np.mean(res_out))
-        print('BASE: Average F1 score=%f for in-domain performance' % np.mean(res['a']))
-
-    else:
-        for domain in dataset.domains:
             subsetdir = os.path.join(tmpdir, domain)
 
             if base_model_str == 'crf':
