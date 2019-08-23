@@ -45,7 +45,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
         print('BASE: Using base model %s' % base_model_str)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    tmpdir = os.path.expanduser('~/data/bayesian_sequence_combination/output/tmp')
+    tmpdir = os.path.expanduser('~/data/bayesian_sequence_combination/output/tmp_spantype%i' % spantype)
     if not os.path.exists(tmpdir):
         os.mkdir(tmpdir)
 

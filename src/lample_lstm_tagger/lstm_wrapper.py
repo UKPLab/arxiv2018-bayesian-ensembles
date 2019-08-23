@@ -118,7 +118,7 @@ class LSTMWrapper(object):
                 self.best_dev = best_dev
                 niter_no_imprv = 0
 
-            elif dev_score <= last_score:
+            else:
                 niter_no_imprv += 1
 
             self.last_score = last_score
