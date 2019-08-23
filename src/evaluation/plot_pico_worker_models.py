@@ -268,7 +268,7 @@ for wm in confmats:
 
     for s in range(nsubfigs):
 
-        ax = plt.subplot(1, nsubfigs, s + 1, projection='3d')
+        ax = plt.subplot(1, nsubfigs, s + 1) #, projection='3d')
         barslist = []
 
         # for l in range(L):
