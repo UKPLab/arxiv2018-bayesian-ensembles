@@ -69,8 +69,8 @@ def nice_names(methods):
 def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=None, thickness=1,
               colors=None, legend_on=True, figsize=(6,5)):
 
-    styles = ['-', '--', '-.']
-    markers = ['o', 'v', 's', 'x', 'p', '*']
+    styles = ['-', '-.', '--', ':']
+    markers = ['x', 'v', '*', 's', '>', 'p', 'o']
 
     matplotlib.rcParams.update({'font.size': 18})
 
@@ -83,8 +83,8 @@ def make_plot(methods, param_idx, x_vals, y_vals, x_ticks_labels, ylabel, title=
         else:
             colj = None
 
-        plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%len(styles)], marker=markers[j%5],
-                 linewidth=thickness, markersize=thickness*3, color=colj)
+        plt.plot(x_vals, np.mean(y_vals[:, j, :], 1), label=methods[j], ls=styles[j%len(styles)], marker=markers[j%len(markers)],
+                 linewidth=thickness, markersize=thickness*5, color=colj)
 
     if legend_on:
         plt.legend(loc='upper left', bbox_to_anchor=(1.01, 1)) # 'lower right') #
@@ -324,7 +324,8 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
 
     # split the pool data results in two
     plot_results(ndocs, method_names[plot_methods], 6, results[:, :, plot_methods, :], False, True,
-                 output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=4, legend_on=intervals=='NER', figsize=(10,5))
+                 output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=2, legend_on=intervals=='NER', figsize=(10,5),
+                 colors=['black', 'orange', 'green', 'red', 'purple', 'brown'])
 
     print('Counts of runs with results on pool data:')
     print(run_counts[0, 0, :, 0])

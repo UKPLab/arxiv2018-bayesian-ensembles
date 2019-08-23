@@ -9,6 +9,7 @@ Created on April 27, 2018
 
 @author: Edwin Simpson
 '''
+import pickle
 
 import matplotlib
 matplotlib.use('Agg')
@@ -17,7 +18,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 
 from bsc.bsc import BSC
-import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 import data.load_data as load_data
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
@@ -29,17 +29,14 @@ s = None #1000
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
-# goldidxs = ((gt != -1) | (gt_task1_dev != -1)).flatten()
-# gt = np.concatenate((gt[gt != -1], gt_dev))
-# annos = annos[goldidxs]
-# doc_start = doc_start[goldidxs]
-# text = text[goldidxs]
+goldidxs_dev = gt_task1_dev != -1
+gt[goldidxs_dev] = gt_task1_dev[goldidxs_dev]
 
 nu0_factor = 0.1
 alpha0_diags = 0.1
 alpha0_factor = 0.1
 
-plot_integrated=True
+plot_integrated=False
 
 if plot_integrated:
     worker_models = [
@@ -48,22 +45,22 @@ if plot_integrated:
 
     # corresponding list of data models
     data_models = [
-        ['LSTM', 'IF']
+        ['IF',  'LSTM']
     ]
 else:
     worker_models = [
-                    'acc',
-                    'vec',
-                    'ibcc',
-                    'mace',
+                    # 'acc',
+                    # 'vec',
+                    # 'ibcc',
+                    # 'mace',
                     'seq',
     ]
 
     data_models = [
-        ['IF'],
-        ['IF'],
-        ['IF'],
-        ['IF'],
+        # ['IF'],
+        # ['IF'],
+        # ['IF'],
+        # ['IF'],
         ['IF'],
     ]
 
@@ -123,12 +120,14 @@ for w, worker_model in enumerate(worker_models):
     model.max_iter = 20
 
     if 'LSTM' in data_model:
+        import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
         dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(gt_dev), text_dev,
                                                                doc_start_dev, gt_dev)
     else:
         dev_sentences = None
 
-    probs, agg, _ = model.run(annos, doc_start, text, converge_workers_first=2 if 'LSTM' in data_model else 0)
+    probs, agg, _ = model.run(annos, doc_start, text, converge_workers_first=2 if 'LSTM' in data_model else 0,
+                              gold_labels=gt)
 
     print('completed training with worker model = %s and data models %s' % (worker_model, data_model))
 
@@ -199,6 +198,9 @@ for w, worker_model in enumerate(worker_models):
 
         EPi_list.append(EPi_square)
 
+    with open(output_dir + '/EPi_list_%s.pkl' % worker_model, 'w') as fh:
+        pickle.dump(EPi_list, fh)
+
     for EPi in EPi_list:
         # cluster
 
@@ -237,6 +239,9 @@ for w, worker_model in enumerate(worker_models):
                 confmats[worker_model + ', prev. label=%i' % i] = mean_conf_mats
             else:
                 confmats[worker_model] = mean_conf_mats
+
+    with open(output_dir + '/confmat_clustered_%s.pkl' % worker_model, 'w') as fh:
+        pickle.dump(confmats, fh)
 
 # Plot the confusion matrices in confmats
 
