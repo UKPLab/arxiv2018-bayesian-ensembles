@@ -24,9 +24,11 @@ import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 
 output_dir = '../../data/bayesian_sequence_combination/output/bio_workers/'
+if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
 
 # debug with subset -------
-s = None #1000
+s = 1000
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
