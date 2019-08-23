@@ -15,7 +15,7 @@ import pickle
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 import matplotlib.patheffects as path_effects
 
@@ -29,7 +29,7 @@ if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 
 # debug with subset -------
-s = 10000
+s = 100000
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
 
 # # get all the gold-labelled data together
@@ -269,33 +269,65 @@ for wm in confmats:
 
     print('Number of clusters: %i' % nsubfigs)
 
-    fig, axs = plt.subplots(1, nsubfigs, figsize=(8, 3))
+    fig, axs = plt.subplots(1, nsubfigs, figsize=(8, 2))
 
     for s, ax in enumerate(axs): # range(nsubfigs):
 
-        #ax = plt.subplot(1, nsubfigs, s + 1) #, projection='3d')
-        #barslist = []
-        #
-        # for l in range(L):
-        #
-        #     # x = np.arange(L) / float(L+1)
-        #     x = np.zeros(L) + l - 0.5
-        #     y = np.arange(L) - 0.5
-        #
-        #     width = 0.8 / float(L)
-        #     top = cmwm[s][l, :]
-        #
-        #     bars = ax.bar3d(x, y, 0, 0.8, 0.8, top, alpha=0.8, edgecolor='k', zorder=l+100)
-        #     bars._sort_zpos = l
-        #     bars.set_alpha(0.8)
-        #
-        #     barslist.append(bars)
-        #
-        #     # ax.bar(x + l - 0.25, top, width, edgecolor='k', color=cols, alpha=0.9)
-        #     #
-        #     # for m in range(L):
-        #     #     ax.text(x[m] + l - 0.33, 0.1 + np.min(top), '%i' % m, color='k' if np.sum(cols[m][:3]) > 0.5 or
-        #     #                                                                        0.1 + np.min(top) > top[m] else 'w')
+        ax = plt.subplot(1, nsubfigs, s + 1, projection='3d')
+        ax.elev += 20
+        barslist = []
+
+        for l in [2, 1, 0]:
+
+            # x = np.arange(L) / float(L+1)
+            x = np.zeros(L) + l - 0.5
+            y = np.arange(L) - 0.5
+
+            width = 0.8 / float(L)
+            top = cmwm[s][l, :]
+
+            bars = ax.bar3d(x, y, 0, 0.8, 0.8, top, alpha=0.8, edgecolor='k', zorder=l+100)
+            bars._sort_zpos = l
+            bars.set_alpha(0.8)
+
+            barslist.append(bars)
+
+        ax.set_title('Cluster %i' % (s))
+
+        ax.set_xticks(range(L))
+        ax.set_yticks(range(L))
+        ax.set_zticks([0, 1])
+
+        ax.set_xticklabels(labels)
+        ax.set_yticklabels(labels)
+
+        ax.tick_params(axis='x', pad=-5)
+        ax.tick_params(axis='y', pad=-5)
+        ax.tick_params(axis='z', pad=-2)
+
+        if s==0:
+            ax.set_xlabel('true label      ', labelpad=-8)
+            ax.set_ylabel('      worker label', labelpad=-8)
+
+        # if s == nsubfigs -1 :
+            # ax.set_zlabel('p(worker label | true label)', labelpad=-10)
+
+        ax.set_xlim(-0.5, L-0.5)
+        ax.set_ylim(-0.5, L-0.5)
+        ax.set_zlim(0, 1)
+
+    plt.tight_layout()
+    plt.show()
+    for i, bars in enumerate(barslist):
+        bars.set_alpha(0.6)
+
+    # save plots to file...
+
+    savepath = './documents/figures/worker_models/'
+    plt.figure(fig.number)
+    plt.savefig(savepath + wm.replace(', prev. label=', '_prev') + '.pdf')
+
+    for s, ax in enumerate(axs): # range(nsubfigs):
 
         matrix = cmwm[s]
         ax.imshow(matrix)
@@ -319,21 +351,10 @@ for wm in confmats:
         # ax.tick_params(axis='z', pad=-2)
 
         if s==0:
-            ax.set_xlabel('true label') #, labelpad=-5)
-            ax.set_ylabel('worker label') #, labelpad=-5)
-
-        # if s == nsubfigs -1 :
-        #     ax.set_zlabel('p(worker label | true label)', labelpad=-3)
-
-        # ax.set_xlim(-0.5, L-0.5)
-        # ax.set_ylim(-0.5, L-0.5)
-        # ax.set_zlim(0, 1)
+            ax.set_xlabel('annotator label') #, labelpad=-5)
+            ax.set_ylabel('true label') #, labelpad=-5)
 
     plt.tight_layout()
-    #plt.show()
-    # for i, bars in enumerate(barslist):
-    #     bars.set_alpha(0.8)
-
     # save plots to file...
 
     savepath = './documents/figures/worker_models/'
