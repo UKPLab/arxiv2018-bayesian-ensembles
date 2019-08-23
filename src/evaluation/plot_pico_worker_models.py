@@ -79,7 +79,7 @@ for w, worker_model in enumerate(worker_models):
 
     outputfile = output_dir + '/EPi_list_%s.pkl' % worker_model
     if os.path.exists(outputfile):
-        with open(outputfile, 'r') as fh:
+        with open(outputfile, 'rb') as fh:
             EPi_list = pickle.load(fh)
     else:
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
@@ -204,12 +204,12 @@ for w, worker_model in enumerate(worker_models):
 
             EPi_list.append(EPi_square)
 
-        with open(outputfile, 'w') as fh:
+        with open(outputfile, 'wb') as fh:
             pickle.dump(EPi_list, fh)
 
     outputfile = output_dir + '/confmat_clustered_%s.pkl' % worker_model
     if os.path.exists(outputfile):
-        with open(outputfile, 'r') as fh:
+        with open(outputfile, 'rb') as fh:
             confmat = pickle.load(fh)
     else:
         for EPi in EPi_list:
@@ -251,7 +251,7 @@ for w, worker_model in enumerate(worker_models):
                 else:
                     confmats[worker_model] = mean_conf_mats
 
-        with open(outputfile, 'w') as fh:
+        with open(outputfile, 'wb') as fh:
             pickle.dump(confmats, fh)
 
 # Plot the confusion matrices in confmats
