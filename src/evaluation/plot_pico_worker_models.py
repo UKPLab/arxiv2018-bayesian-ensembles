@@ -297,7 +297,7 @@ for wm in confmats:
 
         for i in range(L):
             for j in range(L):
-                text = ax.text(str(matrix[i, j]), (j, i), ha="center", va="center", color="w")
+                text = ax.text(j, i, str(matrix[i, j]), ha="center", va="center", color="w")
 
         ax.set_title(wm + ' cluster %i' % (s))
 
