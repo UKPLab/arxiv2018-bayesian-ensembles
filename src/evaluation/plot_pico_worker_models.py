@@ -210,7 +210,7 @@ for w, worker_model in enumerate(worker_models):
     outputfile = output_dir + '/confmat_clustered_%s.pkl' % worker_model
     if os.path.exists(outputfile):
         with open(outputfile, 'rb') as fh:
-            confmat = pickle.load(fh)
+            confmats = pickle.load(fh)
     else:
         for EPi in EPi_list:
             # cluster
