@@ -328,6 +328,8 @@ for wm in confmats:
     plt.figure(fig.number)
     plt.savefig(savepath + wm.replace(', prev. label=', '_prev') + '.pdf')
 
+    fig, axs = plt.subplots(1, nsubfigs, figsize=(10, 3))
+
     for s, ax in enumerate(axs): # range(nsubfigs):
 
         matrix = cmwm[s]
