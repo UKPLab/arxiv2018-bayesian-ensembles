@@ -56,7 +56,7 @@ from base_models import run_base_models
 from bsc import bsc
 from helpers import evaluate, Dataset, get_anno_matrix
 
-reload = False
+reload = True
 rerun_aggregators = True
 verbose = False
 
