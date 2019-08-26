@@ -143,7 +143,7 @@ class BSC(object):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
 
-        self.alpha0[self.outside_labels, self.outside_labels, :, :] *= 5 # because they are way more frequent
+        self.alpha0[self.outside_labels, self.outside_labels, :, :] *= 10 # because they are way more frequent
 
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):

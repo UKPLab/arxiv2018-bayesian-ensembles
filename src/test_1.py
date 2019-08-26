@@ -148,8 +148,8 @@ for classid in [0, 1, 2, 3]:
                         np.concatenate(allgold),
                         np.concatenate(alldocstart),
                         f1type='all')
-    print('*** Cross-domain F1 score for majority vote: ' + str(cross_f1))
-    print('*** Average F1 score for majority vote: ' + str(np.mean(res['agg_MV'], axis=0)) )
+    print('*** Spantype %i, F1 score=%s for MV (micro average over domains) ' % (classid, str(cross_f1)) )
+    print('*** Spantype %i, F1 score=%s for MV (macro average over domains) ' % (classid, str(np.mean(res['agg_MV'], axis=0))) )
 
 
     # Combination methods: IBCC and BSC-seq. Run the aggregation methods separately for each test domain. ------------------
@@ -184,9 +184,6 @@ for classid in [0, 1, 2, 3]:
             with open(predfile, 'w') as fh:
                 json.dump(preds, fh)
 
-            with open(trpredfile, 'w') as fh:
-                json.dump(trpreds, fh)
-
             with open(resfile, 'w') as fh:
                 json.dump(res, fh)
 
@@ -198,11 +195,12 @@ for classid in [0, 1, 2, 3]:
                         np.concatenate(allgold),
                         np.concatenate(alldocstart),
                         f1type='all')
-    print('*** Cross-domain F1 score=%s for IBCC' % str(cross_f1) )
-    print('*** Average F1 score=%s for IBCC' % str(np.mean(res['agg_ibcc'], axis=0)) )
+    print('*** Spantype %i, F1 score=%s for IBCC (micro average over domains) ' % (classid, str(cross_f1)) )
+    print('*** Spantype %i, F1 score=%s for IBCC (macro average over domains) ' % (classid, str(np.mean(res['agg_ibcc'], axis=0))) )
 
-
-
+    alpha0_factor = 1
+    alpha0_diags = 10
+    nu0_factor = 1
 
     if rerun_aggregators or 'agg_bsc-seq' not in res or not len(res['agg_bsc-seq']):
 
@@ -238,9 +236,6 @@ for classid in [0, 1, 2, 3]:
         with open(predfile, 'w') as fh:
             json.dump(preds, fh)
 
-        with open(trpredfile, 'w') as fh:
-            json.dump(trpreds, fh)
-
         with open(resfile, 'w') as fh:
             json.dump(res, fh)
 
@@ -252,8 +247,8 @@ for classid in [0, 1, 2, 3]:
                         np.concatenate(allgold),
                         np.concatenate(alldocstart),
                         f1type='all')
-    print('*** Cross-domain F1 score=%s for BSC-seq' % str(cross_f1) )
-    print('*** Average F1 score=%s for BSC-seq' % str(np.mean(res['agg_bsc-seq'], axis=0)) )
+    print('*** Spantype %i, F1 score=%s for BSC-seq  (micro average over domains) ' % (classid, str(cross_f1)) )
+    print('*** Spantype %i, F1 score=%s for BSC-seq  (macro average over domains) ' % (classid, str(np.mean(res['agg_bsc-seq'], axis=0))) )
 
     # SEMI-SUPERVISED: use a little bit of training data from the target domain --------------------------------------------
     #

@@ -31,15 +31,6 @@ if not os.path.exists(output_dir):
 # debug with subset -------
 # s = 100000
 s = None
-gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(False, s)
-
-# # get all the gold-labelled data together
-goldidxs_dev = gt_task1_dev != -1
-gt[goldidxs_dev] = gt_task1_dev[goldidxs_dev]
-
-nu0_factor = 0.1
-alpha0_diags = 0.1
-alpha0_factor = 0.1
 
 plot_integrated=False
 
@@ -84,6 +75,17 @@ for w, worker_model in enumerate(worker_models):
         with open(outputfile, 'rb') as fh:
             EPi_list = pickle.load(fh)
     else:
+        gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = load_data.load_biomedical_data(
+            False, s)
+
+        # # get all the gold-labelled data together
+        goldidxs_dev = gt_task1_dev != -1
+        gt[goldidxs_dev] = gt_task1_dev[goldidxs_dev]
+
+        nu0_factor = 0.1
+        alpha0_diags = 0.1
+        alpha0_factor = 0.1
+
         # matrices are repeated for the different annotators/previous label conditions inside the BAC code itself.
         if worker_model == 'seq' or worker_model == 'ibcc' or worker_model == 'vec':
 
@@ -272,6 +274,8 @@ for wm in confmats:
 
     fig, axs = plt.subplots(1, nsubfigs, figsize=(8, 2))
 
+    colors = ['purple', 'orange', 'cyan']
+
     for s, ax in enumerate(axs): # range(nsubfigs):
 
         ax = plt.subplot(1, nsubfigs, s + 1, projection='3d')
@@ -287,9 +291,11 @@ for wm in confmats:
             width = 0.8 / float(L)
             top = cmwm[s][l, :]
 
-            bars = ax.bar3d(x, y, 0, 0.8, 0.8, top, alpha=0.8, edgecolor='k', zorder=l+100)
-            bars._sort_zpos = l
-            bars.set_alpha(0.8)
+            for i in [2, 1, 0]:
+                bars = ax.bar3d(x[i], y[i], 0, 0.8, 0.8, top[i], alpha=0.8, edgecolor='k', zorder=l+100,
+                                color=colors[l])
+                bars._sort_zpos = l
+                bars.set_alpha(0.8)
 
             barslist.append(bars)
 
@@ -356,6 +362,9 @@ for wm in confmats:
         if s==0:
             ax.set_xlabel('annotator label') #, labelpad=-5)
             ax.set_ylabel('true label') #, labelpad=-5)
+
+        ax.set_xlim(-0.5, L-0.5)
+        ax.set_ylim(-0.5, L-0.5)
 
     plt.tight_layout()
     # save plots to file...
