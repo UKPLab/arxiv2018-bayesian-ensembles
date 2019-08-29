@@ -77,7 +77,7 @@ def split_train_to_dev(gold_sentences):
 
 class LSTMWrapper(object):
 
-    def __init__(self, models_path_alt=None, embeddings=None):
+    def __init__(self, models_path_alt=None, embeddings=None, reload_from_disk=False):
         self.model = None
         self.best_model_saved = False # flag to tell us whether the best model on dev was saved to disk
         self.best_dev = -np.inf
@@ -89,6 +89,8 @@ class LSTMWrapper(object):
             self.models_path = models_path_alt
 
         self.embeddings = embeddings
+
+        self.reload_from_disk = reload_from_disk
 
     def run_epoch(self, epoch, niter_no_imprv, best_dev, last_score, compute_dev=True):
         epoch_costs = []
@@ -194,6 +196,9 @@ class LSTMWrapper(object):
 
         # Build the model
         f_train, f_eval = model.build(**parameters)
+
+        if self.reload_from_disk:
+            model.reload()
 
         #
         # Train network

@@ -5,7 +5,7 @@
 \usepackage{url}
 %\usepackage[T1]{fontenc}
 
-%\aclfinalcopy % Uncomment this line for the final submission
+\aclfinalcopy % Uncomment this line for the final submission
 
 %\setlength\titlebox{5cm}
 % You can expand the titlebox if you need extra space
@@ -54,7 +54,7 @@
 
 %\title{Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging}
 %Multiple Unreliable Text Annotators}
-\title{Supplementary Notes for: A Bayesian Approach for Sequence Tagging with Crowds}
+\title{Appendix for: A Bayesian Approach for Sequence Tagging with Crowds}
 
 \author{Edwin Simpson and Iryna Gurevych\\
   Ubiquitous Knowledge Processing Lab \\
@@ -100,6 +100,30 @@ as the corresponding  prior distribution defined in Section 4.
 The parameters of each variational distribution are computed in terms  of 
 expectations over the other subsets of variables.
 
+
+\begin{figure*}[t]
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-seq, \\
+previous label = I:
+\end{minipage}
+  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 10]{figures/worker_models/seq_prev0}
+\\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-seq, \\
+previous label = O:
+\end{minipage}
+  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 23]{figures/worker_models/seq_prev1}
+\\
+\begin{minipage}[b][1cm][l]{0.2\textwidth} 
+BSC-seq,\\
+ previous label = B:
+\end{minipage}
+  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 23]{figures/worker_models/seq_prev2}
+\\
+\caption{Clusters of confusion matrix representations from BSC-seq trained on PICO. 
+}
+\label{fig:anno_models_2}
+\end{figure*}
 
 \section{Update Equations for the Forward-Backward Algorithm}
 
@@ -207,6 +231,13 @@ r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau\!-\!1}}\!\delta_{m,c^{(k)}_{n, \!\tau}}, 
 For \emph{CM}, \emph{MACE}, \emph{CV} and \emph{acc}, the factors follow a similar pattern of summing pseudo-counts of correct and incorrect answers. 
 %For reasons of space, we omit the equations for these variants. 
 
+\section{Visualising Annotator Models}
+
+Figure \ref{fig:anno_models_2} provides an alternative visualisation of the \textit{seq} models inferred by BSC-seq for annotators in the PICO dataset.
+The annotators were clustered as described in Section 6 of the main paper,
+and the mean confusion matrices for each cluster are plotted in Figure \ref{fig:anno_models_2} using 3D plots to emphasise the differences between 
+the likelihoods of annotators in each cluster providing a particular label 
+given the true label value.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

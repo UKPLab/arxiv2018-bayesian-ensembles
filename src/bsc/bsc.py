@@ -43,7 +43,8 @@ class BSC(object):
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
                  before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0, nu0=1,
-                 worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False):
+                 worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
+                 model_dir=None, reload_lstm=False, embeddings_file=None):
 
         self.tagging_scheme = tagging_scheme # may be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
         # that follow another start with B).
@@ -84,7 +85,7 @@ class BSC(object):
             self.data_model = []
             for modelstr in data_model:
                 if modelstr == 'LSTM':
-                    self.data_model.append(LSTM())
+                    self.data_model.append(LSTM(model_dir, reload_lstm, embeddings_file))
                     self.max_data_updates_at_end = 20  # allow the other parameters to converge first, then update LSTM
                     # with small number of iterations to avoid overfitting
                 if modelstr == 'IF':
@@ -144,6 +145,8 @@ class BSC(object):
             unrestricted_labels = self.beginning_labels
 
         self.alpha0[self.outside_labels, self.outside_labels, :, :] *= 10 # because they are way more frequent
+        # should be multiplied by 5 for pico and 1 for NER and ARG. TODO: make this into a parameter that can be passed
+        # from outside.
 
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
@@ -856,6 +859,26 @@ class BSC(object):
             seq = self._most_probable_sequence(C, C_data, doc_start, features, parallel)[1]
 
         return q_t, seq
+
+    def competence(self):
+        if self.alpha.ndim == 3:
+            annotator_acc = self.alpha[np.arange(self.L), np.arange(self.L), :] \
+                        / np.sum(self.alpha, axis=1)
+        elif self.alpha.ndim == 2:
+            annotator_acc = self.alpha[1, :] / np.sum(self.alpha[:2, :], axis=0)
+        elif self.alpha.ndim == 4:
+            annotator_acc = np.sum(self.alpha, axis=2)[np.arange(self.L), np.arange(self.L), :] \
+                        / np.sum(self.alpha, axis=(1,2))
+
+        if self.beta.ndim == 2:
+            beta = np.sum(self.beta, axis=0)
+        else:
+            beta = self.beta
+
+        annotator_acc *= (beta / np.sum(beta))[:, None]
+        annotator_acc = np.sum(annotator_acc, axis=0)
+
+        return annotator_acc
 
     def _converged(self):
         '''

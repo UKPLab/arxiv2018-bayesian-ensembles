@@ -1,7 +1,7 @@
 import os, numpy as np, json
 
 from helpers import evaluate
-from seq_taggers import simple_crf, lample #, flair_ner, flair_pos
+from seq_taggers import simple_crf, lample, flair_ner, flair_pos
 
 '''
 Structure of data folder:
@@ -85,7 +85,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
 
     # BASELINE Z -- model trained on data from all source domains
     labeller_every = None
-    if 'baseline_every' not in res or not len(res['baseline_every']):
+    if 'baseline_every' not in res:
 
         if base_model_str == 'crf':
             labeller_every = simple_crf()
@@ -188,14 +188,18 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
         if labeller_every is not None:
             preds_s_every = labeller_every.predict(dataset.tetext[tedomain], dataset.tedocstart[tedomain])
             preds['baseline_every'].append(preds_s_every.tolist())
-        else:
+        elif 'baseline_every' in preds:
             preds_s_every = np.array(preds['baseline_every'][didx]).flatten()
-        res_every = evaluate(preds_s_every, dataset.tegold[tedomain], dataset.tedocstart[tedomain], f1type='all')
-        res['baseline_every'].append(res_every)
+        else:
+            preds_s_every = None
 
-        if verbose:
-            # print('BASE: F1 score=%f for leave-one-out training, tested on %s' % (res_s, tedomain))
-            print('BASE: F1 score=%f for model trained on all, tested on %s' % (res_every, tedomain))
+        if preds_s_every is not None:
+            res_every = evaluate(preds_s_every, dataset.tegold[tedomain], dataset.tedocstart[tedomain], f1type='all')
+            res['baseline_every'].append(res_every)
+
+            if verbose:
+                # print('BASE: F1 score=%f for leave-one-out training, tested on %s' % (res_s, tedomain))
+                print('BASE: F1 score=%f for model trained on all, tested on %s' % (res_every, tedomain))
 
     if labeller_every is not None:
 
@@ -225,10 +229,10 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
                 labeller = simple_crf()
             elif base_model_str == 'bilstm-crf':
                 labeller = lample(subsetdir, 3)
-            # elif base_model_str == 'flair-ner':
-            #     labeller = flair_ner()
-            # elif base_model_str == 'flair-pos':
-            #     labeller = flair_pos()
+            elif base_model_str == 'flair-ner':
+                labeller = flair_ner()
+            elif base_model_str == 'flair-pos':
+                labeller = flair_pos()
             # elif base_model_str == 'flair':
             #     labeller = flair()
 
@@ -285,7 +289,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
     for domain in dataset.domains:
         res_out.append(res[domain])
 
-    print('BASE: Average F1 score=%s for out-of-domain performance' % str(np.mean(res_out, axis=(0,1))) )
-    print('BASE: Average F1 score=%s for in-domain performance' % str(np.mean(res['a'], axis=0)) )
+    print('BASE: spantype %i, Average F1 score=%s for out-of-domain performance' % (spantype, str(np.mean(res_out, axis=(0,1))) ))
+    print('BASE: spantype %i, Average F1 score=%s for in-domain performance' % (spantype, str(np.mean(res['a'], axis=0)) ))
 
     return preds, trpreds, res

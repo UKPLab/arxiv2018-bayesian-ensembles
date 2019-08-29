@@ -64,7 +64,9 @@ datadir = os.path.expanduser('~/data/bayesian_sequence_combination/data/famulus_
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
-base_models = ['bilstm-crf', 'crf']  # 'flair-pos', 'flair-ner'] # 'flair' -- not implemented yet, do this if we can't get lample to work
+base_models = ['bilstm-crf', 'crf', 'flair-pos']#, 'flair-ner'] # 'flair' -- not implemented yet, do this if we can't get lample to work
+
+print('Using base models: ' + str(base_models))
 
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:

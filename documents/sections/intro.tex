@@ -94,7 +94,7 @@ and an empirical evaluation on three sequence labelling tasks,
 in which \emph{BSC} with \emph{seq} consistently outperforms the previous state of the art. 
 We make 
 %the modular implementation of our proposed method freely available, along with 
-all of our code freely available\footnote{\url{http://github.com/*****}}
+all of our code freely available\footnote{\url{http://github.com/ukplab/arxiv2018-bayesian-ensembles}}
 
 \section{Related Work}
 %TODO: note that the HMM crowd study did not establish whether performance benefited from the text features,
@@ -111,10 +111,17 @@ using probabilistic confusion matrices,
 as proposed by Dawid and Skene~\shortcite{dawid_maximum_1979}.
 %Nguyen et al.~\shortcite{hung2013evaluation} 
 Simpson et al.~\shortcite{simpsonlong} showed that a Bayesian variant of
-Dawid and Skene~\shortcite{dawid_maximum_1979}'s model, independent Bayesian classifier combination
-(\emph{IBCC}) ~\cite{kim2012bayesian} 
+Dawid and Skene's model
 can outperform maximum likelihood approaches and simple heuristics
 when combining crowds of image annotators.
+This Bayesian variant, independent Bayesian classifier combination
+(\emph{IBCC})~\cite{kim2012bayesian}, 
+was originally used to combine ensembles of automated classifiers
+rather than human annotators. While
+traditional ensemble methods such as boosting focus on how to generate
+new classifiers~\cite{dietterich2000ensemble},
+IBCC is concerned with modelling the reliability of each classifier in a given
+set of classifiers.
 To reduce the number of parameters in multi-class problems,
 Hovy et al.~\shortcite{hovy2013learning} proposed \emph{MACE}, 
 and showed that it performed better under a Bayesian treatment on NLP tasks.

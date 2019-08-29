@@ -7,6 +7,11 @@ class LSTM:
 
     train_type = 'MLE'#'Bayes'
 
+    def __init__(self, model_dir=None, reload_model=False, embeddings_file=None):
+        self.model_dir = model_dir
+        self.reload_model = reload_model
+        self.emb_file = embeddings_file
+
     def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
@@ -24,8 +29,11 @@ class LSTM:
 
         self.sentences, self.IOB_map, self.IOB_label = data_to_lstm_format(N, text, doc_start, labels, nclasses)
 
-        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
-        self.LSTMWrapper = LSTMWrapper('./models_bac_%s' % timestamp)
+        if self.model_dir is None:
+            timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
+            self.model_dir = './models_bac_%s' % timestamp
+
+        self.LSTMWrapper = LSTMWrapper(self.model_dir, embeddings=self.emb_file, reload_from_disk=self.reload_model)
 
         self.Ndocs = self.sentences.shape[0]
 

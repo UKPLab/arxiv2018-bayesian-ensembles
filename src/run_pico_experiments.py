@@ -89,6 +89,7 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                 new_data=regen_data
                 )
 
+# this is the one we used in the paper with O | O multiplier of 5.
 best_nu0factor = 1
 best_diags = 10
 best_factor = 100

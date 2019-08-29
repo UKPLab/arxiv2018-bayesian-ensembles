@@ -137,7 +137,7 @@ BSC-CM &
 \\ 
 BSC-seq & 
 80.3 & \textbf{74.8} & \textbf{77.4} & 0.65 & 
-72.9 & 77.6 & \textbf{75.1} & 1.10 & 
+70.4 & 75.3 & \textbf{72.8} & 0.53 & 
 54.4 & \textbf{67.1} & \textbf{60.1} & %70.2 & 86.5 & 77.5 &
  3.26
 \\ \midrule
@@ -169,29 +169,30 @@ BSC-seq$\backslash\bs T$ &
 \end{table*}
 
 \begin{figure*}[h]
-\begin{minipage}[b][1cm][l]{0.2\textwidth} 
-BSC-seq, \\
-previous label = I:
+\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
+Previous label = I:\\
+\vspace{1cm}
 \end{minipage}
-  \includegraphics[width=0.7\textwidth, clip=True, trim=20 16 0 28]{figures/worker_models/seq_prev0}
+  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 28]{figures/worker_models/seq_prev0_heatmap}
+\vspace{0.2cm}
 \\
-\begin{minipage}[b][1cm][l]{0.2\textwidth} 
-BSC-seq, \\
-previous label = O:
+\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
+Previous label = O:\\
+\vspace{1cm}
 \end{minipage}
-  \includegraphics[width=0.7\textwidth, clip=True, trim=20 16 0 28]{figures/worker_models/seq_prev1}
+  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 50]{figures/worker_models/seq_prev1_heatmap}
+\vspace{0.2cm}
 \\
-\begin{minipage}[b][1cm][l]{0.2\textwidth} 
-BSC-seq,\\
- previous label = B:
+\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
+Previous label = B:\\
+\vspace{1cm}
 \end{minipage}
-  \includegraphics[width=0.7\textwidth, clip=True, trim=20 17 0 28]{figures/worker_models/seq_prev2}
+  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 50]{figures/worker_models/seq_prev2_heatmap}
 \\
 \caption{Clusters of confusion matrix representations from BSC-seq trained on PICO. 
 }
 \label{fig:conf_mat_clusters}
 \end{figure*}
-%TODO does this need cutting to save space, or moving to the appendix? Possibly the argumentation example would be better. 
 
 \paragraph{Datasets. }\label{sec:expts}
 
@@ -297,6 +298,13 @@ while BSC-CM-notext and BSC-CM$\backslash\bs T$ in some cases outperform
 BSC-CM.
 This suggests that $\emph{seq}$, with its greater number of parameters to learn, 
 is most effective in combination with the transition matrix and simple text model.
+On the ARG dataset, the scores are close to zero for BSC-seq$\backslash\bs T$.
+Further investigation shows that this is because 
+BSC-seq$\backslash\bs T$ identifies many spans with one 
+or two incorrect labels. Since we use exact span matches to compute true
+and false positives, these small errors reduce the scores substantially.
+In particular, we find a large number of missing ‘B’ tags at the start of spans
+and misplaced ‘O’ tags that split spans in the middle.
 
 The performance of all methods across the three datasets varies greatly.
 With NER, the spans are short and the task is less subjective than PICO or ARG,
@@ -314,8 +322,8 @@ patterns to the experts.
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{l l l l l l l l l l l l l l l }
 \toprule
-Method & Dataset & exact & wrong & partial  & missing  & false & late & early & late & early & fused & splits & inv- &  length \\ 
- & & match & type & match & span & +ve & start & start & finish & finish & spans &  & alid & error \\
+Method & Data & exact & wrong & partial  & missed  & false & late & early & late & early & fused & splits & inv- &  length \\ 
+ & -set & match & type & match & span & +ve & start & start & finish & finish & spans &  & alid & error \\
 \midrule
 MV & NER & 2869 & 304 & 196 & 1775 & 100 & 96 & 10 & 15 & 85 & 17 & 26 & 81 & 0.04 \\
 IBCC & NER & 3742 & 386 & 187 & 829 & 345 & 107 & 27 & 43 & 77 & 47 & 29 & 74 & 0.12 \\
@@ -396,30 +404,66 @@ annotator models.
  \paragraph{Active Learning. }
  \begin{figure}[h]
  \centering
-   \includegraphics[width=1\columnwidth, clip=True, trim=40 22 22 15]{figures/NER_AL/pool/plot_f1-score-tokens.pdf}
- \caption{F1-scores for active learning simulations on NER using least-confidence 
+   \includegraphics[width=0.3\columnwidth, clip=True, trim=530 160 20 20]{figures/NER_AL/pool/plot_F1-score.pdf}
+      \includegraphics[width=0.9\columnwidth, clip=True, trim=40 22 190 15]{figures/NER_AL/pool/plot_F1-score.pdf}
+ \caption{F1 scores for active learning simulations on NER using least-confidence 
  uncertainty sampling.
  %: prediction performance after each labelled batch is received. Mean scores over 10 repeats.
  }
  \label{fig:alner}
  \end{figure}
- Active learning iteratively selects informative data points to be labelled so that a model can be trained
- using less labelled data. Posterior probabilities output by Bayesian methods 
- account for uncertainty in the model parameters, hence can be used to choose data points that rapidly reduce uncertainty. 
- %In contrast, frequentist methods
- %such as maximum likelihood output probabilities that do not account for parameter uncertainty due to 
- %small datasets or noisy labels. 
- We hypothesize that BSC will learn more quickly than non-sequential 
- and non-Bayesian methods
- in an active learning scenario. 
- %While various active learning methods could be applied here, in this paper we wish
- %to demonstrate only that BSC may serve as a good foundation for active learning,
- %and defer a deeper investigation of active learning techniques to future work.
- We simulate active learning using 
+ Active learning is an iterative process that can reduce the amount of labelled
+  data required to train a model.
+  At each iteration, the active learning strategy selects informative data points,
+  obtains their labels, 
+  then re-trains a labelling model given the new labels.
+ The updated model is then used in the next iteration to identify the most
+ informative data points.  
+ 
+  We simulate active learning in a crowdsourcing scenario
+  where the goal is to learn the true labels,
+  $\bs t$, by selecting documents for the crowd to label.
+  Each document can be labelled multiple times by different workers.
+  In a passive learning setup, the number of annotations per document is 
+  usually constant across all documents. 
+  For example, in the PICO dataset, each
+  document was labelled six times.
+  The aim of active learning is to decrease the number of annotations required
+  by avoiding relabelling documents whose true labels can be determined with  high confidence from fewer labels.
+  
+  We simulate active learning using 
  %a well-established technique, \emph{uncertainty sampling}
  the \emph{least confidence} strategy, shown to be effective by 
  ~\citet{settles2008analysis},
  as described in Algorithm \ref{al:uncertainty_sampling}.
+At each iteration, we estimate $\bs t$ from the current set of 
+  crowdsourced labels, $\bs c$,
+  using one of the methods from 
+  our previous experiments as the labelling model,
+  then use this model to determine the least confident $batch\_size$ 
+ documents to be labelled by the crowd. 
+  If the simulation has requested all the labels for a document that
+  are available in our dataset, this document is simply ignored when 
+  choosing new batches
+  and is not selected again.
+ 
+ We hypothesize that BSC will learn more quickly than non-sequential 
+ and non-Bayesian methods
+ in the active learning simulation. 
+ Bayesian methods such as BSC account for uncertainty in the model parameters when estimating confidence,  
+ hence can be used to choose data points that rapidly improve
+ the model itself.
+ Sequential models such as BSC can also account for dependencies between sequence labels
+ when estimating confidence.
+% From the reviews:
+%We apologise that the active learning experiment was not clear from the description. We use active learning to learn the aggregation models themselves, i.e. to train BSC-seq, BSC-CV, MV, etc. The F1-scores therefore evaluate the outputs of the aggregation models at each active learning round. The aim is to show how well each aggregation method performs on smaller numbers of annotations chosen by active learning. BSC-seq performs strongest, suggesting that using it with active learning could reduce the number of labels you need to obtain a desired F1 score for your aggregated labels. 
+ %In contrast, frequentist methods
+ %such as maximum likelihood output probabilities that do not account for parameter uncertainty due to 
+ %small datasets or noisy labels. 
+ 
+ %While various active learning methods could be applied here, in this paper we wish
+ %to demonstrate only that BSC may serve as a good foundation for active learning,
+ %and defer a deeper investigation of active learning techniques to future work.
  %TODO does there need to be another index in t for the document?
  \begin{algorithm}
  \DontPrintSemicolon
@@ -433,7 +477,7 @@ annotator models.
   for $n$. \;
   \nl Obtain annotations for $batch\_size$ documents with the highest values of $LC$ (least confidence), and add them to $\bs c$\;
   }
- \caption{Active learning simulation for each method using uncertainty sampling.}
+ \caption{Active learning simulation using least-confidence sampling.}
  \label{al:uncertainty_sampling}
  \end{algorithm}
  
@@ -445,4 +489,4 @@ annotator models.
  while BSC-CV clearly outperforms HMM-crowd: we believe this difference is due to the Bayesian treatment of IBCC and BSC,
  which means they are better able to estimate confidence than DS and HMM-crowd, which use maximum likelihood and maximum a posteriori inference.
  BSC-seq produces the best overall performance, and the gap grows as the number of labels increases, 
- since more data is required to learn the more complex model.  
+ since more data is required to learn the more complex annotator model.  

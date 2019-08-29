@@ -53,6 +53,22 @@ def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tok
         return f1_score(gold, preds, average='macro')
 
 
+def get_anno_names(spantype, preds, include_all=False):
+
+    names = []
+
+    for base in preds:
+        if '_every' in base or base == 'a' or 'agg_' in base or 'pos' in base or 'ner' in base or 'baseline_z' in base:
+            continue  # exclude base labellers trained on the target domain or aggregation results
+            # exclude other predictors that did not label the target classes
+
+        if not include_all and int(base.split('_')[1]) != spantype:
+            continue
+
+        names.append(base)
+
+    return names
+
 def get_anno_matrix(spantype, preds, didx, include_all=False):
     annos = []
     uniform_priors = []
