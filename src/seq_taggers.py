@@ -5,8 +5,8 @@ import os
 import random
 
 import numpy as np
-from flair.data import Sentence
-from flair.models import SequenceTagger
+# from flair.data import Sentence
+# from flair.models import SequenceTagger
 from sklearn_crfsuite.estimator import CRF
 
 from lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
