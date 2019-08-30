@@ -23,7 +23,7 @@ datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
-base_models = ['bilstm-crf']  #, 'crf' 'flair-pos', 'flair-ner'] # 'flair' -- not implemented yet, do this if we can't get lample to work
+base_models = ['bilstm-crf', 'flair-pos', 'flair-ner', 'crf'] # 'flair' -- not implemented yet, do this if we can't get lample to work
 
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:
@@ -126,7 +126,7 @@ for classid in [0, 1, 2, 3]:
 
             # copy the model we want to fine-tune
             new_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i_tunedfor%s_basemodels%s/%s' %
-                                         (classid, tedomain, best_base.split('__')[-1], basemodels_str))
+                                         (classid, tedomain, basemodels_str, best_base.split('__')[-1]))
             orig_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i/%s' %
                                           (classid, best_base.split('__')[-1]))
 
