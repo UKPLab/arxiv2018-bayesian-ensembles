@@ -23,7 +23,7 @@ datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
-base_models = ['bilstm-crf', 'crf'] # 'flair-pos', 'flair-ner', 
+base_models = ['bilstm-crf', 'crf', 'flair-pos', 'flair-ner']
 
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:
