@@ -54,13 +54,13 @@ import json
 from baselines.dawid_and_skene import ibccvb
 from base_models import run_base_models
 from bsc import bsc
-from helpers import evaluate, Dataset, get_anno_matrix
+from helpers import evaluate, Dataset, get_anno_matrix, get_root_dir
 
 reload = True
 rerun_aggregators = True
 verbose = False
 
-datadir = os.path.expanduser('~/data/bayesian_sequence_combination/data/famulus_TEd')
+datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
@@ -71,7 +71,7 @@ print('Using base models: ' + str(base_models))
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:
 
-    resdir = os.path.expanduser('~/data/bayesian_sequence_combination/output/famulus_TEd_task1_type%i' % classid)
+    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task1_type%_basemodels%s' % (classid, '--'.join(base_models)) )
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 

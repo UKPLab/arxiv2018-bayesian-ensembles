@@ -96,7 +96,7 @@ class LSTM:
                 n_epochs = self.n_epochs_per_vb_iter
 
             # don't need to use an dev set here for early stopping as this may break EM
-            self.lstm, self.f_eval = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, self.dev_sentences,
+            self.lstm, self.f_eval, _ = self.LSTMWrapper.train_LSTM(self.all_sentences, self.sentences, self.dev_sentences,
                                                                  self.dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=freq_eval,
                                                                  crf_probs=self.crf_probs,

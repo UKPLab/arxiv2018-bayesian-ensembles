@@ -9,10 +9,11 @@ import numpy as np
 # from flair.models import SequenceTagger
 from sklearn_crfsuite.estimator import CRF
 
+from helpers import get_root_dir
 from lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
 
 
-embpath = os.path.expanduser('~/data/bayesian_sequence_combination/cc.de.300.vec')
+embpath = os.path.join(get_root_dir(), 'cc.de.300.vec')
 
 class simple_crf:
 

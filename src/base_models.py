@@ -1,6 +1,6 @@
 import os, numpy as np, json
 
-from helpers import evaluate
+from helpers import evaluate, get_root_dir
 from seq_taggers import simple_crf, lample, flair_ner, flair_pos
 
 '''
@@ -32,7 +32,6 @@ For each fold, there is a particular set of classes.
 
 '''
 
-
 def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verbose=False):
     '''
     Use this to run the base sequence taggers and save their predictions.
@@ -45,12 +44,12 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
         print('BASE: Using base model %s' % base_model_str)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    tmpdir = os.path.expanduser('~/data/bayesian_sequence_combination/output/tmp_spantype%i' % spantype)
+    tmpdir = os.path.join(get_root_dir(), 'output/tmp_spantype%i' % spantype)
     if not os.path.exists(tmpdir):
         os.mkdir(tmpdir)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    resdir = os.path.expanduser('~/data/bayesian_sequence_combination/output/famulus_TEd_results_%s_spantype%i'
+    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_results_%s_spantype%i'
                                 % (base_model_str, spantype))
     if not os.path.exists(resdir):
         os.mkdir(resdir)

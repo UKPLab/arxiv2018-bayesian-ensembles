@@ -168,6 +168,9 @@ class LSTMWrapper(object):
         model = Model(parameters=parameters, models_path=self.models_path)
         print("Model location: %s" % model.model_path)
 
+        if self.reload_from_disk:
+            model.reload()
+
         # Data parameters
         lower = parameters['lower']
 
@@ -196,9 +199,6 @@ class LSTMWrapper(object):
 
         # Build the model
         f_train, f_eval = model.build(**parameters)
-
-        if self.reload_from_disk:
-            model.reload()
 
         #
         # Train network

@@ -9,17 +9,17 @@ import shutil
 import numpy as np
 import json
 
-from baselines.dawid_and_skene import ibccvb
+#from baselines.dawid_and_skene import ibccvb
 from base_models import run_base_models
 from bsc import bsc
-from helpers import evaluate, Dataset, get_anno_matrix, get_anno_names
+from helpers import evaluate, Dataset, get_anno_matrix, get_anno_names, get_root_dir
 from seq_taggers import embpath
 
 reload = True
 rerun_aggregators = True
 verbose = False
 
-datadir = os.path.expanduser('~/data/bayesian_sequence_combination/data/famulus_TEd')
+datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
@@ -28,7 +28,9 @@ base_models = ['bilstm-crf']  #, 'crf' 'flair-pos', 'flair-ner'] # 'flair' -- no
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:
 
-    resdir = os.path.expanduser('~/data/bayesian_sequence_combination/output/famulus_TEd_task2_type%i' % classid)
+    basemodels_str = '--'.join(base_models)
+
+    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task2_type%i_basemodels%s' % (classid, basemodels_str) )
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
@@ -118,14 +120,14 @@ for classid in [0, 1, 2, 3]:
             competence[np.all(annos == -1, axis=0)] = 0  # we don't choose the model that has no labels for this domain
             print('Competence of base models:')
             print(competence)
-            best_base = np.argmax(competence)
+            best_base_idx = np.argmax(competence)
             names = get_anno_names(classid, preds, include_all=False)
-            best_base = names[best_base]
+            best_base = names[best_base_idx]
 
             # copy the model we want to fine-tune
-            new_dir = os.path.expanduser('~/data/bayesian_sequence_combination/output/tmp_spantype%i_tunedfor%s/%s' %
-                                         (classid, tedomain, best_base.split('__')[-1]))
-            orig_dir = os.path.expanduser('~/data/bayesian_sequence_combination/output/tmp_spantype%i/%s' %
+            new_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i_tunedfor%s_basemodels%s/%s' %
+                                         (classid, tedomain, best_base.split('__')[-1], basemodels_str))
+            orig_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i/%s' %
                                           (classid, best_base.split('__')[-1]))
 
             if os.path.exists(new_dir):
@@ -135,15 +137,24 @@ for classid in [0, 1, 2, 3]:
             print('copied %s to %s' % (orig_dir, new_dir))
 
             # create a new BSC instance with the LSTM data model and pass in the model directory.
-            bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
+            bsc_model = bsc.BSC(L=3, K=K-1, max_iter=max_iter, before_doc_idx=1,
                         alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
                         worker_model='seq', tagging_scheme='IOB2', data_model=['LSTM'], transition_model='HMM',
                         no_words=False, model_dir=new_dir, reload_lstm=True, embeddings_file=embpath)
             bsc_model.verbose = False
-            bsc_model.max_internal_iters = 1
+            bsc_model.max_internal_iters = 5
+
+            static_annotators = np.arange(annos.shape[1])
+            static_annotators = static_annotators[static_annotators != best_base_idx]
+            annos_fixed = annos[:, static_annotators]
+
+            C_data_initial = [np.zeros((annos.shape[0], 3))]
+            for tag in range(3):
+                C_data_initial[0][:, tag] = (annos[:, best_base_idx] == tag).astype(float)
+
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
-            probs, agg, pseq = bsc_model.run(annos, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
-                                             converge_workers_first=True, uniform_priors=uniform_priors)
+            probs, agg, pseq = bsc_model.run(annos_fixed, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
+                             converge_workers_first=True, uniform_priors=uniform_priors, C_data_initial=C_data_initial)
 
             preds['agg_bsc-seq'].append(agg.flatten().tolist())
 

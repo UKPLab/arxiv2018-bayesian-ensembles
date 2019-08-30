@@ -53,6 +53,8 @@ class BSC(object):
         self.nscores = L
         self.K = K
 
+
+
         self.inside_labels = inside_labels
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
@@ -554,7 +556,7 @@ class BSC(object):
             print('_calc_q_A: nan value encountered!')
 
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
-            gold_labels=None, uniform_priors=[]):
+            gold_labels=None, uniform_priors=[], C_data_initial=None):
         '''
         Runs the BAC bsc with the given annotations and list of document starts.
 
@@ -612,8 +614,12 @@ class BSC(object):
                                   dev_sentences, self.A, self.max_internal_iters)
             model.lnPi_data  = self.A._calc_q_pi(model.alpha_data)
 
-        for model in self.data_model:
-            model.C_data = np.zeros((self.C.shape[0], self.nscores)) + (1.0 / self.nscores)
+
+        for midx, model in enumerate(self.data_model):
+            if C_data_initial is None:
+                model.C_data = np.zeros((self.C.shape[0], self.nscores)) + (1.0 / self.nscores)
+            else:
+                model.C_data = C_data_initial[midx]
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 
@@ -689,9 +695,9 @@ class BSC(object):
                             print("BAC iteration %i: updated model for feature-based predictor of type %s" %
                                   (self.iter, str(type(model))) )
 
-                        if type(model) == LSTM:
-                           np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
-                    else: # model is switched off
+                        # if type(model) == LSTM:
+                        #    np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
+                    elif C_data_initial is None: # model is switched off
                         model.C_data[:] = 0
 
                 # update E_lnpi
