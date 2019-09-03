@@ -35,7 +35,7 @@ In this paper, we remedy this by proposing a sequential annotator model and appl
  scheme, 
 in which the first token in a span of type `x' is labelled `B-x',  
 subsequent tokens are labelled `I-x', 
-and tokens outside of spans are labelled `O'.
+and tokens outside spans are labelled `O'.
 %This results in a sequence of labels, where each label depends on its predecessor.
 %We propose an aggregation method that takes advantage of the sequential dependencies between BIO tags
 %to learn the reliability of individual annotators and predict the true sequence.
@@ -94,7 +94,7 @@ and an empirical evaluation on three sequence labelling tasks,
 in which \emph{BSC} with \emph{seq} consistently outperforms the previous state of the art. 
 We make 
 %the modular implementation of our proposed method freely available, along with 
-all of our code freely available\footnote{\url{http://github.com/ukplab/arxiv2018-bayesian-ensembles}}
+all of our code and data freely available\footnote{\url{http://github.com/ukplab/arxiv2018-bayesian-ensembles}}.
 
 \section{Related Work}
 %TODO: note that the HMM crowd study did not establish whether performance benefited from the text features,
@@ -154,7 +154,7 @@ Here we focus on the core annotator representation, rather than extensions
 for clustering annotators~\cite{venanzi2014community,moreno_bayesian_2015},
 modeling their dynamics~\cite{simpsonlong},
 adapting to task difficulty~\cite{whitehill2009whose,bachrach2012grade},
-or time spent~\cite{venanzi2016time}.
+or time spent by annotators~\cite{venanzi2016time}.
 
 %Previous works have applied crowdsourcing to sequence labeling tasks such as named entity recognition~\cite{ritter2011named}
 %and POS-tagging~\cite{hovy2014experiments}, but these do not develop new aggregation methods.
@@ -177,7 +177,7 @@ that do not capture the effect of sequential dependencies on annotator reliabili
 Neither CRF-MA nor HMM-crowd use a fully Bayesian approach,
 which has been shown to be more effective for handling uncertainty
 due to noise in crowdsourced data for non-sequential classification~\cite{kim2012bayesian,simpsonlong,venanzi2014community,moreno_bayesian_2015}.
-In this paper, we develop a sequential annotator model and a fully Bayesian method for aggregating sequence labels.  %that improves performance over previous approaches.
+In this paper, we develop a sequential annotator model and an approximate Bayesian method for aggregating sequence labels.  %that improves performance over previous approaches.
 
 %TODO check if any of this needs to be kept from the black-box integration stuff.
 % While HMM-crowd uses only a simple conditional independence model of text features,

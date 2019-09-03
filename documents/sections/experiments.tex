@@ -168,39 +168,13 @@ BSC-seq$\backslash\bs T$ &
 \npnoround
 \end{table*}
 
-\begin{figure*}[h]
-\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
-Previous label = I:\\
-\vspace{1cm}
-\end{minipage}
-  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 28]{figures/worker_models/seq_prev0_heatmap}
-\vspace{0.2cm}
-\\
-\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
-Previous label = O:\\
-\vspace{1cm}
-\end{minipage}
-  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 50]{figures/worker_models/seq_prev1_heatmap}
-\vspace{0.2cm}
-\\
-\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
-Previous label = B:\\
-\vspace{1cm}
-\end{minipage}
-  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 50]{figures/worker_models/seq_prev2_heatmap}
-\\
-\caption{Clusters of confusion matrix representations from BSC-seq trained on PICO. 
-}
-\label{fig:conf_mat_clusters}
-\end{figure*}
-
 \paragraph{Datasets. }\label{sec:expts}
 
 We compare BSC to alternative methods on three NLP datasets
 %to test performance in passive and active learning scenarios, 
 %analyze errors, and
 %visualize the learned annotator models.
-containing both crowdsourced and gold sequential annotations:
+containing both crowdsourced and gold sequential annotations.
 \emph{NER}, the CoNLL 2003 named-entity recognition dataset~\cite{tjong2003introduction},
 which contains gold labels for four named entity categories (PER, LOC, ORG, MISC),
 with crowdsourced labels provided by \cite{rodrigues2014sequence}.
@@ -213,10 +187,10 @@ The datasets differ in typical span length, with argument components in ARG the 
 one token long.
 
 The gold-labelled documents are split into validation and test sets. 
-For NER, we use the split given by Nguyen et al. ~\shortcite{nguyen2017aggregating},
-while for PICO and ARG, we make random splits since the splits from previous worker
-were not available\footnote{The data splits will be published upon publication.}
-\footnote{Since we use different splits, our results for PICO are not identical to ~\citet{nguyen2017aggregating}}.
+For NER, we use the split given by Nguyen et al.~\shortcite{nguyen2017aggregating},
+while for PICO and ARG, we make random splits since the splits from previous work
+were not available\footnote{The data splits are available from our Github repository.
+Since we use different splits, our results for PICO are not identical to ~\citet{nguyen2017aggregating}.}.
 
 \paragraph{Evaluation metrics. }
 For NER and ARG we use the CoNLL 2003 F1-score, which considers only exact span matches %(type, start and end) 
@@ -229,7 +203,7 @@ which counts the matching fractions of spans when computing precision and recall
  
 %We additionally compute the root mean squared error in the span lengths, i.e. the difference between the  % actually it's not quite that. We computed the difference in mean span lengths. This is already captured by F1 score for pico and better described by the span-level-precision and recall. Our metric might be more if we didn't take the absolute so we could see if spans were often too long or too short.
 We also compute the cross entropy error (\emph{CEE}, also known as log-loss).
-While this is a token-level rather than span-level metric, it evaluates the quality of the probability estimates produced by aggregation methods, which are useful for tasks such as active learning.
+While this is a token-level rather than span-level metric, it evaluates the quality of the probability estimates produced by aggregation methods, which are useful for tasks such as active learning, as it penalises over-confident mistakes more heavily.
 
 \paragraph{Evaluated Methods. }
 We evaluate BSC in combination with all of the annotator models described in Section \ref{sec:model}.
@@ -261,15 +235,52 @@ and without the transition matrix, which is
 We tune the hyperparameters using grid search on the development sets. To limit the number of hyperparameters to tune, 
 we optimize only three values for BSC:
 hyperparameters of the transition matrix, $\bs\gamma_j$, are set to the same value, 
-$\gamma_0$, except for disallowed transitions, (O$\Arrow{0.2cm}$I, transitions between types, e.g. I-PER$\Arrow{0.2cm}$I-ORG), 
+$\gamma_0$, except for disallowed transitions, (O$\Arrow{0.2cm}$I and transitions between types, e.g. I-PER$\Arrow{0.2cm}$I-ORG), 
 which are set to $1e-6$; 
 for the annotator models,
-all values are set to $\alpha_0$, except for disallowed transitions, which are set to $1e-6$,
+all values are set to $\alpha_0$, except for disallowed transitions, which are set to $1e^{-6}$,
 then $\epsilon_0$ is added to hyperparameters 
 corresponding to correct annotations (e.g. diagonal entries in a confusion matrix).
-This encodes the prior assumption that annotators are more likely to have an accuracy greater than random to avoid the non-identifiability problem, in which the class labels become switched around.
+This encodes the prior assumption that annotators are more likely to have an accuracy greater than random,
+which avoids the non-identifiability problem in which the class labels are switched around.
 %We use validation set F1-scores to choose values from $[0.1, 1, 10, 100]$, 
 %training on a small subset of 250 documents for NER and 350 documents for PICO. 
+
+\begin{table*}[h]
+\small
+\centering
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l l l l l l l l l l l l l l }
+\toprule
+Method & Data & exact & wrong & partial  & missed  & false & late & early & late & early & fused & splits & inv- &  length \\ 
+ & -set & match & type & match & span & +ve & start & start & finish & finish & spans &  & alid & error \\
+\midrule
+MV & NER & 2869 & 304 & 196 & 1775 & 100 & 96 & 10 & 15 & 85 & 17 & 26 & 81 & 0.04 \\
+IBCC & NER & 3742 & 386 & 187 & 829 & 345 & 107 & 27 & 43 & 77 & 47 & 29 & 74 & 0.12 \\
+HMM-crowd & NER & 3650 & 334 & 115 & 1045 & 210 & 109 & 22 & 33 & 89 & 37 & 23 & 0 & 0.03 \\
+BSC-CV & NER & 3381 & 284 & 80 & 1399 & 121 & 94 & 17 & 18 & 90 & 22 & 8 & 0 & 0.00 \\
+BSC-CM & NER & 3856 & 362 & 63 & 863 & 315 & 124 & 25 & 63 & 77 & 53 & 13 & 0 & 0.14 \\
+BSC-seq & NER & 3995 & 353 & 110 & 686 & 357 &  84 &  29 &  25 &  88 &  28 &  26 & 0 & 0.09 \\
+\midrule 
+MV & PICO  & 144 & 0 & 60 & 145 & 48 & 9 & 11 & 1 & 0 & 3 & 9 & 40 & 1.26 \\
+IBCC & PICO & 193 & 0 & 53 & 103 & 100 & 14 & 10 & 0 & 2 & 3 & 10 & 19 & 0.45 \\
+HMM-crowd& PICO & 189 & 0 & 54 & 106 & 84 & 13 & 21 & 0 & 0 & 5 & 8 & 0 & 1.99 \\
+BSC-CV     & PICO & 156 & 0 & 76 & 117 & 81 & 10 & 25 & 0 & 0 & 11 & 0 & 0 & 2.15 \\
+BSC-CM     & PICO & 216 & 0 & 50 & 83 & 157 & 10 & 19 & 0 & 0 & 4 & 17 & 0 & 2.42\\
+%174 & 0 & 98 & 192 & 18 & 15 & 8  & 0 & 4 & 18 \\
+BSC-seq    & PICO & 168 & 0 & 86 & 95 & 67 & 17 & 19 & 5 & 0 & 4 & 9 & 0 & 0.61 \\
+\midrule 
+MV & ARG & 17 &  0 & 26 & 14 &  4  &  9 & 1 &  0 & 2 &  0 &  0 & 9 & 5.27 \\
+IBCC & ARG & 27 & 1 & 21 & 8 & 9 & 7 & 2 & 0 & 1 & 0 & 3 & 9 & 3.43 \\
+HMM-Crowd & ARG & 20 & 0 & 23 & 14 & 4 & 7 & 2 & 0 & 2 & 0 & 0 & 4 & 4.87 \\
+BSC-CV & ARG & 18 & 0 & 25 & 14 & 4 & 12 & 2 & 0 & 2 & 0 & 0 & 0 & 5.37 \\
+BSC-CM & ARG & 35 & 1 & 12 & 9 & 9 & 7 & 2 & 0 & 1 & 1 & 0 & 0 & 2.11 \\
+BSC-Seq & ARG & 39 & 3 & 12 & 3 & 20 & 6 & 4 & 0 & 0 & 1 & 0 & 0 & 0.46 \\
+\bottomrule
+\end{tabular}
+\caption{Counts of different types of span errors.}
+\label{tab:error_analysis}
+\end{table*}
 
 \paragraph{Aggregation Results. }\label{sec:task1}
 
@@ -310,51 +321,16 @@ The performance of all methods across the three datasets varies greatly.
 With NER, the spans are short and the task is less subjective than PICO or ARG,
 hence its higher F1 scores. PICO uses a relaxed F1 score, meaning its scores are
 only slightly lower despite being a more ambiguous task. The constitution of an 
-argument is also ambiguous, so ARG scores are lower, particularly as they use  
+argument is also ambiguous, so ARG scores are lower, particularly as we use  
 strict span-matching to compute the F1 scores. Raising the scores may be possible in future
 by using expert labels as training data, i.e. as known values of $\bs t$,
 which would help to put more weight on annotators with similar labelling 
 patterns to the experts.
 
-\begin{table*}[h]
-\small
-\centering
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{l l l l l l l l l l l l l l l }
-\toprule
-Method & Data & exact & wrong & partial  & missed  & false & late & early & late & early & fused & splits & inv- &  length \\ 
- & -set & match & type & match & span & +ve & start & start & finish & finish & spans &  & alid & error \\
-\midrule
-MV & NER & 2869 & 304 & 196 & 1775 & 100 & 96 & 10 & 15 & 85 & 17 & 26 & 81 & 0.04 \\
-IBCC & NER & 3742 & 386 & 187 & 829 & 345 & 107 & 27 & 43 & 77 & 47 & 29 & 74 & 0.12 \\
-HMM-crowd & NER & 3650 & 334 & 115 & 1045 & 210 & 109 & 22 & 33 & 89 & 37 & 23 & 0 & 0.03 \\
-BSC-CV & NER & 3381 & 284 & 80 & 1399 & 121 & 94 & 17 & 18 & 90 & 22 & 8 & 0 & 0.00 \\
-BSC-CM & NER & 3856 & 362 & 63 & 863 & 315 & 124 & 25 & 63 & 77 & 53 & 13 & 0 & 0.14 \\
-BSC-seq & NER & 3995 & 353 & 110 & 686 & 357 &  84 &  29 &  25 &  88 &  28 &  26 & 0 & 0.09 \\
-\midrule 
-MV & PICO  & 144 & 0 & 60 & 145 & 48 & 9 & 11 & 1 & 0 & 3 & 9 & 40 & 1.26 \\
-IBCC & PICO & 193 & 0 & 53 & 103 & 100 & 14 & 10 & 0 & 2 & 3 & 10 & 19 & 0.45 \\
-HMM-crowd& PICO & 189 & 0 & 54 & 106 & 84 & 13 & 21 & 0 & 0 & 5 & 8 & 0 & 1.99 \\
-BSC-CV     & PICO & 156 & 0 & 76 & 117 & 81 & 10 & 25 & 0 & 0 & 11 & 0 & 0 & 2.15 \\
-BSC-CM     & PICO & 216 & 0 & 50 & 83 & 157 & 10 & 19 & 0 & 0 & 4 & 17 & 0 & 2.42\\
-%174 & 0 & 98 & 192 & 18 & 15 & 8  & 0 & 4 & 18 \\
-BSC-seq    & PICO & 168 & 0 & 86 & 95 & 67 & 17 & 19 & 5 & 0 & 4 & 9 & 0 & 0.61 \\
-\midrule 
-MV & ARG & 17 &  0 & 26 & 14 &  4  &  9 & 1 &  0 & 2 &  0 &  0 & 9 & 5.27 \\
-IBCC & ARG & 27 & 1 & 21 & 8 & 9 & 7 & 2 & 0 & 1 & 0 & 3 & 9 & 3.43 \\
-HMM-Crowd & ARG & 20 & 0 & 23 & 14 & 4 & 7 & 2 & 0 & 2 & 0 & 0 & 4 & 4.87 \\
-BSC-CV & ARG & 18 & 0 & 25 & 14 & 4 & 12 & 2 & 0 & 2 & 0 & 0 & 0 & 5.37 \\
-BSC-CM & ARG & 35 & 1 & 12 & 9 & 9 & 7 & 2 & 0 & 1 & 1 & 0 & 0 & 2.11 \\
-BSC-Seq & ARG & 39 & 3 & 12 & 3 & 20 & 6 & 4 & 0 & 0 & 1 & 0 & 0 & 0.46 \\
-\bottomrule
-\end{tabular}
-\caption{Counts of different types of span errors.}
-\label{tab:error_analysis}
-\end{table*}
-We categorize the errors made by key methods and list the
+We categorise the errors made by key methods and list the
 counts for each category in Table \ref{tab:error_analysis}.
 All machine learning methods tested here reduce the number of spans that were completely missed by majority voting. Note that BSC completely removes all ``invalid'' spans
-(O$\Arrow{0.2cm}$I transitions) due to the sequential model and setting the priors hyperparameters
+(O$\Arrow{0.2cm}$I transitions) due to the sequential model with prior hyperparameters set
 to zero for those transitions.
 For PICO and ARG, which contain longer spans,
 BSC-seq has lower ``length error'' than other methods,
@@ -363,13 +339,46 @@ BSC-seq has lower ``length error'' than other methods,
 Overall, BSC-seq appears to be the best choice for identifying 
 exact span matches and reducing missed spans.
 
+
+
+\begin{figure*}[h]
+\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
+Previous label = I:\\
+\vspace{1cm}
+\end{minipage}
+  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 28]{figures/worker_models/seq_prev0_heatmap}
+\vspace{0.2cm}
+\\
+\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
+Previous label = O:\\
+\vspace{1cm}
+\end{minipage}
+  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 50]{figures/worker_models/seq_prev1_heatmap}
+\vspace{0.2cm}
+\\
+\begin{minipage}[b][0.5cm][b]{0.1\textwidth} 
+Previous label = B:\\
+\vspace{1cm}
+\end{minipage}
+  \includegraphics[width=0.88\textwidth, clip=True, trim=10 20 10 50]{figures/worker_models/seq_prev2_heatmap}
+\\
+\centering\includegraphics[width=0.45\textwidth,clip=True,trim=0 40 110 260]{figures/worker_models/colorbar}\\
+\caption{Clusters of annotators in the PICO dataset. Each column shows the mean of the confusion matrices in the 
+\textit{seq} annotator model for the members of one cluster, as inferred by BSC-seq.
+ Each row corresponds to the mean confusion matrices conditioned on the annotator's previous label. 
+ The confusion matrices are plotted as heatmaps,
+where colours indicate the probabilities, which are also given by the numbers in each square.
+}
+\label{fig:conf_mat_clusters}
+\end{figure*}
 % TODO: make this plot more compact and relevant by plotting only the means across the whole dataset, 
 %and the distribution of hellinger distances between the confusion matrices for each previous label case. Put on a single row.
 %Table \ref{tab:aggregation_results} shows a benefit of using the sequential annotator model over CM, CV and acc.
 \paragraph{Visualising Annotator Models. }
 To determine whether, in practice, BSC-seq really learns distinctive confusion matrices depending on the previous labels,
 we plot the learned annotator models for
-PICO as probabilistic confusion matrices in Figure \ref{fig:conf_mat_clusters}.
+PICO as probabilistic confusion matrices in Figure \ref{fig:conf_mat_clusters} (for an alternative visualisation, 
+see Figure \ref{fig:anno_models_2} in the appendix).
 %As the dataset contains a large number of annotators, we 
 We clustered 
 the confusion matrices % inferred by each model
@@ -394,8 +403,8 @@ confusion matrices depending on the previous label.
 %The confusion matrices for BSC-seq are
 %very different depending on the worker's previous annotation. 
 There are also large variations between the clusters.
-The first column, for example, shows
-annotators with a tendency toward I$\Arrow{0.2cm}$I or O$\Arrow{0.2cm}$O transitions, while the following clusters 
+The third column, for example, shows
+annotators with a tendency toward B$\Arrow{0.2cm}$I transitions regardless of the true label, while other clusters 
 indicate very different labelling behaviour. The model therefore appears able to learn
 distinct confusion matrices for different workers given previous labels, 
 which supports the use of sequential
@@ -424,7 +433,7 @@ annotator models.
   where the goal is to learn the true labels,
   $\bs t$, by selecting documents for the crowd to label.
   Each document can be labelled multiple times by different workers.
-  In a passive learning setup, the number of annotations per document is 
+  In contrast, in a passive learning setup, the number of annotations per document is 
   usually constant across all documents. 
   For example, in the PICO dataset, each
   document was labelled six times.
@@ -447,7 +456,7 @@ At each iteration, we estimate $\bs t$ from the current set of
   choosing new batches
   and is not selected again.
  
- We hypothesize that BSC will learn more quickly than non-sequential 
+ We hypothesise that BSC will learn more quickly than non-sequential 
  and non-Bayesian methods
  in the active learning simulation. 
  Bayesian methods such as BSC account for uncertainty in the model parameters when estimating confidence,  

@@ -88,7 +88,7 @@ By taking a Bayesian approach, we account for uncertainty in the model due to bo
 annotator errors and 
 the lack of data for modelling annotators who complete few tasks.
 We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining,
-showing that our sequential model outperforms the previous state-of-the-art. 
+showing that our sequential model outperforms the previous state of the art. 
 %and that 
 %Bayesian approaches outperform non-Bayesian alternatives.
 We also find that
@@ -113,6 +113,8 @@ better captures uncertainty in the sequence labels when there are few annotation
 
 This work was supported by the German Research Foundation through the German-Israeli Project Cooperation (DIP, grant DA 1600/1-1 and grant GU 798/17-1), and 
 by the German Research Foundation (DFG) as part of the QA-EduInf project (grant GU 798/18-1 and grant RI 803/12-1). 
+We would like to thank all of those who developed the datasets used
+in this work.
 
 % \addcontentsline{toc}{chapter}{Bibliography}
 %\bibliographystyle{apalike}
@@ -123,7 +125,7 @@ by the German Research Foundation (DFG) as part of the QA-EduInf project (grant 
 \appendix
 \section{Discussion of Variational Approximation}
 
-In Equation 12 of the main paper,
+In Equation 12,
 each subset of latent variables has a variational factor of the form 
 $\ln q(z) = \mathbb{E}[\ln p(z | \bs c, \neg z)]$, 
 where $\neg z$ contains all the other latent variables excluding $z$.
@@ -156,15 +158,16 @@ previous label = I:
 BSC-seq, \\
 previous label = O:
 \end{minipage}
-  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 23]{figures/worker_models/seq_prev1}
+  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 0]{figures/worker_models/seq_prev1}
 \\
 \begin{minipage}[b][1cm][l]{0.2\textwidth} 
 BSC-seq,\\
  previous label = B:
 \end{minipage}
-  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 23]{figures/worker_models/seq_prev2}
+  \includegraphics[width=0.8\textwidth, clip=True, trim=10 0 0 0]{figures/worker_models/seq_prev2}
 \\
-\caption{Clusters of confusion matrix representations from BSC-seq trained on PICO. 
+\caption{Clusters of annotators in PICO represented by the 
+mean confusion matrices from BSC-seq. Heights of bars indicate likelihood of a worker (or annotator) label given the true label.
 }
 \label{fig:anno_models_2}
 \end{figure*}
@@ -246,8 +249,6 @@ The forward-backward algorithm requires expectations of $\ln \bs T$ that can be 
  - \Psi\!\left(\sum_{\iota=1}^J (N_{j,\iota} \!\!+ \gamma_{j,\iota}) \!\right), &
 \end{flalign}
  where $\Psi$ is the digamma function.
- 
- 
  
 %\textbf{Variational factors for} $\bs A$ and $\bs B$:
 The variational factor for each annotator model is a distribution over its parameters, 

@@ -18,7 +18,7 @@ In comparison to other Bayesian approaches such as Markov chain Monte Carlo (MCM
 VB is often faster, readily allows incremental learning, and provides easier ways
 to determine convergence~\cite{Bishop2006}. 
 It has been successfully applied to a wide range of methods,
-including as the standard learning procedure for LDA~\cite{blei2003},
+including being used as the standard learning procedure for LDA~\cite{blei2003},
 and to combining non-sequential crowdsourced classifications~\cite{simpsonlong}.
 
 The trade-off is that we must approximate the posterior distribution with
@@ -59,14 +59,14 @@ making use of update equations for the variational factors given below.
 %predict only sequence labels rather than full posterior distributions.
 \begin{algorithm}
 \DontPrintSemicolon
- \KwIn{ Annotations $\bs c$, words $\bs x$}
+ \KwIn{ Annotations $\bs c$, tokens $\bs x$}
  \nl Compute initial values of $\mathbb{E}\ln A^{(k)},\forall k$,
  $\mathbb{E}\ln \rho_j,\forall j$, 
  $\mathbb{E}\ln \bs T_j,\forall j$ 
  from their prior distributions.\;
  \While{$\mathrm{not\_converged}(r_{n,\tau,j},\forall n,\forall \tau, \forall j)$}
  {
- \nl Update $r_{j,n,\tau}$, $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$, $\forall j,\forall \tau,\forall i,\forall \iota$,
+ \nl Update $r_{j,n,\tau}$, $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$, $\!\forall j,\!\forall \tau,\!\forall n,\!\forall \iota$,
  %given $\bs c$, 
  %$\mathbb{E}\left[\ln \bs A \right]$, $\mathbb{E}\left[\ln \bs B \right]$ and $\mathbb{E}\left[\ln \bs T \right]$
  using forward-backward algorithm
@@ -83,9 +83,9 @@ making use of update equations for the variational factors given below.
 %  given current $\hat{\bs d}$, $r_{j,n,\tau}$\;
  \nl Update $\mathbb{E}\ln T_{j,\iota},\forall j,\forall \iota$, 
  given $s_{t_{j,n,\tau\!-\!1}, t_{\iota,n,\tau}}$.\;
- \nl Update $\mathbb{E}\ln \rho_j),\forall j$ given $\bs x$, $r_{j,n,\tau}$.
+ \nl Update $\mathbb{E}\ln \rho_j,\forall j$ given $\bs x$, $r_{j,n,\tau}$.
  }
-\KwOut{ Label posteriors, $r_{n,\tau,j},\forall n,\forall \tau, \forall j$, %\mathbb{E}[\bs t]$, 
+\KwOut{ Label posteriors, $r_{n,\tau,j},\!\forall n,\!\forall \tau, \!\forall j$, %\mathbb{E}[\bs t]$, 
 most probable sequence of labels, $\hat{\bs t}_n,\forall n$ using Viterbi algorithm }
 \;
 \caption{The VB algorithm for BSC.}
@@ -110,9 +110,9 @@ In the forward pass, we compute:
 %  where the log likelihood $ll(j,n,\tau)$ of the annotations for token $\tau$ in document $n$ given
 %  label $j$ is:
 % \begin{flalign} 
-   & ll_{n,\tau}(j) = \sum_{k=1}^K \mathbb{E}%_{\bs A}
-   \ln A^{(k)}\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right)
-   \mathbb{E}\ln\rho_{j,x_{n,\tau}}, & 
+   & ll_{n,\tau}(j) = \!\sum_{k=1}^K \!\mathbb{E}\!%_{\bs A}
+   \ln A^{(k)}\!\!\left(j, c_{n,\tau}^{(k)}, c_{n,\tau\!-\!1}^{(k)} \right)
+   \!\mathbb{E}\!\ln\rho_{j,x_{n,\tau}}, & 
    %+  \sum_{s=1}^S
 %    & \nonumber \\
 %    &  \sum_{i=1}^J\sum_{\iota=1}^J \mathbb{E}%_{\bs B}
@@ -139,8 +139,8 @@ can be computed using standard equations for a Dirichlet distribution:
  \begin{flalign}
 & \mathbb{E}\ln T_{j,\iota} = \Psi\!\left(N_{j,\iota} \!\!+ \gamma_{j,\iota}\right) 
  - \Psi\!\left(\sum_{i=1}^J (N_{j,i} \!\!+ \gamma_{j,i}) \!\right), & \\
- & \mathbb{E} \ln\rho_j = \Psi\!\left(o_{j,w} \!\!+ \gamma_{j,w}\right) 
- - \Psi\!\left(\sum_{v=1}^J (o_{j,v} \!\!+ \gamma_{j,v}) \!\right), &
+ & \mathbb{E} \ln\rho_j = \Psi\!\left(o_{j,w} \!\!+ \kappa_{j,w}\right) 
+ - \Psi\!\left(\sum_{v=1}^J (o_{j,v} \!\!+ \kappa_{j,v}) \!\right), &
 \end{flalign}
  where $\Psi$ is the digamma function,
   $N_{j,\iota} = \sum_{n=1}^N \sum_{\tau=1}^{L_n}  s_{n,\tau,j,\iota}$ is the expected number of times that label $\iota$ follows label $j$,
@@ -149,14 +149,14 @@ can be computed using standard equations for a Dirichlet distribution:
 Similarly, for the \emph{seq} annotator model, the expectation terms are:
  \begin{flalign}
  \label{eq:elna}
-& \mathbb{E}\ln \! A^{(k)}\!(j,l,m) \!=\! \Psi\!\left(\!N^{(k)}_{j,l,m}\!\right)
- \!-\! \Psi\!\left(\!\sum_{\;m'\!=1\!}^J \!\!\left( \!N^{(k)}_{j,l,m'} \!\right) \!\!\right)\!. & \\
-  & N^{(k)}_{j,l,m} \!\!=\!  \alpha_{j,l,m}^{(k)} \!\!\! + \!\sum_{n=1}^N \!\sum_{\tau=1}^{L_n} \!
-r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau\!-\!1}}\!\delta_{m,c^{(k)}_{n, \!\tau}}, \!& 
+ \mathbb{E}\ln A^{(k)}(j,l,m) &= \Psi\!\left(N^{(k)}_{j,l,m}\right)  & \\
+& - \Psi\left(\sum_{\;m'\!=1}^J \left( N^{(k)}_{j,l,m'} \right) \right). & \nonumber \\
+N^{(k)}_{j,l,m} =  \alpha_{j,l,m}^{(k)} + & \sum_{n=1}^N \sum_{\tau=1}^{L_n} 
+r_{n,\tau,j} \delta_{l,c^{(k)}_{n,\tau-1}}\delta_{m,c^{(k)}_{n, \tau}}, & 
  \end{flalign}
  where $\delta$ is the Kronecker delta. 
 For other annotator models, this equation is simplified as the values of
-the previous labels are ignored.
+the previous labels $c^{(k)}_{n,\tau-1}$ are ignored.
 % counts are be simplified for the other annotator models
  
 % For \emph{CM}, the equation can be adapted by omitting the $l$ subscripts on the right-hand side, which refer to the previous annotation in the sequence. 

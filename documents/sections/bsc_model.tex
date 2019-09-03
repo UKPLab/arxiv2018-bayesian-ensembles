@@ -9,11 +9,11 @@ using categorical distributions:
 t_{n,\tau} & \sim \mathrm{Cat}(\bs T_{t_{n,\tau-1}}), \\
 x_{n,\tau} & \sim \mathrm{Cat}(\bs\rho_{t_{n,\tau}}), 
 \end{flalign}
-where $\bs T_j$ is a row of a transition matrix, $\bs T$, and $\bs\rho_j$ 
+where $\bs T_j$ is a row of a transition matrix $\bs T$, and $\bs\rho_j$ 
 is a vector of observation likelihoods for state $j$.
-For text tagging, $n$ indicates a document and $\tau$ a token index.
-Each state, $t_{n,\tau}$ is the true sequence label,
-and $x_{n,\tau}$ are words.
+For text tagging, $n$ indicates a document and $\tau$ a token index, while
+each state $t_{n,\tau}$ is a true sequence label
+and $x_{n,\tau}$ is a token.
 To provide a Bayesian treatment, we assume that 
 $\bs T_j$ and $\bs\rho_j$ have Dirichlet distribution priors as follows:
 \begin{flalign}

@@ -9,7 +9,7 @@ a new extension that captures sequential dependencies.
 Probabilistic annotator models 
 each define a different function, $A$, 
 for the likelihood that the annotator chooses label $c_{\tau}$
-given the true label, $t_{\tau}$, for the $\tau$th token in a sequence.
+given the true label $t_{\tau}$, for the $\tau$th token in a sequence.
 
 \textbf{Accuracy model (acc)}:
  the basis of several previous methods~\cite{donmez2010probabilistic,rodrigues2013learning},
@@ -64,7 +64,8 @@ different error rates in each class.
 % than the true spans by starting the spans early. In this 
 % case, they may more frequently
 %mis-label the `B' tokens than the `I' or `O' tokens,  which cannot be modelled by MACE. 
-For example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently mis-label the start of a span as `O' when the true label is `B-x', 
+For example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently miss the first token
+in a span, thereby labelling the start of a span as `O' when the true label is `B-x', 
 this would not be explicitly modelled by \emph{spam}.
 
 \textbf{Confusion vector (CV)}: this approach learns a separate accuracy 
@@ -130,7 +131,7 @@ The choice of annotator model for a particular annotator
  depends on the developer's understanding of the annotation task: 
  if the annotations have sequential dependencies, this suggests the \emph{seq} model;
 for non-sequential classifications \emph{CM} may be effective with small ($\leq 5$) 
-numbers of classes; \emph{MACE} may be more suitable if there are many classes. 
+numbers of classes; \emph{spam} may be more suitable if there are many classes, as the number of parameters to learn is low. 
 However, there is also a trade-off between the expressiveness of the model and the
 number of parameters that must be learned. Simpler models with fewer parameters
 may be effective if there are only small numbers of annotations from each annotator. 
