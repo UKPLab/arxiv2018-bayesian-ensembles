@@ -25,5 +25,5 @@ for classid in range(4):
         res = json.load(fh)
 
     for key in res:
-        print('Spantype %i: token f1 = %f; relaxed span f1 = %f'
-          % (classid, np.mean(res[key], 0)[1], np.mean(res[key], 0)[3]))
+        print('Spantype %i: token f1 = %.1f; relaxed span f1 = %.1f, %s'
+          % (classid, 100*np.mean(res[key], 0)[1], 100*np.mean(res[key], 0)[3], key))
