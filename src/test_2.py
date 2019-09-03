@@ -80,9 +80,9 @@ for classid in [0, 1, 2, 3]:
                 preds[new_key] = basepreds[key]
                 trpreds[new_key] = basetrpreds[key]
 
-    alpha0_factor = 1
+    alpha0_factor = 0.1
     alpha0_diags = 10
-    nu0_factor = 1
+    nu0_factor = 0.1
 
     max_iter = 100
 
@@ -99,6 +99,7 @@ for classid in [0, 1, 2, 3]:
         res['agg_bsc-seq'] = []
 
         for didx, tedomain in enumerate(dataset.domains):
+
             N = len(dataset.tetext[tedomain]) # number of test points
             # First, put the base labellers into a table.
             annos, uniform_priors = get_anno_matrix(classid, preds, didx, include_all=False)
@@ -115,11 +116,20 @@ for classid in [0, 1, 2, 3]:
             probs, agg, pseq = bsc_model.run(annos, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
                                              converge_workers_first=False, uniform_priors=uniform_priors)
 
+            res_s = evaluate(agg, dataset.tegold[tedomain], dataset.tedocstart[tedomain], f1type='all')
+            print('   Spantype %i: F1 score=%s for BSC-seq, tested on %s' % (classid, str(np.around(res_s, 2)), tedomain))
+
             # now we compute the base model informativeness
-            competence = bsc_model.competence()
+            competence = bsc_model.annotator_accuracy()
             competence[np.all(annos == -1, axis=0)] = 0  # we don't choose the model that has no labels for this domain
-            print('Competence of base models:')
+            print('Accuracy of base models:')
             print(competence)
+
+            competence = bsc_model.informativeness()
+            competence[np.all(annos == -1, axis=0)] = -np.inf  # we don't choose the model that has no labels for this domain
+            print('Informativeness of base models:')
+            print(competence)
+
             best_base_idx = np.argmax(competence)
             names = get_anno_names(classid, preds, include_all=False)
             best_base = names[best_base_idx]
@@ -162,7 +172,7 @@ for classid in [0, 1, 2, 3]:
 
             res_s = evaluate(agg, dataset.tegold[tedomain], dataset.tedocstart[tedomain], f1type='all')
             res['agg_bsc-seq'].append(res_s)
-            print('   Spantype %i: F1 score=%s for BSC-seq, tested on %s' % (classid, str(np.around(res_s, 2)), tedomain))
+            print('   Spantype %i: F1 score=%s for BSC-seq+CVS, tested on %s' % (classid, str(np.around(res_s, 2)), tedomain))
 
         # save all the new results
         with open(predfile, 'w') as fh:

@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 from collections import OrderedDict
 import itertools
@@ -198,8 +199,21 @@ class LSTMWrapper(object):
         model.save_mappings(id_to_word, id_to_char, IOB_label)
 
         # Build the model
-        f_train, f_eval = model.build(**parameters)
+        pickle_f_train = os.path.join(self.model_path, "ftrain.pkl")
+        pickle_f_eval = os.path.join(self.model_path, "feval.pkl")
+        if self.reload_from_disk and os.path.exists(pickle_f_train) and os.path.exists(pickle_f_eval):
+            with open(pickle_f_train, 'rb') as fh:
+                f_train = pickle.load(fh)
+            with open(pickle_f_eval, 'rb') as fh:
+                f_eval = pickle.load(fh)
+        else:
+            f_train, f_eval = model.build(**parameters)
 
+            with open(pickle_f_train, 'wb') as fh:
+                pickle.dump(f_train, fh)
+
+            with open(pickle_f_eval, 'wb') as fh:
+                pickle.dump(f_eval, fh)
         #
         # Train network
         #

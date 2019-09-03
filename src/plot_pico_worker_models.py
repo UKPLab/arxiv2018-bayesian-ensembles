@@ -372,3 +372,5 @@ for wm in confmats:
     savepath = './documents/figures/worker_models/'
     plt.figure(fig.number)
     plt.savefig(savepath + wm.replace(', prev. label=', '_prev') + '_heatmap.pdf')
+
+

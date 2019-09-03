@@ -146,7 +146,9 @@ class BSC(object):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
 
-        self.alpha0[self.outside_labels, self.outside_labels, :, :] *= 10 # because they are way more frequent
+        self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
+        self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
+
         # should be multiplied by 5 for pico and 1 for NER and ARG. TODO: make this into a parameter that can be passed
         # from outside.
 
@@ -172,7 +174,7 @@ class BSC(object):
             if self.beta0.ndim >= 2:
                 # *** This seems to have a small positive effect
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, outside_label] += disallowed_count
+                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
@@ -617,7 +619,7 @@ class BSC(object):
 
         for midx, model in enumerate(self.data_model):
             if C_data_initial is None:
-                model.C_data = np.zeros((self.C.shape[0], self.nscores)) + (1.0 / self.nscores)
+                model.C_data = np.zeros((self.C.shape[0], self.nscores)) #+ (1.0 / self.nscores)
             else:
                 model.C_data = C_data_initial[midx]
 
@@ -631,7 +633,7 @@ class BSC(object):
 
         self.workers_converged = False
 
-        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
+        # timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
         # main inference loop
         with Parallel(n_jobs=-1, backend='threading') as parallel:
@@ -669,9 +671,7 @@ class BSC(object):
                     print(np.around(self.beta[:self.L], 2))
 
                 for model in self.data_model:
-                    if (type(model) != LSTM and not self.workers_converged)\
-                            or not converge_workers_first \
-                            or self.workers_converged: # TODO: test with type(model) == LSTM removed from condition
+                    if not converge_workers_first or self.workers_converged: # TODO: test with type(model) == LSTM removed from condition
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         if model.train_type == 'Bayes':
@@ -687,6 +687,8 @@ class BSC(object):
                             print("BAC iteration %i: updated feature-based predictions from %s" %
                                   (self.iter, type(model)))
 
+                    if not converge_workers_first or self.workers_converged or C_data_initial is not None:
+
                         model.alpha_data = self.A._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
                                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.A._calc_q_pi(model.alpha_data)
@@ -699,6 +701,7 @@ class BSC(object):
                         #    np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
                     elif C_data_initial is None: # model is switched off
                         model.C_data[:] = 0
+
 
                 # update E_lnpi
                 self.alpha = self.A._post_alpha(self.q_t, C, self.alpha0, self.alpha, doc_start,
@@ -866,7 +869,7 @@ class BSC(object):
 
         return q_t, seq
 
-    def competence(self):
+    def annotator_accuracy(self):
         if self.alpha.ndim == 3:
             annotator_acc = self.alpha[np.arange(self.L), np.arange(self.L), :] \
                         / np.sum(self.alpha, axis=1)
@@ -885,6 +888,28 @@ class BSC(object):
         annotator_acc = np.sum(annotator_acc, axis=0)
 
         return annotator_acc
+
+    def informativeness(self):
+
+        ptj = np.zeros(self.L)
+        for j in range(self.L):
+            ptj[j] = np.sum(self.beta0[:, j]) + np.sum(self.q_t == j)
+
+        entropy_prior = -np.sum(ptj * np.log(ptj))
+
+        ptj_c = np.zeros((self.L, self.L, self.K))
+        for j in range(self.L):
+            if self.alpha.ndim == 4:
+                ptj_c[j] = np.sum(self.alpha[j, :, :, :], axis=1) / np.sum(self.alpha[j, :, :, :], axis=(0,1))[None, :] * ptj[j]
+            else:
+                ptj_c[j] = self.alpha[j, :, :] / np.sum(self.alpha[j, :, :], axis=0)[None, :] * ptj[j]
+
+        ptj_giv_c = ptj_c / np.sum(ptj_c, axis=0)[None, :, :]
+
+        entropy_post = -np.sum(ptj_c * np.log(ptj_giv_c), axis=(0,1))
+
+        return entropy_prior - entropy_post
+
 
     def _converged(self):
         '''

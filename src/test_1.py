@@ -64,14 +64,14 @@ datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
-base_models = ['bilstm-crf', 'crf', 'flair-pos']#, 'flair-ner'] # 'flair' -- not implemented yet, do this if we can't get lample to work
+base_models = ['bilstm-crf', 'crf']#, 'flair-pos']#, 'flair-ner'] # 'flair' -- not implemented yet, do this if we can't get lample to work
 
 print('Using base models: ' + str(base_models))
 
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:
 
-    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task1_type%_basemodels%s' % (classid, '--'.join(base_models)) )
+    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task1_type%i_basemodels%s' % (classid, '--'.join(base_models)) )
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
@@ -200,9 +200,9 @@ for classid in [0, 1, 2, 3]:
     print('*** Spantype %i, F1 score=%s for IBCC (micro average over domains) ' % (classid, str(cross_f1)) )
     print('*** Spantype %i, F1 score=%s for IBCC (macro average over domains) ' % (classid, str(np.mean(res['agg_ibcc'], axis=0))) )
 
-    alpha0_factor = 1
+    alpha0_factor = 0.1
     alpha0_diags = 10
-    nu0_factor = 1
+    nu0_factor = 0.1
 
     if rerun_aggregators or 'agg_bsc-seq' not in res or not len(res['agg_bsc-seq']):
 
