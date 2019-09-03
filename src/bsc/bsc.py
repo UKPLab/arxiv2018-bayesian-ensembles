@@ -670,7 +670,7 @@ class BSC(object):
                     print('BAC transition matrix params: ')
                     print(np.around(self.beta[:self.L], 2))
 
-                for model in self.data_model:
+                for midx, model in enumerate(self.data_model):
                     if not converge_workers_first or self.workers_converged: # TODO: test with type(model) == LSTM removed from condition
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
@@ -689,7 +689,8 @@ class BSC(object):
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
-                        print('integrated model predicted the following labels: ' + str(np.unique(np.argmax(C_data_initial, axis=1))))
+                        print('integrated model predicted the following labels: ' +
+                              str(np.unique(np.argmax(C_data_initial[midx], axis=1))))
 
                         model.alpha_data = self.A._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
                                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
