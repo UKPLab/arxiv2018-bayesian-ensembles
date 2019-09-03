@@ -1,10 +1,17 @@
 import os, json, numpy as np
+import sys
 
 from helpers import get_root_dir
 
-base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
+if len(sys.argv) > 1:
+    taskid = int(sys.argv[1])
+else:
+    taskid = 1
 
-taskid = 1
+if len(sys.argv) > 2:
+    base_models = sys.argv[2].split(',')
+else:
+    base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
 
 for classid in range(4):
     basemodels_str = '--'.join(base_models)
