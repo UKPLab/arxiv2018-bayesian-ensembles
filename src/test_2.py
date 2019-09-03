@@ -130,9 +130,15 @@ for classid in [0, 1, 2, 3]:
             print('Informativeness of base models:')
             print(competence)
 
-            best_base_idx = np.argmax(competence)
             names = get_anno_names(classid, preds, include_all=False)
+            print('Names of the annotators: %s' % str(names))
+            # bilstms == we only want to tune these right now
+            tuneables = [name.split('_') == 'bilstm-crf' for name in names]
+            competence[np.invert(tuneables)] = -np.inf # exclude the models that are not tuneable
+
+            best_base_idx = np.argmax(competence)
             best_base = names[best_base_idx]
+            print('Chosen for pre-training: %s' % best_base)
 
             # copy the model we want to fine-tune
             new_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i_tunedfor%s_basemodels%s/%s' %
