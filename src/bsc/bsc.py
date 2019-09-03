@@ -689,6 +689,8 @@ class BSC(object):
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
+                        print('integrated model predicted the following labels: ' % str(np.unique(np.argmax(C_data_initial, axis=1))))
+
                         model.alpha_data = self.A._post_alpha_data(self.q_t, model.C_data, model.alpha0_data,
                                                        model.alpha_data, doc_start, self.nscores, self.before_doc_idx)
                         model.lnPi_data = self.A._calc_q_pi(model.alpha_data)
