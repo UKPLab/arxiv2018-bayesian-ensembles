@@ -28,6 +28,8 @@ for classid in range(4):
         res = json.load(fh)
 
     for key in res:
+        print(np.array(res[key]).shape)
+
         f1tok = 100*np.mean(res[key], 0)[1]
         f1rel = 100*np.mean(res[key], 0)[3]
 

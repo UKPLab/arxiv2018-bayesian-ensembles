@@ -17,6 +17,7 @@ import json
 from base_models import run_base_models
 from bsc import bsc
 from helpers import evaluate, Dataset, get_anno_matrix, get_anno_names, get_root_dir
+from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
 from seq_taggers import embpath
 
 reload = True
@@ -172,9 +173,15 @@ for classid in [0, 1, 2, 3]:
             for tag in range(3):
                 C_data_initial[0][:, tag] = (annos[:, best_base_idx] == tag).astype(float)
 
+            Nde = len(dataset.degold[tedomain])
+            dev_sentences, _, _ = data_to_lstm_format(Nde, dataset.detext[tedomain],
+                                                      dataset.dedocstart[tedomain],
+                                                      dataset.degold[tedomain].flatten(), 3)
+
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
             probs, agg, pseq = bsc_model.run(annos_fixed, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
-                             converge_workers_first=True, uniform_priors=uniform_priors, C_data_initial=C_data_initial)
+                             converge_workers_first=True, uniform_priors=uniform_priors, C_data_initial=C_data_initial,
+                             dev_sentences=dev_sentences)
 
             preds['agg_bsc-seq'].append(agg.flatten().tolist())
 
