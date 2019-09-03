@@ -2,6 +2,10 @@
 Hypothesis 2: fine-tuning one of the models using aggregated label integrated training (ALI training, alint training,
 agg-int training, ITwAL) boosts performance.
 
+
+-- nans in dev score?
+-- names and indexes of annotators are not in the right order. Are we blanking out the wrong ones? Or do names just need sorting?
+
 '''
 import os
 import shutil
