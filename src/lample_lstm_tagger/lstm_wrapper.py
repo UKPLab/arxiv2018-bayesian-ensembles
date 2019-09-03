@@ -1,5 +1,6 @@
 import os
 import pickle
+import sys
 import time
 from collections import OrderedDict
 import itertools
@@ -201,6 +202,9 @@ class LSTMWrapper(object):
         # Build the model
         pickle_f_train = os.path.join(model.model_path, "ftrain.pkl")
         pickle_f_eval = os.path.join(model.model_path, "feval.pkl")
+
+        sys.setrecursionlimit(40000)
+
         if self.reload_from_disk and os.path.exists(pickle_f_train) and os.path.exists(pickle_f_eval):
             with open(pickle_f_train, 'rb') as fh:
                 f_train = pickle.load(fh)
