@@ -1,0 +1,5 @@
+*.aux
+/bayesian_annotator_combination.bbl
+/bayesian_annotator_combination.blg
+*.log 
+*.synctex.gz

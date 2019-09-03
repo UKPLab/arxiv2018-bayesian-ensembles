@@ -199,8 +199,8 @@ class LSTMWrapper(object):
         model.save_mappings(id_to_word, id_to_char, IOB_label)
 
         # Build the model
-        pickle_f_train = os.path.join(self.model_path, "ftrain.pkl")
-        pickle_f_eval = os.path.join(self.model_path, "feval.pkl")
+        pickle_f_train = os.path.join(self.model.model_path, "ftrain.pkl")
+        pickle_f_eval = os.path.join(self.model.model_path, "feval.pkl")
         if self.reload_from_disk and os.path.exists(pickle_f_train) and os.path.exists(pickle_f_eval):
             with open(pickle_f_train, 'rb') as fh:
                 f_train = pickle.load(fh)
