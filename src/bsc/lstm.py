@@ -90,6 +90,10 @@ class LSTM:
         freq_eval = 1
 
         if self.LSTMWrapper.model is None:
+            agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+            self.probs = probs
+            print('LSTM assigned class labels %s' % str(np.unique(agg)) )
+
             # the first update can use more epochs if we have allowed them
             n_epochs = self.max_epochs - ((self.max_vb_iters-1) * self.n_epochs_per_vb_iter) # the first iteration needs a bit more to move off the random initialisation
             if n_epochs < self.n_epochs_per_vb_iter:
@@ -127,9 +131,6 @@ class LSTM:
         if model_updated:
             agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
             self.probs = probs
-
-            _, self.dev_probs  = self.LSTMWrapper.predict_LSTM(self.dev_sentences)
-
             print('LSTM assigned class labels %s' % str(np.unique(agg)) )
         else:
             probs = self.probs
