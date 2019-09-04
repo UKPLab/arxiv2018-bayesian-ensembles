@@ -157,18 +157,19 @@ for classid in [3]: # 0, 1, 2, 3]:
             shutil.copytree(orig_dir, new_dir)
             print('copied %s to %s' % (orig_dir, new_dir))
 
+            static_annotators = np.arange(annos.shape[1])
+            static_annotators = static_annotators[static_annotators != best_base_idx]
+            print('Debugging: for now we are not removing the original labels.')
+            annos_fixed = annos#[:, static_annotators]
+            K = annos_fixed.shape[1]
+
             # create a new BSC instance with the LSTM data model and pass in the model directory.
-            bsc_model = bsc.BSC(L=3, K=K-1, max_iter=max_iter, before_doc_idx=1,
+            bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
                         alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
                         worker_model='seq', tagging_scheme='IOB2', data_model=['LSTM'], transition_model='HMM',
                         no_words=False, model_dir=new_dir, reload_lstm=True, embeddings_file=embpath)
             bsc_model.verbose = False
             bsc_model.max_internal_iters = 200
-
-            static_annotators = np.arange(annos.shape[1])
-            static_annotators = static_annotators[static_annotators != best_base_idx]
-            print('Debugging: for now we are not removing the original labels.')
-            annos_fixed = annos#[:, static_annotators]
 
             C_data_initial = [np.zeros((annos.shape[0], 3))]
             for tag in range(3):
