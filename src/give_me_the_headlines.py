@@ -35,7 +35,7 @@ for classid in range(4):
     with open(predfile, 'r') as fh:
         preds = json.load(fh)
 
-    dataset = Dataset(datadir, classid)
+    dataset = Dataset(datadir, classid, verbose=False)
 
     allgold = []
     alldocstart = []
@@ -49,6 +49,11 @@ for classid in range(4):
 
     res = {}
     for key in preds:
+
+        # we only show results of the aggregation methods, not base models
+        if 'agg_' not in preds:
+            continue
+
         cross_f1 = evaluate(np.concatenate(preds[key]),
                             allgold,
                             alldocstart,

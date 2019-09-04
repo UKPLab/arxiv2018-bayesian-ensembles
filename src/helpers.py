@@ -10,7 +10,7 @@ def get_root_dir():
     # return os.path.expanduser('~/data/bayesian_sequence_combination/')
     return './data/famulus/'
 
-def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tokens'):
+def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tokens', detailed=False):
 
     gold = np.ones(len(gold_all_types))
     gold[gold_all_types == (spantype * 2 + 2)] = 2
@@ -32,19 +32,19 @@ def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tok
         preds = preds_all_types
 
     if f1type == 'all':
+        if detailed:
+            print('Precision for classes I, O, B: ' + str(np.around(precision_score(gold, preds, average=None), 2)))
+            print('Recall for classes I, O, B:    ' + str(np.around(recall_score(gold, preds, average=None), 2)))
+            print('I to B confusion: %i' % np.sum((gold == 0) & (preds == 2)) )
+            print('I to O confusion: %i' % np.sum((gold == 0) & (preds == 1)))
+            print('B to I confusion: %i' % np.sum((gold == 2) & (preds == 0)))
+            print('B to O confusion: %i' % np.sum((gold == 2) & (preds == 1)))
+            print('O to I confusion: %i' % np.sum((gold == 1) & (preds == 0)))
+            print('O to B confusion: %i' % np.sum((gold == 1) & (preds == 2)))
 
-        print('Precision for classes I, O, B: ' + str(np.around(precision_score(gold, preds, average=None), 2)))
-        print('Recall for classes I, O, B:    ' + str(np.around(recall_score(gold, preds, average=None), 2)))
-        print('I to B confusion: %i' % np.sum((gold == 0) & (preds == 2)) )
-        print('I to O confusion: %i' % np.sum((gold == 0) & (preds == 1)))
-        print('B to I confusion: %i' % np.sum((gold == 2) & (preds == 0)))
-        print('B to O confusion: %i' % np.sum((gold == 2) & (preds == 1)))
-        print('O to I confusion: %i' % np.sum((gold == 1) & (preds == 0)))
-        print('O to B confusion: %i' % np.sum((gold == 1) & (preds == 2)))
-
-        print('Correct I: %i' % np.sum((gold == 0) & (preds == 0)))
-        print('Correct O: %i' % np.sum((gold == 1) & (preds == 1)))
-        print('Correct B: %i' % np.sum((gold == 2) & (preds == 2)))
+            print('Correct I: %i' % np.sum((gold == 0) & (preds == 0)))
+            print('Correct O: %i' % np.sum((gold == 1) & (preds == 1)))
+            print('Correct B: %i' % np.sum((gold == 2) & (preds == 2)))
 
         return [
             f1_score(gold, preds, average='macro'),
