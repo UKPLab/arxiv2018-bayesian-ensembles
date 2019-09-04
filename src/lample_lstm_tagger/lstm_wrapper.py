@@ -134,8 +134,7 @@ class LSTMWrapper(object):
 
         return niter_no_imprv, best_dev, dev_score
 
-    def train_LSTM(self, all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, IOB_label, nclasses,
-                   n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3, crf_probs=False, best_dev=-np.inf):
+    def load_LSTM(self, crf_probs):
 
         # parameters
         parameters = OrderedDict()
@@ -174,32 +173,6 @@ class LSTMWrapper(object):
         if self.reload_from_disk:
             model.reload()
 
-        # Data parameters
-        lower = parameters['lower']
-
-        dico_words, word_to_id, id_to_word = word_mapping(all_sentences, lower)
-        dico_words_train = dico_words
-
-        # Create a dictionary and a mapping for words / POS tags / tags
-        dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
-
-        # Index data
-        train_data, _ = prepare_dataset(
-            train_sentences, word_to_id, char_to_id, IOB_map, lower
-        )
-        dev_data, dev_tags = prepare_dataset(
-            dev_sentences, word_to_id, char_to_id, IOB_map, lower
-        )
-        if dev_labels is None:
-            dev_tags = np.array(dev_tags).flatten()
-            dev_tags = np.array([IOB_map[tag] for tag in dev_tags])
-        else:
-            dev_tags = np.array(dev_labels).flatten()
-
-        # Save the mappings to disk
-        print('Saving the mappings to disk...')
-        model.save_mappings(id_to_word, id_to_char, IOB_label)
-
         # Build the model
         pickle_f_train = os.path.join(model.model_path, "ftrain.pkl")
         pickle_f_eval = os.path.join(model.model_path, "feval.pkl")
@@ -219,6 +192,43 @@ class LSTMWrapper(object):
 
             with open(pickle_f_eval, 'wb') as fh:
                 pickle.dump(f_eval, fh)
+
+        return model, f_train, f_eval, parameters
+
+    def train_LSTM(self, all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, IOB_label, nclasses,
+                   n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3, crf_probs=False, best_dev=-np.inf):
+
+        model, f_train, f_eval, parameters = self.load_LSTM(crf_probs)
+
+        # Data parameters
+        self.id_to_tag = IOB_label
+
+        dico_words, word_to_id, id_to_word = word_mapping(all_sentences, parameters['lower'])
+        dico_words_train = dico_words
+
+        # Create a dictionary and a mapping for words / POS tags / tags
+        dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
+
+        if self.reload_from_disk:
+            word_to_id, char_to_id, IOB_map = model.reload_mappings()
+        else:
+            # Save the mappings to disk
+            print('Saving the mappings to disk...')
+            model.save_mappings(id_to_word, id_to_char, IOB_label)
+
+        # Index data
+        train_data, _ = prepare_dataset(
+            train_sentences, word_to_id, char_to_id, IOB_map, parameters['lower']
+        )
+        dev_data, dev_tags = prepare_dataset(
+            dev_sentences, word_to_id, char_to_id, IOB_map, parameters['lower']
+        )
+        if dev_labels is None:
+            dev_tags = np.array(dev_tags).flatten()
+            dev_tags = np.array([IOB_map[tag] for tag in dev_tags])
+        else:
+            dev_tags = np.array(dev_labels).flatten()
+
         #
         # Train network
         #
@@ -235,7 +245,6 @@ class LSTMWrapper(object):
         self.f_eval = f_eval
         self.dev_sentences = dev_sentences
         self.dev_tags = dev_tags
-        self.IOB_label = IOB_label
         self.IOB_map = IOB_map
         self.model = model
         self.nclasses = nclasses

@@ -78,6 +78,9 @@ def create_mapping(dico):
     item_to_id = {v: k for k, v in list(id_to_item.items())}
     return item_to_id, id_to_item
 
+def reverse_mapping(id_to_item):
+    return {v: k for k, v in list(id_to_item.items())}
+
 
 def zero_digits(s):
     """

@@ -7,7 +7,7 @@ import theano.tensor as T
 import codecs
 import pickle
 
-from lample_lstm_tagger.utils import shared, set_values, get_name
+from lample_lstm_tagger.utils import shared, set_values, get_name, reverse_mapping
 from lample_lstm_tagger.nn import HiddenLayer, EmbeddingLayer, DropoutLayer, LSTM, forward
 from lample_lstm_tagger.optimization import Optimization
 
@@ -73,6 +73,8 @@ class Model(object):
         self.id_to_word = mappings['id_to_word']
         self.id_to_char = mappings['id_to_char']
         self.id_to_tag = mappings['id_to_tag']
+
+        return reverse_mapping(self.id_to_word), reverse_mapping(self.id_to_char), reverse_mapping(self.id_to_tag)
 
     def add_component(self, param):
         """

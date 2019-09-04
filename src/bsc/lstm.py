@@ -75,6 +75,9 @@ class LSTM:
             labels = np.argmax(labels, axis=1) # uses the mode
 
         print('Training LSTM on labels: ' + str(np.unique(labels)))
+        print(np.sum(labels == 0))
+        print(np.sum(labels == 1))
+        print(np.sum(labels == 2))
 
         l = 0
         labels_by_sen = []
@@ -83,6 +86,7 @@ class LSTM:
             labels_by_sen.append(sen_labels)
             for t, tok in enumerate(sen):
                 self.sentences[s][t][1] = self.IOB_label[labels[l]]
+                print(self.sentences[s][t][1])
                 sen_labels.append(self.IOB_label[labels[l]])
                 l += 1
 
