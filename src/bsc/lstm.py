@@ -126,6 +126,7 @@ class LSTM:
         # now make predictions for all sentences
         if model_updated:
             agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+            print(probs)
             self.probs = probs
             print('LSTM assigned class labels %s' % str(np.unique(agg)) )
         else:

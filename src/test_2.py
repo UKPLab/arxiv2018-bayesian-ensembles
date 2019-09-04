@@ -181,7 +181,7 @@ for classid in [0, 1, 2, 3]:
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
             probs, agg, pseq = bsc_model.run(annos_fixed, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
                              converge_workers_first=True, uniform_priors=uniform_priors, C_data_initial=C_data_initial,
-                             dev_sentences=dev_sentences)
+                             dev_sentences=dev_sentences, crf_probs=True)
 
             preds['agg_bsc-seq'].append(agg.flatten().tolist())
 
