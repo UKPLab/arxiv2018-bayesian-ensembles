@@ -74,6 +74,8 @@ class LSTM:
         if self.train_type == 'Bayes':
             labels = np.argmax(labels, axis=1) # uses the mode
 
+        print('Training LSTM on labels: ' + str(np.unique(labels)))
+
         l = 0
         labels_by_sen = []
         for s, sen in enumerate(self.sentences):
@@ -116,7 +118,7 @@ class LSTM:
             for epoch in range(n_epochs):
                 self.niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, self.niter_no_imprv,
                                                     best_dev, last_score,
-                                                    compute_dev=((epoch + self.completed_epochs + 1) % freq_eval)==0)
+                                                    compute_dev=(n_epochs>1) and ((epoch + self.completed_epochs + 1) % freq_eval)==0)
 
                 model_updated = True
 
@@ -131,6 +133,7 @@ class LSTM:
             print(probs)
             self.probs = probs
             print('LSTM assigned class labels %s' % str(np.unique(agg)) )
+            print('LSTM max prob labels %s' % str(np.argmax(probs, 1)))
         else:
             probs = self.probs
 

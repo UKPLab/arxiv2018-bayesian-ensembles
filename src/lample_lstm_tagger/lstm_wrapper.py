@@ -109,6 +109,7 @@ class LSTMWrapper(object):
 
         if compute_dev:
             agg, probs = self.predict_LSTM(self.dev_sentences)
+            print('Dev predictions include: ' + str(np.unique(agg)))
 
             dev_score = skm.f1_score(self.dev_tags, agg, average='macro')
 
