@@ -31,7 +31,7 @@ nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 dif
 base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
 
 #iterate through the types of span we want to predict
-for classid in [0, 1, 2, 3]:
+for classid in [3]: # 0, 1, 2, 3]:
 
     basemodels_str = '--'.join(base_models)
 
@@ -167,6 +167,7 @@ for classid in [0, 1, 2, 3]:
 
             static_annotators = np.arange(annos.shape[1])
             static_annotators = static_annotators[static_annotators != best_base_idx]
+            #print('Debugging: for now we are not removing the original labels.')
             annos_fixed = annos[:, static_annotators]
 
             C_data_initial = [np.zeros((annos.shape[0], 3))]

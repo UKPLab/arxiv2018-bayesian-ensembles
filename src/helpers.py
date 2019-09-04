@@ -179,4 +179,5 @@ class Dataset:
             if verbose:
                 print('LOADING: Domain %s has %i test docs and %i tokens' % (subset, Ndoc, Ntargette))
 
-        print('LOADING: Total number of documents in the dataset: %i' % totaldocs)
+        if verbose:
+            print('LOADING: Total number of documents in the dataset: %i' % totaldocs)
