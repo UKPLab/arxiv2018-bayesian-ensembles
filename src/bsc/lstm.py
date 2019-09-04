@@ -95,6 +95,11 @@ class LSTM:
         max_niter_no_imprv = 5
         freq_eval = 1
 
+        self.LSTMWrapper.load_LSTM(self.crf_probs)
+        agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
+        print('LSTM assigned class labels %s' % str(np.unique(agg)))
+        print('LSTM max prob labels %s' % str(np.argmax(probs, 0)))
+
         if self.LSTMWrapper.model is None:
             # the first update can use more epochs if we have allowed them
             n_epochs = self.max_epochs - ((self.max_vb_iters-1) * self.n_epochs_per_vb_iter) # the first iteration needs a bit more to move off the random initialisation
