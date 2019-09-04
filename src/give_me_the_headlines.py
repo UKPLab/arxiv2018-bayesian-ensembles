@@ -62,8 +62,8 @@ for classid in range(4):
 
         # f1tok = 100*np.mean(res[key], 0)[1]
         # f1rel = 100*np.mean(res[key], 0)[3]
-        f1tok = cross_f1[1]
-        f1rel = cross_f1[3]
+        f1tok = 100 * cross_f1[1]
+        f1rel = 100 * cross_f1[3]
 
         print('Spantype %i: token f1 = %.1f; relaxed span f1 = %.1f, %s'
           % (classid, f1tok, f1rel, key))
