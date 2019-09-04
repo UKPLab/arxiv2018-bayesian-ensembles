@@ -322,7 +322,10 @@ class Model(object):
 
             b_id = theano.shared(value=np.array([n_tags], dtype=np.int32))
             e_id = theano.shared(value=np.array([n_tags + 1], dtype=np.int32))
-            padded_tags_ids = T.concatenate([b_id, tag_ids, e_id], axis=0)
+            if hard_training_labels:
+                padded_tags_ids = T.concatenate([b_id, tag_ids, e_id], axis=0)
+            else:
+                padded_tags_ids = T.concatenate([b_id, tag_dist, e_id], axis=0)
             real_path_score += transitions[
                 padded_tags_ids[T.arange(s_len + 1)],
                 padded_tags_ids[T.arange(s_len + 1) + 1]

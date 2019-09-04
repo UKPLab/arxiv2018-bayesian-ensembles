@@ -22,7 +22,7 @@ totals_rel = {}
 for classid in range(4):
     basemodels_str = '--'.join(base_models)
 
-    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task%i_type%i_basemodels%s'
+    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task%i_type%i_basemodels%s_crfprobs'
                       % (taskid, classid, basemodels_str))
 
     # resfile = os.path.join(resdir, 'res.json') this one contains the macro F1 scores, but this leads to some dodgy

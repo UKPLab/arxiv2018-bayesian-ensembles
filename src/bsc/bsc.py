@@ -671,7 +671,7 @@ class BSC(object):
                     print(np.around(self.beta[:self.L], 2))
 
                 for midx, model in enumerate(self.data_model):
-                    if not converge_workers_first or self.workers_converged: # TODO: test with type(model) == LSTM removed from condition
+                    if not converge_workers_first or self.workers_converged:
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         if model.train_type == 'Bayes':

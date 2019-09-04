@@ -134,7 +134,7 @@ class LSTMWrapper(object):
 
         return niter_no_imprv, best_dev, dev_score
 
-    def load_LSTM(self, crf_probs):
+    def load_LSTM(self, crf_probs, all_sentences, IOB_label, nclasses):
 
         # parameters
         parameters = OrderedDict()
@@ -163,6 +163,7 @@ class LSTMWrapper(object):
 
         #lr_decay = 0.9 # not currently used
 
+
         if not os.path.exists(self.models_path):
             os.makedirs(self.models_path)
 
@@ -172,6 +173,20 @@ class LSTMWrapper(object):
 
         if self.reload_from_disk:
             model.reload()
+
+        self.id_to_tag = IOB_label
+
+        dico_words, word_to_id, id_to_word = word_mapping(all_sentences, parameters['lower'])
+
+        # Create a dictionary and a mapping for words / POS tags / tags
+        dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
+
+        if self.reload_from_disk:
+            word_to_id, char_to_id, IOB_map = model.reload_mappings()
+        else:
+            # Save the mappings to disk
+            print('Saving the mappings to disk...')
+            model.save_mappings(id_to_word, id_to_char, IOB_label)
 
         # Build the model
         pickle_f_train = os.path.join(model.model_path, "ftrain.pkl")
@@ -193,35 +208,26 @@ class LSTMWrapper(object):
             with open(pickle_f_eval, 'wb') as fh:
                 pickle.dump(f_eval, fh)
 
-        return model, f_train, f_eval, parameters
+        self.model = model
+        self.parameters = parameters
+        self.f_train = f_train
+        self.f_eval = f_eval
+        self.nclasses = nclasses
+
+        return word_to_id, dico_words, char_to_id
 
     def train_LSTM(self, all_sentences, train_sentences, dev_sentences, dev_labels, IOB_map, IOB_label, nclasses,
                    n_epochs=MAX_NO_EPOCHS, freq_eval=100, max_niter_no_imprv=3, crf_probs=False, best_dev=-np.inf):
 
-        model, f_train, f_eval, parameters = self.load_LSTM(crf_probs)
+        word_to_id, dico_words, char_to_id = self.load_LSTM(crf_probs, all_sentences, IOB_label, nclasses)
 
         # Data parameters
-        self.id_to_tag = IOB_label
-
-        dico_words, word_to_id, id_to_word = word_mapping(all_sentences, parameters['lower'])
-        dico_words_train = dico_words
-
-        # Create a dictionary and a mapping for words / POS tags / tags
-        dico_chars, char_to_id, id_to_char = char_mapping(all_sentences)
-
-        if self.reload_from_disk:
-            word_to_id, char_to_id, IOB_map = model.reload_mappings()
-        else:
-            # Save the mappings to disk
-            print('Saving the mappings to disk...')
-            model.save_mappings(id_to_word, id_to_char, IOB_label)
-
         # Index data
         train_data, _ = prepare_dataset(
-            train_sentences, word_to_id, char_to_id, IOB_map, parameters['lower']
+            train_sentences, word_to_id, char_to_id, IOB_map, self.parameters['lower']
         )
         dev_data, dev_tags = prepare_dataset(
-            dev_sentences, word_to_id, char_to_id, IOB_map, parameters['lower']
+            dev_sentences, word_to_id, char_to_id, IOB_map, self.parameters['lower']
         )
         if dev_labels is None:
             dev_tags = np.array(dev_tags).flatten()
@@ -232,7 +238,12 @@ class LSTMWrapper(object):
         #
         # Train network
         #
-        singletons = set([word_to_id[k] for k, v in list(dico_words_train.items()) if v == 1])
+        # add new words to the dictionary
+        for k in dico_words:
+            if k not in word_to_id:
+                word_to_id[k] = len(word_to_id)
+
+        singletons = set([word_to_id[k] for k, v in list(dico_words.items()) if v == 1])
 
         # evaluate on dev every freq_eval steps
         last_score = best_dev
@@ -240,14 +251,9 @@ class LSTMWrapper(object):
 
         self.train_data = train_data
         self.singletons = singletons
-        self.parameters = parameters
-        self.f_train = f_train
-        self.f_eval = f_eval
         self.dev_sentences = dev_sentences
         self.dev_tags = dev_tags
         self.IOB_map = IOB_map
-        self.model = model
-        self.nclasses = nclasses
 
         self.best_model_saved = False # reset the flag so we don't load old models
 
@@ -260,9 +266,9 @@ class LSTMWrapper(object):
                 break
 
         if self.best_model_saved:
-            model.reload()
+            self.model.reload()
 
-        return model, f_eval, best_dev
+        return self.model, self.f_eval, best_dev
 
     def predict_LSTM(self, test_sentences):
         # Load existing model

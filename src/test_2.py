@@ -31,7 +31,7 @@ nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 dif
 base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
 
 #iterate through the types of span we want to predict
-for classid in [3]: # 0, 1, 2, 3]:
+for classid in [2, 3]: # 0, 1, 2, 3]:
 
     basemodels_str = '--'.join(base_models)
 
@@ -114,7 +114,7 @@ for classid in [3]: # 0, 1, 2, 3]:
             bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
                         alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
                         worker_model='seq', tagging_scheme='IOB2', data_model=[], transition_model='HMM',
-                        no_words=False)
+                        no_words=False, eps=1e-2)
             bsc_model.verbose = False
             bsc_model.max_internal_iters = max_iter
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
@@ -127,21 +127,25 @@ for classid in [3]: # 0, 1, 2, 3]:
             # now we compute the base model informativeness
             competence = bsc_model.annotator_accuracy()
             competence[np.all(annos == -1, axis=0)] = 0  # we don't choose the model that has no labels for this domain
-            print('Accuracy of base models:')
-            print(competence)
+            # print('Accuracy of base models:')
+            # print(competence)
 
             competence = bsc_model.informativeness()
             competence[np.all(annos == -1, axis=0)] = -np.inf  # we don't choose the model that has no labels for this domain
-            print('Informativeness of base models:')
-            print(competence)
+            # print('Informativeness of base models:')
+            # print(competence)
 
             names = get_anno_names(classid, preds, include_all=False)
             print('Names of the annotators: %s' % str(names))
             # bilstms == we only want to tune these right now
-            tuneables = [name.split('_') == 'bilstm-crf' for name in names]
+            tuneables = [name.split('_')[0] == 'bilstm-crf' for name in names]
             competence[np.invert(tuneables)] = -np.inf # exclude the models that are not tuneable
+            print('Informativeness of tuneable base models:')
+            print(competence)
 
             best_base_idx = np.argmax(competence)
+            print(best_base_idx)
+
             best_base = names[best_base_idx]
             print('Chosen for pre-training: %s' % best_base)
 
@@ -157,18 +161,24 @@ for classid in [3]: # 0, 1, 2, 3]:
             shutil.copytree(orig_dir, new_dir)
             print('copied %s to %s' % (orig_dir, new_dir))
 
+            # fine tuning will use a different setting for the BILSTM CRF
+            model_dirs = os.listdir(new_dir)
+            for model_dir in model_dirs:
+                new_model_dir = model_dir.replace('crf_probs=False', 'crf_probs=True')
+                shutil.copytree(os.path.join(new_dir, model_dir), os.path.join(new_dir, new_model_dir))
+
             static_annotators = np.arange(annos.shape[1])
             static_annotators = static_annotators[static_annotators != best_base_idx]
-            print('Debugging: for now we are not removing the original labels.')
-            annos_fixed = annos#[:, static_annotators]
+            # print('Debugging: for now we are not removing the original labels.')
+            annos_fixed = annos[:, static_annotators]
             K = annos_fixed.shape[1]
 
             # create a new BSC instance with the LSTM data model and pass in the model directory.
             bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
                         alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
                         worker_model='seq', tagging_scheme='IOB2', data_model=['LSTM'], transition_model='HMM',
-                        no_words=False, model_dir=new_dir, reload_lstm=True, embeddings_file=embpath)
-            bsc_model.verbose = False
+                        no_words=False, model_dir=new_dir, reload_lstm=True, embeddings_file=embpath, eps=1e-2)
+            bsc_model.verbose = True
             bsc_model.max_internal_iters = 200
 
             C_data_initial = [np.zeros((annos.shape[0], 3))]
@@ -182,7 +192,7 @@ for classid in [3]: # 0, 1, 2, 3]:
 
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
             probs, agg, pseq = bsc_model.run(annos_fixed, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
-                             converge_workers_first=True, uniform_priors=uniform_priors, C_data_initial=C_data_initial,
+                             converge_workers_first=False, uniform_priors=uniform_priors, C_data_initial=C_data_initial,
                              dev_sentences=dev_sentences, crf_probs=True)
 
             preds['agg_bsc-seq'].append(agg.flatten().tolist())
