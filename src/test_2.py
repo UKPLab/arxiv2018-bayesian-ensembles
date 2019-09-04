@@ -167,8 +167,8 @@ for classid in [3]: # 0, 1, 2, 3]:
 
             static_annotators = np.arange(annos.shape[1])
             static_annotators = static_annotators[static_annotators != best_base_idx]
-            #print('Debugging: for now we are not removing the original labels.')
-            annos_fixed = annos[:, static_annotators]
+            print('Debugging: for now we are not removing the original labels.')
+            annos_fixed = annos#[:, static_annotators]
 
             C_data_initial = [np.zeros((annos.shape[0], 3))]
             for tag in range(3):
