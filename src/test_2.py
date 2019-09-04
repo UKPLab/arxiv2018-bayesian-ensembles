@@ -183,12 +183,12 @@ for classid in [0, 1, 2, 3]:
                              converge_workers_first=True, uniform_priors=uniform_priors, C_data_initial=C_data_initial,
                              dev_sentences=dev_sentences, crf_probs=True)
 
-            preds['agg_bsc-seq'].append(agg.flatten().tolist())
+            preds['agg_bsc-seq-probs'].append(agg.flatten().tolist())
 
             aggprob = np.argmax(probs, axis=1)
 
             res_s = evaluate(agg, dataset.tegold[tedomain], dataset.tedocstart[tedomain], f1type='all')
-            res['agg_bsc-seq'].append(res_s)
+            res['agg_bsc-seq-probs'].append(res_s)
             print('   Spantype %i: F1 score=%s for BSC-seq+CVS, tested on %s' % (classid, str(np.around(res_s, 2)), tedomain))
 
         # save all the new results
