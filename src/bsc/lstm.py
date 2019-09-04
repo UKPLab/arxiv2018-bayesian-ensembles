@@ -86,7 +86,7 @@ class LSTM:
 
         model_updated = False
 
-        niter_no_imprv = 2
+        max_niter_no_imprv = 5
         freq_eval = 1
 
         if self.LSTMWrapper.model is None:
@@ -100,10 +100,12 @@ class LSTM:
                                                                  self.dev_labels, self.IOB_map, self.IOB_label,
                                                                  self.nclasses, n_epochs, freq_eval=freq_eval,
                                                                  crf_probs=self.crf_probs,
-                                                                 max_niter_no_imprv=niter_no_imprv)
+                                                                 max_niter_no_imprv=max_niter_no_imprv)
 
             self.completed_epochs = n_epochs
             model_updated = True
+
+            self.niter_no_imprv = 0
 
         elif self.completed_epochs <= self.max_epochs:
             n_epochs = self.n_epochs_per_vb_iter  # for each bac iteration after the first
@@ -112,14 +114,14 @@ class LSTM:
             last_score = self.LSTMWrapper.last_score
 
             for epoch in range(n_epochs):
-                niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, niter_no_imprv,
+                self.niter_no_imprv, best_dev, last_score = self.LSTMWrapper.run_epoch(0, self.niter_no_imprv,
                                                     best_dev, last_score,
                                                     compute_dev=((epoch + self.completed_epochs + 1) % freq_eval)==0)
 
                 model_updated = True
 
-            if self.LSTMWrapper.best_model_saved: # check that we are actually saving models before loading the best one so far
-                self.LSTMWrapper.model.reload()
+            # if self.LSTMWrapper.best_model_saved: # check that we are actually saving models before loading the best one so far
+            #     self.LSTMWrapper.model.reload()
 
             self.completed_epochs += n_epochs
 
