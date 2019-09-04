@@ -52,6 +52,7 @@ for classid in range(4):
 
         # we only show results of the aggregation methods, not base models
         if 'agg_' not in preds:
+            print(key)
             continue
 
         cross_f1 = evaluate(np.concatenate(preds[key]),
