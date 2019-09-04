@@ -163,7 +163,7 @@ for classid in [0, 1, 2, 3]:
                         worker_model='seq', tagging_scheme='IOB2', data_model=['LSTM'], transition_model='HMM',
                         no_words=False, model_dir=new_dir, reload_lstm=True, embeddings_file=embpath)
             bsc_model.verbose = False
-            bsc_model.max_internal_iters = 5
+            bsc_model.max_internal_iters = 200
 
             static_annotators = np.arange(annos.shape[1])
             static_annotators = static_annotators[static_annotators != best_base_idx]
