@@ -1,7 +1,7 @@
 import os, json, numpy as np
 import sys
 
-from helpers import get_root_dir
+from helpers import get_root_dir, Dataset, evaluate
 
 if len(sys.argv) > 1:
     taskid = int(sys.argv[1])
@@ -13,6 +13,9 @@ if len(sys.argv) > 2:
 else:
     base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
 
+datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
+
+
 totals_tok = {}
 totals_rel = {}
 
@@ -22,16 +25,40 @@ for classid in range(4):
     resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task%i_type%i_basemodels%s'
                       % (taskid, classid, basemodels_str))
 
-    resfile = os.path.join(resdir, 'res.json')
+    # resfile = os.path.join(resdir, 'res.json') this one contains the macro F1 scores, but this leads to some dodgy
+    # results in small cases with almost no instances of a particular class.
+    # with open(resfile, 'r') as fh:
+    #     res = json.load(fh)
 
-    with open(resfile, 'r') as fh:
-        res = json.load(fh)
+    # Open the predictions and compute the micro F1 scores:
+    predfile = os.path.join(resdir, 'preds.json')
+    with open(predfile, 'r') as fh:
+        preds = json.load(fh)
 
-    for key in res:
-        print(np.array(res[key]).shape)
+    dataset = Dataset(datadir, classid)
 
-        f1tok = 100*np.mean(res[key], 0)[1]
-        f1rel = 100*np.mean(res[key], 0)[3]
+    allgold = []
+    alldocstart = []
+
+    for didx, tedomain in enumerate(dataset.domains):
+        allgold.append(dataset.tegold[tedomain])
+        alldocstart.append(dataset.tedocstart[tedomain])
+
+    allgold = np.concatenate(allgold)
+    alldocstart = np.concatenate(alldocstart)
+
+    res = {}
+    for key in preds:
+        cross_f1 = evaluate(np.concatenate(preds[key]),
+                            allgold,
+                            alldocstart,
+                            f1type='all')
+
+
+        # f1tok = 100*np.mean(res[key], 0)[1]
+        # f1rel = 100*np.mean(res[key], 0)[3]
+        f1tok = cross_f1[1]
+        f1rel = cross_f1[3]
 
         print('Spantype %i: token f1 = %.1f; relaxed span f1 = %.1f, %s'
           % (classid, f1tok, f1rel, key))
