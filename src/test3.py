@@ -153,10 +153,11 @@ for classid in [0, 1, 2, 3]:
             nu0_factor = 0.1
 
             # now run IBCC
-            probs, _ = ibccvb(annos, nclasses, nu0_factor, alpha0_factor, alpha0_diags, max_iter, trlabels)
-            agg = np.argmax(probs, axis=1)
-            agg = agg[:N] # ignore the training items
-            preds['agg_ibcc'][didx].append(agg.flatten().tolist())
+            if rerun or 'agg_ibcc' not in preds or len(preds['agg_ibcc'][didx]) <= b:
+                probs, _ = ibccvb(annos, nclasses, nu0_factor, alpha0_factor, alpha0_diags, max_iter, trlabels)
+                agg = np.argmax(probs, axis=1)
+                agg = agg[:N] # ignore the training items
+                preds['agg_ibcc'][didx].append(agg.flatten().tolist())
 
             # -------------------------------------------------------------------------------------------------------------
 
@@ -190,7 +191,7 @@ for classid in [0, 1, 2, 3]:
 
     for b in range(nbatches):
         res['agg_ibcc'].append(evaluate(np.concatenate(np.array(preds['agg_ibcc'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
-        res['agg_bsc-seq'].append(evaluate(np.concatenate(np.array(preds['agg_bsc-seq'])[:, b], axis=0), allgold, alldocstart, spantype=classid, f1type='all'))
+        res['agg_bsc-seq'].append(evaluate(np.concatenate(np.array(preds['agg_bsc-seq'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
         res['baseline_every'].append(evaluate(np.concatenate(np.array(preds['baseline_every'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
         res['agg_MV'].append(evaluate(np.concatenate(np.array(preds['agg_MV'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
 
@@ -221,27 +222,29 @@ for classid in [0, 1, 2, 3]:
 # plot results
 import matplotlib.pyplot as plt
 
-plt.figure()
+plt.figure(figsize=[4,3])
 # take the mean across the four different classes
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 1], label='IBCC')
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 1], label='BSC-seq')
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 1], label='All-domain CRF')
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_mv, axis=0)[:, 1], label='MV')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 1], label='IBCC', marker='>', linestyle=':')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 1], label='BSC-seq', marker='o', linestyle='-.')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 1], label='All-domain CRF', marker='x', linestyle='--')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_mv, axis=0)[:, 1], label='MV', marker='D', linestyle='-')
 plt.xlabel('Number of training docs in target domain')
 plt.ylabel('F1 token-wise')
 plt.legend(loc='best')
 plt.ylim(0,60)
+plt.tight_layout()
 
 plt.savefig('results/test3_tokf1_%s.pdf' % uberdomain)
 
-plt.figure()
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 3], label='IBCC')
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 3], label='BSC-seq')
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 3], label='All-domain CRF')
-plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_mv, axis=0)[:, 3], label='MV')
+plt.figure(figsize=[4,3])
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 3], label='IBCC', marker='>', linestyle=':')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 3], label='BSC-seq', marker='o', linestyle='-.')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 3], label='All-domain CRF', marker='x', linestyle='--')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_mv, axis=0)[:, 3], label='MV', marker='D', linestyle='-')
 plt.xlabel('Number of training docs in target domain')
 plt.ylabel('F1 relaxed spans')
 plt.legend(loc='best')
 plt.ylim(0,60)
+plt.tight_layout()
 
 plt.savefig('results/test3_spanf1_%s.pdf' % uberdomain)

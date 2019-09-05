@@ -141,7 +141,7 @@ class lample:
 
         best_dev = -np.inf
 
-        for seed in np.random.randint(1, 100000, size=10):
+        for seed in np.random.randint(1, 100000, size=1): # previously tried 10 seeds
 
             np.random.seed(seed)
             random.seed(seed)
@@ -157,8 +157,8 @@ class lample:
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
             _, _, dev_score = labeller.train_LSTM(all_sentences, train_sentences, dev_sentences, delabels,
-                                                  IOB_map, IOB_label, self.nclasses, n_epochs=100, freq_eval=1,
-                                                  max_niter_no_imprv=5, crf_probs=False)
+                                                  IOB_map, IOB_label, self.nclasses, n_epochs=5, freq_eval=1,
+                                                  max_niter_no_imprv=5, crf_probs=False) # previously let the epochs run to 100
 
             print('Dev score = %f' % dev_score)
             if dev_score > best_dev:
