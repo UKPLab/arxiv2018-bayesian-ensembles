@@ -232,7 +232,7 @@ plt.ylabel('F1 token-wise')
 plt.legend(loc='best')
 plt.ylim(0,60)
 
-plt.savefig('results/test3_tokf1.pdf')
+plt.savefig('results/test3_tokf1_%s.pdf' % uberdomain)
 
 plt.figure()
 plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 3], label='IBCC')
@@ -244,4 +244,4 @@ plt.ylabel('F1 relaxed spans')
 plt.legend(loc='best')
 plt.ylim(0,60)
 
-plt.savefig('results/test3_spanf1.pdf')
+plt.savefig('results/test3_spanf1_%s.pdf' % uberdomain)

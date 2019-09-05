@@ -97,7 +97,7 @@ def run_base_models(dataset, spantype, uberdomain, base_model_str='flair', reloa
         os.mkdir(tmpdir)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    resdir = os.path.join(get_root_dir(), 'output/famulus_%_results_%s_spantype%i'
+    resdir = os.path.join(get_root_dir(), 'output/famulus_%s_results_%s_spantype%i'
                                 % (uberdomain, base_model_str, spantype))
     if not os.path.exists(resdir):
         os.mkdir(resdir)
