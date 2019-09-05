@@ -104,8 +104,14 @@ def append_training_labels(annos, basemodels_str, dataset, classid, didx, tedoma
     if 'bilstm-crf' in basemodels_str:
         otheridx = didx + 1 if (didx < len(dataset.domains) - 2) else (didx - 1)
         othername = 'bilstm-crf_%i_' % classid + dataset.domains[otheridx]
+        newname = 'bilstm-crf_%i_' % classid + tedomain
+        
+        if othername not in trpreds:
+            othername = 'bilstm-crf_%i__' % classid + dataset.domains[otheridx]
+            newname = 'bilstm-crf_%i_' % classid + tedomain
+
         Nother = len(trpreds[othername][didx])
-        trpreds['bilstm-crf_%i_' % classid + tedomain][didx] = (np.zeros(Nother) - 1).tolist()
+        trpreds[newname][didx] = (np.zeros(Nother) - 1).tolist()
         trannos, _ = get_anno_matrix(classid, trpreds, didx, include_all=False)
 
     # get the training labels for the training set
