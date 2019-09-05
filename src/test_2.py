@@ -60,7 +60,7 @@ for classid in [0, 1, 2, 3]:
         for classid2 in [0, 1, 2, 3]:
             if classid2 != classid:
                 continue
-            
+
             dataset2 = Dataset(datadir, classid2)
             if classid2 == classid:
                 dataset = dataset2
