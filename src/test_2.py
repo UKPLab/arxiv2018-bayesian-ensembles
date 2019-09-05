@@ -58,6 +58,9 @@ for classid in [0, 1, 2, 3]:
     for base_model_str in base_models:
 
         for classid2 in [0, 1, 2, 3]:
+            if classid2 != classid:
+                continue
+            
             dataset2 = Dataset(datadir, classid2)
             if classid2 == classid:
                 dataset = dataset2
@@ -78,7 +81,7 @@ for classid in [0, 1, 2, 3]:
                     print('Processing model type %s, base labeller %s we found %i sets of test results' %
                       (base_model_str, key, ntest_domains))
 
-                new_key = base_model_str + '_' + str(classid2) + '__' + key
+                new_key = base_model_str + '_' + str(classid2) + '_' + key
 
                 preds[new_key] = basepreds[key]
                 trpreds[new_key] = basetrpreds[key]
