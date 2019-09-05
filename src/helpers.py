@@ -86,9 +86,6 @@ def get_anno_matrix(spantype, preds, didx, include_all=False):
         if not include_all and int(base.split('_')[1]) != spantype:
             continue
 
-        print(base)
-        print(len(preds[base][didx]))
-
         annos.append(np.array(preds[base][didx])[:, None])
 
         if include_all and int(base.split('_')[1]) != spantype:

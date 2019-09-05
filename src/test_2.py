@@ -81,7 +81,7 @@ for classid in [0, 1, 2, 3]:
                     print('Processing model type %s, base labeller %s we found %i sets of test results' %
                       (base_model_str, key, ntest_domains))
 
-                new_key = base_model_str + '_' + str(classid2) + '_' + key
+                new_key = base_model_str + '_' + str(classid2) + '__' + key
 
                 preds[new_key] = basepreds[key]
                 trpreds[new_key] = basetrpreds[key]
