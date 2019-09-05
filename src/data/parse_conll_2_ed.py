@@ -84,7 +84,7 @@ def load_file(file_name, positional_dict=None):
 
     return positional_dict
 
-rootdir = os.path.expanduser('~/data/bayesian_sequence_combination/data/famulus_TEd')
+rootdir = os.path.expanduser('./data/famulus/data/famulus_MEd') # TEd')
 
 positional_dict = {
     'O': 1,

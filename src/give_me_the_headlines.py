@@ -20,9 +20,16 @@ totals_tok = {}
 totals_rel = {}
 
 for classid in range(0,4):
+    class_tok = {}
+    class_rel = {}
+
     basemodels_str = '--'.join(base_models)
 
-    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task%i_type%i_basemodels%s_crfprobs'
+    if taskid == 0:
+        resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_results_%s_spantype%i'
+                              % (base_models[0], classid))
+    else:
+        resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task%i_type%i_basemodels%s' # _crfprobs
                       % (taskid, classid, basemodels_str))
 
     # resfile = os.path.join(resdir, 'res.json') this one contains the macro F1 scores, but this leads to some dodgy
@@ -51,7 +58,7 @@ for classid in range(0,4):
     for key in preds:
 
         # we only show results of the aggregation methods, not base models
-        if 'agg_' not in key:
+        if (taskid > 0 and 'agg_' not in key) or len(preds[key]) == 0:
             continue
 
         cross_f1 = evaluate(np.concatenate(preds[key]),
@@ -74,6 +81,31 @@ for classid in range(0,4):
             totals_tok[key] += f1tok
             totals_rel[key] += f1rel
 
+        if key not in class_tok:
+            class_tok[key] = f1tok
+            class_rel[key] = f1rel
+        else:
+            class_tok[key] += f1tok
+            class_rel[key] += f1rel
+
+    totals_tok_cases = 0
+    totals_rel_cases = 0
+    for key in class_tok:
+        if taskid == 0 and 'Case' in key:
+            totals_tok_cases += class_tok[key]
+            totals_rel_cases += class_rel[key]
+
+    print('Spantype %i over all cases: %.1f, %.1f' % (classid, totals_tok_cases / 8, totals_rel_cases / 8))
+
+totals_tok_cases = 0
+totals_rel_cases = 0
+
 for key in totals_tok:
     print('Mean: token f1 = %.1f; relaxed span f1 = %.1f, %s' %
           (totals_tok[key] / 4.0, totals_rel[key] / 4.0, key))
+
+    if taskid == 0 and 'Case' in key:
+        totals_tok_cases += totals_tok[key] / 4.0
+        totals_rel_cases += totals_rel[key] / 4.0
+
+print('Mean over all cases: %.1f, %.1f' % (totals_tok_cases / 8, totals_rel_cases / 8))

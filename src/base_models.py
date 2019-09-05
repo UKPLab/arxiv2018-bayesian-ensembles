@@ -300,6 +300,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
                     preds['a'].append(preds_s.tolist())
                     preds[domain].append((np.zeros(len(preds_s)) - 1).tolist())  # no predictions
                     trpreds[domain].append((np.zeros(len(trpreds_s)) - 1).tolist())  # no predictions
+
                 else:
                     preds[domain].append(preds_s.tolist())
                     trpreds[domain].append(trpreds_s.tolist())

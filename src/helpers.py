@@ -12,6 +12,8 @@ def get_root_dir():
 
 def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tokens', detailed=False):
 
+    preds_all_types = np.array(preds_all_types)
+
     gold = np.ones(len(gold_all_types))
     gold[gold_all_types == (spantype * 2 + 2)] = 2
 
@@ -29,7 +31,11 @@ def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tok
         else:
             preds[preds_all_types == (spantype * 2 + 1)] = 0
     else:
-        preds = preds_all_types
+        preds = np.array(preds_all_types)
+
+    # only consider the points where there are real prediction
+    gold = gold[preds != -1]
+    preds = preds[preds != -1]
 
     if f1type == 'all':
         if detailed:
@@ -115,9 +121,6 @@ def append_training_labels(annos, basemodels_str, dataset, classid, didx, tedoma
 
             Nother = len(trpreds[othername][didx])
             trpreds[newname][didx] = (np.zeros(Nother) - 1).tolist()
-            print(trpreds.keys())
-            print(Nother)
-            print(newname)
         trannos, _ = get_anno_matrix(classid, trpreds, didx, include_all=False)
 
     # get the training labels for the training set

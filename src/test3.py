@@ -15,8 +15,8 @@ from bsc import bsc
 from helpers import evaluate, Dataset, get_anno_matrix, get_root_dir, append_training_labels
 
 reload = True
-rerun_aggregators = True
 verbose = False
+rerun = False
 
 datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
 
@@ -43,7 +43,7 @@ for classid in [0, 1, 2, 3]:
     trpredfile = os.path.join(resdir, 'trpreds.json')
     resfile = os.path.join(resdir, 'res.json')
 
-    if reload and not rerun_aggregators and os.path.exists(predfile):
+    if reload and os.path.exists(predfile):
         with open(predfile, 'r') as fh:
             preds = json.load(fh)
 
@@ -82,15 +82,26 @@ for classid in [0, 1, 2, 3]:
             trpreds[new_key] = basetrpreds[key]
 
     preds['agg_ibcc'] = []
-    preds['agg_bsc-seq'] = []
+    if 'agg_bsc-seq' not in preds or rerun:
+        preds['agg_bsc-seq'] = []
+    else:
+        preds['agg_bsc-seq'] = preds['agg_bsc-seq'][:8]
+    preds['baseline_every'] = []
+    preds['agg_MV'] = []
 
     res['agg_ibcc'] = []
     res['agg_bsc-seq'] = []
     res['baseline_every'] = []
     res['agg_MV'] = []
 
+    allgold = []
+    alldocstart = []
+
     # Now we do a simulation with different amounts of data from the target domain
     for didx, tedomain in enumerate(dataset.domains):
+
+        allgold.append(dataset.tegold[tedomain])
+        alldocstart.append(dataset.tedocstart[tedomain])
 
         N = len(dataset.tetext[tedomain]) # number of test points
         # First, put the base labellers into a table.
@@ -99,14 +110,11 @@ for classid in [0, 1, 2, 3]:
         nbatches = 6
 
         preds['agg_ibcc'].append([])
-        res['agg_ibcc'].append([])
-
-        preds['agg_bsc-seq'].append([])
-        res['agg_bsc-seq'].append([])
+        if len(preds['agg_bsc-seq']) <= didx or rerun:
+            preds['agg_bsc-seq'].append([])
 
         basepreds, basetrpreds, baseres = run_base_models(dataset, classid, base_model_str, reload)
-        res_every = evaluate(basepreds['baseline_every'][didx], dataset.tegold[tedomain], dataset.tedocstart[tedomain])
-        res['baseline_every'].append([])
+        preds['baseline_every'].append([])
 
         votes, _ = get_anno_matrix(classid, preds, didx)
         counts = np.zeros((votes.shape[0], 3))
@@ -114,15 +122,14 @@ for classid in [0, 1, 2, 3]:
             counts[:, c] = np.sum(votes==c, axis=1)
 
         mv = np.argmax(counts, axis=1)
-        res_mv = evaluate(mv, dataset.tegold[tedomain], dataset.tedocstart[tedomain])
-        res['agg_MV'].append([])
+        preds['agg_MV'].append([])
 
         # take the training labels for aggregation methods from the target domain's training set.
         # -- this means that the test set for the target domain stays the same.
         for b in range(0, nbatches):
 
-            res['baseline_every'][didx].append(res_every)
-            res['agg_MV'][didx].append(res_mv)
+            preds['baseline_every'][didx].append(basepreds['baseline_every'][didx])
+            preds['agg_MV'][didx].append(mv.tolist())
 
             # get the training labels for the training set
             annos, uniform_priors = get_anno_matrix(classid, preds, didx, include_all=False)
@@ -134,7 +141,7 @@ for classid in [0, 1, 2, 3]:
                 annos, docstart, text, trlabels = append_training_labels(annos, basemodels_str, dataset, classid, didx, tedomain, trpreds, 10)
             K = annos.shape[1]  # number of annotators
 
-            max_iter = 30
+            max_iter = 100
             alpha0_factor = 0.1
             alpha0_diags = 0.1
             nu0_factor = 0.1
@@ -145,40 +152,46 @@ for classid in [0, 1, 2, 3]:
             agg = agg[:N] # ignore the training items
             preds['agg_ibcc'][didx].append(agg.flatten().tolist())
 
-            res_s = evaluate(agg, dataset.tegold[tedomain], dataset.tedocstart[tedomain])
-            res['agg_ibcc'][didx].append(res_s)
-            print('F1 score=%s for IBCC with %i training docs on %s' % (str(res_s), b*batchsize, tedomain))
-
             # -------------------------------------------------------------------------------------------------------------
 
             alpha0_factor = 0.1
             alpha0_diags = 10
             nu0_factor = 0.1
 
-            # # now run BSC-seq
-            bsc_model = bsc.BSC(L=nclasses, K=K, max_iter=max_iter, before_doc_idx=1, inside_labels=[0],
-                            outside_labels=[1], beginning_labels=[2],
-                            alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
-                            worker_model='seq', tagging_scheme='IOB2', data_model=[], transition_model='HMM',
-                            no_words=False)
+            if rerun or 'agg_bsc-seq' not in preds or len(preds['agg_bsc-seq'][didx]) <= b:
+                # # now run BSC-seq
+                bsc_model = bsc.BSC(L=nclasses, K=K, max_iter=max_iter, before_doc_idx=1,
+                                alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
+                                worker_model='seq', tagging_scheme='IOB2', data_model=[], transition_model='HMM',
+                                no_words=False)
 
-            bsc_model.verbose = False
-            bsc_model.max_internal_iters = max_iter
+                bsc_model.verbose = False
+                bsc_model.max_internal_iters = max_iter
 
-            probs, agg, pseq = bsc_model.run(annos, docstart, text, converge_workers_first=False, gold_labels=trlabels)
-            agg = agg[:N] # forget the training points
-            preds['agg_bsc-seq'][didx].append(agg.flatten().tolist())
+                probs, agg, pseq = bsc_model.run(annos, docstart, text, converge_workers_first=False, gold_labels=trlabels)
+                agg = agg[:N] # forget the training points
+                preds['agg_bsc-seq'][didx].append(agg.flatten().tolist())
 
-            res_s = evaluate(agg, dataset.tegold[tedomain], dataset.tedocstart[tedomain])
-            res['agg_bsc-seq'][didx].append(res_s)
-
-            print('F1 score=%s for BSC-seq with %i training docs on %s' % (str(res_s), b*batchsize, tedomain))
             # -------------------------------------------------------------------------------------------------------------
 
-    means_ibcc.append(np.mean(np.array(res['agg_ibcc']), axis=0))
-    means_bsc.append(np.mean(np.array(res['agg_bsc-seq']), axis=0))
-    means_every.append(np.mean(np.array(res['baseline_every']), axis=0))
-    means_mv.append(np.mean(np.array(res['agg_MV']), axis=0))
+    allgold = np.concatenate(allgold)
+    alldocstart = np.concatenate(alldocstart)
+
+    res['agg_ibcc'] = []
+    res['agg_bsc-seq'] = []
+    res['baseline_every'] = []
+    res['agg_MV'] = []
+
+    for b in range(nbatches):
+        res['agg_ibcc'].append(evaluate(np.concatenate(np.array(preds['agg_ibcc'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
+        res['agg_bsc-seq'].append(evaluate(np.concatenate(np.array(preds['agg_bsc-seq'])[:, b], axis=0), allgold, alldocstart, spantype=classid, f1type='all'))
+        res['baseline_every'].append(evaluate(np.concatenate(np.array(preds['baseline_every'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
+        res['agg_MV'].append(evaluate(np.concatenate(np.array(preds['agg_MV'])[:, b], axis=0), allgold, alldocstart, f1type='all'))
+
+    means_ibcc.append(res['agg_ibcc'])
+    means_bsc.append(res['agg_bsc-seq'])
+    means_every.append(res['baseline_every'])
+    means_mv.append(res['agg_MV'])
 
     print('Average F1 scores for IBCC with increasing amounts of training data:')
     print(means_ibcc[-1])
@@ -203,12 +216,26 @@ for classid in [0, 1, 2, 3]:
 import matplotlib.pyplot as plt
 
 plt.figure()
-plt.plot(np.mean(means_ibcc, axis=0), label='IBCC')
-plt.plot(np.mean(means_bsc, axis=0), label='BSC-seq')
-plt.plot(np.mean(means_every, axis=0), label='BiLSTM-LSTM-CRF')
-plt.plot(np.mean(means_mv, axis=0), label='MV')
+# take the mean across the four different classes
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 1], label='IBCC')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 1], label='BSC-seq')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 1], label='All-domain CRF')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_mv, axis=0)[:, 1], label='MV')
 plt.xlabel('Number of training docs in target domain')
-plt.ylabel('F1')
+plt.ylabel('F1 token-wise')
 plt.legend(loc='best')
+plt.ylim(0,60)
 
-plt.savefig('results/test3.pdf')
+plt.savefig('results/test3_tokf1.pdf')
+
+plt.figure()
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 3], label='IBCC')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 3], label='BSC-seq')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 3], label='All-domain CRF')
+plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_mv, axis=0)[:, 3], label='MV')
+plt.xlabel('Number of training docs in target domain')
+plt.ylabel('F1 relaxed spans')
+plt.legend(loc='best')
+plt.ylim(0,60)
+
+plt.savefig('results/test3_spanf1.pdf')
