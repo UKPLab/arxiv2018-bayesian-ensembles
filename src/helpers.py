@@ -113,6 +113,8 @@ def append_training_labels(annos, basemodels_str, dataset, classid, didx, tedoma
         Nother = len(trpreds[othername][didx])
         trpreds[newname][didx] = (np.zeros(Nother) - 1).tolist()
         print(trpreds.keys())
+        print(Nother)
+        print(newname)
         trannos, _ = get_anno_matrix(classid, trpreds, didx, include_all=False)
 
     # get the training labels for the training set
