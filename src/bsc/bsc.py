@@ -622,6 +622,8 @@ class BSC(object):
                 model.C_data = np.zeros((self.C.shape[0], self.nscores)) #+ (1.0 / self.nscores)
             else:
                 model.C_data = C_data_initial[midx]
+                print('integrated model initial labels: ' +
+                      str(np.unique(np.argmax(C_data_initial[midx], axis=1))))
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 

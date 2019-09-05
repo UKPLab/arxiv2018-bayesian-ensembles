@@ -119,7 +119,7 @@ def f1(predictions, gold, strict, doc_starts):
     rec = recall(predictions, gold, strict, doc_starts=doc_starts)
 
     if prec + rec == 0:
-        print('Warning: zero precision and recall scores!')
+        #print('Warning: zero precision and recall scores!')
         return 0
 
     return 2 * prec * rec / (prec + rec)

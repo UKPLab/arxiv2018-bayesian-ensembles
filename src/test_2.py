@@ -16,7 +16,7 @@ import json
 #from baselines.dawid_and_skene import ibccvb
 from base_models import run_base_models
 from bsc import bsc
-from helpers import evaluate, Dataset, get_anno_matrix, get_anno_names, get_root_dir
+from helpers import evaluate, Dataset, get_anno_matrix, get_anno_names, get_root_dir, append_training_labels
 from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
 from seq_taggers import embpath
 
@@ -31,7 +31,7 @@ nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 dif
 base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
 
 #iterate through the types of span we want to predict
-for classid in [2, 3]: # 0, 1, 2, 3]:
+for classid in [0, 1, 2, 3]:
 
     basemodels_str = '--'.join(base_models)
 
@@ -105,21 +105,28 @@ for classid in [2, 3]: # 0, 1, 2, 3]:
 
         for didx, tedomain in enumerate(dataset.domains):
 
-            N = len(dataset.tetext[tedomain]) # number of test points
             # First, put the base labellers into a table.
             annos, uniform_priors = get_anno_matrix(classid, preds, didx, include_all=False)
+            docstart = dataset.tedocstart[tedomain]
+            text = dataset.tetext[tedomain]
+            annos, docstart, text, trlabels = append_training_labels(annos, basemodels_str, dataset, classid, didx, tedomain, trpreds, 20)
+
+
             K = annos.shape[1] # number of annotators
 
             # Run BSC-seq to determine the best base model.
             bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
                         alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
                         worker_model='seq', tagging_scheme='IOB2', data_model=[], transition_model='HMM',
-                        no_words=False, eps=1e-2)
+                        no_words=True, eps=1e-2)
             bsc_model.verbose = False
             bsc_model.max_internal_iters = max_iter
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
-            probs, agg, pseq = bsc_model.run(annos, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
-                                             converge_workers_first=False, uniform_priors=uniform_priors)
+            probs, agg, pseq = bsc_model.run(annos, docstart, text,
+                                 converge_workers_first=False, uniform_priors=uniform_priors, gold_labels=trlabels)
+
+            agg = agg[:len(dataset.tetext[tedomain])]
+            preds['agg_bsc-seq'].append(agg.flatten().tolist())
 
             res_s = evaluate(agg, dataset.tegold[tedomain], dataset.tedocstart[tedomain], f1type='all')
             print('   Spantype %i: F1 score=%s for BSC-seq, tested on %s' % (classid, str(np.around(res_s, 2)), tedomain))
@@ -139,51 +146,60 @@ for classid in [2, 3]: # 0, 1, 2, 3]:
             print('Names of the annotators: %s' % str(names))
             # bilstms == we only want to tune these right now
             tuneables = [name.split('_')[0] == 'bilstm-crf' for name in names]
-            competence[np.invert(tuneables)] = -np.inf # exclude the models that are not tuneable
-            print('Informativeness of tuneable base models:')
-            print(competence)
 
-            best_base_idx = np.argmax(competence)
-            print(best_base_idx)
+            if np.any(tuneables):
+                competence[np.invert(tuneables)] = -np.inf # exclude the models that are not tuneable
+                print('Informativeness of tuneable base models:')
+                print(competence)
 
-            best_base = names[best_base_idx]
-            print('Chosen for pre-training: %s' % best_base)
+                best_base_idx = np.argmax(competence)
+                print(best_base_idx)
 
-            # copy the model we want to fine-tune
-            new_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i_tunedfor%s_basemodels%s/%s' %
-                                         (classid, tedomain, basemodels_str, best_base.split('__')[-1]))
-            orig_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i/%s' %
-                                          (classid, best_base.split('__')[-1]))
+                best_base = names[best_base_idx]
+                print('Chosen for pre-training: %s' % best_base)
 
-            if os.path.exists(new_dir):
-                shutil.rmtree(new_dir)
-                print('removed %s' % new_dir)
-            shutil.copytree(orig_dir, new_dir)
-            print('copied %s to %s' % (orig_dir, new_dir))
+                # copy the model we want to fine-tune
+                new_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i_tunedfor%s_basemodels%s/%s' %
+                                             (classid, tedomain, basemodels_str, best_base.split('__')[-1]))
+                orig_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i/%s' %
+                                              (classid, best_base.split('__')[-1]))
 
-            # fine tuning will use a different setting for the BILSTM CRF
-            model_dirs = os.listdir(new_dir)
-            for model_dir in model_dirs:
-                new_model_dir = model_dir.replace('crf_probs=False', 'crf_probs=True')
-                shutil.copytree(os.path.join(new_dir, model_dir), os.path.join(new_dir, new_model_dir))
+                if os.path.exists(new_dir):
+                    shutil.rmtree(new_dir)
+                    print('removed %s' % new_dir)
+                shutil.copytree(orig_dir, new_dir)
+                print('copied %s to %s' % (orig_dir, new_dir))
 
-            static_annotators = np.arange(annos.shape[1])
-            static_annotators = static_annotators[static_annotators != best_base_idx]
-            # print('Debugging: for now we are not removing the original labels.')
-            annos_fixed = annos[:, static_annotators]
+                # fine tuning will use a different setting for the BILSTM CRF
+                model_dirs = os.listdir(new_dir)
+                for model_dir in model_dirs:
+                    new_model_dir = model_dir.replace('crf_probs=False', 'crf_probs=True')
+                    shutil.copytree(os.path.join(new_dir, model_dir), os.path.join(new_dir, new_model_dir))
+
+                static_annotators = np.arange(annos.shape[1])
+                static_annotators = static_annotators[static_annotators != best_base_idx]
+                print('Debugging: for now we are not removing the original labels.')
+
+                reload_lstm = True
+            else:
+                new_dir = os.path.join(get_root_dir(), 'output/tmp_spantype%i_tunedfor%s_basemodels%s/new_target_model' %
+                                             (classid, tedomain, basemodels_str))
+                reload_lstm = False
+
+            annos_fixed = annos  #[:, static_annotators]
             K = annos_fixed.shape[1]
 
             # create a new BSC instance with the LSTM data model and pass in the model directory.
             bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
                         alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
                         worker_model='seq', tagging_scheme='IOB2', data_model=['LSTM'], transition_model='HMM',
-                        no_words=False, model_dir=new_dir, reload_lstm=True, embeddings_file=embpath, eps=1e-2)
-            bsc_model.verbose = True
-            bsc_model.max_internal_iters = 200
+                        no_words=True, model_dir=new_dir, reload_lstm=reload_lstm, embeddings_file=embpath, eps=1e-2)
+            bsc_model.verbose = False
+            bsc_model.max_internal_iters = 20
 
-            C_data_initial = [np.zeros((annos.shape[0], 3))]
-            for tag in range(3):
-                C_data_initial[0][:, tag] = (annos[:, best_base_idx] == tag).astype(float)
+            # C_data_initial = [np.zeros((annos.shape[0], 3))]
+            # for tag in range(3):
+            #     C_data_initial[0][:, tag] = (annos[:, best_base_idx] == tag).astype(float)
 
             Nde = len(dataset.degold[tedomain])
             dev_sentences, _, _ = data_to_lstm_format(Nde, dataset.detext[tedomain],
@@ -191,11 +207,12 @@ for classid in [2, 3]: # 0, 1, 2, 3]:
                                                       dataset.degold[tedomain].flatten(), 3)
 
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
-            probs, agg, pseq = bsc_model.run(annos_fixed, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
-                             converge_workers_first=False, uniform_priors=uniform_priors, C_data_initial=C_data_initial,
-                             dev_sentences=dev_sentences, crf_probs=True)
+            probs, agg, pseq = bsc_model.run(annos_fixed, docstart, text,
+                             converge_workers_first=True, uniform_priors=uniform_priors, #C_data_initial=C_data_initial,
+                             crf_probs=True, gold_labels=trlabels) # dev_sentences=dev_sentences,  shouldn't have this as it's not realistic for our scenario
+            agg = agg[:len(dataset.tetext[tedomain])]
 
-            preds['agg_bsc-seq'].append(agg.flatten().tolist())
+            preds['agg_bsc-seq-VCS'].append(agg.flatten().tolist())
 
             aggprob = np.argmax(probs, axis=1)
 

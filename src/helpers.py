@@ -86,7 +86,6 @@ def get_anno_matrix(spantype, preds, didx, include_all=False):
         if not include_all and int(base.split('_')[1]) != spantype:
             continue
 
-        # print('Included %s' % base)
         annos.append(np.array(preds[base][didx])[:, None])
 
         if include_all and int(base.split('_')[1]) != spantype:
@@ -97,6 +96,33 @@ def get_anno_matrix(spantype, preds, didx, include_all=False):
     annos = np.concatenate(annos, axis=1)
 
     return annos, uniform_priors
+
+def append_training_labels(annos, basemodels_str, dataset, classid, didx, tedomain, trpreds, Ntrain):
+
+    N = len(dataset.tetext[tedomain])  # number of test points
+
+    if 'bilstm-crf' in basemodels_str:
+        otheridx = didx + 1 if (didx < len(dataset.domains) - 2) else (didx - 1)
+        othername = 'bilstm-crf_%i_' % classid + dataset.domains[otheridx]
+        Nother = len(trpreds[othername][didx])
+        trpreds['bilstm-crf_%i_' % classid + tedomain][didx] = (np.zeros(Nother) - 1).tolist()
+        trannos, _ = get_anno_matrix(classid, trpreds, didx, include_all=False)
+
+    # get the training labels for the training set
+    Ndoc = np.sum(dataset.trdocstart[tedomain])
+    docids = np.cumsum(dataset.trdocstart[tedomain])
+
+    trdocs = np.random.choice(Ndoc, Ntrain, replace=False)
+    tridxs = np.in1d(docids, trdocs)
+    trlabels = dataset.trgold[tedomain][tridxs]
+    trlabels = np.concatenate(
+        (np.zeros(N) - 1, trlabels))  # concatenate with a vector of missing training labels for the test items
+    annos = np.concatenate((annos, trannos[tridxs]), axis=0)
+
+    docstart = np.concatenate((dataset.tedocstart[tedomain], dataset.trdocstart[tedomain][tridxs]))
+    text = np.concatenate((dataset.tetext[tedomain], dataset.trtext[tedomain][tridxs]))
+
+    return annos, docstart, text, trlabels
 
 
 class Dataset:

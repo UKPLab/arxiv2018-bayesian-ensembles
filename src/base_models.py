@@ -1,6 +1,7 @@
 import os, numpy as np, json
 
 from helpers import evaluate, get_root_dir
+from lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
 from seq_taggers import simple_crf, lample, flair_ner, flair_pos
 
 '''
@@ -31,6 +32,50 @@ We divide the data into 'folds' where a fold is one sub-directory.
 For each fold, there is a particular set of classes.
 
 '''
+# def rerun_trpreds_lample(dataset, spantype):
+#     resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_results_%s_spantype%i'
+#                                 % ('bilstm-crf', spantype))
+#     tmpdir = os.path.join(get_root_dir(), 'output/tmp_spantype%i' % spantype)
+#
+#     trpredfile = os.path.join(resdir, 'trpreds.json')
+#
+#     with open(trpredfile, 'r') as fh:
+#         trpreds = json.load(fh)
+#
+#     for domain in dataset.domains:
+#
+#         subsetdir = os.path.join(tmpdir, domain)
+#         labeller = lample(subsetdir, 3)
+#
+#         labels = dataset.trgold[domain]
+#         doc_start = dataset.trdocstart[domain]
+#         text = dataset.trtext[domain]
+#
+#         delabels = dataset.degold[domain]
+#         dedoc_start = dataset.dedocstart[domain]
+#         detext = dataset.detext[domain]
+#
+#         N = len(labels)
+#         train_sentences, IOB_map, IOB_label = data_to_lstm_format(N, text, doc_start, labels.flatten(), 3)
+#
+#         Nde = len(delabels)
+#         dev_sentences, _, _ = data_to_lstm_format(Nde, detext, dedoc_start, delabels.flatten(), 3)
+#
+#         all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
+#
+#         embpath = os.path.join(get_root_dir(), 'cc.de.300.vec')
+#         labeller.labeller = LSTMWrapper(subsetdir, embpath)
+#         labeller.labeller.load_LSTM(False, all_sentences, IOB_label, 3)
+#
+#         # given the model trained on the current domain, test it on all subsets
+#         for tedomain in dataset.domains:
+#             if tedomain[0] == '.':
+#                 continue
+#
+#             trpreds_s = labeller.predict(dataset.trtext[tedomain], dataset.trdocstart[tedomain])
+#
+#             trpreds[domain].append()
+
 
 def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verbose=False):
     '''
@@ -254,7 +299,7 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
                     # separate the in-domain predictions
                     preds['a'].append(preds_s.tolist())
                     preds[domain].append((np.zeros(len(preds_s)) - 1).tolist())  # no predictions
-                    trpreds[domain].append((np.zeros(len(preds_s)) - 1).tolist())  # no predictions
+                    trpreds[domain].append((np.zeros(len(trpreds_s)) - 1).tolist())  # no predictions
                 else:
                     preds[domain].append(preds_s.tolist())
                     trpreds[domain].append(trpreds_s.tolist())
