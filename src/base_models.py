@@ -77,7 +77,7 @@ For each fold, there is a particular set of classes.
 #             trpreds[domain].append()
 
 
-def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verbose=False):
+def run_base_models(dataset, spantype, uberdomain, base_model_str='flair', reload=True, verbose=False):
     '''
     Use this to run the base sequence taggers and save their predictions.
 
@@ -90,12 +90,15 @@ def run_base_models(dataset, spantype, base_model_str='flair', reload=True, verb
 
     # For each subset, train a base classifier and predict labels for all other subsets
     tmpdir = os.path.join(get_root_dir(), 'output/tmp_spantype%i' % spantype)
+    if uberdomain != 'TEd':
+        tmpdir += '_%s' % uberdomain
+
     if not os.path.exists(tmpdir):
         os.mkdir(tmpdir)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_results_%s_spantype%i'
-                                % (base_model_str, spantype))
+    resdir = os.path.join(get_root_dir(), 'output/famulus_%_results_%s_spantype%i'
+                                % (uberdomain, base_model_str, spantype))
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 

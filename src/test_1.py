@@ -47,6 +47,7 @@ transition, even when there are very few B labels. We may need to step through t
 
 '''
 import os
+import sys
 
 import numpy as np
 import json
@@ -60,18 +61,24 @@ reload = True
 rerun_aggregators = True
 verbose = False
 
-datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
+if len(sys.argv) > 1:
+    uberdomain = sys.argv[1]
+else:
+    uberdomain = 'TEd'
+
+datadir = os.path.join(get_root_dir(), 'data/famulus_%s' % uberdomain)
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
 base_models = ['crf'] # 'bilstm-crf']#'crf',  'flair-pos']#, 'flair-ner'] # 'flair' -- not implemented yet, do this if we can't get lample to work
+
 
 print('Using base models: ' + str(base_models))
 
 #iterate through the types of span we want to predict
 for classid in [0, 1, 2, 3]:
 
-    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task1_type%i_basemodels%s' % (classid, '--'.join(base_models)) )
+    resdir = os.path.join(get_root_dir(), 'output/famulus_%s_task1_type%i_basemodels%s' % (uberdomain, classid, '--'.join(base_models)) )
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
@@ -100,7 +107,7 @@ for classid in [0, 1, 2, 3]:
             if classid2 == classid:
                 dataset = dataset2
 
-            basepreds, basetrpreds, baseres = run_base_models(dataset2, classid2, base_model_str, reload)
+            basepreds, basetrpreds, baseres = run_base_models(dataset2, classid2, uberdomain, base_model_str, reload)
             for key in basepreds:
 
                 if key == 'a' or key == 'MV' or key == 'baseline_every' or 'ibcc' in key or 'bsc-seq' in key:

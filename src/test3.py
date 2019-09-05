@@ -5,6 +5,7 @@ SEMI-SUPERVISED: use a little bit of training data from the target domain ------
 
 '''
 import os
+import sys
 
 import numpy as np
 import json
@@ -18,7 +19,11 @@ reload = True
 verbose = False
 rerun = False
 
-datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
+if len(sys.argv) > 1:
+    uberdomain = sys.argv[1]
+else:
+    uberdomain = 'TEd'
+datadir = os.path.join(get_root_dir(), 'data/famulus_%s' % uberdomain)
 
 nclasses = 9 # four types means I and B tags for each type + 1 O tag gives 9 different tags or class labels
 
@@ -35,7 +40,8 @@ for classid in [0, 1, 2, 3]:
 
     basemodels_str = '--'.join(base_models)
 
-    resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task3_type%i_basemodels%s' % (classid, '--'.join(base_models)) )
+    resdir = os.path.join(get_root_dir(), 'output/famulus_%s_task3_type%i_basemodels%s'
+                          % (uberdomain, classid, '--'.join(base_models)) )
     if not os.path.exists(resdir):
         os.mkdir(resdir)
 
@@ -60,7 +66,7 @@ for classid in [0, 1, 2, 3]:
     for base_model_str in base_models:
 
         dataset = Dataset(datadir, classid)
-        basepreds, basetrpreds, baseres = run_base_models(dataset, classid, base_model_str, reload)
+        basepreds, basetrpreds, baseres = run_base_models(dataset, classid, uberdomain, base_model_str, reload)
         for key in basepreds:
 
             if key == 'a' or key == 'MV' or key == 'baseline_every' or 'ibcc' in key or 'bsc-seq' in key:
@@ -113,7 +119,7 @@ for classid in [0, 1, 2, 3]:
         if len(preds['agg_bsc-seq']) <= didx or rerun:
             preds['agg_bsc-seq'].append([])
 
-        basepreds, basetrpreds, baseres = run_base_models(dataset, classid, base_model_str, reload)
+        basepreds, basetrpreds, baseres = run_base_models(dataset, classid, uberdomain, base_model_str, reload)
         preds['baseline_every'].append([])
 
         votes, _ = get_anno_matrix(classid, preds, didx)
