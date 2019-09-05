@@ -105,10 +105,10 @@ def append_training_labels(annos, basemodels_str, dataset, classid, didx, tedoma
         otheridx = didx + 1 if (didx < len(dataset.domains) - 2) else (didx - 1)
         othername = 'bilstm-crf_%i_' % classid + dataset.domains[otheridx]
         newname = 'bilstm-crf_%i_' % classid + tedomain
-        
+
         if othername not in trpreds:
             othername = 'bilstm-crf_%i__' % classid + dataset.domains[otheridx]
-            newname = 'bilstm-crf_%i_' % classid + tedomain
+            newname = 'bilstm-crf_%i__' % classid + tedomain
 
         Nother = len(trpreds[othername][didx])
         trpreds[newname][didx] = (np.zeros(Nother) - 1).tolist()
