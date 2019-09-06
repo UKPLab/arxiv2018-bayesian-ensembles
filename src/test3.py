@@ -112,8 +112,8 @@ for classid in [0, 1, 2, 3]:
         N = len(dataset.tetext[tedomain]) # number of test points
         # First, put the base labellers into a table.
 
-        batchsize = 10
-        nbatches = 6
+        batchsize = 5
+        nbatches = 8
 
         preds['agg_ibcc'].append([])
         if len(preds['agg_bsc-seq']) <= didx or rerun:
@@ -222,7 +222,7 @@ for classid in [0, 1, 2, 3]:
 # plot results
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=[4,3])
+plt.figure(figsize=[4,4])
 # take the mean across the four different classes
 plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 1], label='IBCC', marker='>', linestyle=':')
 plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 1], label='BSC-seq', marker='o', linestyle='-.')
@@ -236,7 +236,7 @@ plt.tight_layout()
 
 plt.savefig('results/test3_tokf1_%s.pdf' % uberdomain)
 
-plt.figure(figsize=[4,3])
+plt.figure(figsize=[4,4])
 plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_ibcc, axis=0)[:, 3], label='IBCC', marker='>', linestyle=':')
 plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_bsc, axis=0)[:, 3], label='BSC-seq', marker='o', linestyle='-.')
 plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean(means_every, axis=0)[:, 3], label='All-domain CRF', marker='x', linestyle='--')
