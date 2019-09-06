@@ -13,7 +13,12 @@ if len(sys.argv) > 2:
 else:
     base_models = ['bilstm-crf', 'crf'] # , 'flair-pos', 'flair-ner']
 
-datadir = os.path.join(get_root_dir(), 'data/famulus_TEd')
+if len(sys.argv) > 3:
+    uberdomain = sys.argv[3]
+else:
+    uberdomain = 'TEd'
+
+datadir = os.path.join(get_root_dir(), 'data/famulus_%s' % uberdomain)
 
 
 totals_tok = {}
@@ -26,11 +31,11 @@ for classid in range(0,4):
     basemodels_str = '--'.join(base_models)
 
     if taskid == 0:
-        resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_results_%s_spantype%i'
-                              % (base_models[0], classid))
+        resdir = os.path.join(get_root_dir(), 'output/famulus_%s_results_%s_spantype%i'
+                              % (uberdomain, base_models[0], classid))
     else:
-        resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_task%i_type%i_basemodels%s' # _crfprobs
-                      % (taskid, classid, basemodels_str))
+        resdir = os.path.join(get_root_dir(), 'output/famulus_%s_task%i_type%i_basemodels%s' # _crfprobs
+                      % (uberdomain, taskid, classid, basemodels_str))
 
     # resfile = os.path.join(resdir, 'res.json') this one contains the macro F1 scores, but this leads to some dodgy
     # results in small cases with almost no instances of a particular class.
