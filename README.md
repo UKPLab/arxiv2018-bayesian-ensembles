@@ -23,19 +23,7 @@ please use the following citation:
 }
 
 > **Abstract:** 
-Current methods for sequence tagging, a core task in NLP, are data hungry. 
-Crowdsourcing is a relatively cheap way to obtain
-labeled data, but the annotators are unreliable. 
-To address this, we develop a modular
-Bayesian method for aggregating sequence
-labels from multiple annotators and evaluate different models of annotator 
-reliability. Our approach integrates black-box 
-sequence taggers as components in the 
-aggregation model to improve the quality of predictions. 
-We evaluate our model on crowdsourced data for named entity recognition
-and information extraction tasks, showing
-that our sequential annotator model outperforms previous methods. We publish our
-code to encourage adaptation and reuse.
+Current methods for sequence tagging, a core task in NLP, are data hungry, which motivates the use of crowdsourcing as a cheap way to obtain labelled data. However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation errors. To address this, we propose a Bayesian method for aggregating sequence tags that reduces errors by modelling sequential dependencies between the annotations as well  as  the  ground-truth  labels. By  taking a  Bayesian  approach, we account for uncertainty in the model due to both annotator errors and the lack of data for modelling annotators who complete few tasks. We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining, showing that our sequential model outperforms the previous state of the art.   We also find that our approach can reduce crowdsourcing costs through more effective active learning, as it better captures uncertainty in the sequence labels when there are few annotations.
 
 Contact person:
 
@@ -62,32 +50,47 @@ Please send us an e-mail or report an issue, if something is broken or if you ha
    * `documents` -- tex files for the paper. 
    * `MACE` -- MACE implementation in Java, see NOTICE.txt
 
+## Third-pary code included in this repository:
+
+* MACE -- by Dirk Hovy, https://github.com/dirkhovy/MACE 
+* src/baselines/hmm.py -- by An Tanh Nguyen, https://github.com/thanhan
+
 ## Requirements and installation.
 
-Python 3.5 and 3.6. 
+Python 3.5 or higher. 
 
-Use virtualenv to install the packages listed in requirements.txt. 
-You can use the script `setup.sh` to do this automatically in a new environment `env`.
+Use virtualenv to install the packages listed in requirements.txt -- you can use the script `setup.sh` to automatically set up a new 
+virtual environment in the directory `env`.
+Please also run:
+~~~
+python -m spacy download en_core_web_sm
+~~~
 
 ### Obtaining Datasets
 
 If you wish to reproduce the experiments in the paper, follow these steps
 to install the datasets.
 
-1. Create the directories `~/data/bayesian_sequence_combination/data`  and 
-`~/data/bayesian_sequence_combination/output`.
+1. Create the directories `../../data/bayesian_sequence_combination/data`  and 
+`../../data/bayesian_sequence_combination/output`. 
+The `../../` is relative to the directory containing this repository.
+If you want to put the data or results somewhere else, 
+you can replace all references to '../../data' in the code with the desired location.
 
 2. Extract the NER crowdsourced data from `data/crf-ma-NER-task1.zip`. 
-Move the directory to `~/data/bayesian_sequence_combination/data`.
+Move the directory to `../../data/bayesian_sequence_combination/data`.
 
 3. Extract the NER test data from `data/English NER.zip` and 
-move it to `~/data/bayesian_sequence_combination/data`.
+move it to `../../data/bayesian_sequence_combination/data`.
 
 4. For the PICO dataset, 
 checkout the git repo https://github.com/yinfeiy/PICO-data/ . 
 
 5. Create a link to the PICO data:
-`ln -s ~/git/PICO-data/ ~/data/bayesian_sequence_combination/data/bio-PICO`.
+`ln -s ~/git/PICO-data/ ../../data/bayesian_sequence_combination/data/bio-PICO`, 
+where the path `~/git/PICO-data/` should be replaced with location where you checked out the PICO-data.
+
+6. For the ARG dataset, unzip the data from `data/argmin_LMU.zip` and move it to `../../data/bayesian_sequence_combination/data`.
  
 ## Running the experiments
 
@@ -99,12 +102,6 @@ checkout the git repo https://github.com/yinfeiy/PICO-data/ .
  instead you should comment and uncomment the  code
  to disable or enable the methods you want to test.
  
-### Simulated Annotators
-
-Please run the script `src/run_synthetic_experiments.py`. It must 
-be edited to enable each of the experiments you want to run
-by uncommenting the calls to `run_synth()`.
-
 ### NER experiments
 
 You can run the table 2 and table 4 experiments using the following:
@@ -170,22 +167,9 @@ Now, run `src/evaluation/error_analysis.py`.
 
 ### Annotator models
 
-The plots in figure 2 were made using `src/evaluation/plot_pico_worker_models.py`.
+The plots in Figure 1 were made using `src/plot_pico_worker_models.py`.
 
 ## Running Bayesian Sequence Combination
-
-The main method implementation is in src/algorithm/bsc.py. It can be run as follows. First,
-construct the object for a BIO tagging problem:
-~~~
-num_classes = 3 # B, I and O
-
-bac_model = bsc.BSC(L=num_classes, K=num_annotators, worker_model='seq',
-            data_model=['IF'])
-
-bac_model.verbose = True # to get extra debugging info
-~~~
-
-In the next call, you can fit the model to the data and predict the aggregate labels.
 
 ### Data Format
 
@@ -196,7 +180,7 @@ that the annotators labeled) should be concatenated. The start points of each bl
 is indicated by a vector, doc_start, which has '1' to indicate that a token is the first in
 a new block of text and '0' for all other tokens.
 
-The default setup in the example above assumes that the labels in the annotation matrix  
+The default setup in the example below assumes that the labels in the annotation matrix  
 are as follows:
    * 0: Inside
    * 1: Outside
@@ -207,11 +191,29 @@ for example, instead of simply I and B, you may have I-type1, B-type1, I-type2, 
 In this case you must pass pass in a list of values for the inside and beginning tokens to 
 the constructor.
 
-### Training and Aggregation
+### Aggregating Crowdsourced Data
+
+The main method implementation is in src/algorithm/bsc.py. It can be run as follows. First,
+construct the object for an IOB tagging problem:
+~~~
+num_classes = 3 # B, I and O
+
+bsc_model = bsc.BSC(L=num_classes, K=num_annotators, worker_model='seq')
+
+bsc_model.verbose = True # to get extra debugging info
+~~~
+The constructor takes an argument, 'worker_model', which determines the type of 
+annotator model. In the example above it is set to "worker_model='seq'", which
+uses the default sequential annotator model. However, if the results are not looking good
+on some datasets, you may also wish to try "worker_model='ibcc''" (this is the confusion matrix or 'cm' model in the paper), 
+which will use a simpler annotator model. 
+Further alternatives are "worker_model='vec'" (called 'cv' or confusion vector in the paper),
+ "worker_model='mace'" (called 'spam' in the paper),
+and "worker_model='acc' (a single accuracy value for each worker).
 
 A single call is used to train the model and produce the aggregated labels:
 ~~~
-probs, agg = bac_model.run(annotations, doc_start, features)
+probs, agg = bsc_model.run(annotations, doc_start, features)
 ~~~
 The features object is a numpy array that typically contains strings, i.e. a column vector of text tokens.
 Other features can also be provided as additional columns. The shape of features is num_tokens x num_features_per_token.
@@ -220,63 +222,32 @@ If we consider only the text tokens as features, num_features_per_token == 1.
 The method outputs both 'probs', i.e. the class label probabilities for each token, and 
 'agg', which is the most likely sequence of labels aggregated from the crowdsourced data. 
 
-### Annotator models
-
-The constructor takes an argument, 'worker_model', which determines the type of 
-annotator model. In the example above it is set to "worker_model='seq'", which
-uses the default sequential annotator model. However, if the results are not looking good
-on some datasets, you may also wish to try "worker_model='ibcc''", which will use
-a simpler annotator model. A further simplification to the model is "worker_model='vec'".
-
 ### Sequential label model
 
 The method can also be applied to non-sequential classification tasks by turning off the 
 sequential label model. This is achieved by passing an optional constructor argument
 "transition_model='noHMM'". 
-
-## Third-pary code included in this repository:
-
-* MACE
-* src/baselines/hmm.py
  
 ## Competence Scores
 
-Most of the annotator models used here to not learn a single competence score
-for each worker. However, a competence score or similar can be useful for ranking
-workers to decide who to exclude from a task.
-We can compute a competence measure as follows:
-
+A competence score that rates the ability of an annotator can be useful for selecting the best workers for future tasks.
+Given a `bsc_model` object, after calling `run()` as described above, 
+we can compute the annotator accuracy as follows:
 ~~~
-model = bsc.BAC(L=num_classes, K=num_annotators, worker_model='seq',
-            data_model=['IF'])
-
-probs, agg = model.run(annotations, doc_start, features)
-
-EPi = model.A._calc_EPi(self.alpha) # gives us a 2D or 3D matrix
-
-if EPi.ndim == 1:
-    competence = EPi[1, :]
-elif EPi.ndim == 2:
-    competence = np.mean(EPi[range(EPi.shape[0]), range(EPi.shape[0]), :], axis=0)
-else:
-    competence = np.mean(np.mean(EPi[range(EPi.shape[0]), range(EPi.shape[0]), :, :], axis=0), axis=0)
-    
-print(competence)
+acc = bsc_model.annotator_accuracy()
+print(acc)
 ~~~
+This returns a vector of accuracies for the annotators. 
+The accuracy has a couple of downsides as a metric for worker competence:
+(1) if the classes are not balanced (e.g. lots of 'O' tokens), the accuracy can be very
+high if the worker selects the same label all the time;
+(2) annotators can still be informative, even if they are inaccurate, e.g. if 
+a worker consistently confuses one class for another.
+A better metric is based on the expected information gain, i.e. the reduction in uncertainty
+about a true label given the label from a particular worker. We call this 'informativeness':
+~~~
+infor = bsc_model.informativeness()
+print(infor)
+~~~
+The informativeness is also returned as a vector and can also be used to rank workers (higher is better).
 
-In this case, the competence is the probability of the annotator giving the 
-correct answer, averaged over all the different cases considered by the model.
-
-
-# Experiments
-
-Instructions on how to reproduce the experiments in the paper "Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging".
-Required data for experiments on the NER dataset:
-* crf-ma-NER-task1
-* English NER
-For the PICO dataset:
-* bio-PICO
-These folders should all be copied to ~/data/bayesian_sequence_combination/data (or you can replace all references to '../../data' in the code with the desired location. The experiments should then be run from within the src directory. More details to follow...
-
-Run this:
-python -m spacy download en_core_web_sm
