@@ -16,32 +16,6 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 
 
 # ------------------------------------------------------------------------------------------------
-best_nu0factor = 0.1 # changed for MACE...
-best_diags = 0.1
-best_factor = 0.1
-#
-# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-#
-# exp.alpha0_diags = best_diags
-# exp.alpha0_factor = best_factor
-# exp.nu0_factor = best_nu0factor
-#
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#     'HMM_crowd',
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(
-#     annos, gt, doc_start, output_dir, text,
-#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     new_data=regen_data
-# )
-
-
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
 exp.opt_hyper = False#True
@@ -49,7 +23,7 @@ exp.opt_hyper = False#True
 best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 best_bac_wm_score = -np.inf
 
-best_nu0factor = 0.1 # changed for MACE...
+best_nu0factor = 0.1
 best_diags = 1
 best_factor = 1
 best_acc_bias = 0
@@ -59,45 +33,42 @@ exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
 
-# run all the methods that don't require tuning here
 exp.methods =  [
                 'majority',
                 # 'mace',
                 # 'ds',
+                # 'ibcc',
+                # 'bac_vec_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # 'bac_mace_integrateIF',
+                # 'HMM_crowd',
                 # 'best',
                 # 'worst',
                 # best_bac_wm,
-                # 'bac_mace_integrateIF'
+                'bac_seq_integrateIF',
 ]
 
-# should run both task 1 and 2.
 exp.run_methods(
     annos, gt, doc_start, output_dir, text,
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
     new_data=regen_data
 )
-#
-#
-# # exp.alpha0_diags_lstm = 0.1
-# # exp.alpha0_factor_lstm = 0.1
-# #
+
 # nu_factors = [0.1, 10, 100]
 # diags = [0.1, 1, 10, 100]
-# factors = [0.1, 1, 10]
-# # # acc_biases = [1, 10, 100]
-# #
+# factors = [0.1, 1, 10, 100]
 # methods_to_tune = [
-#                     #'bac_ibcc_integrateIF_noHMM',
-#                     # 'bac_seq_integrateIF_noHMM',
-#                     # 'bac_ibcc',
-#                     # 'bac_mace'
-# #                    'ibcc',
+#                    'bac_ibcc_integrateIF_noHMM',
+#                    'bac_seq_integrateIF_noHMM',
+#                    'bac_ibcc',
+#                    'bac_mace'
+#                    'ibcc',
 #                    'bac_vec_integrateIF',
-# #                    'bac_ibcc_integrateIF',
-# #                    'bac_seq_integrateIF',
-# #                    'bac_acc_integrateIF',
-# #                    'bac_mace_integrateIF'
+#                    'bac_ibcc_integrateIF',
+#                    'bac_seq_integrateIF',
+#                    'bac_acc_integrateIF',
+#                    'bac_mace_integrateIF'
 #                    ]
 #
 # # tune with small dataset to save time
@@ -132,9 +103,6 @@ exp.run_methods(
 #     exp.alpha0_diags = diags[best_idxs[1]]
 #     exp.alpha0_factor = factors[best_idxs[2]]
 #
-#     # exp.alpha0_diags_lstm = diags[best_idxs[1]]
-#     # exp.alpha0_factor_lstm = factors[best_idxs[2]]
-#
 #     print('Best values: %f, %f, %f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 #
 #     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
@@ -145,74 +113,5 @@ exp.run_methods(
 #                 text_nocrowd=text_nocrowd,
 #                 new_data=regen_data
 #                 )
-#
-#     # best_score = best_scores[0]
-#     # if 'bac_seq' in method and best_score > best_bac_wm_score:
-#     #     best_bac_wm = 'bac_' + method.split('_')[1]
-#     #     best_bac_wm_score = best_score
-#     #     best_diags = exp.alpha0_diags
-#     #     best_factor = exp.alpha0_factor
-#     #     best_nu0factor = exp.nu0_factor
-
-# print('best BAC method tested here = %s' % best_bac_wm)
-#
-# exp.alpha0_diags = best_diags
-# exp.alpha0_factor = best_factor
-# exp.nu0_factor = best_nu0factor
-# exp.alpha0_acc_bias = best_acc_bias
-#
 
 
-# # ------------------------------------------------------------------------------------------------
-# exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-#
-# exp.alpha0_diags = best_diags
-# exp.alpha0_factor = best_factor
-# exp.nu0_factor = best_nu0factor
-# exp.alpha0_acc_bias = best_acc_bias
-#
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 #'HMM_crowd',
-#                 'bac_seq',
-#                 'bac_seq_integrateIF_noHMM'
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(
-#     annos, gt, doc_start, output_dir, text,
-#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     new_data=regen_data
-# )
-
-# ------------------------------------------------------------------------------------------------
-best_nu0factor = 0.1 # changed for MACE...
-best_diags = 100
-best_factor = 0.1
-
-exp = Experiment(None, 9, annos.shape[1], None, alpha0_factor=16, alpha0_diags=1, max_iter=20)
-exp.save_results = True
-exp.opt_hyper = False#True
-
-exp.alpha0_diags = best_diags
-exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-exp.alpha0_acc_bias = best_acc_bias
-
-# run all the methods that don't require tuning here
-exp.methods =  [
-    'bac_ibcc_integrateIF',
-    # 'bac_ibcc_integrateIF_noHMM',
-    # 'bac_ibcc',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    new_data=regen_data
-)
