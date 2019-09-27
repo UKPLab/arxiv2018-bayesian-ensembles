@@ -3,12 +3,13 @@ Created on April 27, 2018
 
 @author: Edwin Simpson
 '''
+import os
 
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_sequence_combination/output/pico_task2/'
+output_dir = os.path.join(load_data.output_root_dir, 'pico_task2')
 
 regen_data = False
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \

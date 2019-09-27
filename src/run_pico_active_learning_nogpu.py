@@ -32,7 +32,7 @@ text_dev = text_dev[:100]
 num_reps = 10
 for rep in range(num_reps):
 
-    # output_dir = '../../data/bayesian_sequence_combination/output/bio_rand_small/'
+    # output_dir = os.path.join(load_data.output_root_dir, 'bio_rand_small')
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #
@@ -61,7 +61,7 @@ for rep in range(num_reps):
 
     # ------------------------------------------------------------------------------
 
-    output_dir = '../../data/bayesian_sequence_combination/output/bio_al_small/'
+    output_dir = os.path.join(load_data.output_root_dir, 'bio_al_small')
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -89,7 +89,7 @@ for rep in range(num_reps):
 
     # # ------------------------
     #
-    # output_dir = '../../data/bayesian_sequence_combination/output/bio_al_small/'
+    # output_dir = os.path.join(load_data.output_root_dir, 'bio_al_small')
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #
@@ -116,7 +116,7 @@ for rep in range(num_reps):
 
     # ------------------------
 
-    # output_dir = '../../data/bayesian_sequence_combination/output/bio_al_small/'
+    # output_dir = os.path.join(load_data.output_root_dir, 'bio_al_small')
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #
@@ -143,7 +143,7 @@ for rep in range(num_reps):
     #
     # # ------------------------
     #
-    # output_dir = '../../data/bayesian_sequence_combination/output/bio_al_small/'
+    # output_dir = os.path.join(load_data.output_root_dir, 'bio_al_small')
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #
@@ -169,7 +169,7 @@ for rep in range(num_reps):
 
     # Random Sampling ------------------------------------------------------------------------------
     #
-    # output_dir = '../../data/bayesian_sequence_combination/output/bio_rand_small/'
+    # output_dir = os.path.join(load_data.output_root_dir, 'bio_rand_small')
     # if not os.path.isdir(output_dir):
     #     os.mkdir(output_dir)
     #

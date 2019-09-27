@@ -24,7 +24,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 num_reps = 10
 for rep in range(num_reps):
 
-    output_dir = '../../data/bayesian_sequence_combination/output/ner_al/'
+    output_dir = os.path.join(load_data.output_root_dir, 'ner_al')
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 

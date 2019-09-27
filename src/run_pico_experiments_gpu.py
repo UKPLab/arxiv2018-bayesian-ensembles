@@ -3,12 +3,13 @@ Created on April 27, 2018
 
 @author: Edwin Simpson
 '''
+import os
 
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_sequence_combination/output/pico/'
+output_dir = os.path.join(load_data.output_root_dir, 'pico')
 
 regen_data = False
 
