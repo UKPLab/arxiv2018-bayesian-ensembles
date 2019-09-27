@@ -22,7 +22,7 @@ exp.opt_hyper = False #True
 
 # this is the one we used in the paper with O | O multiplier of 5.
 best_nu0factor = 1
-best_diags = 10
+best_diags = 50
 best_factor = 100
 
 # ------------------------------------------------------------------------------------------------

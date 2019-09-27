@@ -331,4 +331,3 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
     print(run_counts[0, 0, :, 0])
     print('Counts of runs with results on test data:')
     print(run_counts_nocrowd[0, 0, :, 0])
-

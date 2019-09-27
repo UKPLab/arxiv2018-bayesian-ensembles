@@ -146,8 +146,8 @@ class BSC(object):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
 
-        self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
-        self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
+        #self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
+        #self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
 
         # should be multiplied by 5 for pico and 1 for NER and ARG. TODO: make this into a parameter that can be passed
         # from outside.

@@ -1424,5 +1424,3 @@ class Experiment(object):
             return
         else:
             return self.run_synth_exp()
-
-
