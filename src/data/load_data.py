@@ -297,33 +297,13 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None):
         os.mkdir(savepath)
 
     if regen_data_files or not os.path.isfile(savepath + '/annos.csv'):
-        anno_path_root = os.path.join(data_root_dir, 'bio-PICO/annotations')
+        anno_path_root = os.path.join(data_root_dir, 'bio-PICO/annotations/')
 
         # There are four folders here:
         # acl17-test: the only one containing 'professional' annotations. 191 docs
         # train: 3549 docs
         # dev: 500 docs
         # test: 500 docs
-
-        # Total of 4740 is slightly fewer than the values stated in the paper.
-        # The validation/test split in the acl17-test data is also not given. This suggests we may need to run the
-        # HMMCrowd and LSTMCrowd methods with hyperparameter tuning on our own splits. Let's skip that tuning for now?
-        # Cite Nils' paper about using a generic hyperparameter tuning that works well across tasks -- we need to do
-        # this initially because we don't have gold data to optimise on.
-        # Nguyen et al do only light tuning with a few (less than 5) values to choose from for each hyperparameter of
-        # HMM-Crowd, LSTM-Crowd and the individual LSTMs. Not clear whether the values set in the code as default are
-        # the chosen values -- let's assume so for now. We can re-tune later if necessary. Remember: we don't require
-        # a validation set for tuning our methods.
-
-        # We need for task1 and task2:
-        # train, dev and test splits.
-        # I believe the acl17-test set was split to form the dev and test sets in nguyen et al.
-        # Task 1 does not require separate training samples -- it's trained on crowdsourced rather than professional labels.
-        # Task 2 requires testing on separate samples (with gold labels)
-        # from the training samples (with crowd labels).
-        # Both tasks use all training data for training and the acl17-test set for validation/testing.
-        # These other splits into the train, test and dev folders appear to relate to a different set of experiments
-        # and are not relevant to nguyen et al 2017.
 
         folders_to_load = ['acl17-test', 'train', 'test', 'dev']
         all_data = None
