@@ -20,7 +20,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from evaluation.experiment import Experiment
 
 
-all_root_dir = '../../data/bayesian_sequence_combination'
+all_root_dir = os.path.expanduser('~/data/bayesian_sequence_combination')
 data_root_dir = os.path.join(all_root_dir, 'data')
 output_root_dir = os.path.join(all_root_dir, 'output')
 
