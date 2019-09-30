@@ -332,7 +332,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None):
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
     print('loading text data...')
-    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
+    text = pd.read_csv(savepath + '/text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
     text = text.fillna(' ').values
 
     print('loading doc starts...')
