@@ -15,18 +15,14 @@ regen_data = False
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data)
 
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False #True
-
 # this is the one we used in the paper with O | O multiplier of 5.
 best_nu0factor = 1
-best_diags = 50
+best_diags = 10
 best_factor = 100
+best_outside_factor = 5
 
 # ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
 
 exp.save_results = True
 exp.opt_hyper = False
