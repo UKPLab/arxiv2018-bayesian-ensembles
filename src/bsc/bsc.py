@@ -42,7 +42,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0, nu0=1,
+                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None):
 
@@ -122,6 +122,7 @@ class BSC(object):
             self.alpha_shape = (self.L, self.nscores)
 
         self.alpha0, self.alpha0_data = self.A._init_alpha0(alpha0_diags, alpha0_factor, L)
+        self.alpha0_outside_factor = alpha0_outside_factor
 
         self.rare_transition_pseudocount = 1e-10
         # self.rare_transition_pseudocount = np.min(self.alpha0) / 10.0 # this makes the rare transition much less likely than
@@ -146,11 +147,9 @@ class BSC(object):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
 
-        self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
-        self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= 10 # because they are way more frequent
-
-        # should be multiplied by 5 for pico and 1 for NER and ARG. TODO: make this into a parameter that can be passed
-        # from outside.
+        # The outside labels often need a stronger bias because they are way more frequent
+        self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
+        self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
 
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
@@ -158,10 +157,6 @@ class BSC(object):
             for outside_label in self.outside_labels:
                 # set the disallowed transition to as close to zero as possible
                 disallowed_count = self.alpha0[:, restricted_label, outside_label, :] - self.rare_transition_pseudocount
-
-                # TODO: test this. It's meant to reduce likelihood of an I label given true class O.
-                # print('RESTRICTED LABEL: %i' % restricted_label)
-                # self.alpha0[restricted_label, restricted_label, restricted_label] += np.sum(disallowed_count)
 
                 self.alpha0[:, unrestricted_labels[i], outside_label] += disallowed_count # previous experiments use this
                 self.alpha0[:, restricted_label, outside_label, :] = self.rare_transition_pseudocount

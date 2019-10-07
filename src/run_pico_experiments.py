@@ -3,30 +3,26 @@ Created on April 27, 2018
 
 @author: Edwin Simpson
 '''
+import os
 
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = '../../data/bayesian_sequence_combination/output/pico2/'
-
+output_dir = os.path.join(load_data.output_root_dir, 'pico2')
 regen_data = False
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data)
 
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
-
-exp.save_results = True
-exp.opt_hyper = False #True
-
-# this is the one we used in the paper with O | O multiplier of 5.
+# this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
 best_diags = 10
 best_factor = 100
+best_outside_factor = 10
 
 # ------------------------------------------------------------------------------------------------
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
 
 exp.save_results = True
 exp.opt_hyper = False

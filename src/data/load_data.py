@@ -20,6 +20,10 @@ from sklearn.feature_extraction.text import CountVectorizer
 from evaluation.experiment import Experiment
 
 
+all_root_dir = os.path.expanduser('~/data/bayesian_sequence_combination')
+data_root_dir = os.path.join(all_root_dir, 'data')
+output_root_dir = os.path.join(all_root_dir, 'output')
+
 def convert_argmin(x):
     label = x.split('-')[0]
     if label == 'I':
@@ -63,7 +67,7 @@ def convert_crowdsourcing(x):
 
 def load_argmin_data():    
 
-    path = '../../data/bayesian_sequence_combination/data/argmin/'
+    path = os.path.join(data_root_dir, 'argmin')
     if not os.path.isdir(path):
         os.mkdir(path)
             
@@ -89,15 +93,15 @@ def load_argmin_data():
         start_annos[start_annos == label] = start_labels[l]
         annos[doc_start.astype(bool).flatten(), :] = start_annos
 
-    np.savetxt('../../data/bayesian_sequence_combination/data/argmin/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../../data/bayesian_sequence_combination/data/argmin/gt.csv', gt, fmt='%s', delimiter=',')
-    np.savetxt('../../data/bayesian_sequence_combination/data/argmin/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(path, 'annos.csv'), annos, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(path, 'gt.csv'), gt, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(path, 'doc_start.csv'), doc_start, fmt='%s', delimiter=',')
 
     return gt, annos, doc_start
 
 def load_argmin_7class_data():    
 
-    path = '../../data/bayesian_sequence_combination/data/argmin/'
+    path = os.path.join(data_root_dir, 'argmin')
     if not os.path.isdir(path):
         os.mkdir(path)
     
@@ -119,7 +123,7 @@ def load_argmin_7class_data():
         start_annos[start_annos == label] = start_labels[l]
         annos[doc_start.astype(bool).flatten(), :] = start_annos
 
-    outpath = '../../data/bayesian_sequence_combination/data/argmin7/'
+    outpath = os.path.join(data_root_dir, 'argmin7')
     if not os.path.isdir(outpath):
         os.mkdir(outpath)
     
@@ -130,7 +134,7 @@ def load_argmin_7class_data():
     return gt, annos, doc_start
 
 def load_crowdsourcing_data():
-    path = '../../data/bayesian_sequence_combination/data/crowdsourcing/'
+    path = os.path.join(data_root_dir, 'crowdsourcing')
     if not os.path.isdir(path):
         os.mkdir(path)
             
@@ -155,8 +159,8 @@ def load_crowdsourcing_data():
         if '_00' in str(concatenated[i,0]):
             doc_start[i] = 1
     
-    np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/annos.csv', annos, fmt='%s', delimiter=',')
-    np.savetxt('../../data/bayesian_sequence_combination/data/crowdsourcing/gen/doc_start.csv', doc_start, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(path, 'gen/annos.csv'), annos, fmt='%s', delimiter=',')
+    np.savetxt(os.path.join(path, 'gen/doc_start.csv'), doc_start, fmt='%s', delimiter=',')
     
     return annos, doc_start
 
@@ -186,7 +190,7 @@ def _load_bio_folder(anno_path_root, folder_name):
     '''
     from data.pico.corpus import Corpus
 
-    DOC_PATH = os.path.expanduser("../../data/bayesian_sequence_combination/data/bio-PICO/docs/")
+    DOC_PATH = os.path.join(data_root_dir, "bio-PICO/docs/")
     ANNOTYPE = 'Participants'
 
     anno_path = anno_path_root + folder_name
@@ -288,38 +292,18 @@ def _load_bio_folder(anno_path_root, folder_name):
     return all_data, workerids
 
 def load_biomedical_data(regen_data_files, debug_subset_size=None):
-    savepath = '../../data/bayesian_sequence_combination/data/bio/'
+    savepath = os.path.join(data_root_dir, 'bio')
     if not os.path.isdir(savepath):
         os.mkdir(savepath)
 
     if regen_data_files or not os.path.isfile(savepath + '/annos.csv'):
-        anno_path_root = '../../data/bayesian_sequence_combination/data/bio-PICO/annotations'
+        anno_path_root = os.path.join(data_root_dir, 'bio-PICO/annotations/')
 
         # There are four folders here:
         # acl17-test: the only one containing 'professional' annotations. 191 docs
         # train: 3549 docs
         # dev: 500 docs
         # test: 500 docs
-
-        # Total of 4740 is slightly fewer than the values stated in the paper.
-        # The validation/test split in the acl17-test data is also not given. This suggests we may need to run the
-        # HMMCrowd and LSTMCrowd methods with hyperparameter tuning on our own splits. Let's skip that tuning for now?
-        # Cite Nils' paper about using a generic hyperparameter tuning that works well across tasks -- we need to do
-        # this initially because we don't have gold data to optimise on.
-        # Nguyen et al do only light tuning with a few (less than 5) values to choose from for each hyperparameter of
-        # HMM-Crowd, LSTM-Crowd and the individual LSTMs. Not clear whether the values set in the code as default are
-        # the chosen values -- let's assume so for now. We can re-tune later if necessary. Remember: we don't require
-        # a validation set for tuning our methods.
-
-        # We need for task1 and task2:
-        # train, dev and test splits.
-        # I believe the acl17-test set was split to form the dev and test sets in nguyen et al.
-        # Task 1 does not require separate training samples -- it's trained on crowdsourced rather than professional labels.
-        # Task 2 requires testing on separate samples (with gold labels)
-        # from the training samples (with crowd labels).
-        # Both tasks use all training data for training and the acl17-test set for validation/testing.
-        # These other splits into the train, test and dev folders appear to relate to a different set of experiments
-        # and are not relevant to nguyen et al 2017.
 
         folders_to_load = ['acl17-test', 'train', 'test', 'dev']
         all_data = None
@@ -348,7 +332,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None):
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
     print('loading text data...')
-    text = pd.read_csv(savepath + './text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
+    text = pd.read_csv(savepath + '/text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
     text = text.fillna(' ').values
 
     print('loading doc starts...')
@@ -721,7 +705,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     # Task 2 is for prediction on a test set given a model trained on the training set and optimised on the validation
     # set. It would be ideal to show both these results...
 
-    savepath = '../../data/bayesian_sequence_combination/data/ner/' # location to save our csv files to
+    savepath = os.path.join(data_root_dir, 'ner') # location to save our csv files to
     if not os.path.isdir(savepath):
         os.mkdir(savepath)
 
@@ -729,12 +713,12 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     # folder. Rodrigues et al. have assigned document IDs that allow us to match up the annotations from each worker.
     # Nguyen et al. have split the training set into the val/test folders for task 1. Data is otherwise the same as in
     # the Rodrigues folder under mturk/extracted_data.
-    task1_val_path = '../../data/bayesian_sequence_combination/data/crf-ma-NER-task1/val/'
-    task1_test_path = '../../data/bayesian_sequence_combination/data/crf-ma-NER-task1/test/'
+    task1_val_path = os.path.join(data_root_dir, 'crf-ma-NER-task1/val/')
+    task1_test_path = os.path.join(data_root_dir, 'crf-ma-NER-task1/test')
 
     # These are just two files that we use for text features + ground truth labels.
-    task2_val_path = '../../data/bayesian_sequence_combination/data/English NER/eng.testa'
-    task2_test_path = '../../data/bayesian_sequence_combination/data/English NER/eng.testb'
+    task2_val_path = os.path.join(data_root_dir, 'English NER/eng.testa')
+    task2_test_path = os.path.join(data_root_dir, 'English NER/eng.testb')
 
     if regen_data_files or not os.path.isfile(savepath + '/task1_val_annos.csv'):
         # Steps to load data (all steps need to map annotations to consecutive integer labels).
@@ -997,8 +981,8 @@ def split_dataset(gt, doc_start, text, annos, seed):
     return gt_test, gt_dev, doc_start_dev, text_dev
 
 if __name__ == '__main__':
-    output_dir = '../../data/bayesian_sequence_combination/output/bio_task1_mini/'
-    savepath = '../../data/bayesian_sequence_combination/data/bio/'
+    output_dir = os.path.join(output_root_dir, 'bio_task1_mini')
+    savepath = os.path.join(data_root_dir, 'bio')
 
     print('loading annos...')
     annos = pd.read_csv(savepath + '/annos.csv', header=None)

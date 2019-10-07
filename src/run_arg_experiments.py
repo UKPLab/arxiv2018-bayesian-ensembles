@@ -10,7 +10,7 @@ import data.load_data as load_data
 import numpy as np
 import pandas as pd
 
-output_dir = '../../data/bayesian_sequence_combination/output/arg_LMU_corrected_gold_2/'
+output_dir = os.path.join(load_data.output_root_dir, 'arg_LMU_corrected_gold_2')
 
 # TODO try the simple BIO task as well as 5-class thing
 
