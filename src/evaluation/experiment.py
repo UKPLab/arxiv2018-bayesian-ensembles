@@ -842,6 +842,7 @@ class Experiment(object):
         if outputdir is not None:
             if not os.path.exists(outputdir):
                 os.mkdir(outputdir)
+        outputdir += '/'
 
         print('Running experiment, Optimisation=%s' % (self.opt_hyper))
 

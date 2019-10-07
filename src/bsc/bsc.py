@@ -151,9 +151,6 @@ class BSC(object):
         self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
         self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
 
-        # should be multiplied by 5 for pico and 1 for NER and ARG. TODO: make this into a parameter that can be passed
-        # from outside.
-
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
