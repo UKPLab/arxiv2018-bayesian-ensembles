@@ -280,3 +280,4 @@ These folders should all be copied to ~/data/bayesian_sequence_combination/data 
 
 Run this:
 python -m spacy download en_core_web_sm
+python -m spacy download en

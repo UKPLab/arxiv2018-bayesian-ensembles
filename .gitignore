@@ -1,3 +1,8 @@
+core.*
+*.out.*
+*.err.*
+**/*.err.*
+**/*.out.*
 */*.old2
 */*/*.old2
 */*.old
