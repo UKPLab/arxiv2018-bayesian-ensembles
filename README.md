@@ -64,6 +64,7 @@ virtual environment in the directory `env`.
 Please also run:
 ~~~
 python -m spacy download en_core_web_sm
+python -m spacy download en
 ~~~
 
 ### Obtaining Datasets
