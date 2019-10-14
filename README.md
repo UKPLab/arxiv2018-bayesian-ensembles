@@ -88,7 +88,10 @@ Move the directory to `../../data/bayesian_sequence_combination/data`.
 move it to `../../data/bayesian_sequence_combination/data`.
 
 4. For the PICO dataset, 
-checkout the git repo https://github.com/yinfeiy/PICO-data/ . 
+extract the data from `data/bio.zip' and move it to `../../data/bayesian_sequence_combination/data'.
+If you want to get the original data that these files were derived from,
+checkout the git repo https://github.com/yinfeiy/PICO-data/ (you don't need these
+to repeat the experiments). 
 
 5. Create a link to the PICO data:
 `ln -s ~/git/PICO-data/ ../../data/bayesian_sequence_combination/data/bio-PICO`, 
