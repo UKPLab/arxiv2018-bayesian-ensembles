@@ -1,0 +1,143 @@
+\section{ Modeling Sequential Annotators }\label{sec:annomodels}
+
+When combining multiple annotators with varying skill levels, we can improve performance by modelling their individual noise and bias using a probabilistic
+model.
+Here, we describe several models 
+that do not consider dependencies between annotations in a sequence,
+before defining \emph{seq}, 
+a new extension that captures sequential dependencies. 
+Probabilistic annotator models 
+each define a different function, $A$, 
+for the likelihood that the annotator chooses label $c_{\tau}$
+given the true label $t_{\tau}$, for the $\tau$th token in a sequence.
+
+\textbf{Accuracy model (acc)}:
+ the basis of several previous methods~\cite{donmez2010probabilistic,rodrigues2013learning},
+\emph{acc} uses a single parameter for each 
+annotator's accuracy, $\pi$: 
+\begin{flalign}
+ & A = p( c_{\tau} \! = \! i | t_{\tau} \! = \! j, \pi ) = \left.
+\begin{cases}
+  \pi  \!&\!\!\!\text{ where } i = j \\
+  \frac{1 - \pi}{J-1} \!&\!\!\!\text{ otherwise}
+\end{cases} 
+\right\} \!, &&
+\end{flalign}
+where 
+%$c_{\tau}$ is the label given by the annotator for token $\tau$, $t_{\tau}$ is its true label
+%and 
+$J$ is the number of classes.
+%The limitation of this approach is that it
+%It assumes reliability is constant,
+%which means that 
+This may be unsuitable when one class label dominates the data, 
+since a spammer who always selects the most common label will nonetheless 
+have a high $\pi$.
+%despite their labels being uninformative.
+%Annotator models define a likelihood... 
+%\begin{flalign}
+%& A = p(c_{\tau}, c_{\tau-1}, t_{\tau}) = p( c_{\tau} \!\!=\! i | c_{\tau-1}, t_{\tau} \!=\! j, \bs\pi ),&&
+%\end{flalign}
+
+\textbf{Spamming model (spam)}:
+proposed as part of MACE~\cite{hovy2013learning}, this model also
+assumes constant accuracy, $\pi$,
+but that when an annotator is incorrect, they label according to 
+a spamming distribution, $\bs\xi$, that is independent of the true label, $t_{\tau}$.
+\begin{flalign}
+A & = p( c_{\tau} = i | t_{\tau} = j, \pi, \bs\xi) && \nonumber \\
+& = \left.
+\begin{cases}
+  \pi + (1 - \pi) \xi_j  &\text{ where } i = j \\
+  (1 - \pi) \xi_j &\text{ otherwise}
+\end{cases} 
+\right\}.
+\end{flalign}
+This addresses the case where spammers choose the dominant label
+% common label when the classes are imbalanced.
+%While MACE can capture spamming patterns, 
+but does not explicitly model 
+different error rates in each class. 
+%which
+%may be an issue for sequence tagging using the 
+%BIO encoding. For example, if an annotator frequently labels longer spans
+% than the true spans by starting the spans early. In this 
+% case, they may more frequently
+%mis-label the `B' tokens than the `I' or `O' tokens,  which cannot be modelled by MACE. 
+For example, if an annotator is better at detecting type `x' spans than type `y', or if they frequently miss the first token
+in a span, thereby labelling the start of a span as `O' when the true label is `B-x', 
+this would not be explicitly modelled by \emph{spam}.
+
+\textbf{Confusion vector (CV)}: this approach learns a separate accuracy 
+ for each class label~\cite{nguyen2017aggregating}
+using parameter vector, $\bs\pi$, of size $J$:
+\begin{flalign}
+& A = p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi ) = \left.
+\begin{cases}
+  \pi_j  \!\!\!\!\!\!&\text{ where } i \!=\! j \\
+  \frac{1 \!- \!\pi_j}{J-1} \!\!\!\!\!\!&\text{ otherwise}
+\end{cases} 
+\! \right\} \!.&&
+\end{flalign}
+%For the incorrect label cases where $i \! \neq \! j$,
+% $p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi )$ is constant for all values of $i$.
+% Therefore, t
+This model does not capture spamming
+patterns where one of the incorrect labels has a much higher likelihood than the others.
+
+\textbf{Confusion matrix (CM)}~\cite{dawid_maximum_1979}:
+this model can be seen as an expansion of the confusion vector so that $\bs\pi$ becomes a 
+$J\times J$ matrix with values given by:
+\begin{flalign}
+& A = p( c_{\tau} \!\!=\! i | t_{\tau} \!=\! j, \bs\pi ) = 
+  \pi_{j,i} .&&
+\end{flalign}
+This requires a larger number of parameters, $J^2$, compared to the $J+1$ parameters of MACE or $J$ parameters
+of the confusion vector.
+Like \emph{spam}, 
+\emph{CM} %represents the probability of each mistake, so it 
+can model spammers who frequently chose one label regardless
+of the ground truth, but also
+models different error rates and biases for each class.
+%type of `B-x', `I-x' and `O' label.
+However, \emph{CM} ignores dependencies between annotations in a sequence, % that affect these probabilities.
+such as the fact that an `I' cannot immediately follow an `O'.
+% Consider the following example where this may be a problem: three annotators produce sequences of labels as follows:
+% O-B-I-I-I-O
+% O-O-B-I-O-O
+% O-O-O-O-O-O
+% We can see that the first two annotators agree that the third token is part of the span, 
+
+\textbf{Sequential Confusion Matrix (seq)}: we introduce a new extension to the confusion matrix to model the dependency 
+of each label in a sequence on its predecessor,
+giving the following likelihood:
+\begin{flalign}
+& A = p( c_{\tau} \!\!=\! i | c_{\tau-1} \!=\! \iota, t_{\tau} \!=\! j, \bs\pi ) = 
+  \pi_{j,\iota,i} ,&&
+\end{flalign}
+where $\bs\pi$ is now three-dimensional with size $J\times J\times J$.
+In the case of disallowed transitions, e.g. from $c_{\tau-1}=$`O' to $c_{\tau}=$`I', the value $\pi_{j,c_{\tau-1},c_{\tau}}\approx 0$, $\forall j$
+is fixed \textit{a priori}. 
+The sequential model can capture phenomena such as a tendency toward overly long sequences, by learning that I is more likely to follow another I, so that
+$\pi_{O,I,I} > \pi_{O,I,O}$.
+A tendency to split spans by inserting `B' in place of `I' can be modelled
+by increasing the value of
+$\pi_{I,I,B}$ without affecting $\pi_{I,B,B}$ and $\pi_{I,O,B}$.
+
+The annotator models presented in this section 
+include the most widespread models for NLP annotation tasks, 
+and can be seen as extensions of one another.
+The choice of annotator model for a particular annotator
+ depends on the developer's understanding of the annotation task: 
+ if the annotations have sequential dependencies, this suggests the \emph{seq} model;
+for non-sequential classifications \emph{CM} may be effective with small ($\leq 5$) 
+numbers of classes; \emph{spam} may be more suitable if there are many classes, as the number of parameters to learn is low. 
+However, there is also a trade-off between the expressiveness of the model and the
+number of parameters that must be learned. Simpler models with fewer parameters
+may be effective if there are only small numbers of annotations from each annotator. 
+%Our experiments in Section \ref{sec:expts_all} investigate this trade-off on NLP tasks involving sequential annotation.
+The next section shows how these annotator models can be used as components of 
+a complete model for aggregating sequential annotations. 
+%The experiments in Section \ref{sec:expts_all} 
+% test whether the more expressive seq annotator model,
+%which has more parameters to learn, is beneficial in a realistic setting.

@@ -1,0 +1,42 @@
+\section{Conclusions}
+
+We proposed BSC, a novel Bayesian approach to aggregating sequence labels
+that can be combined with several different models of annotator noise and bias.
+To model the effect of dependencies between labels on annotator noise and bias, we introduced 
+the \emph{seq} annotator model.
+Our results demonstrated the benefits of BSC over established non-sequential methods, such 
+as MACE, Dawid-Skene (DS), and IBCC.
+%reinforce previous work that has demonstrated the benefits of modeling annotator reliability when aggregating noisy data, such as crowdsourced labels. 
+We also showed the advantages of a Bayesian approach for active learning,
+and that the combination of \emph{BSC} with the \emph{seq} annotator model improves 
+the state-of-the-art over HMM-crowd on three NLP tasks with different types of span annotations.
+
+In future work, we plan to adapt active learning methods for easy deployment on crowdsourcing platforms,
+and to investigate techniques for automatically selecting good hyperparameters without recourse to a development
+set, which is often unavailable at the start of a crowdsourcing process.
+%Its performance depends on the combination of sequential annotator model, label transition matrix, and 
+%text model. 
+%To enable more efficient training data collection,
+% We further improved the quality of aggregated labels,
+% by integrating existing 
+% sequence taggers into our variational inference approach as black-box training and prediction functions.
+% This technique performed well with larger amounts of labeled data, but may benefit from the use of pre-trained neural sequence taggers
+% when the dataset is very small.
+%We also found that including a simple conditional independence model of text features enables us to learn BSC-seq more effectively.
+% Future work will evaluate integrating sequence taggers built on
+% Bayesian deep learning, 
+% which may improve active learning.
+% We will also investigate
+% %alternative data selection strategies to bootstrap active learning, 
+% %and 
+% how to set priors for %reduce over-confidence in predictions by including
+% the reliability of black-box methods by testing them
+% on other training sets of similar size.
+
+%how to adapt hyper-parameters of the NN automatically in low-resource state?
+
+% % In future, BSC-Seq could be applied to other sequential classification tasks beside span annotation.
+% For example, the order of tasks that are intended to be exchangeable may affect the likelihood
+% of the labels provided by the annotators\cite{mathur2017}. Seq-BCC could be applied to model the 
+% propensity of the workers to choose certain labels given their previous labels, while the 
+% ground truth sequence may be ignored.
