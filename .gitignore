@@ -1,3 +1,6 @@
+venv
+run_gputest.sh
+src/gpu_tutorial2.py
 core.*
 *.out.*
 *.err.*
