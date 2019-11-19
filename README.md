@@ -7,6 +7,7 @@ LSTM sequence tagger. The crowd of annotators plus automated taggers together fo
 This is the implementation of the method discussed in the following paper -- 
 please use the following citation:
 
+```bibtex
 @article{DBLP:journals/corr/abs-1811-00780,
   author    = {Edwin Simpson and
                Iryna Gurevych},
@@ -21,6 +22,7 @@ please use the following citation:
   biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1811-00780},
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
+```
 
 > **Abstract:** 
 Current methods for sequence tagging, a core task in NLP, are data hungry, which motivates the use of crowdsourcing as a cheap way to obtain labelled data. However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation errors. To address this, we propose a Bayesian method for aggregating sequence tags that reduces errors by modelling sequential dependencies between the annotations as well  as  the  ground-truth  labels. By  taking a  Bayesian  approach, we account for uncertainty in the model due to both annotator errors and the lack of data for modelling annotators who complete few tasks. We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining, showing that our sequential model outperforms the previous state of the art.   We also find that our approach can reduce crowdsourcing costs through more effective active learning, as it better captures uncertainty in the sequence labels when there are few annotations.
@@ -62,9 +64,10 @@ Python 3.5 or higher.
 Use virtualenv to install the packages listed in requirements.txt -- you can use the script `setup.sh` to automatically set up a new 
 virtual environment in the directory `env`.
 Please also run:
-~~~
+
+~~~bash
 python -m spacy download en_core_web_sm
-pyhton -m spacy download en
+python -m spacy download en
 ~~~
 
 ### Obtaining Datasets
@@ -85,7 +88,10 @@ Move the directory to `../../data/bayesian_sequence_combination/data`.
 move it to `../../data/bayesian_sequence_combination/data`.
 
 4. For the PICO dataset, 
-checkout the git repo https://github.com/yinfeiy/PICO-data/ . 
+extract the data from `data/bio.zip' and move it to `../../data/bayesian_sequence_combination/data'.
+If you want to get the original data that these files were derived from,
+checkout the git repo https://github.com/yinfeiy/PICO-data/ (you don't need these
+to repeat the experiments). 
 
 5. Create a link to the PICO data:
 `ln -s ~/git/PICO-data/ ../../data/bayesian_sequence_combination/data/bio-PICO`, 
@@ -234,7 +240,7 @@ sequential label model. This is achieved by passing an optional constructor argu
 A competence score that rates the ability of an annotator can be useful for selecting the best workers for future tasks.
 Given a `bsc_model` object, after calling `run()` as described above, 
 we can compute the annotator accuracy as follows:
-~~~
+~~~python
 acc = bsc_model.annotator_accuracy()
 print(acc)
 ~~~
@@ -246,9 +252,8 @@ high if the worker selects the same label all the time;
 a worker consistently confuses one class for another.
 A better metric is based on the expected information gain, i.e. the reduction in uncertainty
 about a true label given the label from a particular worker. We call this 'informativeness':
-~~~
+~~~python
 infor = bsc_model.informativeness()
 print(infor)
 ~~~
 The informativeness is also returned as a vector and can also be used to rank workers (higher is better).
-

@@ -25,19 +25,19 @@ class BSC(object):
 
     K = None  # number of annotators
     L = None  # number of class labels
-    
+
     nscores = None  # number of possible values a token can have, usually this is L + 1 (add one to account for unannotated tokens)
-    
+
     beta0 = None  # ground truth priors
-    
+
     lnB = None  # transition matrix
     lnPi = None  # worker confusion matrices
-    
+
     q_t = None  # current true label estimates
     q_t_old = None  # previous true labels estimates
-    
+
     iter = 0  # current iteration
-    
+
     max_iter = None  # maximum number of iterations
     eps = None  # maximum difference of estimate differences in convergence chack
 
@@ -169,7 +169,7 @@ class BSC(object):
             if self.beta0.ndim >= 2:
                 # *** This seems to have a small positive effect
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                self.beta0[self.outside_labels, outside_label] += disallowed_count
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
@@ -297,7 +297,7 @@ class BSC(object):
 
     def lowerbound(self):
         '''
-        Compute the variational lower bound on the log marginal likelihood. 
+        Compute the variational lower bound on the log marginal likelihood.
         '''
         lnp_features_and_Cdata = 0
         lnq_Cdata = 0
@@ -316,27 +316,27 @@ class BSC(object):
         C_prev[self.doc_start.flatten() == 1, :] = 0
         C_prev[C_prev == 0] = self.before_doc_idx + 1  # document starts or missing labels
         valid_labels = (C != 0).astype(float)
-        
+
         for j in range(self.L):
             # self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]]
             lnpCj = valid_labels * self.A._read_lnPi(self.lnPi, j, C - 1, C_prev - 1, np.arange(self.K)[None, :], self.nscores) \
                     * self.q_t[:, j:j+1]
-            lnpC += lnpCj            
+            lnpC += lnpCj
 
         lnpt = self._lnpt()
 
         lnpCt = np.sum(lnpC) + np.sum(lnpt)
 
-        # trying to handle warnings        
+        # trying to handle warnings
         qt_sum = np.sum(self.q_t_joint, axis=2)[:, :, None]
         qt_sum[qt_sum==0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
         q_t_cond = self.q_t_joint / qt_sum
         q_t_cond[q_t_cond == 0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
         lnqt = self.q_t_joint * np.log(q_t_cond)
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
-        lnqt = np.sum(lnqt) 
+        lnqt = np.sum(lnqt)
         warnings.filterwarnings('always')
-            
+
         # E[ln p(\pi | \alpha_0)]
         # E[ln q(\pi)]
         lnpPi, lnqPi = self._lowerbound_pi_terms(self.alpha0, self.alpha, self.lnPi)
@@ -359,8 +359,8 @@ class BSC(object):
         x = np.sum(x, axis=1)
         z = gammaln(np.sum(self.beta0, 1)) - np.sum(gammaln_nu0, 1)
         z[np.isinf(z)] = 0
-        lnpA = np.sum(x + z) 
-        
+        lnpA = np.sum(x + z)
+
         # E[ln q(A)]
         # TODO this is wrong since lnB is now transition matrix + word observation likelihood
         x = (self.beta - 1) * self.lnB
@@ -372,20 +372,20 @@ class BSC(object):
         z = gammaln(np.sum(self.beta, 1)) - np.sum(gammaln_nu, 1)
         z[np.isinf(z)] = 0
         lnqA = np.sum(x + z)
-        
+
         print('Computing LB: %f, %f, %f, %f, %f, %f, %f, %f' % (lnpCt, lnqt, lnp_features_and_Cdata, lnq_Cdata,
                                                                 lnpPi, lnqPi, lnpA, lnqA))
         lb = lnpCt - lnqt + lnp_features_and_Cdata - lnq_Cdata + lnpPi - lnqPi + lnpA - lnqA
         return lb
-        
+
     def optimize(self, C, doc_start, features=None, maxfun=50, converge_workers_first=False):
-        ''' 
+        '''
         Run with MLII optimisation over the lower bound on the log-marginal likelihood.
         Optimizes the confusion matrix prior to the same values for all previous labels, and the scaling of the transition matrix
         hyperparameters.
         '''
         self.opt_runs = 0
-        
+
         def neg_marginal_likelihood(hyperparams, C, doc_start):
             # set hyperparameters
 
@@ -396,21 +396,21 @@ class BSC(object):
 
             # run the method
             self.run(C, doc_start, features, converge_workers_first=converge_workers_first)
-            
+
             # compute lower bound
             lb = self.lowerbound()
-            
+
             print("Run %i. Lower bound: %.5f, alpha_0 = %s, nu0 scale = %.3f" % (self.opt_runs,
                                                  lb, str(np.exp(hyperparams[0:-1])), np.exp(hyperparams[-1])))
 
             self.opt_runs += 1
             return -lb
-        
+
         initialguess = np.log(np.append(self.alpha0.flatten(), self.beta0[0, 0]))
         ftol = 1.0  #1e-3
         opt_hyperparams, _, _, _, _ = fmin(neg_marginal_likelihood, initialguess, args=(C, doc_start), maxfun=maxfun,
-                                                     full_output=True, ftol=ftol, xtol=1e100) 
-            
+                                                     full_output=True, ftol=ftol, xtol=1e100)
+
         print("Optimal hyper-parameters: alpha_0 = %s, nu0 scale = %s" % (np.array2string(np.exp(opt_hyperparams[:-1])),
                                                                           np.array2string(np.exp(opt_hyperparams[-1]))))
 
@@ -583,7 +583,7 @@ class BSC(object):
         doc_start = doc_start.astype(bool)
         if doc_start.ndim == 1:
             doc_start = doc_start[:, None]
-        
+
         self.N = doc_start.size
 
         if self.iter == 0:
@@ -754,7 +754,7 @@ class BSC(object):
         Use Viterbi decoding to ensure we make a valid prediction. There
         are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
         [[0.41, 0.4, 0.19], [[0.41, 0.42, 0.17]].
-        Taking the most probable labels results in an illegal sequence of [0, 1]. 
+        Taking the most probable labels results in an illegal sequence of [0, 1].
         Using most probable sequence would result in [0, 0].
         '''
         if self.beta.ndim >= 2 and self.beta.shape[0] > 1:
