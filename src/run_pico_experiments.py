@@ -9,7 +9,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = os.path.join(load_data.output_root_dir, 'pico2')
+output_dir = os.path.join(load_data.output_root_dir, 'pico_no_outside_factor_weighting')
 regen_data = False
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
@@ -19,7 +19,7 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
 best_nu0factor = 1
 best_diags = 10
 best_factor = 100
-best_outside_factor = 5
+best_outside_factor = 1
 
 # ------------------------------------------------------------------------------------------------
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
@@ -53,9 +53,9 @@ exp.methods =  [
 #                 )
 
 # ------------------------------------------------------------------------------------------------
-nu_factors = [0.1, 1, 10]
-diags = [1, 10, 100]
-factors = [1, 10, 100]
+nu_factors = [0.01, 0.1, 1]
+diags = [0.1, 1, 10]
+factors = [0.1, 1, 10]
 
 methods_to_tune = [
                 # 'ibcc',
