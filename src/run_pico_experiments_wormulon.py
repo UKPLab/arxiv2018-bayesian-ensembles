@@ -111,7 +111,7 @@ exp.methods =  [
 ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-#exp.run_methods(annos, gt, doc_start, output_dir, text,
-#                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
-#                new_data=regen_data
-#                )
+exp.run_methods(annos, gt, doc_start, output_dir, text,
+                ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+                new_data=regen_data
+                )
