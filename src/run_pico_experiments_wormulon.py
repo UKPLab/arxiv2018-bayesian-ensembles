@@ -13,13 +13,13 @@ output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon')
 regen_data = False
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data)
-
+    load_data.load_biomedical_data(regen_data)#, debug_subset_size=50000)
+#
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
 best_diags = 10
 best_factor = 100
-best_outside_factor = 5
+best_outside_factor = 1
 
 # ------------------------------------------------------------------------------------------------
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
@@ -47,7 +47,7 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
 best_nu0factor = 0.01
 best_diags = 0.1
 best_factor = 1
-best_outside_factor = 5
+best_outside_factor = 1
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
 
