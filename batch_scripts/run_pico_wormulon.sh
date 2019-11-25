@@ -7,8 +7,8 @@
 #SBATCH -e ./pico.err.%j
 #SBATCH -o ./pico.out.%j
 #SBATCH -n 1
-#SBATCH -c 16
-#SBATCH --mem-per-cpu=8182
+#SBATCH -c 8
+#SBATCH --mem=30000
 
 
 # ----------------------------------
