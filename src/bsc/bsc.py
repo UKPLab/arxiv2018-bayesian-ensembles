@@ -167,9 +167,8 @@ class BSC(object):
 
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
-                # *** This seems to have a small positive effect
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, outside_label] += disallowed_count
+                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
