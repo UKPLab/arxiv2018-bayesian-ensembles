@@ -291,8 +291,8 @@ def _load_bio_folder(anno_path_root, folder_name):
 
     return all_data, workerids
 
-def load_biomedical_data(regen_data_files, debug_subset_size=None):
-    savepath = os.path.join(data_root_dir, 'bio')
+def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='bio'):
+    savepath = os.path.join(data_root_dir, data_folder)
     if not os.path.isdir(savepath):
         os.mkdir(savepath)
 
