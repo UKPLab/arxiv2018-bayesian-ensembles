@@ -15,11 +15,11 @@ regen_data = False
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data)#, debug_subset_size=50000)
 #
-# this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
+# this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv; 1 10 100
 best_nu0factor = 1
 best_diags = 10
-best_factor = 100
-best_outside_factor = 5 # best so far: 1
+best_factor = 10
+best_outside_factor = 1
 
 # ------------------------------------------------------------------------------------------------
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
@@ -44,8 +44,8 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
 
 # ------------------------------------------------------------------------------------------------
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
-best_nu0factor = 0
-best_diags = 0
+best_nu0factor = 0.1
+best_diags = 1
 best_factor = 0.1
 best_outside_factor = 1
 
@@ -60,7 +60,7 @@ exp.nu0_factor = best_nu0factor
 
 # # run all the methods that don't require tuning here
 exp.methods =  [
-                'HMM_crowd',
+                'bac_vec_integrateIF',
 ]
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
