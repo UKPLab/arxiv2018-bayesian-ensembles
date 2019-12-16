@@ -21,12 +21,11 @@ import numpy as np
 # So up until then, it may have been using 160818 or 1705118.
 
 # Longer-term question -- why does it make so much difference to BSC but not to HMM-crowd? What is it sensitive to?
-
-output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon')
 regen_data = False
 
+datadir = 'bio_160818maybe'
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, data_folder='bio_160818maybe')#, debug_subset_size=50000)
+    load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
 #
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
@@ -48,6 +47,9 @@ exp.nu0_factor = best_nu0factor
 exp.methods =  [
                 'bac_seq_integrateIF',
 ]
+
+output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%s'
+                          % (best_nu0factor, best_diags, best_factor, datadir))
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,
@@ -55,8 +57,10 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                  new_data=regen_data
                  )
 
-#-------------------------------------------------------------------------------------------------gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-load_data.load_biomedical_data(regen_data, data_folder='bio_170518')#, debug_subset_size=50000)
+#-------------------------------------------------------------------------------------------------
+datadir = 'bio_170518'
+gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
+    load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
 #
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
@@ -78,6 +82,9 @@ exp.nu0_factor = best_nu0factor
 exp.methods =  [
                 'bac_seq_integrateIF',
 ]
+
+output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%s'
+                          % (best_nu0factor, best_diags, best_factor, datadir))
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,
@@ -85,8 +92,9 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                  new_data=regen_data
                  )
 #-----------------------------------------------------------------------------------------------
+datadir = 'bio_160818maybe'
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, data_folder='bio_160818maybe')#, debug_subset_size=50000)
+    load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
 
 # ------------------------------------------------------------------------------------------------
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
@@ -108,6 +116,9 @@ exp.nu0_factor = best_nu0factor
 exp.methods =  [
                 'HMM_crowd',
 ]
+
+output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%s'
+                          % (best_nu0factor, best_diags, best_factor, datadir))
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(annos, gt, doc_start, output_dir, text,
