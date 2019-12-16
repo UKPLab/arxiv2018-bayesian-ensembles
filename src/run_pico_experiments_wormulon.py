@@ -11,7 +11,16 @@ import numpy as np
 
 # currently on wormulon:
 # testing with priors 1, 10, 10, 1
-# Now: try reloading the older data files. It is possible they were produced from the random sample?
+# testing BSC-cv.
+
+# Now, in this script: try reloading the older data files. It is possible they were produced from the random sample?
+# -- probably seed 10 for 160818 or 170518 version, probably seed 2348945 for the 170518 or older missing versions.
+# This should not depend on the loading order of the corpus on a particular machine -- the docs are loaded in the
+# order they are first mentioned in acl17-test/PICO-annos-crowdsourcing.json.
+# The bio_apu folder might actually have been generated recently when I tested all the steps.
+# So up until then, it may have been using 160818 or 1705118.
+
+# Longer-term question -- why does it make so much difference to BSC but not to HMM-crowd? What is it sensitive to?
 
 output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon')
 regen_data = False
@@ -47,7 +56,7 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                  )
 
 #-------------------------------------------------------------------------------------------------gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, data_folder='bio_170518')#, debug_subset_size=50000)
+load_data.load_biomedical_data(regen_data, data_folder='bio_170518')#, debug_subset_size=50000)
 #
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1

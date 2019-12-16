@@ -366,6 +366,31 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
 
     print('Creating dev/test split...')
 
+    # for pre-17.05.18 version
+    # np.random.seed(2348945)
+    #
+    # # since there is no separate validation set, we split the test set
+    # ndocs = np.sum(doc_start)
+    # testdocs = np.random.randint(0, ndocs, int(np.floor(ndocs * 0.5)))
+    #
+    # docidxs = np.cumsum(doc_start)  # gets us the doc ids
+    # testidxs = np.in1d(docidxs, testdocs)
+    #
+    # devidxs = np.ones(len(gt), dtype=bool)
+    # devidxs[testidxs] = False
+    #
+    # gt_test = np.copy(gt)
+    # gt_test[devidxs] = -1
+    #
+    # gt_dev = np.zeros_like(gt) - 1  # gt[devidxs]
+    # gt_dev[devidxs] = gt[devidxs]
+    #
+    # doc_start_dev = doc_start[devidxs]
+    # text_dev = text[devidxs]
+    #
+
+    # For 17/05/18 or 160818 version? Or does the loading order also change?
+    #
     # seed = 10
     #
     # gt_test, gt_dev, doc_start_dev, text_dev = split_dataset(
