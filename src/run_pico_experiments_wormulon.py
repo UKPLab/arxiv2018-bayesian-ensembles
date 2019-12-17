@@ -50,7 +50,7 @@ exp.methods =  [
                 'bac_seq_integrateIF',
 ]
 
-output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%f_%s'
+output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%f_%s_betaOO'
                           % (best_nu0factor, best_diags, best_factor, best_outside_factor, datadir))
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
@@ -60,7 +60,41 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                  )
 
 #-------------------------------------------------------------------------------------------------
-datadir = 'bio_170518'
+# datadir = 'bio_170518'
+# gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
+#     load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
+# #
+# # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
+# best_nu0factor = 1
+# best_diags = 10
+# best_factor = 100
+# best_outside_factor = 5
+#
+# # ------------------------------------------------------------------------------------------------
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
+#
+# exp.save_results = True
+# exp.opt_hyper = False
+#
+# exp.alpha0_diags = best_diags
+# exp.alpha0_factor = best_factor
+# exp.nu0_factor = best_nu0factor
+#
+# # # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 'bac_seq_integrateIF',
+# ]
+#
+# output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%f_%s'
+#                           % (best_nu0factor, best_diags, best_factor, best_outside_factor, datadir))
+#
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(annos, gt, doc_start, output_dir, text,
+#                  ground_truth_val=gt_dev, doc_start_val=doc_start_dev, text_val=text_dev,
+#                  new_data=regen_data
+#                  )
+#-------------------------------------------------------------------------------------------------
+datadir = 'bio'
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
     load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
 #
@@ -85,7 +119,7 @@ exp.methods =  [
                 'bac_seq_integrateIF',
 ]
 
-output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%f_%s'
+output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%f_%s_betaOO'
                           % (best_nu0factor, best_diags, best_factor, best_outside_factor, datadir))
 
 # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
@@ -94,10 +128,10 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                  new_data=regen_data
                  )
 #-----------------------------------------------------------------------------------------------
-datadir = 'bio_160818maybe'
-gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
-
+# datadir = 'bio_160818maybe'
+# gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
+#     load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
+#
 # # ------------------------------------------------------------------------------------------------
 # # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 # best_nu0factor = 0.1
