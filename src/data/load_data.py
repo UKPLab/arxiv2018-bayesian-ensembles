@@ -297,6 +297,10 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
         os.mkdir(savepath)
 
     if regen_data_files or not os.path.isfile(savepath + '/annos.csv'):
+
+        print(regen_data_files)
+        print(os.path.isfile(savepath + '/annos.csv'))
+
         anno_path_root = os.path.join(data_root_dir, 'bio-PICO/annotations/')
 
         # There are four folders here:

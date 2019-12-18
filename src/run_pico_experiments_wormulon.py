@@ -31,8 +31,8 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
 #
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
-best_diags = 10
-best_factor = 100
+best_diags = 100
+best_factor = 10
 best_outside_factor = 5
 
 # ------------------------------------------------------------------------------------------------
@@ -100,8 +100,8 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
 #
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
-best_diags = 10
-best_factor = 100
+best_diags = 100
+best_factor = 10
 best_outside_factor = 5
 
 # ------------------------------------------------------------------------------------------------
