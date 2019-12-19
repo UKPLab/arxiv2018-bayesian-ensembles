@@ -53,12 +53,11 @@ class BSC(object):
         self.nscores = L
         self.K = K
 
-
-
         self.inside_labels = inside_labels
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
 
+        # this might be better set to 0.1 as was the case for HMM Crowd?
         self.nu0 = nu0 #self.N / float(self.L)
         # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
         # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators

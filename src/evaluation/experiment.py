@@ -616,7 +616,7 @@ class Experiment(object):
 
         data = crowd_data(sentences, crowd_labels)
         hc = HMM_crowd(self.num_classes, nfeats, data, None, None, n_workers=annotations.shape[1],
-                       vb=[self.nu0_factor, self.alpha0_factor], smooth=self.alpha0_factor, ne=1)
+                       vb=[self.nu0_factor, 1.0], smooth=self.alpha0_factor)
         hc.init(init_type='dw', wm_rep='cv', dw_em=5, wm_smooth=self.alpha0_factor)
 
         print('Running HMM-crowd inference...')

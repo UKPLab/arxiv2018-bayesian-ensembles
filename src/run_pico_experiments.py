@@ -13,12 +13,12 @@ output_dir = os.path.join(load_data.output_root_dir, 'pico_no_outside_factor_wei
 regen_data = False
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, debug_subset_size=100000)
+    load_data.load_biomedical_data(regen_data, debug_subset_size=1000000)
 
 # ------------------------------------------------------------------------------------------------
 
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
-best_nu0factor = 1
+best_nu0factor = 10
 best_diags = 10
 best_factor = 100
 best_outside_factor = 1
@@ -55,7 +55,7 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
 # ------------------------------------------------------------------------------------------------
 
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
-best_nu0factor = 1
+best_nu0factor = 10
 best_diags = 100
 best_factor = 10
 best_outside_factor = 1
