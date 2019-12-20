@@ -42,7 +42,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
+                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=0.1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None):
 
@@ -167,8 +167,8 @@ class BSC(object):
             # if we don't add the disallowed count for nu0, then p(O-O) becomes higher than p(I-O)?
             if self.beta0.ndim >= 2:
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-                # self.beta0[self.outside_labels, outside_label] += disallowed_count
+                # self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
+                self.beta0[self.outside_labels, outside_label] += disallowed_count
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
