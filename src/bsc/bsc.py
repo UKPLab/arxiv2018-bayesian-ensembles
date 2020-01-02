@@ -42,7 +42,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=0.1,
+                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None):
 
@@ -467,7 +467,7 @@ class BSC(object):
 
         # update q_t and q_t_joint
         self.q_t_joint = _expec_joint_t(self.lnR_, self.lnLambd, self.lnB, self.lnPi, lnPi_data, C, C_data,
-                                        doc_start, self.nscores, self.A, self.before_doc_idx)
+                                        doc_start, self.nscores, self.A, self.blanks, self.before_doc_idx)
 
         self.q_t = np.sum(self.q_t_joint, axis=1)
 
@@ -603,6 +603,8 @@ class BSC(object):
             self.doc_start = doc_start
             self.C = C
 
+            self.blanks = C == -1
+
         # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
             model.alpha_data = model.init(self.alpha0_data, C.shape[0], features, doc_start, self.L,
@@ -632,7 +634,7 @@ class BSC(object):
         # timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
         # main inference loop
-        with Parallel(n_jobs=-1, backend='threading') as parallel:
+        with Parallel(n_jobs=-1) as parallel: #, backend='threading') as parallel:
 
             while not self._converged() or not self.workers_converged:
 
@@ -957,7 +959,7 @@ def _expec_t(lnR_, lnLambda):
     return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None])
 
 
-def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model,
+def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, nscores, worker_model, blanks,
                    before_doc_idx=-1):
     '''
     Calculate joint label probabilities for each pair of tokens.
@@ -984,7 +986,7 @@ def _expec_joint_t(lnR_, lnLambda, lnB, lnPi, lnPi_data, C, C_data, doc_start, n
     for l in range(L):
 
         # Non-doc-starts
-        lnPi_terms = worker_model._read_lnPi(lnPi, l, C, Cprev, np.arange(K)[None, :], nscores)
+        lnPi_terms = worker_model._read_lnPi(lnPi, l, C, Cprev, np.arange(K)[None, :], nscores, blanks)
         if C_data is not None and len(C_data):
             lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
 

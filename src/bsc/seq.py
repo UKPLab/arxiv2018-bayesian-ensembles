@@ -31,18 +31,23 @@ class SequentialWorker(VectorWorker):
         dims = alpha0.shape
         alpha = alpha0.copy()
 
+        C_binary = {}
+        C_binary[-1] = C == 0
+        for l in range(dims[1]):
+            C_binary[l] = C == (l+1)
+
         for j in range(dims[0]):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
-                counts = ((C == l + 1) * doc_start).T.dot(Tj).reshape(-1)
-                counts +=  ((C[1:, :] == l + 1) * (C[:-1, :] == 0) * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
+                counts = (C_binary[l] * doc_start).T.dot(Tj).reshape(-1)
+                counts +=  ((C_binary[l][1:, :]) * (C_binary[-1][:-1, :]) * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
                 # previous tokens are missing.
 
                 alpha[j, l, before_doc_idx, :] += counts
 
                 for m in range(dims[1]):
-                    counts = ((C == l + 1)[1:, :] * (1 - doc_start[1:]) * (C == m + 1)[:-1, :]).T.dot(Tj[1:])
+                    counts = ((C_binary[l])[1:, :] * (1 - doc_start[1:]) * (C_binary[m])[:-1, :]).T.dot(Tj[1:])
                     alpha[j, l, m, :] += counts
 
         return alpha
@@ -68,7 +73,7 @@ class SequentialWorker(VectorWorker):
 
         return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
+    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
         if l is None:
 
             if np.isscalar(Krange):
@@ -87,7 +92,7 @@ class SequentialWorker(VectorWorker):
                     result = lnPi[l, C, Cprev, Krange]
             else:
                 result = lnPi[l, C, Cprev, Krange]
-                result[C == -1] = 0
+                result[blanks] = 0
 
         return result
 
