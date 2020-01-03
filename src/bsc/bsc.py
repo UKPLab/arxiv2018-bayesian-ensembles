@@ -57,13 +57,7 @@ class BSC(object):
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
 
-        if nu0 is None:
-            self.nu0 = self.N / float(self.L)
-        else:
-            self.nu0 = nu0
-        # Unless specificed, self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
-        # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
-        # of class even in the limit of infinite data.
+        self.nu0 = nu0
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
@@ -253,11 +247,11 @@ class BSC(object):
         self.beta = self.beta0
 
         if self.beta0.ndim >= 2:
-            nu0_sum = psi(np.sum(self.beta0, -1))[:, None]
+            beta0_sum = psi(np.sum(self.beta0, -1))[:, None]
         else:
-            nu0_sum = psi(np.sum(self.beta0))
+            beta0_sum = psi(np.sum(self.beta0))
 
-        self.lnB = psi(self.beta0) - nu0_sum
+        self.lnB = psi(self.beta0) - beta0_sum
 
         if self.beta0.ndim == 1:
             self.lnB = np.tile(self.lnB, (self.L + 1, 1))
@@ -495,6 +489,12 @@ class BSC(object):
             return
 
         N = len(text)
+
+        if self.nu0 is None:
+            self.nu0 = N / float(self.L)
+        # Unless specificed, self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
+        # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
+        # of class even in the limit of infinite data.
 
         for feat in text.flatten():
             if feat not in self.feat_map:
