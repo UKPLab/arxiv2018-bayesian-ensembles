@@ -42,7 +42,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
-                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
+                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=None,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None):
 
@@ -57,9 +57,11 @@ class BSC(object):
         self.outside_labels = outside_labels
         self.beginning_labels = beginning_labels
 
-        # this might be better set to 0.1 as was the case for HMM Crowd?
-        self.nu0 = nu0 #self.N / float(self.L)
-        # self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
+        if nu0 is None:
+            self.nu0 = self.N / float(self.L)
+        else:
+            self.nu0 = nu0
+        # Unless specificed, self.nu0 is chosen heuristically -- it prevents the word counts from having a strong effect, even if the
         # dataset size is large, becuase we don't believe a priori that the word distributions are reliable indicators
         # of class even in the limit of infinite data.
 
