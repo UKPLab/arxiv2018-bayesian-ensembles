@@ -12,7 +12,7 @@ class VectorWorker():
 
         # for the incorrect answers, the psuedo count splits the alpha0_factor equally
         # between the incorrect answers and multiplies by 2 (why?)
-        alpha0_base = alpha0_factor / ((L - 1) / 2)
+        alpha0_base = alpha0_factor / (L - 1)
 
         # for the correct answers, the pseudo count is alpha0_factor + alpha0_diags
         alpha0_correct = alpha0_diags + alpha0_factor - alpha0_base
