@@ -803,12 +803,13 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         # 3. Load worker annotations for test set.
         # load the gold data in the same way as the worker data
-        gold_data = _load_rodrigues_annotations(task1_test_path + 'ground_truth/', 'gold')
+        gold_data = _load_rodrigues_annotations(
+            os.path.join(task1_test_path, 'ground_truth/'), 'gold')
 
         # load the test data
-        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_test_path + 'mturk_train_data/',
-                                                                       gold_data, skip_sen_with_dirty_data)
-
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(
+            os.path.join(task1_test_path, 'mturk_train_data/'),
+            gold_data, skip_sen_with_dirty_data)
 
         # 4. Create ground truth CSV for task1_test_path
         # merge with the worker data
