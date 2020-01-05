@@ -83,7 +83,7 @@ class BSC(object):
             for modelstr in data_model:
                 if modelstr == 'LSTM':
                     self.data_model.append(LSTM(model_dir, reload_lstm, embeddings_file))
-                    self.max_data_updates_at_end = 20  # allow the other parameters to converge first, then update LSTM
+                    self.max_data_updates_at_end = 3 #20  # allow the other parameters to converge first, then update LSTM
                     # with small number of iterations to avoid overfitting
                 if modelstr == 'IF':
                     self.data_model.append(IndependentFeatures())

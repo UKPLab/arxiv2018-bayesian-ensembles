@@ -14,12 +14,13 @@ class MACEWorker():
     # lnPi[2:2+nscores, :] = ln p(label given worker is spamming/incorrect)
 
     def _init_alpha0(alpha0_diags, alpha0_factor, L):
+        # for incorrect answers and for spamming pattern, pseudocount is alpha0_factor
         alpha0 = alpha0_factor * np.ones((2 + L))
+        # for corrent answers, pseudocount is alpha0_factor + alpha0_diags
         alpha0[1] = alpha0_diags  # diags are bias toward correct answer
 
         alpha0_data = np.copy(alpha0)
         alpha0_data[:] = alpha0_factor
-        alpha0_data[1] = alpha0_diags
 
         return alpha0, alpha0_data
 

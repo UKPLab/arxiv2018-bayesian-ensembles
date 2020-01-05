@@ -189,8 +189,9 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
+                best_bac_wm + '_integratIF',
                 best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
-                #best_bac_wm + '_integrateIF_then_LSTM',
+                best_bac_wm + '_integrateIF_then_LSTM',
 ]
 
 # should run both task 1 and 2.

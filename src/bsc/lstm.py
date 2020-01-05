@@ -92,8 +92,8 @@ class LSTM:
 
         model_updated = False
 
-        max_niter_no_imprv = 5
-        freq_eval = 1
+        max_niter_no_imprv = 2
+        freq_eval = 5
 
         if self.completed_epochs == 0:
             # the first update can use more epochs if we have allowed them
