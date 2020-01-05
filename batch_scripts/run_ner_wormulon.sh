@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH -J pico
+#SBATCH -J ner
 #SBATCH --mail-user=simpson@ukp.informatik.tu-darmstadt.de
 #SBATCH --mail-type=FAIL
 #SBATCH --partition=ukp
-#SBATCH --output=/ukp-storage-1/simpson/pico.txt
-#SBATCH -e ./pico.err.%j
-#SBATCH -o ./pico.out.%j
+#SBATCH --output=/ukp-storage-1/simpson/ner.txt
+#SBATCH -e ./ner.err.%j
+#SBATCH -o ./ner.out.%j
 #SBATCH -n 1
 #SBATCH -c 8
 #SBATCH --mem=20000

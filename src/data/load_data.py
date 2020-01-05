@@ -754,11 +754,12 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
 
         # load the gold data in the same way as the worker data
-        gold_data = _load_rodrigues_annotations(task1_val_path + 'ground_truth/', 'gold')
+        gold_data = _load_rodrigues_annotations(os.path.join(task1_val_path, 'ground_truth/'), 'gold')
 
         # load the validation data
-        data, annotator_cols = _load_rodrigues_annotations_all_workers(task1_val_path + 'mturk_train_data/',
-                                                                       gold_data, skip_sen_with_dirty_data)
+        data, annotator_cols = _load_rodrigues_annotations_all_workers(
+            os.path.join(task1_val_path, 'mturk_train_data/'),
+            gold_data, skip_sen_with_dirty_data)
 
         # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
         # merge gold with the worker data
