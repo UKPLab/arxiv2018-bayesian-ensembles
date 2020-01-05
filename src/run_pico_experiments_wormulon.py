@@ -140,9 +140,9 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
 # ------------------------------------------------------------------------------------------------
 # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
-best_diags = 10
+best_diags = 100
 best_factor = 10
-best_outside_factor = 10
+best_outside_factor = 1
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
 
@@ -171,8 +171,8 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
 # new best-so-far but has slightly low prec and high rec
 best_nu0factor = 1
 best_diags = 10
-best_factor = 10
-best_outside_factor = 5
+best_factor = 100
+best_outside_factor = 1
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
 
