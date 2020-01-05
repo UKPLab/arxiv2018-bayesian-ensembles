@@ -599,7 +599,7 @@ class BSC(object):
             self.doc_start = doc_start
             self.C = C
 
-            self.blanks = C == -1
+            self.blanks = C == 0
 
         # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
@@ -827,6 +827,7 @@ class BSC(object):
 
             doc_start = doc_start.astype(bool)
             C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
+            self.blanks = C == 0
 
             self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
 
