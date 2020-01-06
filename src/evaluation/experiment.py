@@ -548,7 +548,7 @@ class Experiment(object):
         L = self.num_classes
 
         num_types = (self.num_classes - 1) / 2
-        outside_labels = [-1, 1]
+        outside_labels = [1, -1]
         inside_labels = (np.arange(num_types) * 2 + 1).astype(int)
         inside_labels[0] = 0
         begin_labels = (np.arange(num_types) * 2 + 2).astype(int)

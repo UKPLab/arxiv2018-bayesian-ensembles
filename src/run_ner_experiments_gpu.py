@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = os.path.join(load_data.output_root_dir, 'ner')
+output_dir = os.path.join(load_data.output_root_dir, 'ner_refactored')
 
 regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, gt_all = \
@@ -189,9 +189,11 @@ exp.alpha0_acc_bias = best_acc_bias
 
 # run all the methods that don't require tuning here
 exp.methods =  [
-                best_bac_wm + '_integratIF',
-                best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
-                best_bac_wm + '_integrateIF_then_LSTM',
+                'bsc_vec_integrateIF',
+                'bsc_ibcc_integrateIF',
+                best_bac_wm + '_integrateIF',
+                # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
+                # best_bac_wm + '_integrateIF_then_LSTM',
 ]
 
 # should run both task 1 and 2.

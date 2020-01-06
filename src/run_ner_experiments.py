@@ -16,6 +16,20 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
     load_data.load_ner_data(regen_data)
 
 
+# -------------------- debug with subset -------
+s = 100
+idxs = np.argwhere(gt!=-1)[:s, 0]
+gt = gt[idxs]
+annos = annos[idxs]
+doc_start = doc_start[idxs]
+text = text[idxs]
+gt_task1_val = gt_task1_val[idxs]
+
+gt_nocrowd = None
+text_nocrowd = None
+doc_start_nocrowd = None
+# -------------------------
+
 # ------------------------------------------------------------------------------------------------
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
 exp.save_results = True
@@ -31,23 +45,24 @@ best_acc_bias = 0
 
 exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
-exp.nu0_factor = best_nu0factor
-exp.alpha0_acc_bias = best_acc_bias
-
 exp.methods =  [
-                'majority',
+                # 'majority',
                 # 'mace',
                 # 'ds',
                 # 'ibcc',
-                # 'bac_vec_integrateIF',
-                # 'bac_ibcc_integrateIF',
-                # 'bac_mace_integrateIF',
                 # 'HMM_crowd',
                 # 'best',
                 # 'worst',
                 # best_bac_wm,
+                'bac_acc_integrateIF',
+                'bac_mace_integrateIF',
+                'bac_vec_integrateIF',
+                'bac_ibcc_integrateIF',
                 'bac_seq_integrateIF',
 ]
+exp.nu0_factor = best_nu0factor
+exp.alpha0_acc_bias = best_acc_bias
+
 
 exp.run_methods(
     annos, gt, doc_start, output_dir, text,
