@@ -142,9 +142,8 @@ class BSC(object):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
 
-        # The outside labels often need a stronger bias because they are way more frequent
-        self.alpha0[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
-        #self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
+        # The beginning labels often need a stronger bias
+        self.alpha0[self.beginning_labels, self.beginning_labels, :, :] *= self.alpha0_outside_factor
 
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):

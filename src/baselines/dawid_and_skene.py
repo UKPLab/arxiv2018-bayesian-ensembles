@@ -2,7 +2,7 @@ import numpy as np
 from scipy.special import psi # the Digamma function
 
 def ibccvb(annotation_matrix, num_classes, class_proportion_smoothing=0.001, annotator_smoothing=0.1,
-           annotator_accuracy_bias=0.9, max_iter=10, target_labels=None, uniform_priors=[], verbose=False):
+           annotator_accuracy_bias=0.9, last_corner_bias=1.0, max_iter=10, target_labels=None, uniform_priors=[], verbose=False):
     '''
     A simple implementation of the IBCC-VB method described in
     https://arxiv.org/abs/1206.1831
@@ -66,6 +66,7 @@ def ibccvb(annotation_matrix, num_classes, class_proportion_smoothing=0.001, ann
     if len(uniform_priors):
         nonuniform_priors[uniform_priors] = False
     annotator_smoothing[:, :, nonuniform_priors] += np.eye(num_classes)[:, :, None] * annotator_accuracy_bias
+    annotator_smoothing[-1, -1, nonuniform_priors] *= last_corner_bias
 
     class_proportion_smoothing = class_proportion_smoothing * np.ones(num_classes)
     annotator_pseudocounts = np.copy(annotator_smoothing)

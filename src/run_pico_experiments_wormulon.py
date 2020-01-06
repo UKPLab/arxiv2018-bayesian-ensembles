@@ -155,6 +155,7 @@ exp.nu0_factor = best_nu0factor
 
 # # run all the methods that don't require tuning here
 exp.methods =  [
+                'ibcc',
                 'bac_seq_integrateIF',
 ]
 
@@ -170,9 +171,9 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
 # ------------------------------------------------------------------------------------------------
 # new best-so-far but has slightly low prec and high rec
 best_nu0factor = 1
-best_diags = 10
+best_diags = 100
 best_factor = 100
-best_outside_factor = 10
+best_outside_factor = 1
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
 

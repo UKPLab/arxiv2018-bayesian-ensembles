@@ -482,7 +482,8 @@ class Experiment(object):
         return agg, probs
 
     def _run_ibcc(self, annotations, use_ml=False):
-        probs, _ = ibccvb(annotations, self.num_classes, self.nu0_factor, self.alpha0_factor, self.alpha0_diags, self.max_iter)
+        probs, _ = ibccvb(annotations, self.num_classes, self.nu0_factor,
+                          self.alpha0_factor, self.alpha0_diags, self.outside_factor, self.max_iter)
         agg = np.argmax(probs, axis=1)
         return agg, probs
 
