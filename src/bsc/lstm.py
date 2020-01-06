@@ -13,7 +13,7 @@ class LSTM:
         self.emb_file = embeddings_file
         self.completed_epochs = 0
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
+    def init(self, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
 
         self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
         #  model converge.
@@ -42,10 +42,6 @@ class LSTM:
 
         self.nclasses = nclasses
 
-        alpha_data = np.copy(alpha0_data)
-        self.alpha0_data = np.copy(alpha0_data)
-        #self.alpha0_data_prior = np.copy(alpha0_data)
-
         self.dev_sentences = dev_sentences
         if dev_sentences is not None:
             self.all_sentences = np.concatenate((self.sentences, self.dev_sentences))
@@ -65,10 +61,8 @@ class LSTM:
             self.doc_start_dev[pointer] = 1
             pointer += len(sen)
 
-
         self.A = A
 
-        return alpha_data
 
     def fit_predict(self, labels):
 

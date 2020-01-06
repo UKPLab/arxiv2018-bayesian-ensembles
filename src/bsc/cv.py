@@ -1,14 +1,16 @@
 import numpy as np
 from scipy.special.basic import psi
 
+from bsc.annotator_model import Annotator
 
-class VectorWorker():
+
+class VectorWorker(Annotator):
 # Worker model: confusion/accuracy vector for workers ----------------------------------------------------------------------------
 
 # the alphas are counted as for IBCC for simplicity. However, when Pi is computed, the counts for incorrect answers
 # are summed together to compute lnPi_incorrect, then exp(lnPi_incorrect) is divided by nclasses - 1.
 
-    def _init_alpha0(alpha0_diags, alpha0_factor, L):
+    def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
 
         # for the incorrect answers, the psuedo count splits the alpha0_factor equally
         # between the incorrect answers and multiplies by 2 (why?)
@@ -17,31 +19,36 @@ class VectorWorker():
         # for the correct answers, the pseudo count is alpha0_factor + alpha0_diags
         alpha0_correct = alpha0_diags + alpha0_factor - alpha0_base
 
-        alpha0 = alpha0_base * np.ones((L, L)) + \
+        self.alpha0 = alpha0_base * np.ones((L, L)) + \
                  alpha0_correct * np.eye(L)
 
-        alpha0_data = np.copy(alpha0)
-        alpha0_data[:] = alpha0_base
+        self.alpha0_data = {}
+        self.lnPi = {}
+        for m in range(nModels):
+            self.alpha0_data[m] = np.copy(self.alpha0)
+            self.alpha0_data[m][:] = alpha0_base
 
-        return alpha0, alpha0_data
+        self.nModels = nModels
 
-    def _init_lnPi(alpha0):
-        # Returns the initial values for alpha and lnPi
-        lnPi = VectorWorker._calc_q_pi(alpha0)
 
+    def _init_lnPi(self):
         # init to prior
-        alpha = np.copy(alpha0)
-        return alpha, lnPi
+        self.alpha = np.copy(self.alpha0)
 
-    def _calc_q_pi(alpha):
+        # Returns the initial values for alpha and lnPi
+        self.lnPi = self.q_pi()
+
+
+    def _calc_q_pi(self, alpha):
         '''
         Update the annotator models.
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
         q_pi = psi(alpha) - psi_alpha_sum
 
-        q_pi_incorrect = psi(np.sum(alpha, 1) - alpha[np.arange(alpha.shape[0]), np.arange(alpha.shape[0]), :]) \
-                         - psi_alpha_sum[:, 0, :]
+        q_pi_incorrect = psi(np.sum(alpha, 1)
+                        - alpha[range(self.alpha.shape[0]), range(alpha.shape[0]), :]) \
+                        - psi_alpha_sum[:, 0, :]
         q_pi_incorrect = np.log(np.exp(q_pi_incorrect) / float(alpha.shape[1] - 1)) # J x K
 
         for j in range(alpha.shape[0]):
@@ -52,39 +59,38 @@ class VectorWorker():
 
         return q_pi
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+
+    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
+        dims = self.alpha0.shape
+        self.alpha = self.alpha0.copy()
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
                 counts = (C == l + 1).T.dot(Tj).reshape(-1)
-                alpha[j, l, :] += counts
+                self.alpha[j, l, :] += counts
 
-        return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
+        dims = self.alpha0_data.shape
+        self.alpha_data = self.alpha0_data.copy()
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
                 counts = (C[:, l:l+1]).T.dot(Tj).reshape(-1)
-                alpha[j, l, :] += counts
+                self.alpha_data[j, l, :] += counts
 
-        return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]
@@ -103,31 +109,30 @@ class VectorWorker():
 
         return result
 
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores, uniform_priors):
+
+    def _expand_alpha0(self, K, nscores):
         '''
         Take the alpha0 for one worker and expand.
         :return:
         '''
-        L = alpha0.shape[0]
+        L = self.alpha0.shape[0]
 
         # set priors
-        if alpha0 is None:
+        if self.alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
+            self.alpha0 = np.ones((L, nscores, K)) + 1.0 * np.eye(L)[:, :, None]
         else:
-            alpha0 = alpha0[:, :, None]
-            alpha0 = np.tile(alpha0, (1, 1, K))
+            self.alpha0 = self.alpha0[:, :, None]
+            self.alpha0 = np.tile(self.alpha0, (1, 1, K))
 
-        alpha0[:, :, uniform_priors] = alpha0[0, 1, uniform_priors]
+        for midx in range(self.nModels):
+            if self.alpha0_data[midx] is None:
+                self.alpha0_data[midx] = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
+            elif self.alpha0_data[midx].ndim == 2:
+                self.alpha0_data[midx] = self.alpha0_data[midx][:, :, None]
 
-        if alpha0_data is None:
-            alpha0_data = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
-        elif alpha0_data.ndim == 2:
-            alpha0_data = alpha0_data[:, :, None]
 
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
+    def _calc_EPi(self, alpha):
 
         EPi = np.zeros_like(alpha)
 
@@ -135,7 +140,8 @@ class VectorWorker():
 
             EPi[j, j, :] = alpha[j, j, :] / np.sum(alpha[j, :, :], axis=0)
 
-            EPi_incorrect_j = (np.sum(alpha[j, :, :], axis=0) - alpha[j, j, :]) / np.sum(alpha[j, :, :], axis=0)
+            EPi_incorrect_j = (np.sum(alpha[j, :, :], axis=0) - alpha[j, j, :]) \
+                              / np.sum(alpha[j, :, :], axis=0)
             EPi_incorrect_j /= float(alpha.shape[1] - 1)
 
             for l in range(alpha.shape[1]):

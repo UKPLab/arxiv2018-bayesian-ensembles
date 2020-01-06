@@ -8,7 +8,7 @@ class IndependentFeatures:
 
     train_type = 'Bayes'
 
-    def init(self, alpha0_data, N, text, doc_start, nclasses, max_iters_after_workers_converge,
+    def init(self, N, text, doc_start, nclasses, max_iters_after_workers_converge,
              crf_probs, dev_sentences, A, max_internal_iters):
 
         self.N = N
@@ -32,13 +32,6 @@ class IndependentFeatures:
 
         self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
 
-        # set this to trust the model completely
-        alpha0_data = np.copy(alpha0_data) #
-        alpha_data = np.copy(alpha0_data)
-
-        self.alpha0_data = alpha0_data
-
-        return alpha_data
 
     def fit_predict(self, Et):
 
