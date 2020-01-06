@@ -23,8 +23,8 @@ best_diags = 1
 best_factor = 1
 best_acc_bias = 0
 
-best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
-best_bac_wm_score = -np.inf
+# best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
+# best_bac_wm_score = -np.inf
 
 # The following code tunes on dev set: -----------------------
 #
@@ -187,11 +187,15 @@ exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor
 exp.alpha0_acc_bias = best_acc_bias
 
-# run all the methods that don't require tuning here
+# Why has bsc_seq got worse?
+# Looks like a spelling mistake in integrateIF!
+# Constraints on alpha: 1, -1 flip? --> try betaOB again
 exp.methods =  [
                 'majority',
                 'ibcc',
-                # best_bac_wm + '_integratIF',
+                'bsc_vec_integrateIF',
+                'bsc_ibcc_integrateIF',
+                'bsc_seq_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -200,6 +204,7 @@ exp.methods =  [
 exp.run_methods(
     annos, gt, doc_start, output_dir, text,
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
     new_data=regen_data
 )
