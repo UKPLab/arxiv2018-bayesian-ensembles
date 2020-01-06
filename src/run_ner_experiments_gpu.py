@@ -166,15 +166,15 @@ best_acc_bias = 0
 #     new_data=regen_data, ground_truth_all_points=gt_all
 # )
 
-# -------------------- debug with subset -------
-s = 100
-idxs = np.argwhere(gt!=-1)[:s, 0]
-gt = gt[idxs]
-annos = annos[idxs]
-doc_start = doc_start[idxs]
-text = text[idxs]
-gt_task1_val = gt_task1_val[idxs]
-# -------------------------
+# # -------------------- debug with subset -------
+# s = 100
+# idxs = np.argwhere(gt!=-1)[:s, 0]
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# text = text[idxs]
+# gt_task1_val = gt_task1_val[idxs]
+# # -------------------------
 
 niter = 20 # variational inference iterations
 
