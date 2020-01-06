@@ -56,7 +56,7 @@ class ConfusionMatrixWorker(VectorWorker):
 
         return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
+    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]

@@ -159,7 +159,7 @@ class MACEWorker():
 
         return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
+    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
 
         ll_incorrect = lnPi[0, Krange] + lnPi[C+2, Krange]
 

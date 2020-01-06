@@ -80,7 +80,7 @@ class AccuracyWorker():
 
         return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores):
+    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
 
         if np.isscalar(C):
             N = 1
