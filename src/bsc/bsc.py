@@ -164,7 +164,7 @@ class BSC(object):
             if self.beta0.ndim >= 2:
                 disallowed_count = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
                 # self.beta0[self.outside_labels, unrestricted_labels[i]] += disallowed_count
-                self.beta0[self.outside_labels, outside_label] += disallowed_count
+                self.beta0[self.outside_labels, self.outside_labels[0]] += disallowed_count
                 self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
