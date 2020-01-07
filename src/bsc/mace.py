@@ -2,8 +2,10 @@ import numpy as np
 from scipy.special import logsumexp
 from scipy.special.basic import psi
 
+from bsc.annotator_model import Annotator
 
-class MACEWorker():
+
+class MACEWorker(Annotator):
     # Worker model: MACE-like spammer model --------------------------------------------------------------------------------
 
     # alpha[0,:] and alpha[1,:] are parameters for the spamming probability
@@ -13,34 +15,37 @@ class MACEWorker():
     # lnPi[0, :] = ln p(incorrect/spam answer)
     # lnPi[2:2+nscores, :] = ln p(label given worker is spamming/incorrect)
 
-    def _init_alpha0(alpha0_diags, alpha0_factor, L):
+    def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
         # for incorrect answers and for spamming pattern, pseudocount is alpha0_factor
-        alpha0 = alpha0_factor * np.ones((2 + L))
+        self.alpha0 = alpha0_factor * np.ones((2 + L))
         # for corrent answers, pseudocount is alpha0_factor + alpha0_diags
-        alpha0[1] = alpha0_diags  # diags are bias toward correct answer
+        self.alpha0[1] = alpha0_diags  # diags are bias toward correct answer
 
-        alpha0_data = np.copy(alpha0)
-        alpha0_data[:] = alpha0_factor
+        self.alpha0_data = {}
+        self.lnPi = {}
+        for m in range(nModels):
+            self.alpha0_data[m] = np.copy(self.alpha0)
+            self.alpha0_data[m][:] = alpha0_factor
 
-        return alpha0, alpha0_data
+        self.nModels = nModels
 
-    def _init_lnPi(alpha0):
+
+    def _init_lnPi(self):
         # Returns the initial values for alpha and lnPi
 
-        psi_alpha_sum = np.zeros_like(alpha0)
-        psi_alpha_sum[0, :] = psi(alpha0[0,:] + alpha0[1, :])
+        psi_alpha_sum = np.zeros_like(self.alpha0)
+        psi_alpha_sum[0, :] = psi(self.alpha0[0,:] + self.alpha0[1, :])
         psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
 
-        psi_alpha_sum[2:, :] = psi(np.sum(alpha0[2:, :], 0))[None, :]
+        psi_alpha_sum[2:, :] = psi(np.sum(self.alpha0[2:, :], 0))[None, :]
 
-        lnPi = psi(alpha0) - psi_alpha_sum
+        self.lnPi = psi(self.alpha0) - psi_alpha_sum
 
         # init to prior
-        alpha = np.copy(alpha0)
+        self.alpha = np.copy(self.alpha0)
 
-        return alpha, lnPi
 
-    def _calc_q_pi(alpha):
+    def _calc_q_pi(self, alpha):
         '''
         Update the annotator models.
         '''
@@ -49,15 +54,10 @@ class MACEWorker():
         psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
         psi_alpha_sum[2:, :] = psi(np.sum(alpha[2:, :], 0))[None, :]
 
-        ElnPi = psi(alpha) - psi_alpha_sum
+        return psi(alpha) - psi_alpha_sum
 
-        # ElnPi[0, :] = np.log(0.5)
-        # ElnPi[1, :] = np.log(0.5)
-        # ElnPi[2:, :] = np.log(1.0 / float(alpha.shape[1] - 2))
 
-        return ElnPi
-
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -85,10 +85,10 @@ class MACEWorker():
         pknowing = 0
         pspamming = 0
 
-        Pi = np.zeros_like(alpha)
-        Pi[0, :] = alpha[0, :] / (alpha[0, :] + alpha[1, :])
-        Pi[1, :] = alpha[1, :] / (alpha[0, :] + alpha[1, :])
-        Pi[2:, :] = alpha[2:, :] / np.sum(alpha[2:, :], 0)[None, :]
+        Pi = np.zeros_like(self.alpha)
+        Pi[0, :] = self.alpha[0, :] / (self.alpha[0, :] + self.alpha[1, :])
+        Pi[1, :] = self.alpha[1, :] / (self.alpha[0, :] + self.alpha[1, :])
+        Pi[2:, :] = self.alpha[2:, :] / np.sum(self.alpha[2:, :], 0)[None, :]
 
         pspamming_j_unnormed = Pi[0, :][None, :] * Pi[C + 1, np.arange(C.shape[1])[None, :]]
 
@@ -109,16 +109,15 @@ class MACEWorker():
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
-        alpha[1, :] = alpha0[1, :] + correct_count
-        alpha[0, :] = alpha0[0, :] + incorrect_count
+        self.alpha[1, :] = self.alpha0[1, :] + correct_count
+        self.alpha[0, :] = self.alpha0[0, :] + incorrect_count
 
         for l in range(nscores):
             strategy_count_l = np.sum((C == l + 1) * pspamming, 0)
-            alpha[l+2, :] = alpha0[l+2, :] + strategy_count_l
+            self.alpha[l+2, :] = self.alpha0[l+2, :] + strategy_count_l
 
-        return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -127,10 +126,10 @@ class MACEWorker():
         pknowing = 0
         pspamming = 0
 
-        Pi = np.zeros_like(alpha)
-        Pi[0, :] = alpha[0, :] / (alpha[0, :] + alpha[1, :])
-        Pi[1, :] = alpha[1, :] / (alpha[0, :] + alpha[1, :])
-        Pi[2:, :] = alpha[2:, :] / np.sum(alpha[2:, :], 0)[None, :]
+        Pi = np.zeros_like(self.alpha)
+        Pi[0, :] = self.alpha_data[0, :] / (self.alpha_data[0, :] + self.alpha_data[1, :])
+        Pi[1, :] = self.alpha_data[1, :] / (self.alpha_data[0, :] + self.alpha_data[1, :])
+        Pi[2:, :] = self.alpha_data[2:, :] / np.sum(self.alpha_data[2:, :], 0)[None, :]
 
         pspamming_j_unnormed = 0
         for j in range(C.shape[1]):
@@ -150,16 +149,15 @@ class MACEWorker():
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
-        alpha[1, :] = alpha0[1, :] + correct_count
-        alpha[0, :] = alpha0[0, :] + incorrect_count
+        self.alpha_data[1, :] = self.alpha0_data[1, :] + correct_count
+        self.alpha_data[0, :] = self.alpha0_data[0, :] + incorrect_count
 
         for l in range(nscores):
             strategy_count_l = np.sum((C[:, l:l+1]) * pspamming, 0)
-            alpha[l+2, :] = alpha0[l+2, :] + strategy_count_l
+            self.alpha_data[l+2, :] = self.alpha0_data[l+2, :] + strategy_count_l
 
-        return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
 
         ll_incorrect = lnPi[0, Krange] + lnPi[C+2, Krange]
 
@@ -207,35 +205,32 @@ class MACEWorker():
 
         return logsumexp([ll_correct, ll_incorrect], axis=0)
 
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores, uniform_priors):
+
+    def _expand_alpha0(self, K, nscores):
         '''
         Take the alpha0 for one worker and expand.
         :return:
         '''
-        L = alpha0.shape[0]
+        L = self.alpha0.shape[0]
 
         # set priors
-        if alpha0 is None:
+        if self.alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((nscores + 2, K))
-            alpha0[1, :] += 1.0
+            self.alpha0 = np.ones((nscores + 2, K))
+            self.alpha0[1, :] += 1.0
         else:
-            alpha0 = alpha0[:, None]
-            alpha0 = np.tile(alpha0, (1, K))
+            self.alpha0 = self.alpha0[:, None]
+            self.alpha0 = np.tile(self.alpha0, (1, K))
 
-        alpha0[:, uniform_priors] = alpha0[0, uniform_priors]
+        for midx in range(self.nModels):
+            if self.alpha0_data[midx] is None:
+                self.alpha0_data[midx] = np.ones((nscores + 2, 1))
+                self.alpha0_data[midx][1, :] += 1.0
+            elif self.alpha0_data[midx].ndim == 1:
+                self.alpha0_data[midx] = self.alpha0_data[midx][:, None]
 
-        if alpha0_data is None:
-            alpha0_data = np.ones((nscores + 2, 1))
-            alpha0_data[1, :] += 1.0
-        elif alpha0_data.ndim == 1:
-            alpha0_data = alpha0_data[:, None]
 
-
-        return alpha0, alpha0_data
-
-    def _calc_EPi(alpha):
-
+    def _calc_EPi(self, alpha):
         pi = np.zeros_like(alpha)
 
         pi[0] = alpha[0] / (alpha[0] + alpha[1])

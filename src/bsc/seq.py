@@ -7,29 +7,40 @@ from bsc.cv import VectorWorker
 class SequentialWorker(VectorWorker):
     # Worker model: sequential model of workers-----------------------------------------------------------------------------
 
-    def _init_lnPi(alpha0):
+    def __init__(self, alpha0_diags, alpha0_factor, L, nModels, tagging_scheme,
+                 beginning_labels, inside_labels, outside_labels, alpha0_outside_factor, rare_transition_pseudocount):
+        super().__init__(alpha0_diags, alpha0_factor, L, nModels)
+
+        self.tagging_scheme = tagging_scheme
+        self.beginning_labels = beginning_labels
+        self.inside_labels = inside_labels
+        self.outside_labels = outside_labels
+        self.alpha0_outside_factor = alpha0_outside_factor
+        self.rare_transition_pseudocount = rare_transition_pseudocount
+
+    def _init_lnPi(self):
         # Returns the initial values for alpha and lnPi
-        psi_alpha_sum = psi(np.sum(alpha0, 1))
-        lnPi = psi(alpha0) - psi_alpha_sum[:, None, :, :]
+        psi_alpha_sum = psi(np.sum(self.alpha0, 1))
+        self.lnPi = psi(self.alpha0) - psi_alpha_sum[:, None, :, :]
 
         # init to prior
-        alpha = np.copy(alpha0)
-        return alpha, lnPi
+        self.alpha = np.copy(self.alpha0)
 
-    def _calc_q_pi(alpha):
+
+    def _calc_q_pi(self, alpha):
         '''
         Update the annotator models.
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :, :]
-        q_pi = psi(alpha) - psi_alpha_sum
-        return q_pi
+        return psi(alpha) - psi_alpha_sum
 
-    def _post_alpha(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+
+    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
+        dims = self.alpha0.shape
+        self.alpha = self.alpha0.copy()
 
         C_binary = {}
         C_binary[-1] = C == 0
@@ -44,20 +55,19 @@ class SequentialWorker(VectorWorker):
                 counts +=  ((C_binary[l][1:, :]) * (C_binary[-1][:-1, :]) * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
                 # previous tokens are missing.
 
-                alpha[j, l, before_doc_idx, :] += counts
+                self.alpha[j, l, before_doc_idx, :] += counts
 
                 for m in range(dims[1]):
                     counts = ((C_binary[l])[1:, :] * (1 - doc_start[1:]) * (C_binary[m])[:-1, :]).T.dot(Tj[1:])
-                    alpha[j, l, m, :] += counts
+                    self.alpha[j, l, m, :] += counts
 
-        return alpha
 
-    def _post_alpha_data(E_t, C, alpha0, alpha, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
-        dims = alpha0.shape
-        alpha = alpha0.copy()
+        dims = self.alpha0_data.shape
+        self.alpha_data = self.alpha0_data.copy()
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
@@ -65,15 +75,14 @@ class SequentialWorker(VectorWorker):
             for l in range(dims[1]):
 
                 counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
-                alpha[j, l, before_doc_idx, :] += counts
+                self.alpha[j, l, before_doc_idx, :] += counts
 
                 for m in range(dims[1]):
                     counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
-                    alpha[j, l, m, :] += counts
+                    self.alpha[j, l, m, :] += counts
 
-        return alpha
 
-    def _read_lnPi(lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
         if l is None:
 
             if np.isscalar(Krange):
@@ -96,30 +105,90 @@ class SequentialWorker(VectorWorker):
 
         return result
 
-    def _expand_alpha0(alpha0, alpha0_data, K, nscores, uniform_priors):
+
+    def _expand_alpha0(self, K, nscores):
         '''
         Take the alpha0 for one worker and expand.
         :return:
         '''
-        L = alpha0.shape[0]
+        L = self.alpha0.shape[0]
 
         # set priors
-        if alpha0 is None:
+        if self.alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            alpha0 = np.ones((L, nscores, nscores + 1, K)) + 1.0 * np.eye(L)[:, :, None, None]
+            self.alpha0 = np.ones((L, nscores, nscores + 1, K)) + 1.0 * np.eye(L)[:, :, None, None]
         else:
-            alpha0 = alpha0[:, :, None, None]
-            alpha0 = np.tile(alpha0, (1, 1, nscores + 1, K))
+            self.alpha0 = self.alpha0[:, :, None, None]
+            self.alpha0 = np.tile(self.alpha0, (1, 1, nscores + 1, K))
 
-        alpha0[:, :, :, uniform_priors] = alpha0[0, 1, 0, uniform_priors]
+        for midx in range(self.nModels):
+            if self.alpha0_data[midx] is None:
+                self.alpha0_data[midx] = np.ones((L, L, L + 1, 1)) + 1.0 * np.eye(L)[:, :, None, None]
+            elif self.alpha0_data[midx].ndim == 2:
+                self.alpha0_data[midx] = self.alpha0_data[midx][:, :, None, None]
+                self.alpha0_data[midx] = np.tile(self.alpha0_data[midx], (1, 1, L+1, 1))
 
-        if alpha0_data is None:
-            alpha0_data = np.ones((L, L, L + 1, 1)) + 1.0 * np.eye(L)[:, :, None, None]
-        elif alpha0_data.ndim == 2:
-            alpha0_data = alpha0_data[:, :, None, None]
-            alpha0_data = np.tile(alpha0_data, (1, 1, L+1, 1))
+        if self.tagging_scheme == 'IOB':
+            restricted_labels = self.beginning_labels  # labels that cannot follow an outside label
+            unrestricted_labels = self.inside_labels  # labels that can follow any label
+        elif self.tagging_scheme == 'IOB2':
+            restricted_labels = self.inside_labels
+            unrestricted_labels = self.beginning_labels
 
-        return alpha0, alpha0_data
+        # The outside labels often need a stronger bias because they are way more frequent
+        # we ought to change this to test whether amping up the outside labels really helps!
+        self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_outside_factor
+        #self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
 
-    def _calc_EPi(alpha):
+        # set priors for invalid transitions (to low values)
+        for i, restricted_label in enumerate(restricted_labels):
+            # pseudo-counts for the transitions that are not allowed from outside to inside
+            for outside_label in self.outside_labels:
+                # set the disallowed transition to as close to zero as possible
+                disallowed_count = self.alpha0[:, restricted_label, outside_label] - self.rare_transition_pseudocount
+
+                self.alpha0[:, unrestricted_labels[i], outside_label] += disallowed_count # previous experiments use this
+                self.alpha0[:, restricted_label, outside_label] = self.rare_transition_pseudocount
+
+                for midx in range(self.nModels):
+                    disallowed_count = self.alpha0_data[midx][:, restricted_label, outside_label] - self.rare_transition_pseudocount
+                    self.alpha0_data[midx][:, unrestricted_labels[i], outside_label] += disallowed_count
+                    self.alpha0_data[midx][:, restricted_label, outside_label] = self.rare_transition_pseudocount
+
+            # Ban jumps from a B of one type to an I of another type
+            for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
+                # prevent transitions from unrestricted to restricted if they don't have the same types
+                if typeid == i:  # same type is allowed
+                    continue
+
+                # *** These seem to have a positive effect
+                disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label] - self.rare_transition_pseudocount
+                # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                self.alpha0[:, restricted_labels[typeid], other_unrestricted_label] += disallowed_count
+                # set the disallowed transition to as close to zero as possible
+                self.alpha0[:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
+
+                for midx in range(self.nModels):
+                    disallowed_count = self.alpha0_data[midx][:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
+                    self.alpha0_data[midx][:, restricted_labels[typeid], other_unrestricted_label] += disallowed_count # sticks to wrong type
+                    self.alpha0_data[midx][:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
+
+            # Ban jumps between Is of different types
+            for typeid, other_restricted_label in enumerate(restricted_labels):
+                if other_restricted_label == restricted_label:
+                    continue
+
+                # set the disallowed transition to as close to zero as possible
+                # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
+
+                # disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
+
+                self.alpha0[:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
+                for midx in range(self.nModels):
+                    self.alpha0_data[midx][:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
+
+
+    def _calc_EPi(self, alpha):
         return alpha / np.sum(alpha, axis=1)[:, None, :, :]
