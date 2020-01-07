@@ -189,6 +189,7 @@ output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_f
 # bsc_seq has got worse: maybe due to the changed constraints? Beta OO preference might make less sense for NER
 # because the entities are much more frequent. Solution: use different settings for NER rather than try to find a single setup.
 # Or because we modified the prior by taking out the /2 bit.
+# Or because we changed the nu0 prior for the word distributions.
 exp.methods =  [
                 # 'majority',
                 # 'ibcc',

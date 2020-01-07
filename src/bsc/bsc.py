@@ -117,7 +117,7 @@ class BSC(object):
             self.alpha_shape = (self.L, self.nscores)
 
         self.alpha0, self.alpha0_data = self.A._init_alpha0(alpha0_diags, alpha0_factor, L)
-        self.alpha0_outside_factor = alpha0_outside_factor
+        self.alpha0_bfactor = alpha0_outside_factor
 
         self.rare_transition_pseudocount = 1e-10
         # self.rare_transition_pseudocount = np.min(self.alpha0) / 10.0 # this makes the rare transition much less likely than
@@ -143,7 +143,7 @@ class BSC(object):
             unrestricted_labels = self.beginning_labels
 
         # The beginning labels often need a stronger bias
-        self.alpha0[self.beginning_labels, self.beginning_labels, :, :] *= self.alpha0_outside_factor
+        self.alpha0[self.beginning_labels, self.beginning_labels, :, :] *= self.alpha0_bfactor
 
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):

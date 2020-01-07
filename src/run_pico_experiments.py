@@ -23,7 +23,7 @@ best_diags = 100
 best_factor = 10
 best_outside_factor = 1
 
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_outside_factor)
 
 exp.save_results = True
 exp.opt_hyper = False

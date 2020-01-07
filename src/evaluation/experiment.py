@@ -224,7 +224,7 @@ class Experiment(object):
     random_sampling = False
 
     def __init__(self, generator, nclasses=None, nannotators=None, config=None, alpha0_factor=1.0, alpha0_diags=1.0,
-                 beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0, max_internal_iter=20, outside_factor=1.0):
+                 beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0, max_internal_iter=20, begin_factor=1.0):
 
         self.output_dir = '~/data/bayesian_sequence_combination/output/'
 
@@ -244,7 +244,7 @@ class Experiment(object):
 
         self.alpha0_factor = alpha0_factor
         self.alpha0_diags = alpha0_diags
-        self.outside_factor = outside_factor
+        self.begin_factor = begin_factor
         self.nu0_factor = beta0_factor
         self.max_internal_iter = max_internal_iter
 
@@ -483,7 +483,7 @@ class Experiment(object):
 
     def _run_ibcc(self, annotations, use_ml=False):
         probs, _ = ibccvb(annotations, self.num_classes, self.nu0_factor,
-                          self.alpha0_factor, self.alpha0_diags, self.outside_factor, self.max_iter)
+                          self.alpha0_factor, self.alpha0_diags, self.begin_factor, self.max_iter)
         agg = np.argmax(probs, axis=1)
         return agg, probs
 
@@ -573,10 +573,10 @@ class Experiment(object):
             no_words = True
 
         bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, before_doc_idx=1,
-            inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
-            alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, alpha0_outside_factor=self.outside_factor,
-            beta0_factor=self.nu0_factor, worker_model=self.bsc_worker_model, tagging_scheme='IOB2',
-            data_model=data_model, transition_model=transition_model, no_words=no_words)
+                            inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
+                            alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, alpha0_outside_factor=self.begin_factor,
+                            beta0_factor=self.nu0_factor, worker_model=self.bsc_worker_model, tagging_scheme='IOB2',
+                            data_model=data_model, transition_model=transition_model, no_words=no_words)
 
         bsc_model.verbose = True
 
