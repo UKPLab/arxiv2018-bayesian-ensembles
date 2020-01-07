@@ -176,49 +176,76 @@ best_acc_bias = 0
 # gt_task1_val = gt_task1_val[idxs]
 # # -------------------------
 
-niter = 20 # variational inference iterations
-
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
-exp.save_results = True
-exp.opt_hyper = False#True
-
-exp.nu0_factor = 10
-exp.alpha0_diags = 1
-exp.alpha0_factor = 1
-output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
-# bsc_seq has got worse: maybe due to the changed constraints? Beta OO preference might make less sense for NER
-# because the entities are much more frequent. Solution: use different settings for NER rather than try to find a single setup.
-# Or because we modified the prior by taking out the /2 bit.
-# Or because we changed the nu0 prior for the word distributions.
-exp.methods =  [
-                # 'majority',
-                # 'ibcc',
-                'bac_vec_integrateIF',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
-    new_data=regen_data
-)
+# niter = 20 # variational inference iterations
+#
+# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
+# exp.save_results = True
+# exp.opt_hyper = False#True
+#
+# exp.nu0_factor = 10
+# exp.alpha0_diags = 1
+# exp.alpha0_factor = 1
+# output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+# # bsc_seq has got worse: maybe due to the changed constraints? Beta OO preference might make less sense for NER
+# # because the entities are much more frequent. Solution: use different settings for NER rather than try to find a single setup.
+# # Or because we modified the prior by taking out the /2 bit.
+# # Or because we changed the nu0 prior for the word distributions.
+# exp.methods =  [
+#                 # 'majority',
+#                 # 'ibcc',
+#                 'bac_vec_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
+#     new_data=regen_data
+# )
 
 #----------------------------------------------------------------------------
+# niter = 20 # variational inference iterations
+#
+# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
+# exp.save_results = True
+# exp.opt_hyper = False#True
+#
+# exp.nu0_factor = 0.1
+# exp.alpha0_diags = 100
+# exp.alpha0_factor = 0.1
+# output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+#
+# exp.methods =  [
+#                 'bac_ibcc_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
+#     new_data=regen_data
+# )
+
+#-------------------------------------------------------------------------------------
 niter = 20 # variational inference iterations
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-exp.nu0_factor = 0.1
-exp.alpha0_diags = 100
-exp.alpha0_factor = 0.1
+exp.nu0_factor = 1
+exp.alpha0_diags = 10
+exp.alpha0_factor = 10
+exp.begin_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
-
 exp.methods =  [
-                'bac_ibcc_integrateIF',
+                'bac_seq_integrateIF',
+                # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
+                # best_bac_wm + '_integrateIF_then_LSTM',
 ]
 
 # should run both task 1 and 2.
@@ -238,7 +265,7 @@ exp.save_results = True
 exp.opt_hyper = False#True
 
 exp.nu0_factor = 1
-exp.alpha0_diags = 10
+exp.alpha0_diags = 100
 exp.alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
@@ -263,9 +290,9 @@ exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-exp.nu0_factor = 0.1
-exp.alpha0_diags = 0
-exp.alpha0_factor = 2
+exp.nu0_factor = 1
+exp.alpha0_diags = 10
+exp.alpha0_factor = 100
 output_dir = os.path.join(load_data.output_root_dir, 'ner_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 'bac_seq_integrateIF',
