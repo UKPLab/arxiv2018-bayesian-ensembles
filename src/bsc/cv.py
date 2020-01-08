@@ -60,7 +60,7 @@ class VectorWorker(Annotator):
         return q_pi
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -75,7 +75,7 @@ class VectorWorker(Annotator):
                 self.alpha[j, l, :] += counts
 
 
-    def _post_alpha_data(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''

@@ -105,7 +105,7 @@ for w, worker_model in enumerate(worker_models):
 
         data_model = data_models[w]
 
-        model = BSC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_labels=outside_labels,
+        model = BSC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_label=outside_labels,
                     beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor,
                     beta0_factor=nu0_factor, before_doc_idx=1, worker_model=worker_model, tagging_scheme='IOB2',
                     data_model=data_model, transition_model='HMM')

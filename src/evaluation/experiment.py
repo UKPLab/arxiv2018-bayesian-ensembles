@@ -549,7 +549,7 @@ class Experiment(object):
         L = self.num_classes
 
         num_types = (self.num_classes - 1) / 2
-        outside_labels = [1, -1]
+        outside_label = 1
         inside_labels = (np.arange(num_types) * 2 + 1).astype(int)
         inside_labels[0] = 0
         begin_labels = (np.arange(num_types) * 2 + 2).astype(int)
@@ -572,8 +572,8 @@ class Experiment(object):
         else:
             no_words = True
 
-        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, before_doc_idx=1,
-                            inside_labels=inside_labels, outside_labels=outside_labels, beginning_labels=begin_labels,
+        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+                            inside_labels=inside_labels, outside_label=outside_label, beginning_labels=begin_labels,
                             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, alpha0_outside_factor=self.begin_factor,
                             beta0_factor=self.nu0_factor, worker_model=self.bsc_worker_model, tagging_scheme='IOB2',
                             data_model=data_model, transition_model=transition_model, no_words=no_words)

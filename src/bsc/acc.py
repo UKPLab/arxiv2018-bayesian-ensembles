@@ -46,7 +46,7 @@ class AccuracyWorker(Annotator):
         return lnPi
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -66,7 +66,7 @@ class AccuracyWorker(Annotator):
                 self.alpha[0, :] += incorrect_count
 
 
-    def _post_alpha_data(self, model_idx, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''

@@ -8,13 +8,13 @@ class SequentialWorker(VectorWorker):
     # Worker model: sequential model of workers-----------------------------------------------------------------------------
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels, tagging_scheme,
-                 beginning_labels, inside_labels, outside_labels, alpha0_outside_factor, rare_transition_pseudocount):
+                 beginning_labels, inside_labels, outside_label, alpha0_outside_factor, rare_transition_pseudocount):
         super().__init__(alpha0_diags, alpha0_factor, L, nModels)
 
         self.tagging_scheme = tagging_scheme
         self.beginning_labels = beginning_labels
         self.inside_labels = inside_labels
-        self.outside_labels = outside_labels
+        self.outside_label = outside_label
         self.alpha0_outside_factor = alpha0_outside_factor
         self.rare_transition_pseudocount = rare_transition_pseudocount
 
@@ -35,7 +35,7 @@ class SequentialWorker(VectorWorker):
         return psi(alpha) - psi_alpha_sum
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -55,14 +55,14 @@ class SequentialWorker(VectorWorker):
                 counts +=  ((C_binary[l][1:, :]) * (C_binary[-1][:-1, :]) * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
                 # previous tokens are missing.
 
-                self.alpha[j, l, before_doc_idx, :] += counts
+                self.alpha[j, l, self.outside_label, :] += counts
 
                 for m in range(dims[1]):
                     counts = ((C_binary[l])[1:, :] * (1 - doc_start[1:]) * (C_binary[m])[:-1, :]).T.dot(Tj[1:])
                     self.alpha[j, l, m, :] += counts
 
 
-    def _post_alpha_data(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -75,7 +75,7 @@ class SequentialWorker(VectorWorker):
             for l in range(dims[1]):
 
                 counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
-                self.alpha[j, l, before_doc_idx, :] += counts
+                self.alpha[j, l, self.outside_label, :] += counts
 
                 for m in range(dims[1]):
                     counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
@@ -143,7 +143,7 @@ class SequentialWorker(VectorWorker):
         # set priors for invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            for outside_label in self.outside_labels:
+            for outside_label in self.outside_label:
                 # set the disallowed transition to as close to zero as possible
                 disallowed_count = self.alpha0[:, restricted_label, outside_label] - self.rare_transition_pseudocount
 

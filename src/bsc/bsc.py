@@ -39,32 +39,29 @@ class BSC(object):
     max_iter = None  # maximum number of iterations
     eps = None  # maximum difference of estimate differences in convergence chack
 
-    def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1], beginning_labels=[2],
-                 before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
+    def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
+                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-10, verbose=False):
 
         self.verbose = verbose
 
-        self.tagging_scheme = tagging_scheme # may be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
+        # tagging_scheme can be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
         # that follow another start with B).
 
         self.L = L
         self.K = K
 
-        self.inside_labels = inside_labels
-        self.outside_labels = outside_labels
-        self.beginning_labels = beginning_labels
 
         self.nu0 = nu0
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-            self.LM = MarkovLabelModel(np.ones((self.L, self.L)) * beta0_factor, self.L, before_doc_idx, verbose,
-                                       self.tagging_scheme, self.beginning_labels, self.inside_labels,
-                                       self.outside_labels, rare_transition_pseudocount)
+            self.LM = MarkovLabelModel(np.ones((self.L, self.L)) * beta0_factor, self.L, verbose,
+                                       tagging_scheme, beginning_labels, inside_labels,
+                                       outside_label, rare_transition_pseudocount)
         else:
-            self.LM = IndependentLabelModel(np.ones((self.L)) * beta0_factor, self.L, before_doc_idx, verbose)
+            self.LM = IndependentLabelModel(np.ones((self.L)) * beta0_factor, self.L, verbose)
 
         # choose data model
         self.max_data_updates_at_end = 0  # no data model to be updated after everything else has converged.
@@ -99,8 +96,8 @@ class BSC(object):
 
         elif worker_model == 'seq':
             self.A = SequentialWorker(alpha0_diags, alpha0_factor, L, len(data_model), tagging_scheme,
-                            beginning_labels, inside_labels, outside_labels, alpha0_outside_factor,
-                            rare_transition_pseudocount)
+                                      beginning_labels, inside_labels, outside_label, alpha0_outside_factor,
+                                      rare_transition_pseudocount)
             self.alpha_shape = (self.L, self.L)
 
         elif worker_model == 'vec':
@@ -111,7 +108,7 @@ class BSC(object):
 
         self.rare_transition_pseudocount = rare_transition_pseudocount
 
-        self.before_doc_idx = before_doc_idx  # identifies which true class value is assumed for the label before the start of a document
+        self.outside_label = outside_label # identifies which true class value is assumed for the label before the start of a document
 
         self.max_iter = max_iter #- self.max_data_updates_at_end  # maximum number of iterations before training data models
         self.eps = eps  # threshold for convergence
@@ -172,7 +169,7 @@ class BSC(object):
         C = self.C.astype(int)
         C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
         C_prev[self.doc_start.flatten() == 1, :] = 0
-        C_prev[C_prev == 0] = self.before_doc_idx + 1  # document starts or missing labels
+        C_prev[C_prev == 0] = self.outside_label + 1  # document starts or missing labels # why is it + 1?
         valid_labels = (C != 0).astype(float)
 
         for j in range(self.L):
@@ -447,7 +444,7 @@ class BSC(object):
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
-                        self.A._post_alpha_data(self.Et, model.C_data, doc_start, self.L, self.before_doc_idx)
+                        self.A._post_alpha_data(self.Et, model.C_data, doc_start, self.L)
                         self.A.q_pi_data(midx)
 
                         if self.verbose:
@@ -461,7 +458,7 @@ class BSC(object):
 
 
                 # update E_lnpi
-                self.A._post_alpha(self.Et, C, doc_start, self.L, self.before_doc_idx)
+                self.A._post_alpha(self.Et, C, doc_start, self.L)
                 self.A.q_pi()
 
                 if self.verbose:
@@ -621,9 +618,9 @@ def _log_dir(alpha, lnPi, sum_dim):
 # ----------------------------------------------------------------------------------------------------------------------
 
 class LabelModel(object):
-    def __init__(self, beta0, L, before_doc_idx, verbose=False):
+    def __init__(self, beta0, L, outside_label, verbose=False):
         self.L = L
-        self.before_doc_idx = before_doc_idx
+        self.outside_label = outside_label
         self.verbose = verbose
 
         self.beta0 = beta0
@@ -658,12 +655,12 @@ class LabelModel(object):
         pass
 
 class MarkovLabelModel(LabelModel):
-    def __init__(self, beta0, L, before_doc_idx, verbose, tagging_scheme,
-                 beginning_labels, inside_labels, outside_labels, rare_transition_pseudocount):
+    def __init__(self, beta0, L, verbose, tagging_scheme,
+                 beginning_labels, inside_labels, outside_label, rare_transition_pseudocount):
 
         self.C_by_doc = None
 
-        super().__init__(beta0, L, before_doc_idx, verbose)
+        super().__init__(beta0, L, outside_label, verbose)
 
         if self.beta0.ndim != 2:
             return
@@ -678,10 +675,10 @@ class MarkovLabelModel(LabelModel):
 
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
-            disallowed_counts = self.beta0[outside_labels, restricted_label] - rare_transition_pseudocount
+            disallowed_counts = self.beta0[outside_label, restricted_label] - rare_transition_pseudocount
             # self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
-            self.beta0[outside_labels, outside_labels[0]] += disallowed_counts
-            self.beta0[outside_labels, restricted_label] = rare_transition_pseudocount
+            self.beta0[outside_label, outside_label] += disallowed_counts
+            self.beta0[outside_label, restricted_label] = rare_transition_pseudocount
 
             # cannot jump from one type to another
             for j, unrestricted_label in enumerate(unrestricted_labels):
@@ -727,7 +724,7 @@ class MarkovLabelModel(LabelModel):
             self.Et_joint[1:, l, :] = self.Et[:-1, l][:, None] * self.Et[1:, :] * B[l, :][None, :]
 
         self.Et_joint[doc_start, :, :] = 0
-        self.Et_joint[doc_start, self.before_doc_idx, :] = self.Et[doc_start, :] * B[self.before_doc_idx, :]
+        self.Et_joint[doc_start, self.outside_label, :] = self.Et[doc_start, :] * B[self.outside_label, :]
 
         self.Et_joint /= np.sum(self.Et_joint, axis=(1, 2))[:, None, None]
 
@@ -761,7 +758,7 @@ class MarkovLabelModel(LabelModel):
 
             self.Et_joint[goldidxs, :, :] = 0
             if not hasattr(self, 'goldprev'):
-                self.goldprev = np.append([self.before_doc_idx], self.gold[:-1])[goldidxs]
+                self.goldprev = np.append([self.outside_label], self.gold[:-1])[goldidxs]
 
             self.Et_joint[goldidxs, self.goldprev, self.gold[goldidxs]] = 1.0
 
@@ -791,11 +788,11 @@ class MarkovLabelModel(LabelModel):
                 self.C_data_by_doc = list(zip(*self.C_data_by_doc))
 
             res = self.parallel(delayed(_doc_forward_pass)(C_doc, self.C_data_by_doc[d], self.lnB_by_doc[d],
-                                                      self.L, self.A, self.before_doc_idx)
+                                                           self.L, self.A, self.outside_label)
                            for d, C_doc in enumerate(self.C_by_doc))
         else:
             res = self.parallel(delayed(_doc_forward_pass)(C_doc, None, self.lnB_by_doc[d],
-                                                      self.L, self.A, self.before_doc_idx)
+                                                           self.L, self.A, self.outside_label)
                            for d, C_doc in enumerate(self.C_by_doc))
 
         # reformat results
@@ -807,10 +804,10 @@ class MarkovLabelModel(LabelModel):
         '''
         if self.Cdata is not None and len(self.Cdata) > 0:
             res = self.parallel(delayed(_doc_backward_pass)(doc, self.C_data_by_doc[d], self.lnB_by_doc[d], self.L, self.A,
-                                                       self.before_doc_idx) for d, doc in enumerate(self.C_by_doc))
+                                                            self.outside_label) for d, doc in enumerate(self.C_by_doc))
         else:
             res = self.parallel(delayed(_doc_backward_pass)(doc, None, self.lnB_by_doc[d], self.L, self.A,
-                                                       self.before_doc_idx) for d, doc in enumerate(self.C_by_doc))
+                                                            self.outside_label) for d, doc in enumerate(self.C_by_doc))
 
         # reformat results
         self.lnLambda = np.concatenate(res, axis=0)
@@ -832,12 +829,12 @@ class MarkovLabelModel(LabelModel):
 
         # flags to indicate whether the entries are valid or should be zeroed out later.
         flags = -np.inf * np.ones_like(lnS)
-        flags[np.where(self.ds == 1)[0], self.before_doc_idx, :] = 0
+        flags[np.where(self.ds == 1)[0], self.outside_label, :] = 0
         flags[np.where(self.ds == 0)[0], :L, :] = 0
 
-        Cprev = np.append(np.zeros((1, K), dtype=int) + self.before_doc_idx, C[:-1, :], axis=0)
-        Cprev[self.ds.flatten(), :] = self.before_doc_idx
-        Cprev[Cprev == -1] = self.before_doc_idx
+        Cprev = np.append(np.zeros((1, K), dtype=int) + self.outside_label, C[:-1, :], axis=0)
+        Cprev[self.ds.flatten(), :] = self.outside_label
+        Cprev[Cprev == -1] = self.outside_label
 
         for l in range(L):
 
@@ -849,8 +846,8 @@ class MarkovLabelModel(LabelModel):
                 for model_idx in range(len(self.Cdata)):
                     C_data_prev = np.append(np.zeros((1, L), dtype=int), self.Cdata[model_idx][:-1, :], axis=0)
                     C_data_prev[self.ds, :] = 0
-                    C_data_prev[self.ds, self.before_doc_idx] = 1
-                    C_data_prev[0, self.before_doc_idx] = 1
+                    C_data_prev[self.ds, self.outside_label] = 1
+                    C_data_prev[0, self.outside_label] = 1
 
                     for m in range(L):
                         weights = self.Cdata[model_idx][:, m:m + 1] * C_data_prev
@@ -921,11 +918,11 @@ class MarkovLabelModel(LabelModel):
             C_data_by_doc = list(zip(*C_data_by_doc))
 
             res = self.parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEB_by_doc[d], self.L,
-                                self.C.shape[1], self.A, self.before_doc_idx)
+                                                                     self.C.shape[1], self.A, self.outside_label)
                            for d, doc in enumerate(self.C_by_doc))
         else:
             res = self.parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], self.L,
-                                self.C.shape[1], self.A, self.before_doc_idx)
+                                                                     self.C.shape[1], self.A, self.outside_label)
                            for d, doc in enumerate(self.C_by_doc))
 
         # note: we are using ElnPi instead of lnEPi, I think is not strictly correct.
@@ -976,7 +973,7 @@ class IndependentLabelModel(LabelModel):
         Krange = np.arange(self.C.shape[1], dtype=int)
         Ccurr = self.C - 1
         Cprev = np.concatenate((np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :] - 1), axis=0)
-        Cprev[self.ds, :] =  int(self.before_doc_idx)
+        Cprev[self.ds, :] =  int(self.outside_label)
 
         self.Et = np.copy(self.lnB)
 
@@ -984,7 +981,7 @@ class IndependentLabelModel(LabelModel):
         for model_idx in range(len(C_data)):
 
             C_m = C_data[model_idx]
-            C_m_prev = np.concatenate((np.zeros((1, self.L)) + self.before_doc_idx, C_data[model_idx][:-1, :]), axis=0)
+            C_m_prev = np.concatenate((np.zeros((1, self.L)) + self.outside_label, C_data[model_idx][:-1, :]), axis=0)
 
             for m in range(self.L):
                 for n in range(self.L):

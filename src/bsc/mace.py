@@ -57,7 +57,7 @@ class MACEWorker(Annotator):
         return psi(alpha) - psi_alpha_sum
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -117,7 +117,7 @@ class MACEWorker(Annotator):
             self.alpha[l+2, :] = self.alpha0[l+2, :] + strategy_count_l
 
 
-    def _post_alpha_data(self, E_t, C, doc_start, nscores, before_doc_idx=-1):  # Posterior Hyperparameters
+    def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
