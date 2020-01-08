@@ -61,11 +61,15 @@ def ibccvb(annotation_matrix, num_classes, class_proportion_smoothing=0.001, ann
         t[tridxs] = 0
         t[tridxs, target_labels[tridxs]] = 1
 
-    annotator_smoothing = annotator_smoothing * np.ones((num_classes, num_classes, num_annotators))
+    annotator_smoothing = annotator_smoothing * np.ones((num_classes, num_classes, num_annotators)) / float(num_classes-1)
     nonuniform_priors = np.ones(num_annotators, dtype=bool)
     if len(uniform_priors):
         nonuniform_priors[uniform_priors] = False
-    annotator_smoothing[:, :, nonuniform_priors] += np.eye(num_classes)[:, :, None] * annotator_accuracy_bias
+
+    for l in range(num_classes):
+        annotator_smoothing[l, l, nonuniform_priors] *= num_classes-1
+        annotator_smoothing[l, l, nonuniform_priors] += annotator_accuracy_bias
+
     annotator_smoothing[-1, -1, nonuniform_priors] *= last_corner_bias
 
     class_proportion_smoothing = class_proportion_smoothing * np.ones(num_classes)
@@ -96,8 +100,8 @@ def ibccvb(annotation_matrix, num_classes, class_proportion_smoothing=0.001, ann
         if np.max(np.abs(t_old - t)) < eps:
             break
 
-    if verbose:
-        print('Completed in %i iterations' % i)
+    # if verbose:
+    print('Completed in %i iterations' % i)
 
     #print('Class proportions = %s' % str(np.exp(lnkappa)))
 

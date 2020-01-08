@@ -1,6 +1,7 @@
 '''
 Abstract class for the annotator models.
 '''
+import numpy as np
 
 class Annotator():
 
@@ -20,9 +21,27 @@ class Annotator():
         self.lnPi_data[model_idx] = self._calc_q_pi(self.alpha_data[model_idx])
 
 
-    def EPi(self):
-        return self._calc_EPi(self.alpha)
+    def lnEPi(self):
+        EPi = self._calc_EPi(self.alpha)
+
+        lnEPi = np.zeros_like(EPi)
+        lnEPi[EPi != 0] = np.log(EPi[EPi != 0])
+        lnEPi[EPi == 0] = -np.inf
+
+        return lnEPi
 
 
-    def EPi_data(self, model_idx):
-        return self._calc_EPi(self.alpha_data[model_idx])
+    def lnEPi_data(self):
+        if len(self.alpha0_data) == 0:
+            return 0
+
+        lnEPi_data = []
+
+        for midx, _ in enumerate(self.alpha_data):
+            EPi_m = self._calc_EPi(self.alpha_data[midx])
+            lnEPi_m = np.zeros_like(EPi_m)
+            lnEPi_m[EPi_m != 0] = np.log(EPi_m[EPi_m != 0])
+            lnEPi_m[EPi_m == 0] = -np.inf
+            lnEPi_data.append(lnEPi_m)
+
+        return lnEPi_data

@@ -26,31 +26,30 @@ class BSC(object):
     K = None  # number of annotators
     L = None  # number of class labels
 
-    nscores = None  # number of possible values a token can have, usually this is L + 1 (add one to account for unannotated tokens)
-
     beta0 = None  # ground truth priors
 
     lnB = None  # transition matrix
     lnPi = None  # worker confusion matrices
 
-    q_t = None  # current true label estimates
-    q_t_old = None  # previous true labels estimates
+    Et = None  # current true label estimates
+    Et_old = None  # previous true labels estimates
 
     iter = 0  # current iteration
 
     max_iter = None  # maximum number of iterations
     eps = None  # maximum difference of estimate differences in convergence chack
 
-    def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1, -1], beginning_labels=[2],
+    def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_labels=[1], beginning_labels=[2],
                  before_doc_idx=1, alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
-                 model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-10):
+                 model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-10, verbose=False):
+
+        self.verbose = verbose
 
         self.tagging_scheme = tagging_scheme # may be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
         # that follow another start with B).
 
         self.L = L
-        self.nscores = L
         self.K = K
 
         self.inside_labels = inside_labels
@@ -61,15 +60,11 @@ class BSC(object):
 
         # choose whether to use the HMM transition model or not
         if transition_model == 'HMM':
-            self.beta0 = np.ones((self.L + 1, self.L)) * beta0_factor
-            self._update_B = self._update_B_trans
-            self.use_ibcc_to_init = True
-            self.has_transition_constraints = True
+            self.LM = MarkovLabelModel(np.ones((self.L, self.L)) * beta0_factor, self.L, before_doc_idx, verbose,
+                                       self.tagging_scheme, self.beginning_labels, self.inside_labels,
+                                       self.outside_labels, rare_transition_pseudocount)
         else:
-            self.beta0 = np.ones((self.L)) * beta0_factor
-            self._update_B = self._update_B_notrans
-            self.use_ibcc_to_init = False
-            self.has_transition_constraints = False
+            self.LM = IndependentLabelModel(np.ones((self.L)) * beta0_factor, self.L, before_doc_idx, verbose)
 
         # choose data model
         self.max_data_updates_at_end = 0  # no data model to be updated after everything else has converged.
@@ -95,22 +90,22 @@ class BSC(object):
 
         elif worker_model == 'mace':
             self.A = MACEWorker(alpha0_diags, alpha0_factor, L, len(data_model))
-            self.alpha_shape = (2 + self.nscores)
+            self.alpha_shape = (2 + self.L)
             self._lowerbound_pi_terms = self._lowerbound_pi_terms_mace
 
         elif worker_model == 'ibcc':
             self.A = ConfusionMatrixWorker(alpha0_diags, alpha0_factor, L, len(data_model))
-            self.alpha_shape = (self.L, self.nscores)
+            self.alpha_shape = (self.L, self.L)
 
         elif worker_model == 'seq':
             self.A = SequentialWorker(alpha0_diags, alpha0_factor, L, len(data_model), tagging_scheme,
                             beginning_labels, inside_labels, outside_labels, alpha0_outside_factor,
                             rare_transition_pseudocount)
-            self.alpha_shape = (self.L, self.nscores)
+            self.alpha_shape = (self.L, self.L)
 
         elif worker_model == 'vec':
             self.A = VectorWorker(alpha0_diags, alpha0_factor, L, len(data_model))
-            self.alpha_shape = (self.L, self.nscores)
+            self.alpha_shape = (self.L, self.L)
 
         self.alpha0_outside_factor = alpha0_outside_factor
 
@@ -125,56 +120,6 @@ class BSC(object):
 
         self.verbose = False  # can change this if you want progress updates to be printed
 
-
-    def _set_transition_constraints(self):
-
-        if self.beta0.ndim != 2:
-            return
-
-        # set priors for invalid transitions (to low values)
-        if self.tagging_scheme == 'IOB':
-            restricted_labels = self.beginning_labels  # labels that cannot follow an outside label
-            unrestricted_labels = self.inside_labels  # labels that can follow any label
-        elif self.tagging_scheme == 'IOB2':
-            restricted_labels = self.inside_labels
-            unrestricted_labels = self.beginning_labels
-
-        for i, restricted_label in enumerate(restricted_labels):
-            # pseudo-counts for the transitions that are not allowed from outside to inside
-            disallowed_counts = self.beta0[self.outside_labels, restricted_label] - self.rare_transition_pseudocount
-            # self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
-            self.beta0[self.outside_labels, self.outside_labels[0]] += disallowed_counts
-            self.beta0[self.outside_labels, restricted_label] = self.rare_transition_pseudocount
-
-            # cannot jump from one type to another
-            for j, unrestricted_label in enumerate(unrestricted_labels):
-                if i == j:
-                    continue  # this transitiion is allowed
-                disallowed_counts = self.beta0[unrestricted_label, restricted_label] - self.rare_transition_pseudocount
-                self.beta0[unrestricted_label, restricted_labels[j]] += disallowed_counts
-                self.beta0[unrestricted_label, restricted_label] = self.rare_transition_pseudocount
-
-            # can't switch types mid annotation
-            for j, other_restricted_label in enumerate(restricted_labels):
-                if other_restricted_label == restricted_label:
-                    continue
-                self.beta0[other_restricted_label, restricted_label] = self.rare_transition_pseudocount
-
-
-    def _initB(self):
-        self.beta = self.beta0
-
-        if self.beta0.ndim >= 2:
-            beta0_sum = psi(np.sum(self.beta0, -1))[:, None]
-        else:
-            beta0_sum = psi(np.sum(self.beta0))
-
-        self.lnB = psi(self.beta0) - beta0_sum
-
-        if self.beta0.ndim == 1:
-            self.lnB = np.tile(self.lnB, (self.L + 1, 1))
-
-        self.lnB = np.tile(self.lnB, (self.N, 1, 1))
 
     def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
@@ -216,7 +161,7 @@ class BSC(object):
         lnq_Cdata = 0
 
         for model in self.data_model:
-            lnp_features_and_Cdata += model.log_likelihood(model.C_data, self.q_t)
+            lnp_features_and_Cdata += model.log_likelihood(model.C_data, self.Et)
             lnq_Cdata_m = model.C_data * np.log(model.C_data)
             lnq_Cdata_m[model.C_data == 0] = 0
             lnq_Cdata += lnq_Cdata_m
@@ -232,8 +177,8 @@ class BSC(object):
 
         for j in range(self.L):
             # self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]]
-            lnpCj = valid_labels * self.A._read_lnPi(j, C - 1, C_prev - 1, np.arange(self.K)[None, :], self.nscores) \
-                    * self.q_t[:, j:j+1]
+            lnpCj = valid_labels * self.A._read_lnPi(j, C - 1, C_prev - 1, np.arange(self.K)[None, :], self.L) \
+                    * self.Et[:, j:j + 1]
             lnpC += lnpCj
 
         lnpt = self._lnpt()
@@ -305,7 +250,7 @@ class BSC(object):
             n_alpha_elements = len(hyperparams) - 1
 
             self.alpha0 = np.exp(hyperparams[0:n_alpha_elements]).reshape(self.alpha_shape)
-            self.beta0 = np.ones((self.L + 1, self.L)) * np.exp(hyperparams[-1])
+            self.beta0 = np.ones((self.L, self.L)) * np.exp(hyperparams[-1])
 
             # run the method
             self.run(C, doc_start, features, converge_workers_first=converge_workers_first)
@@ -331,72 +276,8 @@ class BSC(object):
         for model in self.data_model:
             C_data.append(model.C_data)
 
-        return self.q_t, self._most_probable_sequence(C, C_data, doc_start, self.features)[1]
+        return self.Et, self._most_probable_sequence(C, C_data, doc_start, self.features)[1]
 
-
-    def _init_t(self, C, doc_start):
-        C = C-1
-        doc_start = doc_start.flatten()
-
-        if self.beta0.ndim == 2:
-            B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
-            beta0 = np.mean(self.beta0, 0)
-        else:
-            B = np.tile((self.beta0 / np.sum(self.beta0))[None, :], (self.L, 1))
-            beta0 = self.beta0
-
-        if self.use_ibcc_to_init:
-            self.q_t = ds(C, self.L, 0.1)
-        else:
-            self.q_t = np.zeros((C.shape[0], self.L)) + beta0
-            for l in range(self.L):
-                self.q_t[:, l] += np.sum(C == l, axis=1)
-            self.q_t /= np.sum(self.q_t, axis=1)[:, None]
-
-        self.q_t_joint = np.zeros((self.N, self.L+1, self.L))
-        for l in range(self.L):
-            self.q_t_joint[1:, l, :] =  self.q_t[:-1, l][:, None] * self.q_t[1:, :] * B[l, :][None, :]
-
-        self.q_t_joint[doc_start, :, :] = 0
-        self.q_t_joint[doc_start, self.before_doc_idx, :] = self.q_t[doc_start, :] * B[self.before_doc_idx, :]
-
-        self.q_t_joint /= np.sum(self.q_t_joint, axis=(1,2))[:, None, None]
-
-
-    def _update_t(self, parallel, C, C_data, doc_start):
-
-        # calculate alphas and betas using forward-backward bsc
-        self.lnR_ = _parallel_forward_pass(parallel, C, C_data,
-                                           self.lnB[:, 0:self.L, :],
-                                           doc_start, self.nscores, self.A, self.before_doc_idx)
-
-        if self.verbose:
-            print("BAC iteration %i: completed forward pass" % self.iter)
-
-        self.lnLambd = _parallel_backward_pass(parallel, C, C_data,
-                                          self.lnB[:, 0:self.L, :],
-                                          doc_start, self.nscores, self.A, self.before_doc_idx)
-        if self.verbose:
-            print("BAC iteration %i: completed backward pass" % self.iter)
-
-        # update q_t and q_t_joint
-        self.q_t_joint = _expec_joint_t(self.lnR_, self.lnLambd, self.lnB, C, C_data,
-                                        doc_start, self.nscores, self.A, self.blanks, self.before_doc_idx)
-
-        self.q_t = np.sum(self.q_t_joint, axis=1)
-
-        if self.gold is not None:
-            goldidxs = self.gold != -1
-            self.q_t[goldidxs, :] = 0
-            self.q_t[goldidxs, self.gold[goldidxs]] = 1.0
-
-            self.q_t_joint[goldidxs, :, :] = 0
-            if not hasattr(self, 'goldprev'):
-                self.goldprev = np.append([self.before_doc_idx], self.gold[:-1])[goldidxs]
-
-            self.q_t_joint[goldidxs, self.goldprev, self.gold[goldidxs]] = 1.0
-
-        return self.q_t
 
     def _init_words(self, text):
 
@@ -424,7 +305,7 @@ class BSC(object):
         if self.no_words:
             return np.zeros((self.N, self.L))
 
-        self.nu = self.nu0 + self.features_mat.dot(self.q_t) # nfeatures x nclasses
+        self.nu = self.nu0 + self.features_mat.dot(self.Et) # nfeatures x nclasses
 
         # update the expected log word likelihoods
         self.ElnRho = psi(self.nu) - psi(np.sum(self.nu, 0)[None, :])
@@ -435,35 +316,6 @@ class BSC(object):
 
         return lnptext_given_t # N x nclasses where N is number of tokens/data points
 
-    def _update_B_trans(self):
-        '''
-        Update the transition model.
-        '''
-        self.beta = self.beta0 + np.sum(self.q_t_joint, 0)
-        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
-
-        ln_word_likelihood = self._update_words()
-        self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
-
-        if np.any(np.isnan(self.lnB)):
-            print('_calc_q_A: nan value encountered!')
-
-    def _update_B_notrans(self):
-        '''
-        Update the transition model.
-
-        q_t_joint is N x L+1 x L. In this case, we just sum up over all previous label values, so the counts are
-        independent of the previous labels.
-        '''
-        self.beta = self.beta0 + np.sum(np.sum(self.q_t_joint, 0), 0)
-        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))
-        self.lnB = np.tile(self.lnB, (self.L+1, 1))
-
-        ln_word_likelihood = self._update_words()
-        self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
-
-        if np.any(np.isnan(self.lnB)):
-            print('_calc_q_A: nan value encountered!')
 
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
             gold_labels=None, C_data_initial=None):
@@ -471,7 +323,6 @@ class BSC(object):
         Runs the BAC bsc with the given annotations and list of document starts.
 
         '''
-
         if self.verbose:
             print('BSC: run() called with C shape = %s' % str(C.shape))
 
@@ -482,13 +333,10 @@ class BSC(object):
             self.gold = None
 
         # initialise the hyperparameters to correct sizes
-        self.A._expand_alpha0(self.K, self.nscores)
+        self.A._expand_alpha0(self.K, self.L)
 
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
-
-        # set the correct number of iterations with the LSTM
-        # self.max_data_updates_at_end = self.max_iter - 2
 
         # transform input data to desired format: unannotated tokens represented as zeros
         C = C.astype(int) + 1
@@ -499,17 +347,13 @@ class BSC(object):
         self.N = doc_start.size
 
         if self.iter == 0:
-            # try without any transition constraints
-            self._set_transition_constraints()
-
-            # initialise transition and confusion matrices
+            # initialise word model and worker models
             self._init_words(features)
-            self._initB()
             self.A._init_lnPi()
 
             # initialise variables
-            self.q_t_old = np.zeros((C.shape[0], self.L))
-            self.q_t = np.ones((C.shape[0], self.L))
+            self.Et_old = np.zeros((C.shape[0], self.L))
+            self.Et = np.ones((C.shape[0], self.L))
 
             #oldlb = -np.inf
 
@@ -523,11 +367,11 @@ class BSC(object):
             model.init(C.shape[0], features, doc_start, self.L,
                       self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
                       dev_sentences, self.A, self.max_internal_iters)
-            self.A.qpi_model(model)
+            self.A.qpi_data(model)
 
         for midx, model in enumerate(self.data_model):
             if C_data_initial is None:
-                model.C_data = np.zeros((self.C.shape[0], self.nscores)) #+ (1.0 / self.nscores)
+                model.C_data = np.zeros((self.C.shape[0], self.L)) #+ (1.0 / self.L)
             else:
                 model.C_data = C_data_initial[midx]
                 print('integrated model initial labels: ' +
@@ -554,22 +398,23 @@ class BSC(object):
                 if self.verbose:
                     print("BAC iteration %i in progress" % self.iter)
 
-                self.q_t_old = self.q_t
+                self.Et_old = self.Et
                 C_data = [model.C_data for model in self.data_model]
 
                 if self.verbose:
                     print('Updating with C shape = %s' % str(C.shape))
 
                 if self.iter > 0:
-                    self._update_t(parallel, C, C_data, doc_start)
+                    self.Et = self.LM.update_t(parallel, C_data)
                 else:
-                    self._init_t(C, doc_start)
+                    self.Et = self.LM.init_t(C, doc_start, self.A, self.blanks, self.gold)
 
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
 
                 # update E_lnB
-                self._update_B()
+                ln_word_likelihood = self._update_words()
+                self.LM.update_B(ln_word_likelihood)
                 if self.verbose:
                     print("BAC iteration %i: updated transition matrix" % self.iter)
 
@@ -584,7 +429,7 @@ class BSC(object):
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         if model.train_type == 'Bayes':
-                            model.C_data = model.fit_predict(self.q_t)
+                            model.C_data = model.fit_predict(self.Et)
                         elif model.train_type == 'MLE':
                             seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)[1]
                             model.C_data = model.fit_predict(seq)
@@ -602,7 +447,7 @@ class BSC(object):
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
-                        self.A._post_alpha_data(self.q_t, model.C_data, doc_start, self.nscores, self.before_doc_idx)
+                        self.A._post_alpha_data(self.Et, model.C_data, doc_start, self.L, self.before_doc_idx)
                         self.A.q_pi_data(midx)
 
                         if self.verbose:
@@ -616,7 +461,7 @@ class BSC(object):
 
 
                 # update E_lnpi
-                self.A._post_alpha(self.q_t, C, doc_start, self.nscores, self.before_doc_idx)
+                self.A._post_alpha(self.Et, C, doc_start, self.L, self.before_doc_idx)
                 self.A.q_pi()
 
                 if self.verbose:
@@ -634,105 +479,26 @@ class BSC(object):
             if self.verbose:
                 print("BAC iteration %i: computing most probable sequence..." % self.iter)
 
-            C_data = [model.C_data for model in self.data_model]
-            pseq, seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)
+            pseq, seq = self.LM.most_probable_sequence(self.word_ll(self.features))
         if self.verbose:
             print("BAC iteration %i: fitting/predicting complete." % self.iter)
 
             # print('BAC final transition matrix: ')
             # print(np.around(self.beta / (np.sum(self.beta, -1)[:, None] if self.beta.ndim > 1 else np.sum(self.beta)), 2))
 
-        # Some code for saving the Seq model to a reasonably readable format
-        # import pandas as pd
-        # betatable = np.around(self.beta / np.sum(self.beta, axis=1)[:, None], 2)
-        # betatable = pd.DataFrame(betatable)
-        # betatable.to_csv('./beta_%i.csv' % C.shape[0])
-        #
-        # flatalpha = np.swapaxes(np.around(self.alpha / np.sum(self.alpha, axis=1)[:, None, :, :], 2), 0, -1).swapaxes(-1, 1
-        #              ).swapaxes(-1,2).reshape(self.K, self.L*self.L*(self.L + 1))
-        #
-        # headers = np.unravel_index(np.arange((self.L+1)*self.L*self.L), dims=(self.L, self.L, self.L+1))
-        # columns = ["%i_%i_%i" % (headers[0][i], headers[1][i], headers[2][i])
-        #            for i in range(len(headers[0]))]
-        # flatalpha = pd.DataFrame(flatalpha, columns=columns)
-        # flatalpha.to_csv('./alpha_%i.csv' % C.shape[0])
+        return self.Et, seq, pseq
 
-        return self.q_t, seq, pseq
-
-    def _most_probable_sequence(self, C, C_data, doc_start, features, parallel):
-        '''
-        Use Viterbi decoding to ensure we make a valid prediction. There
-        are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
-        [[0.41, 0.4, 0.19], [[0.41, 0.42, 0.17]].
-        Taking the most probable labels results in an illegal sequence of [0, 1].
-        Using most probable sequence would result in [0, 0].
-        '''
-        if self.beta.ndim >= 2 and self.beta.shape[0] > 1:
-            EB = self.beta / np.sum(self.beta, axis=1)[:, None]
-        else:
-            EB = self.beta / np.sum(self.beta)
-            EB = np.tile(EB[None, :], (self.L+1, 1))
-
-        lnEB = np.zeros_like(EB)
-        lnEB[EB != 0] = np.log(EB[EB != 0])
-        lnEB[EB == 0] = -np.inf
-
-        # update the expected log word likelihoods
+    def word_ll(self, features):
         if self.no_words:
-            lnEB = np.tile(lnEB[None, :, :], (C.shape[0], 1, 1))
+            word_ll = None
         else:
-            ERho = self.nu / np.sum(self.nu, 0)[None, :] # nfeatures x nclasses
+            ERho = self.nu / np.sum(self.nu, 0)[None, :]  # nfeatures x nclasses
             lnERho = np.zeros_like(ERho)
             lnERho[ERho != 0] = np.log(ERho[ERho != 0])
             lnERho[ERho == 0] = -np.inf
             word_ll = lnERho[features, :]
 
-            lnEB = lnEB[None, :, :] + word_ll[:, None, :]
-
-        EPi = self.A.EPi()
-        lnEPi = np.zeros_like(EPi)
-        lnEPi[EPi != 0] = np.log(EPi[EPi != 0])
-        lnEPi[EPi == 0] = -np.inf
-
-        lnEPi_data = []
-
-        for midx, model in enumerate(self.data_model):
-            EPi_m = self.A.EPi_data(midx)
-            lnEPi_m = np.zeros_like(EPi_m)
-            lnEPi_m[EPi_m != 0] = np.log(EPi_m[EPi_m != 0])
-            lnEPi_m[EPi_m == 0] = -np.inf
-            lnEPi_data.append(lnEPi_m)
-
-        # split into documents
-        docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-        lnEB_by_doc = np.split(lnEB, np.where(doc_start == 1)[0][1:], axis=0)
-
-        C_data_by_doc = []
-        for C_data_m in C_data:
-            C_data_by_doc.append(np.split(C_data_m, np.where(doc_start == 1)[0][1:], axis=0))
-        if len(self.data_model) >= 1:
-            C_data_by_doc = list(zip(*C_data_by_doc))
-
-        # docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-        # run forward pass for each doc concurrently
-        if len(self.data_model):
-            res = parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEB_by_doc[d], lnEPi,
-                        lnEPi_data, self.L, self.nscores, self.K, self.A, self.before_doc_idx)
-                           for d, doc in enumerate(docs))
-        else:
-            # res = parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], lnEPi, lnEPi_data, self.L,
-            #             self.nscores, self.K, self.A, self.before_doc_idx)
-            #                for d, doc in enumerate(docs))
-
-            res = [_doc_most_probable_sequence(doc, None, lnEB_by_doc[d], self.L,
-                        self.nscores, self.K, self.A, self.before_doc_idx)
-                       for d, doc in enumerate(docs)]
-
-        # reformat results
-        pseq = np.array(list(zip(*res))[0])
-        seq = np.concatenate(list(zip(*res))[1], axis=0)
-
-        return pseq, seq
+        return word_ll
 
     def predict(self, doc_start, text):
 
@@ -767,9 +533,10 @@ class BSC(object):
             for model in self.data_model:
                 C_data.append(model.predict(doc_start, text))
 
-            q_t = self._update_t(parallel, C, C_data, doc_start)
+            self.LM.init_t(C, doc_start, self.A)
+            q_t = self.LM.update_t(parallel, C_data)
 
-            seq = self._most_probable_sequence(C, C_data, doc_start, features, parallel)[1]
+            seq = self.LM.most_probable_sequence(self.word_ll(self.features))[1]
 
         return q_t, seq
 
@@ -797,7 +564,7 @@ class BSC(object):
 
         ptj = np.zeros(self.L)
         for j in range(self.L):
-            ptj[j] = np.sum(self.beta0[:, j]) + np.sum(self.q_t == j)
+            ptj[j] = np.sum(self.beta0[:, j]) + np.sum(self.Et == j)
 
         entropy_prior = -np.sum(ptj * np.log(ptj))
 
@@ -822,7 +589,7 @@ class BSC(object):
         smaller than the given epsilon.
         '''
         if self.verbose:
-            print("BSC: max. difference in posteriors at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.q_t_old - self.q_t))))
+            print("BSC: max. difference in posteriors at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.Et_old - self.Et))))
 
         if not self.workers_converged:
             converged = self.iter >= self.max_iter
@@ -831,7 +598,7 @@ class BSC(object):
 
         if not converged and self.data_model_updated != 1: # we need to allow at least one more iteration after the data
             # model has been updated because it will not yet have changed q_t
-            converged = np.max(np.abs(self.q_t_old - self.q_t)) < self.eps
+            converged = np.max(np.abs(self.Et_old - self.Et)) < self.eps
 
         if converged and not self.workers_converged:
             # the worker model has converged, but we need to do more iterations to converge the data model
@@ -853,84 +620,395 @@ def _log_dir(alpha, lnPi, sum_dim):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+class LabelModel(object):
+    def __init__(self, beta0, L, before_doc_idx, verbose=False):
+        self.L = L
+        self.before_doc_idx = before_doc_idx
+        self.verbose = verbose
 
-def _expec_t(lnR_, lnLambda):
-    '''
-    Calculate label probabilities for each token.
-    '''
-    return np.exp(lnR_ + lnLambda - logsumexp(lnR_ + lnLambda, axis=1)[:, None])
+        self.beta0 = beta0
 
+    def update_B(self, ln_word_likelihood):
+        pass
 
-def _expec_joint_t(lnR_, lnLambda, lnB, C, C_data, doc_start, nscores, worker_model, blanks,
-                   before_doc_idx=-1):
-    '''
-    Calculate joint label probabilities for each pair of tokens.
-    '''
-    # initialise variables
-    L = lnB.shape[-1]
-    K = C.shape[-1]
+    def init_t(self, C, doc_start, A, blanks, gold=None):
 
-    lnS = np.repeat(lnLambda[:, None, :], L + 1, 1)
+        self.C = C
+        self.ds = doc_start.flatten() == 1
+        self.A = A
+        self.N = C.shape[0]
+        self.blanks = blanks
+        self.gold = gold
 
-    mask = (C != 0)
+        self.beta = self.beta0
 
-    C = C - 1
-
-    # flags to indicate whether the entries are valid or should be zeroed out later.
-    flags = -np.inf * np.ones_like(lnS)
-    flags[np.where(doc_start == 1)[0], before_doc_idx, :] = 0
-    flags[np.where(doc_start == 0)[0], :L, :] = 0
-
-    Cprev = np.append(np.zeros((1, K), dtype=int) + before_doc_idx, C[:-1, :], axis=0)
-    Cprev[doc_start.flatten(), :] = before_doc_idx
-    Cprev[Cprev == -1] = before_doc_idx
-
-    for l in range(L):
-
-        # Non-doc-starts
-        lnPi_terms = worker_model.read_lnPi(l, C, Cprev, np.arange(K)[None, :], nscores, blanks)
-        if C_data is not None and len(C_data):
-            lnPi_data_terms = np.zeros(C_data[0].shape[0], dtype=float)
-
-            for model_idx in range(len(C_data)):
-                C_data_prev = np.append(np.zeros((1, L), dtype=int), C_data[model_idx][:-1, :], axis=0)
-                C_data_prev[doc_start.flatten(), :] = 0
-                C_data_prev[doc_start.flatten(), before_doc_idx] = 1
-                C_data_prev[0, before_doc_idx] = 1
-
-                for m in range(L):
-                    weights = C_data[model_idx][:, m:m + 1] * C_data_prev
-
-                    for n in range(L):
-                        lnPi_data_terms_mn = weights[:, n] * worker_model.read_lnPi_data(l, m, n, 0, nscores, model_idx)
-                        lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
-                        lnPi_data_terms += lnPi_data_terms_mn
+        if self.beta0.ndim >= 2:
+            beta0_sum = psi(np.sum(self.beta0, -1))[:, None]
         else:
-            lnPi_data_terms = 0
+            beta0_sum = psi(np.sum(self.beta0))
 
-        loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
-
-        # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
-        # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
-        lnS[:, :, l] += loglikelihood_l + lnB[:, :, l]
-        lnS[1:, :L, l] += lnR_[:-1, :]
-
-    # print('_expec_joint_t_quick: Normalising...')
-
-    # normalise and return
-    lnS = lnS + flags
-    if np.any(np.isnan(np.exp(lnS))):
-        print('_expec_joint_t: nan value encountered (1) ')
-
-    lnS = lnS - logsumexp(lnS, axis=(1, 2))[:, None, None]
-
-    if np.any(np.isnan(np.exp(lnS))):
-        print('_expec_joint_t: nan value encountered')
-
-    return np.exp(lnS)
+        self.lnB = psi(self.beta0) - beta0_sum
+        self.lnB = np.tile(self.lnB, (self.N, 1, 1))
 
 
-def _doc_forward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
+    def update_t(self):
+        pass
+
+    def most_probable_sequence(self, word_ll):
+        pass
+
+class MarkovLabelModel(LabelModel):
+    def __init__(self, beta0, L, before_doc_idx, verbose, tagging_scheme,
+                 beginning_labels, inside_labels, outside_labels, rare_transition_pseudocount):
+
+        self.C_by_doc = None
+
+        super().__init__(beta0, L, before_doc_idx, verbose)
+
+        if self.beta0.ndim != 2:
+            return
+
+        # set priors for invalid transitions (to low values)
+        if tagging_scheme == 'IOB':
+            restricted_labels = beginning_labels  # labels that cannot follow an outside label
+            unrestricted_labels = inside_labels  # labels that can follow any label
+        elif tagging_scheme == 'IOB2':
+            restricted_labels = inside_labels
+            unrestricted_labels = beginning_labels
+
+        for i, restricted_label in enumerate(restricted_labels):
+            # pseudo-counts for the transitions that are not allowed from outside to inside
+            disallowed_counts = self.beta0[outside_labels, restricted_label] - rare_transition_pseudocount
+            # self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            self.beta0[outside_labels, outside_labels[0]] += disallowed_counts
+            self.beta0[outside_labels, restricted_label] = rare_transition_pseudocount
+
+            # cannot jump from one type to another
+            for j, unrestricted_label in enumerate(unrestricted_labels):
+                if i == j:
+                    continue  # this transitiion is allowed
+                disallowed_counts = self.beta0[unrestricted_label, restricted_label] - rare_transition_pseudocount
+                self.beta0[unrestricted_label, restricted_labels[j]] += disallowed_counts
+                self.beta0[unrestricted_label, restricted_label] = rare_transition_pseudocount
+
+            # can't switch types mid annotation
+            for j, other_restricted_label in enumerate(restricted_labels):
+                if other_restricted_label == restricted_label:
+                    continue
+                self.beta0[other_restricted_label, restricted_label] = rare_transition_pseudocount
+
+
+    def update_B(self, ln_word_likelihood):
+        '''
+        Update the transition model.
+        '''
+        self.beta = self.beta0 + np.sum(self.Et_joint, 0)
+        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+
+        self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
+
+        if np.any(np.isnan(self.lnB)):
+            print('_calc_q_A: nan value encountered!')
+
+    def init_t(self, C, doc_start, A, blanks, gold):
+
+        super().init_t(C, doc_start, A, blanks, gold)
+
+        C = C-1
+        doc_start = doc_start.flatten()
+
+        B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
+
+        # initialise using Dawid and Skene
+        self.Et = ds(C, self.L, 0.1)
+
+        self.Et_joint = np.zeros((self.N, self.L, self.L))
+        for l in range(self.L):
+            self.Et_joint[1:, l, :] = self.Et[:-1, l][:, None] * self.Et[1:, :] * B[l, :][None, :]
+
+        self.Et_joint[doc_start, :, :] = 0
+        self.Et_joint[doc_start, self.before_doc_idx, :] = self.Et[doc_start, :] * B[self.before_doc_idx, :]
+
+        self.Et_joint /= np.sum(self.Et_joint, axis=(1, 2))[:, None, None]
+
+        return self.Et
+
+
+    def update_t(self, parallel, C_data):
+
+        self.parallel = parallel
+        self.Cdata = C_data
+
+        # calculate alphas and betas using forward-backward bsc
+        self._parallel_forward_pass()
+
+        if self.verbose:
+            print("BAC iteration %i: completed forward pass" % self.iter)
+
+        self._parallel_backward_pass()
+        if self.verbose:
+            print("BAC iteration %i: completed backward pass" % self.iter)
+
+        # update q_t and q_t_joint
+        self._expec_joint_t()
+
+        self.Et = np.sum(self.Et_joint, axis=1)
+
+        if self.gold is not None:
+            goldidxs = self.gold != -1
+            self.Et[goldidxs, :] = 0
+            self.Et[goldidxs, self.gold[goldidxs]] = 1.0
+
+            self.Et_joint[goldidxs, :, :] = 0
+            if not hasattr(self, 'goldprev'):
+                self.goldprev = np.append([self.before_doc_idx], self.gold[:-1])[goldidxs]
+
+            self.Et_joint[goldidxs, self.goldprev, self.gold[goldidxs]] = 1.0
+
+        return self.Et
+
+    def _parallel_forward_pass(self):
+        '''
+        Perform the forward pass of the Forward-Backward bsc (for multiple documents in parallel).
+        '''
+        # split into documents
+        if self.C_by_doc is None:
+            self.C_by_doc = np.split(self.C, np.where(self.ds)[0][1:], axis=0)
+
+        self.lnB_by_doc = np.split(self.lnB, np.where(self.ds)[0][1:], axis=0)
+
+        # print('Complete size of C = %s and lnB = %s' % (str(C.shape), str(lnB.shape)))
+
+        self.C_data_by_doc = []
+
+        # run forward pass for each doc concurrently
+        # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
+        if self.Cdata is not None and len(self.Cdata) > 0:
+            for m, Cdata_m in enumerate(self.Cdata):
+                self.C_data_by_doc.append(np.split(Cdata_m, np.where(self.ds)[0][1:], axis=0))
+
+            if len(self.Cdata) >= 1:
+                self.C_data_by_doc = list(zip(*self.C_data_by_doc))
+
+            res = self.parallel(delayed(_doc_forward_pass)(C_doc, self.C_data_by_doc[d], self.lnB_by_doc[d],
+                                                      self.L, self.A, self.before_doc_idx)
+                           for d, C_doc in enumerate(self.C_by_doc))
+        else:
+            res = self.parallel(delayed(_doc_forward_pass)(C_doc, None, self.lnB_by_doc[d],
+                                                      self.L, self.A, self.before_doc_idx)
+                           for d, C_doc in enumerate(self.C_by_doc))
+
+        # reformat results
+        self.lnR_ = np.concatenate(res, axis=0)
+
+    def _parallel_backward_pass(self):
+        '''
+        Perform the backward pass of the Forward-Backward bsc (for multiple documents in parallel).
+        '''
+        if self.Cdata is not None and len(self.Cdata) > 0:
+            res = self.parallel(delayed(_doc_backward_pass)(doc, self.C_data_by_doc[d], self.lnB_by_doc[d], self.L, self.A,
+                                                       self.before_doc_idx) for d, doc in enumerate(self.C_by_doc))
+        else:
+            res = self.parallel(delayed(_doc_backward_pass)(doc, None, self.lnB_by_doc[d], self.L, self.A,
+                                                       self.before_doc_idx) for d, doc in enumerate(self.C_by_doc))
+
+        # reformat results
+        self.lnLambda = np.concatenate(res, axis=0)
+
+
+    def _expec_joint_t(self):
+        '''
+        Calculate joint label probabilities for each pair of tokens.
+        '''
+        # initialise variables
+        L = self.lnB.shape[-1]
+        K = self.C.shape[-1]
+
+        lnS = np.repeat(self.lnLambda[:, None, :], L, 1)
+
+        mask = (self.C != 0)
+
+        C = self.C - 1
+
+        # flags to indicate whether the entries are valid or should be zeroed out later.
+        flags = -np.inf * np.ones_like(lnS)
+        flags[np.where(self.ds == 1)[0], self.before_doc_idx, :] = 0
+        flags[np.where(self.ds == 0)[0], :L, :] = 0
+
+        Cprev = np.append(np.zeros((1, K), dtype=int) + self.before_doc_idx, C[:-1, :], axis=0)
+        Cprev[self.ds.flatten(), :] = self.before_doc_idx
+        Cprev[Cprev == -1] = self.before_doc_idx
+
+        for l in range(L):
+
+            # Non-doc-starts
+            lnPi_terms = self.A.read_lnPi(l, C, Cprev, np.arange(K)[None, :], self.L, self.blanks)
+            if self.Cdata is not None and len(self.Cdata):
+                lnPi_data_terms = np.zeros(self.Cdata[0].shape[0], dtype=float)
+
+                for model_idx in range(len(self.Cdata)):
+                    C_data_prev = np.append(np.zeros((1, L), dtype=int), self.Cdata[model_idx][:-1, :], axis=0)
+                    C_data_prev[self.ds, :] = 0
+                    C_data_prev[self.ds, self.before_doc_idx] = 1
+                    C_data_prev[0, self.before_doc_idx] = 1
+
+                    for m in range(L):
+                        weights = self.Cdata[model_idx][:, m:m + 1] * C_data_prev
+
+                        for n in range(L):
+                            lnPi_data_terms_mn = weights[:, n] * self.A.read_lnPi_data(l, m, n, 0, self.L, model_idx)
+                            lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
+                            lnPi_data_terms += lnPi_data_terms_mn
+            else:
+                lnPi_data_terms = 0
+
+            loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
+
+            # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
+            # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
+            lnS[:, :, l] += loglikelihood_l + self.lnB[:, :, l]
+            lnS[1:, :L, l] += self.lnR_[:-1, :]
+
+        # print('_expec_joint_t_quick: Normalising...')
+
+        # normalise and return
+        lnS = lnS + flags
+        if np.any(np.isnan(np.exp(lnS))):
+            print('_expec_joint_t: nan value encountered (1) ')
+
+        lnS = lnS - logsumexp(lnS, axis=(1, 2))[:, None, None]
+
+        if np.any(np.isnan(np.exp(lnS))):
+            print('_expec_joint_t: nan value encountered')
+
+        self.Et_joint = np.exp(lnS)
+
+
+    def most_probable_sequence(self, word_ll):
+        '''
+        Use Viterbi decoding to ensure we make a valid prediction. There
+        are some cases where most probable sequence does not match argmax(self.q_t,1). E.g.:
+        [[0.41, 0.4, 0.19], [[0.41, 0.42, 0.17]].
+        Taking the most probable labels results in an illegal sequence of [0, 1].
+        Using most probable sequence would result in [0, 0].
+        '''
+        if self.beta.ndim >= 2 and self.beta.shape[0] > 1:
+            EB = self.beta / np.sum(self.beta, axis=1)[:, None]
+        else:
+            EB = self.beta / np.sum(self.beta)
+            EB = np.tile(EB[None, :], (self.L, 1))
+
+        lnEB = np.zeros_like(EB)
+        lnEB[EB != 0] = np.log(EB[EB != 0])
+        lnEB[EB == 0] = -np.inf
+
+        # update the expected log word likelihoods
+        if word_ll is None:
+            lnEB = np.tile(lnEB[None, :, :], (self.C.shape[0], 1, 1))
+        else:
+            lnEB = lnEB[None, :, :] + word_ll[:, None, :]
+
+        lnEPi = self.A.lnEPi()
+        lnEPi_data = self.A.lnEPi_data()
+
+        # split into documents
+        lnEB_by_doc = np.split(lnEB, np.where(self.ds)[0][1:], axis=0)
+
+        C_data_by_doc = []
+        for C_data_m in self.Cdata:
+            C_data_by_doc.append(np.split(C_data_m, np.where(self.ds)[0][1:], axis=0))
+        if len(self.Cdata) >= 1:
+            C_data_by_doc = list(zip(*C_data_by_doc))
+
+            res = self.parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEB_by_doc[d], self.L,
+                                self.C.shape[1], self.A, self.before_doc_idx)
+                           for d, doc in enumerate(self.C_by_doc))
+        else:
+            res = self.parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], self.L,
+                                self.C.shape[1], self.A, self.before_doc_idx)
+                           for d, doc in enumerate(self.C_by_doc))
+
+        # note: we are using ElnPi instead of lnEPi, I think is not strictly correct.
+
+        # reformat results
+        pseq = np.array(list(zip(*res))[0])
+        seq = np.concatenate(list(zip(*res))[1], axis=0)
+
+        return pseq, seq
+
+
+class IndependentLabelModel(LabelModel):
+
+    def update_B(self, ln_word_likelihood):
+        '''
+        Update the transition model.
+
+        q_t_joint is N x L x L. In this case, we just sum up over all previous label values, so the counts are
+        independent of the previous labels.
+        '''
+        self.beta = self.beta0 + np.sum(self.Et, 0)
+
+        self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))
+
+        self.lnB = self.lnB[None, :] + ln_word_likelihood
+
+        if np.any(np.isnan(self.lnB)):
+            print('_calc_q_A: nan value encountered!')
+
+    def init_t(self, C, doc_start, A, blanks, gold):
+
+        super().init_t(C, doc_start, A, blanks, gold)
+
+        C = C - 1
+
+        beta0 = self.beta0
+
+        # initialise using the fraction of votes for each label
+        self.Et = np.zeros((C.shape[0], self.L)) + beta0
+        for l in range(self.L):
+            self.Et[:, l] += np.sum(C == l, axis=1)
+        self.Et /= np.sum(self.Et, axis=1)[:, None]
+
+        return self.Et
+
+
+    def update_t(self, parallel, C_data):
+        Krange = np.arange(self.C.shape[1], dtype=int)
+        Ccurr = self.C - 1
+        Cprev = np.concatenate((np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :] - 1), axis=0)
+        Cprev[self.ds, :] =  int(self.before_doc_idx)
+
+        self.Et = np.copy(self.lnB)
+
+        lnPi_data_terms = 0
+        for model_idx in range(len(C_data)):
+
+            C_m = C_data[model_idx]
+            C_m_prev = np.concatenate((np.zeros((1, self.L)) + self.before_doc_idx, C_data[model_idx][:-1, :]), axis=0)
+
+            for m in range(self.L):
+                for n in range(self.L):
+                    lnPi_data_terms += self.A.read_lnPi_data(None, m, n, 0, self.L, model_idx)[:, :, 0] * \
+                                       C_m[:, m][None, :] * C_m_prev[:, n][None, :]
+
+        Elnpi = self.A.read_lnPi(None, Ccurr, Cprev, Krange[None, :], self.L)
+        self.Et += (np.sum(Elnpi, axis=2) + lnPi_data_terms).T
+
+        self.Et = np.exp(self.Et)
+        self.Et /= np.sum(self.Et, axis=1)[:, None]
+
+        if self.gold is not None:
+            goldidxs = self.gold != -1
+            self.Et[goldidxs, :] = 0
+            self.Et[goldidxs, self.gold[goldidxs]] = 1.0
+
+        return self.Et
+
+    def most_probable_sequence(self, word_ll):
+        return np.max(self.Et, axis=1), np.argmax(self.Et, axis=1)
+
+
+def _doc_forward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
     '''
     Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -945,13 +1023,13 @@ def _doc_forward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
     mask = C != 0
 
     # For the first data point
-    lnPi_terms = worker_model.read_lnPi(None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], nscores)
+    lnPi_terms = worker_model.read_lnPi(None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], L)
     lnPi_data_terms = 0
 
     if C_data is not None:
-        for m in range(nscores):
+        for m in range(L):
             for model_idx in range(len(C_data)):
-                lnPi_data_terms += (worker_model.read_lnPi_data(None, m, before_doc_idx, 0, nscores, model_idx)[:, :, 0]
+                lnPi_data_terms += (worker_model.read_lnPi_data(None, m, before_doc_idx, 0, L, model_idx)[:, :, 0]
                                     * C_data[model_idx][0, m])[:, 0]
 
     lnR_[0, :] = lnB[0, before_doc_idx, :] + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
@@ -963,13 +1041,13 @@ def _doc_forward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
     Ccurr = C[1:, :] - 1
 
     # the other data points
-    lnPi_terms = worker_model.read_lnPi(None, Ccurr, Cprev, Krange[None, :], nscores)
+    lnPi_terms = worker_model.read_lnPi(None, Ccurr, Cprev, Krange[None, :], L)
     lnPi_data_terms = 0
     if C_data is not None:
-        for m in range(nscores):
-            for n in range(nscores):
+        for m in range(L):
+            for n in range(L):
                 for model_idx in range(len(C_data)):
-                    lnPi_data_terms += worker_model.read_lnPi_data(None, m, n, 0, nscores, model_idx)[:, :, 0] * \
+                    lnPi_data_terms += worker_model.read_lnPi_data(None, m, n, 0, L, model_idx)[:, :, 0] * \
                                        C_data[model_idx][1:, m][None, :] * C_data[model_idx][:-1, n][None, :]
 
     likelihood_next = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms  # L x T-1
@@ -987,47 +1065,7 @@ def _doc_forward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
 
     return lnR_
 
-
-def _parallel_forward_pass(parallel, C, Cdata, lnB, doc_start, nscores, worker_model,
-                           before_doc_idx=1):
-    '''
-    Perform the forward pass of the Forward-Backward bsc (for multiple documents in parallel).
-    '''
-    # split into documents
-    C_by_doc = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-    lnB_by_doc = np.split(lnB, np.where(doc_start==1)[0][1:], axis=0)
-
-    #print('Complete size of C = %s and lnB = %s' % (str(C.shape), str(lnB.shape)))
-
-    C_data_by_doc = []
-
-    # run forward pass for each doc concurrently
-    # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
-    if Cdata is not None and len(Cdata) > 0:
-        for m, Cdata_m in enumerate(Cdata):
-            C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
-        if len(Cdata) >= 1:
-            C_data_by_doc = list(zip(*C_data_by_doc))
-
-        res = parallel(delayed(_doc_forward_pass)(C_doc, C_data_by_doc[d], lnB_by_doc[d],
-                                                  nscores, worker_model, before_doc_idx)
-                       for d, C_doc in enumerate(C_by_doc))
-    else:
-        res = parallel(delayed(_doc_forward_pass)(C_doc, None, lnB_by_doc[d],
-                                                  nscores, worker_model, before_doc_idx)
-                       for d, C_doc in enumerate(C_by_doc))
-
-        # res = [_doc_forward_pass(C_doc, None, lnB_by_doc[d], lnPi, lnPi_data,
-        #                                           nscores, worker_model, before_doc_idx)
-        #                for d, C_doc in enumerate(C_by_doc)]
-
-    # reformat results
-    lnR_ = np.concatenate(res, axis=0)
-
-    return lnR_
-
-
-def _doc_backward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
+def _doc_backward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
     '''
     Perform the backward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -1047,7 +1085,7 @@ def _doc_backward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
     Ccurr = Ccurr[:-1, :]
     Cnext = C[1:, :] - 1
 
-    lnPi_terms = worker_model.read_lnPi(None, Cnext, Ccurr, Krange[None, :], nscores)
+    lnPi_terms = worker_model.read_lnPi(None, Cnext, Ccurr, Krange[None, :], L)
     lnPi_data_terms = 0
     if C_data is not None:
         for model_idx in range(len(C_data)):
@@ -1055,9 +1093,9 @@ def _doc_backward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
             C_data_curr = C_data[model_idx][:-1, :]
             C_data_next = C_data[model_idx][1:, :]
 
-            for m in range(nscores):
-                for n in range(nscores):
-                    terms_mn = worker_model.read_lnPi_data(None, m, n, 0, nscores, model_idx)[:, :, 0] \
+            for m in range(L):
+                for n in range(L):
+                    terms_mn = worker_model.read_lnPi_data(None, m, n, 0, L, model_idx)[:, :, 0] \
                                * C_data_next[:, m][None, :] \
                                * C_data_curr[:, n][None, :]
                     terms_mn[:, (C_data_next[:, m] * C_data_curr[:, n]) == 0] = 0
@@ -1079,38 +1117,7 @@ def _doc_backward_pass(C, C_data, lnB, nscores, worker_model, before_doc_idx=1):
 
     return lnLambda
 
-
-def _parallel_backward_pass(parallel, C, C_data, lnB, doc_start, nscores, worker_model,
-                            before_doc_idx=1):
-    '''
-    Perform the backward pass of the Forward-Backward bsc (for multiple documents in parallel).
-    '''
-    # split into documents
-    docs = np.split(C, np.where(doc_start == 1)[0][1:], axis=0)
-    lnB_by_doc = np.split(lnB, np.where(doc_start==1)[0][1:], axis=0)
-
-    C_data_by_doc = []
-
-    if C_data is not None:
-        for m, Cdata_m in enumerate(C_data):
-            C_data_by_doc.append(np.split(Cdata_m, np.where(doc_start == 1)[0][1:], axis=0))
-        if len(C_data) >= 1:
-            C_data_by_doc = list(zip(*C_data_by_doc))
-
-    if C_data is not None and len(C_data) > 0:
-        res = parallel(delayed(_doc_backward_pass)(doc, C_data_by_doc[d], lnB_by_doc[d], nscores, worker_model,
-                                                   before_doc_idx) for d, doc in enumerate(docs))
-    else:
-        res = parallel(delayed(_doc_backward_pass)(doc, None, lnB_by_doc[d], nscores, worker_model,
-                                                   before_doc_idx) for d, doc in enumerate(docs))
-
-    # reformat results
-    lnLambda = np.concatenate(res, axis=0)
-
-    return lnLambda
-
-
-def _doc_most_probable_sequence(C, C_data, lnEB, L, nscores, K, worker_model, before_doc_idx):
+def _doc_most_probable_sequence(C, C_data, lnEB, L, K, worker_model, before_doc_idx):
     lnV = np.zeros((C.shape[0], L))
     prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
 
@@ -1118,14 +1125,14 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, nscores, K, worker_model, be
 
     t = 0
     for l in range(L):
-        lnPi_terms = worker_model.read_lnPi(l, C[t, :] - 1, before_doc_idx, np.arange(K), nscores)
+        lnPi_terms = worker_model.read_lnPi(l, C[t, :] - 1, before_doc_idx, np.arange(K), L)
 
         lnPi_data_terms = 0
         if C_data is not None:
             for model_idx, C_data_m in enumerate(C_data):
                 for m in range(L):
                     terms_startm = C_data_m[t, m] * worker_model.read_lnPi_data(l, m, before_doc_idx,
-                                                                                 0, nscores, model_idx)
+                                                                                0, L, model_idx)
                     if C_data_m[t, m] == 0:
                         terms_startm = 0
 
@@ -1135,12 +1142,11 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, nscores, K, worker_model, be
 
         lnV[t, l] = lnEB[t, before_doc_idx, l] + likelihood_current
 
-
     Cnext = C[1:, :] - 1
     Cprev = C[:-1, :] - 1
     Cprev[Cprev == -1] = before_doc_idx
 
-    lnPi_terms = worker_model.read_lnPi(None, Cnext, Cprev, np.arange(K), nscores)
+    lnPi_terms = worker_model.read_lnPi(None, Cnext, Cprev, np.arange(K), L)
     lnPi_data_terms = 0
     if C_data is not None:
         for model_idx, C_data_m in enumerate(C_data):
@@ -1148,7 +1154,7 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, nscores, K, worker_model, be
                 for n in range(L):
                     weights = (C_data_m[1:, m] * C_data_m[:-1, n])[None, :]
                     terms_mn = weights * worker_model.read_lnPi_data(None,
-                                                 m, n, 0, nscores, model_idx)[:, :, 0]
+                                                                     m, n, 0, L, model_idx)[:, :, 0]
                     terms_mn[:, weights[0] == 0] = 0
 
                     lnPi_data_terms += terms_mn
@@ -1161,7 +1167,7 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, nscores, K, worker_model, be
             lnV[t, l] = np.max(p_current)
             prev[t, l] = np.argmax(p_current, axis=0)
 
-        lnV[t, :] -= logsumexp(lnV[t, :]) # normalise to prevent underflow in long sequences
+        lnV[t, :] -= logsumexp(lnV[t, :])  # normalise to prevent underflow in long sequences
 
     # decode
     seq = np.zeros(C.shape[0], dtype=int)
