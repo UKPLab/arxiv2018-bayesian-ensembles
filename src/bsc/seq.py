@@ -140,20 +140,18 @@ class SequentialWorker(VectorWorker):
         self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_outside_factor
         #self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
 
-        # set priors for invalid transitions (to low values)
+        # set priors for pseudo-counts invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
-            # pseudo-counts for the transitions that are not allowed from outside to inside
-            for outside_label in self.outside_label:
-                # set the disallowed transition to as close to zero as possible
-                disallowed_count = self.alpha0[:, restricted_label, outside_label] - self.rare_transition_pseudocount
+            # Not allowed: from outside to inside
+            disallowed_count = self.alpha0[:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
 
-                self.alpha0[:, unrestricted_labels[i], outside_label] += disallowed_count # previous experiments use this
-                self.alpha0[:, restricted_label, outside_label] = self.rare_transition_pseudocount
+            self.alpha0[:, unrestricted_labels[i], self.outside_label] += disallowed_count # previous experiments use this
+            self.alpha0[:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
-                for midx in range(self.nModels):
-                    disallowed_count = self.alpha0_data[midx][:, restricted_label, outside_label] - self.rare_transition_pseudocount
-                    self.alpha0_data[midx][:, unrestricted_labels[i], outside_label] += disallowed_count
-                    self.alpha0_data[midx][:, restricted_label, outside_label] = self.rare_transition_pseudocount
+            for midx in range(self.nModels):
+                disallowed_count = self.alpha0_data[midx][:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
+                self.alpha0_data[midx][:, unrestricted_labels[i], self.outside_label] += disallowed_count
+                self.alpha0_data[midx][:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
