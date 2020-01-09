@@ -2,7 +2,7 @@ import numpy as np
 from scipy.special import logsumexp
 from scipy.special.basic import psi
 
-from bsc.annotator_model import Annotator
+from bsc.annotator_model import Annotator, log_dirichlet_pdf
 
 
 class MACEWorker(Annotator):
@@ -90,18 +90,18 @@ class MACEWorker(Annotator):
         Pi[1, :] = self.alpha[1, :] / (self.alpha[0, :] + self.alpha[1, :])
         Pi[2:, :] = self.alpha[2:, :] / np.sum(self.alpha[2:, :], 0)[None, :]
 
-        pspamming_j_unnormed = Pi[0, :][None, :] * Pi[C + 1, np.arange(C.shape[1])[None, :]]
+        pspamming_j_unnormed = Pi[0, :][None, :] * Pi[C + 2, np.arange(C.shape[1])[None, :]]
 
         for j in range(E_t.shape[1]):
             Tj = E_t[:, j:j+1]
 
-            pknowing_j_unnormed = (Pi[1,:][None, :] * (C == j + 1))
+            pknowing_j_unnormed = (Pi[1,:][None, :] * (C == j))
 
             pknowing_j = pknowing_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
             pspamming_j = pspamming_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
 
             # The cases where worker has not given a label are not really spam!
-            pspamming_j[C==0] = 0
+            pspamming_j[C==-1] = 0
 
             pknowing += pknowing_j * Tj
             pspamming += pspamming_j * Tj
@@ -113,7 +113,7 @@ class MACEWorker(Annotator):
         self.alpha[0, :] = self.alpha0[0, :] + incorrect_count
 
         for l in range(nscores):
-            strategy_count_l = np.sum((C == l + 1) * pspamming, 0)
+            strategy_count_l = np.sum((C == l) * pspamming, 0)
             self.alpha[l+2, :] = self.alpha0[l+2, :] + strategy_count_l
 
 
@@ -157,7 +157,7 @@ class MACEWorker(Annotator):
             self.alpha_data[l+2, :] = self.alpha0_data[l+2, :] + strategy_count_l
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
 
         ll_incorrect = lnPi[0, Krange] + lnPi[C+2, Krange]
 
@@ -203,7 +203,13 @@ class MACEWorker(Annotator):
                 ll_correct = lnPi[1, Krange] * idx
                 ll_correct[idx == 0] = - np.inf
 
-        return logsumexp([ll_correct, ll_incorrect], axis=0)
+        result = logsumexp([ll_correct, ll_incorrect], axis=0)
+        if not np.isscalar(C) and l is None:
+            result[:, blanks] = 0
+        elif not np.isscalar(C):
+            result[blanks] = 0
+
+        return result
 
 
     def _expand_alpha0(self, K, nscores):
@@ -238,3 +244,22 @@ class MACEWorker(Annotator):
         pi[2:] = alpha[2:] / np.sum(alpha[2:], axis=0)[None, :]
 
         return pi
+
+    def lowerbound_terms(self):
+        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
+        sum_dim = 0 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
+
+        lnpPi_correct = log_dirichlet_pdf(self.alpha0[0:2, :], self.lnPi[0:2, :], sum_dim)
+        lnpPi_strategy = log_dirichlet_pdf(self.alpha0[2:, :], self.lnPi[2:, :], sum_dim)
+
+        lnqPi_correct = log_dirichlet_pdf(self.alpha[0:2, :], self.lnPi[0:2, :], sum_dim)
+        lnqPi_strategy = log_dirichlet_pdf(self.alpha[2:, :], self.lnPi[2:, :], sum_dim)
+
+        for midx in range(len(self.alpha0_data)):
+            lnpPi_correct += log_dirichlet_pdf(self.alpha0_data[midx][0:2, :], self.lnPi_data[midx][0:2, :], sum_dim)
+            lnpPi_strategy += log_dirichlet_pdf(self.alpha0_data[midx][2:, :], self.lnPi_data[midx][2:, :], sum_dim)
+
+            lnqPi_correct += log_dirichlet_pdf(self.alpha_data[midx][0:2, :], self.lnPi_data[midx][0:2, :], sum_dim)
+            lnqPi_strategy += log_dirichlet_pdf(self.alpha_data[midx][2:, :], self.lnPi_data[midx][2:, :], sum_dim)
+
+        return lnpPi_correct + lnpPi_strategy, lnqPi_correct + lnqPi_strategy

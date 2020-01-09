@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.special.basic import psi
 
+from bsc.annotator_model import log_dirichlet_pdf
 from bsc.cv import VectorWorker
 
 
@@ -17,6 +18,7 @@ class SequentialWorker(VectorWorker):
         self.outside_label = outside_label
         self.alpha0_outside_factor = alpha0_outside_factor
         self.rare_transition_pseudocount = rare_transition_pseudocount
+        self.C_binary = {}
 
     def _init_lnPi(self):
         # Returns the initial values for alpha and lnPi
@@ -32,34 +34,32 @@ class SequentialWorker(VectorWorker):
         Update the annotator models.
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :, :]
-        return psi(alpha) - psi_alpha_sum
+        self.lnPi = psi(alpha) - psi_alpha_sum
+        return self.lnPi
 
 
     def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
-        dims = self.alpha0.shape
-        self.alpha = self.alpha0.copy()
+        if len(self.C_binary) == 0:
+            self.C_binary[-1] = C == -1
+            for l in range(nscores):
+                self.C_binary[l] = C == l
 
-        C_binary = {}
-        C_binary[-1] = C == 0
-        for l in range(dims[1]):
-            C_binary[l] = C == (l+1)
-
-        for j in range(dims[0]):
+        for j in range(nscores):
             Tj = E_t[:, j]
 
-            for l in range(dims[1]):
-                counts = (C_binary[l] * doc_start).T.dot(Tj).reshape(-1)
-                counts +=  ((C_binary[l][1:, :]) * (C_binary[-1][:-1, :]) * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
+            for l in range(nscores):
+                counts = (self.C_binary[l] * doc_start).T.dot(Tj).reshape(-1)
+                counts +=  ((self.C_binary[l][1:, :]) * self.C_binary[-1][:-1, :] * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
                 # previous tokens are missing.
 
-                self.alpha[j, l, self.outside_label, :] += counts
+                self.alpha[j, l, self.outside_label, :] = self.alpha0[j, l, self.outside_label, :] + counts
 
-                for m in range(dims[1]):
-                    counts = ((C_binary[l])[1:, :] * (1 - doc_start[1:]) * (C_binary[m])[:-1, :]).T.dot(Tj[1:])
-                    self.alpha[j, l, m, :] += counts
+                for m in range(nscores):
+                    counts = (self.C_binary[l][1:, :] * np.invert(doc_start[1:]) * self.C_binary[m][:-1, :]).T.dot(Tj[1:])
+                    self.alpha[j, l, m, :] = self.alpha0[j, l, m, :] + counts
 
 
     def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
@@ -82,24 +82,33 @@ class SequentialWorker(VectorWorker):
                     self.alpha[j, l, m, :] += counts
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
-        if l is None:
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
+        # shouldn't it use the outside factor instead of Cprev if there is a doc start?
 
+        if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]
             if np.isscalar(C):
                 C = np.array([C])[:, None]
+                if Cprev == -1:
+                    Cprev = self.outside_label
+            else:
+                Cprev[Cprev == -1] = self.outside_label
 
             result = lnPi[:, C, Cprev, Krange]
-            result[:, C == -1] = 0
 
+            if not np.isscalar(C):
+                result[:, blanks] = 0
         else:
             if np.isscalar(C):
                 if C == -1:
                     result = 0
                 else:
+                    if Cprev == -1:
+                        Cprev = self.outside_label
                     result = lnPi[l, C, Cprev, Krange]
             else:
+                Cprev[Cprev == -1] = self.outside_label
                 result = lnPi[l, C, Cprev, Krange]
                 result[blanks] = 0
 
@@ -116,17 +125,17 @@ class SequentialWorker(VectorWorker):
         # set priors
         if self.alpha0 is None:
             # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            self.alpha0 = np.ones((L, nscores, nscores + 1, K)) + 1.0 * np.eye(L)[:, :, None, None]
+            self.alpha0 = np.ones((L, nscores, nscores, K)) + 1.0 * np.eye(L)[:, :, None, None]
         else:
             self.alpha0 = self.alpha0[:, :, None, None]
-            self.alpha0 = np.tile(self.alpha0, (1, 1, nscores + 1, K))
+            self.alpha0 = np.tile(self.alpha0, (1, 1, nscores, K))
 
         for midx in range(self.nModels):
             if self.alpha0_data[midx] is None:
-                self.alpha0_data[midx] = np.ones((L, L, L + 1, 1)) + 1.0 * np.eye(L)[:, :, None, None]
+                self.alpha0_data[midx] = np.ones((L, L, L, 1)) + 1.0 * np.eye(L)[:, :, None, None]
             elif self.alpha0_data[midx].ndim == 2:
                 self.alpha0_data[midx] = self.alpha0_data[midx][:, :, None, None]
-                self.alpha0_data[midx] = np.tile(self.alpha0_data[midx], (1, 1, L+1, 1))
+                self.alpha0_data[midx] = np.tile(self.alpha0_data[midx], (1, 1, L, 1))
 
         if self.tagging_scheme == 'IOB':
             restricted_labels = self.beginning_labels  # labels that cannot follow an outside label
@@ -187,6 +196,19 @@ class SequentialWorker(VectorWorker):
                 for midx in range(self.nModels):
                     self.alpha0_data[midx][:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
 
-
     def _calc_EPi(self, alpha):
         return alpha / np.sum(alpha, axis=1)[:, None, :, :]
+
+
+    def lowerbound_terms(self):
+        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
+        sum_dim = 1 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
+
+        lnpPi = log_dirichlet_pdf(self.alpha0, self.lnPi, sum_dim)
+        lnqPi = log_dirichlet_pdf(self.alpha, self.lnPi, sum_dim)
+
+        for midx, alpha0_data in enumerate(self.alpha0_data):
+            lnpPi += log_dirichlet_pdf(alpha0_data, self.lnPi_data[midx], sum_dim)
+            lnqPi += log_dirichlet_pdf(self.alpha_data[midx], self.lnPi_data[midx], sum_dim)
+
+        return lnpPi, lnqPi

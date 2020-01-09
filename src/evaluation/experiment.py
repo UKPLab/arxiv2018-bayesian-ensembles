@@ -572,7 +572,9 @@ class Experiment(object):
         else:
             no_words = True
 
-        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,
+        annotations = annotations[:, np.any(annotations!=-1, axis=0)]
+
+        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, # eps=-1,
                             inside_labels=inside_labels, outside_label=outside_label, beginning_labels=begin_labels,
                             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, alpha0_outside_factor=self.begin_factor,
                             beta0_factor=self.nu0_factor, worker_model=self.bsc_worker_model, tagging_scheme='IOB2',

@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.special.basic import psi
 
-from bsc.annotator_model import Annotator
-
+from bsc.annotator_model import Annotator, log_dirichlet_pdf
 
 class AccuracyWorker(Annotator):
     # Worker model: accuracy only ------------------------------------------------------------------------------------------
@@ -41,9 +40,9 @@ class AccuracyWorker(Annotator):
         Update the annotator models.
         '''
         psi_alpha_sum = psi(np.sum(alpha, 0))[None, :]
-        lnPi = psi(alpha) - psi_alpha_sum
+        self.lnPi = psi(alpha) - psi_alpha_sum
 
-        return lnPi
+        return self.lnPi
 
 
     def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
@@ -56,13 +55,13 @@ class AccuracyWorker(Annotator):
         for j in range(nclasses):
             Tj = E_t[:, j]
 
-            correct_count = (C == j + 1).T.dot(Tj).reshape(-1)
+            correct_count = (C == j).T.dot(Tj).reshape(-1)
             self.alpha[1, :] += correct_count
 
             for l in range(nscores):
                 if l == j:
                     continue
-                incorrect_count = (C == l + 1).T.dot(Tj).reshape(-1)
+                incorrect_count = (C == l).T.dot(Tj).reshape(-1)
                 self.alpha[0, :] += incorrect_count
 
 
@@ -86,7 +85,7 @@ class AccuracyWorker(Annotator):
                 self.alpha_data[model_idx][0, :] += incorrect_count
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
 
         if np.isscalar(C):
             N = 1
@@ -112,9 +111,10 @@ class AccuracyWorker(Annotator):
 
                 else:
                     idx = (l==C).astype(int)
-                    result[l, :, :] = lnPi[idx, Krange]
+                    result[l, :] = lnPi[idx, Krange]
                     # incorrect answers: split mass across classes evenly
                     result[l, idx == 0] = np.log(np.exp(result[l, idx == 0]) / float(nscores))
+                    result[l, blanks] = 0
 
             return result
 
@@ -131,6 +131,8 @@ class AccuracyWorker(Annotator):
             result = lnPi[idx, Krange]
             # incorrect answers: split mass across classes evenly
             result[idx == 0] = np.log(np.exp(result[idx==0]) / float(nscores))
+
+            result[blanks] = 0
 
         return result
 
@@ -159,3 +161,17 @@ class AccuracyWorker(Annotator):
 
     def _calc_EPi(self, alpha):
         return alpha / np.sum(alpha, axis=0)[None, :]
+
+
+    def lowerbound_terms(self):
+        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
+        sum_dim = 0 # in the case that we have only one Dirichlet per worker, e.g. accuracy model
+
+        lnpPi = log_dirichlet_pdf(self.alpha0, self.lnPi, sum_dim)
+        lnqPi = log_dirichlet_pdf(self.alpha, self.lnPi, sum_dim)
+
+        for midx, alpha0_data in enumerate(self.alpha0_data):
+            lnpPi += log_dirichlet_pdf(alpha0_data, self.lnPi_data[midx], sum_dim)
+            lnqPi += log_dirichlet_pdf(self.alpha_data[midx], self.lnPi_data[midx], sum_dim)
+
+        return lnpPi, lnqPi

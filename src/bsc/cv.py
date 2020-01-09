@@ -1,8 +1,8 @@
 import numpy as np
+from scipy.special._logsumexp import logsumexp
 from scipy.special.basic import psi
 
-from bsc.annotator_model import Annotator
-
+from bsc.annotator_model import Annotator, log_dirichlet_pdf
 
 class VectorWorker(Annotator):
 # Worker model: confusion/accuracy vector for workers ----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class VectorWorker(Annotator):
                  alpha0_correct * np.eye(L)
 
         self.alpha0_data = {}
-        self.lnPi = {}
+        self.lnPi_data = {}
         for m in range(nModels):
             self.alpha0_data[m] = np.copy(self.alpha0)
             self.alpha0_data[m][:] = alpha0_base
@@ -44,20 +44,20 @@ class VectorWorker(Annotator):
         Update the annotator models.
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
-        q_pi = psi(alpha) - psi_alpha_sum
+        self.lnpi = psi(alpha) - psi_alpha_sum
 
-        q_pi_incorrect = psi(np.sum(alpha, 1)
+        lnpi_incorrect = psi(np.sum(alpha, 1)
                         - alpha[range(self.alpha.shape[0]), range(alpha.shape[0]), :]) \
                         - psi_alpha_sum[:, 0, :]
-        q_pi_incorrect = np.log(np.exp(q_pi_incorrect) / float(alpha.shape[1] - 1)) # J x K
+        lnpi_incorrect = np.log(np.exp(lnpi_incorrect) / float(alpha.shape[1] - 1)) # J x K
 
         for j in range(alpha.shape[0]):
             for l in range(alpha.shape[1]):
                 if j == l:
                     continue
-                q_pi[j, l, :] = q_pi_incorrect[j, :]
+                self.lnpi[j, l, :] = lnpi_incorrect[j, :]
 
-        return q_pi
+        return self.lnpi
 
 
     def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
@@ -71,7 +71,7 @@ class VectorWorker(Annotator):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
-                counts = (C == l + 1).T.dot(Tj).reshape(-1)
+                counts = (C == l).T.dot(Tj).reshape(-1)
                 self.alpha[j, l, :] += counts
 
 
@@ -90,7 +90,7 @@ class VectorWorker(Annotator):
                 self.alpha_data[j, l, :] += counts
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]
@@ -98,14 +98,15 @@ class VectorWorker(Annotator):
                 C = np.array([C])[:, None]
 
             result = lnPi[:, C, Krange]
-            result[:, C == -1] = 0
+            if not np.isscalar(C):
+                result[:, blanks] = 0
         else:
             result = lnPi[l, C, Krange]
             if np.isscalar(C):
                 if C == -1:
                     result = 0
             else:
-                result[C == -1] = 0
+                result[blanks] = 0
 
         return result
 
@@ -150,3 +151,42 @@ class VectorWorker(Annotator):
                 EPi[j, l, :] = EPi_incorrect_j
 
         return EPi
+
+    def lowerbound_terms(self):
+        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
+        sum_dim = 0 # in the case that we have only one Dirichlet per worker, e.g. accuracy model
+
+        L = self.alpha0.shape[0]
+        correctcounts = self.alpha0[range(L), range(L), :]
+        incorrectcounts = np.sum(self.alpha0, axis=1) - correctcounts
+        alpha0 = np.concatenate((correctcounts[:, None, :], incorrectcounts[:, None, :]), axis=1)
+
+        correctcounts = self.alpha[range(L), range(L), :]
+        incorrectcounts = np.sum(self.alpha, axis=1) - correctcounts
+        alpha = np.concatenate((correctcounts[:, None, :], incorrectcounts[:, None, :]), axis=1)
+
+        lnpicorrect = self.lnPi[range(L), range(L), :]
+        lnpiincorrect = logsumexp(self.lnPi, axis=1) - lnpicorrect
+        lnpi = np.concatenate((lnpicorrect[:, None, :], lnpiincorrect[:, None, :]), axis=1)
+
+        lnpPi = log_dirichlet_pdf(alpha0, lnpi, sum_dim)
+
+        lnqPi = log_dirichlet_pdf(alpha, lnpi, sum_dim)
+
+        for midx, alpha0_data in enumerate(self.alpha0_data):
+            correctcounts = alpha0_data[range(L), range(L)]
+            incorrectcounts = np.sum(alpha0_data, axis=1) - correctcounts
+            alpha0_data = np.concatenate((correctcounts, incorrectcounts), axis=1)
+
+            correctcounts = self.alpha_data[midx][range(L), range(L)]
+            incorrectcounts = np.sum(self.alpha_data[midx], axis=1) - correctcounts
+            alpha_data = np.concatenate((correctcounts, incorrectcounts), axis=1)
+
+            lnpicorrect = self.lnPi_data[midx][range(L), range(L), :]
+            lnpiincorrect = np.sum(self.lnPi_data[midx], axis=1) - lnpicorrect
+            lnpi_data = np.concatenate((lnpicorrect, lnpiincorrect), axis=1)
+
+            lnpPi += log_dirichlet_pdf(alpha0_data, lnpi_data, sum_dim)
+            lnqPi += log_dirichlet_pdf(alpha_data, lnpi_data, sum_dim)
+
+        return lnpPi, lnqPi

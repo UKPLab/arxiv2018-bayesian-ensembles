@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.special.basic import psi
 
+from bsc.annotator_model import log_dirichlet_pdf
 from bsc.cv import VectorWorker
 
 
@@ -21,7 +22,8 @@ class ConfusionMatrixWorker(VectorWorker):
         Update the annotator models.
         '''
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :]
-        return psi(self.alpha) - psi_alpha_sum
+        self.lnPi = psi(self.alpha) - psi_alpha_sum
+        return self.lnPi
 
 
     def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
@@ -35,7 +37,7 @@ class ConfusionMatrixWorker(VectorWorker):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
-                counts = (C == l + 1).T.dot(Tj)
+                counts = (C == l).T.dot(Tj)
                 self.alpha[j, l, :] += counts
 
 
@@ -54,7 +56,7 @@ class ConfusionMatrixWorker(VectorWorker):
                 self.alpha_data[j, l, :] += counts
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks=None):
+    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]
@@ -62,14 +64,17 @@ class ConfusionMatrixWorker(VectorWorker):
                 C = np.array([C])[:, None]
 
             result = lnPi[:, C, Krange]
-            result[:, C == -1] = 0
+
+            if not np.isscalar(C):
+                result[:, blanks] = 0
         else:
             result = lnPi[l, C, Krange]
             if np.isscalar(C):
                 if C == -1:
                     result = 0
-            else:
-                result[C == -1] = 0
+
+            if not np.isscalar(C):
+                result[blanks] = 0
 
         return result
 
@@ -98,3 +103,17 @@ class ConfusionMatrixWorker(VectorWorker):
 
     def _calc_EPi(self, alpha):
         return alpha / np.sum(alpha, axis=1)[:, None, :]
+
+
+    def lowerbound_terms(self):
+        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
+        sum_dim = 1 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
+
+        lnpPi = log_dirichlet_pdf(self.alpha0, self.lnPi, sum_dim)
+        lnqPi = log_dirichlet_pdf(self.alpha, self.lnPi, sum_dim)
+
+        for midx, alpha0_data in enumerate(self.alpha0_data):
+            lnpPi += log_dirichlet_pdf(alpha0_data, self.lnPi_data[midx], sum_dim)
+            lnqPi += log_dirichlet_pdf(self.alpha_data[midx], self.lnPi_data[midx], sum_dim)
+
+        return lnpPi, lnqPi

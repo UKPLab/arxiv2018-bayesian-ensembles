@@ -19,7 +19,7 @@ from bsc.indfeatures import IndependentFeatures
 from bsc.lstm import LSTM
 from bsc.mace import MACEWorker
 from bsc.seq import SequentialWorker
-
+from bsc.annotator_model import log_dirichlet_pdf
 
 class BSC(object):
 
@@ -42,9 +42,14 @@ class BSC(object):
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
                  alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
-                 model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-10, verbose=False):
+                 model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-6,
+                 verbose=False, use_lowerbound=True):
 
         self.verbose = verbose
+
+        self.use_lb = use_lowerbound
+        if self.use_lb:
+            self.lb = -np.inf
 
         # tagging_scheme can be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
         # that follow another start with B).
@@ -88,7 +93,6 @@ class BSC(object):
         elif worker_model == 'mace':
             self.A = MACEWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (2 + self.L)
-            self._lowerbound_pi_terms = self._lowerbound_pi_terms_mace
 
         elif worker_model == 'ibcc':
             self.A = ConfusionMatrixWorker(alpha0_diags, alpha0_factor, L, len(data_model))
@@ -115,122 +119,59 @@ class BSC(object):
         self.iter = 0
         self.max_internal_iters = 20
 
-        self.verbose = False  # can change this if you want progress updates to be printed
+        self.verbose = False  # can change this if you want progress updates to be printed\
 
-
-    def _lowerbound_pi_terms_mace(self, alpha0, alpha, lnPi):
-        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
-        sum_dim = 0 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
-
-        lnpPi_correct = _log_dir(alpha0[0:2, :], lnPi[0:2, :], sum_dim)
-        lnpPi_strategy = _log_dir(alpha0[2:, :], lnPi[2:, :], sum_dim)
-
-        lnqPi_correct = _log_dir(alpha[0:2, :], lnPi[0:2, :], sum_dim)
-        lnqPi_strategy = _log_dir(alpha[2:, :], lnPi[2:, :], sum_dim)
-
-        return lnpPi_correct + lnpPi_strategy, lnqPi_correct + lnqPi_strategy
-
-    def _lowerbound_pi_terms(self, alpha0, alpha, lnPi):
-        # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
-        if alpha.ndim == 2:
-            sum_dim = 0 # in the case that we have only one Dirichlet per worker, e.g. accuracy model
-        else:
-            sum_dim = 1 # in the case that we have multiple Dirichlets per worker, e.g. IBCC, sequential-BCC model
-
-        lnpPi = _log_dir(alpha0, lnPi, sum_dim)
-
-        lnqPi = _log_dir(alpha, lnPi, sum_dim)
-
-        return lnpPi, lnqPi
-
-    def _lnpt(self):
-        lnpt = self.lnB.copy()
-        lnpt[np.isinf(lnpt) | np.isnan(lnpt)] = 0
-        lnpt = lnpt * self.q_t_joint
-
-        return lnpt
 
     def lowerbound(self):
         '''
         Compute the variational lower bound on the log marginal likelihood.
         '''
-        lnp_features_and_Cdata = 0
+        lnpCdata = 0
         lnq_Cdata = 0
 
-        for model in self.data_model:
-            lnp_features_and_Cdata += model.log_likelihood(model.C_data, self.Et)
-            lnq_Cdata_m = model.C_data * np.log(model.C_data)
-            lnq_Cdata_m[model.C_data == 0] = 0
+        for midx, Cdata in enumerate(self.C_data):
+            Cdata_prev = np.concatenate((np.zeros((1, self.L), dtype=int), Cdata[:-1, :]))
+            Cdata_prev[self.doc_start.flatten(), :] = 0
+            for m in range(self.L):
+                for n in range(self.L):
+                    lnpCdata += np.sum(self.Et * self.A.read_lnPi_data(None, m, n, self.L, midx)[None, :]
+                                       * Cdata[:, m:m+1] * Cdata_prev[:, n:n+1])
+
+            lnq_Cdata_m = Cdata * np.log(Cdata)
+            lnq_Cdata_m[Cdata == 0] = 0
             lnq_Cdata += lnq_Cdata_m
 
         lnq_Cdata = np.sum(lnq_Cdata)
 
         lnpC = 0
         C = self.C.astype(int)
-        C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int), C[:-1, :]))
-        C_prev[self.doc_start.flatten() == 1, :] = 0
-        C_prev[C_prev == 0] = self.outside_label + 1  # document starts or missing labels # why is it + 1?
-        valid_labels = (C != 0).astype(float)
+        C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int)-1, C[:-1, :]))
 
         for j in range(self.L):
             # self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]]
-            lnpCj = valid_labels * self.A._read_lnPi(j, C - 1, C_prev - 1, np.arange(self.K)[None, :], self.L) \
-                    * self.Et[:, j:j + 1]
+            lnpCj = self.A.read_lnPi(j, C, C_prev, np.arange(self.K)[None, :], self.L, self.blanks) * self.Et[:, j:j + 1]
             lnpC += lnpCj
 
-        lnpt = self._lnpt()
+        lnpC = np.sum(lnpC)
 
-        lnpCt = np.sum(lnpC) + np.sum(lnpt)
+        lnpPi, lnqPi = self.A.lowerbound_terms()
 
-        # trying to handle warnings
-        qt_sum = np.sum(self.q_t_joint, axis=2)[:, :, None]
-        qt_sum[qt_sum==0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
-        q_t_cond = self.q_t_joint / qt_sum
-        q_t_cond[q_t_cond == 0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
-        lnqt = self.q_t_joint * np.log(q_t_cond)
-        lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
-        lnqt = np.sum(lnqt)
-        warnings.filterwarnings('always')
+        lnptB, lnqtB = self.LM.lowerbound_terms()
 
-        # E[ln p(\pi | \alpha_0)]
-        # E[ln q(\pi)]
-        lnpPi, lnqPi = self._lowerbound_pi_terms(self.alpha0, self.alpha, self.lnPi)
+        if self.no_words:
+            lnpRho = 0
+            lnqRho = 0
+        else:
+            lnpwords = np.sum(self.ElnRho[self.features, :] * self.Et)
+            nu0 = np.zeros((1, self.L)) + self.nu0
+            lnpRho = np.sum(gammaln(np.sum(nu0)) - np.sum(gammaln(nu0)) + sum((nu0 - 1) * self.ElnRho, 0)) + lnpwords
+            lnqRho = np.sum(gammaln(np.sum(self.nu,0)) - np.sum(gammaln(self.nu),0) + sum((self.nu - 1) * self.ElnRho, 0))
 
-        for model in self.data_model:
-            lnpPi_model, lnqPi_model = self._lowerbound_pi_terms(model.alpha0_data,
-                                                                 model.alpha_data,
-                                                                 model.lnPi)
 
-            lnpPi += lnpPi_model
-            lnqPi += lnqPi_model
+        print('Computing LB: %f, %f, %f, %f, %f' % (lnpC, lnpCdata-lnq_Cdata,
+                                                                lnpPi-lnqPi, lnptB-lnqtB, lnpRho-lnqRho))
 
-        # E[ln p(A | nu_0)]
-        # TODO this is wrong since lnB is now transition matrix + word observation likelihood
-        x = (self.beta0 - 1) * self.lnB
-        gammaln_nu0 = gammaln(self.beta0)
-        invalid_nus = np.isinf(gammaln_nu0) | np.isinf(x) | np.isnan(x)
-        gammaln_nu0[invalid_nus] = 0
-        x[invalid_nus] = 0
-        x = np.sum(x, axis=1)
-        z = gammaln(np.sum(self.beta0, 1)) - np.sum(gammaln_nu0, 1)
-        z[np.isinf(z)] = 0
-        lnpA = np.sum(x + z)
-
-        # E[ln q(A)]
-        # TODO this is wrong since lnB is now transition matrix + word observation likelihood
-        x = (self.beta - 1) * self.lnB
-        x[np.isinf(x)] = 0
-        gammaln_nu = gammaln(self.beta)
-        gammaln_nu[invalid_nus] = 0
-        x[invalid_nus] = 0
-        x = np.sum(x, axis=1)
-        z = gammaln(np.sum(self.beta, 1)) - np.sum(gammaln_nu, 1)
-        z[np.isinf(z)] = 0
-        lnqA = np.sum(x + z)
-
-        print('Computing LB: %f, %f, %f, %f, %f, %f, %f, %f' % (lnpCt, lnqt, lnp_features_and_Cdata, lnq_Cdata,
-                                                                lnpPi, lnqPi, lnpA, lnqA))
-        lb = lnpCt - lnqt + lnp_features_and_Cdata - lnq_Cdata + lnpPi - lnqPi + lnpA - lnqA
+        lb = lnpC + lnpCdata - lnq_Cdata + lnpPi - lnqPi + lnptB - lnqtB + lnpRho - lnqRho
         return lb
 
     def optimize(self, C, doc_start, features=None, maxfun=50, converge_workers_first=False):
@@ -246,8 +187,8 @@ class BSC(object):
 
             n_alpha_elements = len(hyperparams) - 1
 
-            self.alpha0 = np.exp(hyperparams[0:n_alpha_elements]).reshape(self.alpha_shape)
-            self.beta0 = np.ones((self.L, self.L)) * np.exp(hyperparams[-1])
+            self.A.alpha0 = np.exp(hyperparams[0:n_alpha_elements]).reshape(self.alpha_shape)
+            self.LM.beta0 = np.ones((self.L, self.L)) * np.exp(hyperparams[-1])
 
             # run the method
             self.run(C, doc_start, features, converge_workers_first=converge_workers_first)
@@ -261,7 +202,7 @@ class BSC(object):
             self.opt_runs += 1
             return -lb
 
-        initialguess = np.log(np.append(self.alpha0.flatten(), self.beta0[0, 0]))
+        initialguess = np.log(np.append(self.A.alpha0.flatten(), self.LM.beta0[0, 0]))
         ftol = 1.0  #1e-3
         opt_hyperparams, _, _, _, _ = fmin(neg_marginal_likelihood, initialguess, args=(C, doc_start), maxfun=maxfun,
                                                      full_output=True, ftol=ftol, xtol=1e100)
@@ -269,11 +210,7 @@ class BSC(object):
         print("Optimal hyper-parameters: alpha_0 = %s, nu0 scale = %s" % (np.array2string(np.exp(opt_hyperparams[:-1])),
                                                                           np.array2string(np.exp(opt_hyperparams[-1]))))
 
-        C_data = []
-        for model in self.data_model:
-            C_data.append(model.C_data)
-
-        return self.Et, self._most_probable_sequence(C, C_data, doc_start, self.features)[1]
+        return self.Et, self.LM.most_probable_sequence(self.word_ll(self.features))[1]
 
 
     def _init_words(self, text):
@@ -314,10 +251,26 @@ class BSC(object):
         return lnptext_given_t # N x nclasses where N is number of tokens/data points
 
 
+    def word_ll(self, features):
+        if self.no_words:
+            word_ll = None
+        else:
+            ERho = self.nu / np.sum(self.nu, 0)[None, :]  # nfeatures x nclasses
+            lnERho = np.zeros_like(ERho)
+            lnERho[ERho != 0] = np.log(ERho[ERho != 0])
+            lnERho[ERho == 0] = -np.inf
+            word_ll = lnERho[features, :]
+
+        return word_ll
+
+
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
             gold_labels=None, C_data_initial=None):
         '''
         Runs the BAC bsc with the given annotations and list of document starts.
+
+        C: use -1 to indicate where the annotations are missing. In future we may want to change
+        this to a sparse format?
 
         '''
         if self.verbose:
@@ -335,8 +288,7 @@ class BSC(object):
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
 
-        # transform input data to desired format: unannotated tokens represented as zeros
-        C = C.astype(int) + 1
+        # C = C.astype(int) + 1
         doc_start = doc_start.astype(bool)
         if doc_start.ndim == 1:
             doc_start = doc_start[:, None]
@@ -355,22 +307,23 @@ class BSC(object):
             #oldlb = -np.inf
 
             self.doc_start = doc_start
-            self.C = C
+            self.C = C.astype(int)
 
-            self.blanks = C == 0
+            self.blanks = C == -1
 
         # reset the data model guesses to zero for the first iteration after we restart iterative learning
         for model in self.data_model:
-            model.init(C.shape[0], features, doc_start, self.L,
+            model.init(self.C.shape[0], features, doc_start, self.L,
                       self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
                       dev_sentences, self.A, self.max_internal_iters)
             self.A.qpi_data(model)
 
+        self.C_data = []
         for midx, model in enumerate(self.data_model):
             if C_data_initial is None:
-                model.C_data = np.zeros((self.C.shape[0], self.L)) #+ (1.0 / self.L)
+                self.C_data.append(np.zeros((self.C.shape[0], self.L)) ) #+ (1.0 / self.L)
             else:
-                model.C_data = C_data_initial[midx]
+                self.C_data.append(C_data_initial[midx])
                 print('integrated model initial labels: ' +
                       str(np.unique(np.argmax(C_data_initial[midx], axis=1))))
 
@@ -396,15 +349,14 @@ class BSC(object):
                     print("BAC iteration %i in progress" % self.iter)
 
                 self.Et_old = self.Et
-                C_data = [model.C_data for model in self.data_model]
 
                 if self.verbose:
                     print('Updating with C shape = %s' % str(C.shape))
 
                 if self.iter > 0:
-                    self.Et = self.LM.update_t(parallel, C_data)
+                    self.Et = self.LM.update_t(parallel, self.C_data)
                 else:
-                    self.Et = self.LM.init_t(C, doc_start, self.A, self.blanks, self.gold)
+                    self.Et = self.LM.init_t(self.C, doc_start, self.A, self.blanks, self.gold)
 
                 if self.verbose:
                     print("BAC iteration %i: computed label sequence probabilities" % self.iter)
@@ -426,10 +378,10 @@ class BSC(object):
 
                         # Update the data model by retraining the integrated task classifier and obtaining its predictions
                         if model.train_type == 'Bayes':
-                            model.C_data = model.fit_predict(self.Et)
+                            self.C_data[midx] = model.fit_predict(self.Et)
                         elif model.train_type == 'MLE':
-                            seq = self._most_probable_sequence(C, C_data, doc_start, self.features, parallel)[1]
-                            model.C_data = model.fit_predict(seq)
+                            seq = self.LM.most_probable_sequence(self.word_ll(self.features))[1]
+                            self.C_data[midx] = model.fit_predict(seq)
 
                         if type(model) == LSTM:
                             self.data_model_updated += 1
@@ -440,11 +392,11 @@ class BSC(object):
 
 
                         print('integrated model predicted the following labels: ' +
-                              str(np.unique(np.argmax(model.C_data, axis=1))))
+                              str(np.unique(np.argmax(self.C_data[midx], axis=1))))
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
-                        self.A._post_alpha_data(self.Et, model.C_data, doc_start, self.L)
+                        self.A._post_alpha_data(self.Et, self.C_data[midx], doc_start, self.L)
                         self.A.q_pi_data(midx)
 
                         if self.verbose:
@@ -454,11 +406,11 @@ class BSC(object):
                         # if type(model) == LSTM:
                         #    np.save('LSTM_worker_model_%s.npy' % timestamp, model.alpha_data)
                     elif C_data_initial is None: # model is switched off
-                        model.C_data[:] = 0
+                        self.C_data[midx][:] = 0
 
 
                 # update E_lnpi
-                self.A._post_alpha(self.Et, C, doc_start, self.L)
+                self.A._post_alpha(self.Et, self.C, doc_start, self.L)
                 self.A.q_pi()
 
                 if self.verbose:
@@ -485,17 +437,6 @@ class BSC(object):
 
         return self.Et, seq, pseq
 
-    def word_ll(self, features):
-        if self.no_words:
-            word_ll = None
-        else:
-            ERho = self.nu / np.sum(self.nu, 0)[None, :]  # nfeatures x nclasses
-            lnERho = np.zeros_like(ERho)
-            lnERho[ERho != 0] = np.log(ERho[ERho != 0])
-            lnERho[ERho == 0] = -np.inf
-            word_ll = lnERho[features, :]
-
-        return word_ll
 
     def predict(self, doc_start, text):
 
@@ -537,46 +478,16 @@ class BSC(object):
 
         return q_t, seq
 
-    def annotator_accuracy(self):
-        if self.alpha.ndim == 3:
-            annotator_acc = self.alpha[np.arange(self.L), np.arange(self.L), :] \
-                        / np.sum(self.alpha, axis=1)
-        elif self.alpha.ndim == 2:
-            annotator_acc = self.alpha[1, :] / np.sum(self.alpha[:2, :], axis=0)
-        elif self.alpha.ndim == 4:
-            annotator_acc = np.sum(self.alpha, axis=2)[np.arange(self.L), np.arange(self.L), :] \
-                        / np.sum(self.alpha, axis=(1,2))
 
-        if self.beta.ndim == 2:
-            beta = np.sum(self.beta, axis=0)
+    def _convergence_diff(self):
+        if self.use_lb:
+
+            oldlb = self.lb
+            self.lb = self.lowerbound()
+
+            return self.lb - oldlb
         else:
-            beta = self.beta
-
-        annotator_acc *= (beta / np.sum(beta))[:, None]
-        annotator_acc = np.sum(annotator_acc, axis=0)
-
-        return annotator_acc
-
-    def informativeness(self):
-
-        ptj = np.zeros(self.L)
-        for j in range(self.L):
-            ptj[j] = np.sum(self.beta0[:, j]) + np.sum(self.Et == j)
-
-        entropy_prior = -np.sum(ptj * np.log(ptj))
-
-        ptj_c = np.zeros((self.L, self.L, self.K))
-        for j in range(self.L):
-            if self.alpha.ndim == 4:
-                ptj_c[j] = np.sum(self.alpha[j, :, :, :], axis=1) / np.sum(self.alpha[j, :, :, :], axis=(0,1))[None, :] * ptj[j]
-            else:
-                ptj_c[j] = self.alpha[j, :, :] / np.sum(self.alpha[j, :, :], axis=0)[None, :] * ptj[j]
-
-        ptj_giv_c = ptj_c / np.sum(ptj_c, axis=0)[None, :, :]
-
-        entropy_post = -np.sum(ptj_c * np.log(ptj_giv_c), axis=(0,1))
-
-        return entropy_prior - entropy_post
+            return np.max(np.abs(self.Et_old - self.Et))
 
 
     def _converged(self):
@@ -585,8 +496,13 @@ class BSC(object):
         The bsc has _converged when the maximum difference of an entry of q_t between two iterations is
         smaller than the given epsilon.
         '''
+        if self.iter == 0:
+            return False # don't bother to check because some of the variables have not even been initialised yet!
+
+        diff = self._convergence_diff()
+
         if self.verbose:
-            print("BSC: max. difference in posteriors at iteration %i: %.5f" % (self.iter, np.max(np.abs(self.Et_old - self.Et))))
+            print("BSC: max. difference at iteration %i: %.5f" % (self.iter, diff))
 
         if not self.workers_converged:
             converged = self.iter >= self.max_iter
@@ -595,7 +511,7 @@ class BSC(object):
 
         if not converged and self.data_model_updated != 1: # we need to allow at least one more iteration after the data
             # model has been updated because it will not yet have changed q_t
-            converged = np.max(np.abs(self.Et_old - self.Et)) < self.eps
+            converged = diff < self.eps
 
         if converged and not self.workers_converged:
             # the worker model has converged, but we need to do more iterations to converge the data model
@@ -603,17 +519,6 @@ class BSC(object):
             converged = False
 
         return converged
-
-def _log_dir(alpha, lnPi, sum_dim):
-    x = (alpha - 1) * lnPi
-    gammaln_alpha = gammaln(alpha)
-    invalid_alphas = np.isinf(gammaln_alpha) | np.isinf(x) | np.isnan(x)
-    gammaln_alpha[invalid_alphas] = 0  # these possibilities should be excluded
-    x[invalid_alphas] = 0
-    x = np.sum(x, axis=sum_dim)
-    z = gammaln(np.sum(alpha, sum_dim)) - np.sum(gammaln_alpha, sum_dim)
-    z[np.isinf(z)] = 0
-    return np.sum(x + z)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -653,6 +558,24 @@ class LabelModel(object):
 
     def most_probable_sequence(self, word_ll):
         pass
+
+    def lowerbound_terms(self):
+        lnB = psi(self.beta) - psi(np.sum(self.beta, -1))
+        lnB[np.isinf(lnB) | np.isnan(lnB)] = 0
+        lnpt = lnB * self.Et
+        lnpt = np.sum(lnpt)
+
+        lnqt = np.log(self.Et)
+        lnqt[self.Et == 0] = 0
+        lnqt *= self.Et
+        lnqt = np.sum(lnqt)
+
+        lnpB = log_dirichlet_pdf(self.beta0, lnB, 1)
+        lnqB = log_dirichlet_pdf(self.beta, lnB, 1)
+        lnpB = np.sum(lnpB)
+        lnqB = np.sum(lnqB)
+
+        return lnpt + lnpB, lnqt + lnqB
 
 class MarkovLabelModel(LabelModel):
     def __init__(self, beta0, L, verbose, tagging_scheme,
@@ -707,11 +630,10 @@ class MarkovLabelModel(LabelModel):
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def init_t(self, C, doc_start, A, blanks, gold):
+    def init_t(self, C, doc_start, A, blanks, gold=None):
 
         super().init_t(C, doc_start, A, blanks, gold)
 
-        C = C-1
         doc_start = doc_start.flatten()
 
         B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
@@ -770,9 +692,10 @@ class MarkovLabelModel(LabelModel):
         '''
         # split into documents
         if self.C_by_doc is None:
-            self.C_by_doc = np.split(self.C, np.where(self.ds)[0][1:], axis=0)
+            self.splitidxs = np.where(self.ds)[0][1:]
+            self.C_by_doc = np.split(self.C, self.splitidxs, axis=0)
 
-        self.lnB_by_doc = np.split(self.lnB, np.where(self.ds)[0][1:], axis=0)
+        self.lnB_by_doc = np.split(self.lnB, self.splitidxs, axis=0)
 
         # print('Complete size of C = %s and lnB = %s' % (str(C.shape), str(lnB.shape)))
 
@@ -782,7 +705,7 @@ class MarkovLabelModel(LabelModel):
         # option backend='threading' does not work here because of the shared objects locking. Can we release them read-only?
         if self.Cdata is not None and len(self.Cdata) > 0:
             for m, Cdata_m in enumerate(self.Cdata):
-                self.C_data_by_doc.append(np.split(Cdata_m, np.where(self.ds)[0][1:], axis=0))
+                self.C_data_by_doc.append(np.split(Cdata_m, self.splitidxs, axis=0))
 
             if len(self.Cdata) >= 1:
                 self.C_data_by_doc = list(zip(*self.C_data_by_doc))
@@ -796,18 +719,20 @@ class MarkovLabelModel(LabelModel):
                            for d, C_doc in enumerate(self.C_by_doc))
 
         # reformat results
-        self.lnR_ = np.concatenate(res, axis=0)
+        self.lnR_ = np.concatenate([r[0] for r in res], axis=0)
+        self.scaling = [r[1] for r in res]
 
     def _parallel_backward_pass(self):
         '''
         Perform the backward pass of the Forward-Backward bsc (for multiple documents in parallel).
         '''
         if self.Cdata is not None and len(self.Cdata) > 0:
-            res = self.parallel(delayed(_doc_backward_pass)(doc, self.C_data_by_doc[d], self.lnB_by_doc[d], self.L, self.A,
-                                                            self.outside_label) for d, doc in enumerate(self.C_by_doc))
+            res = self.parallel(delayed(_doc_backward_pass)(doc, self.C_data_by_doc[d], self.lnB_by_doc[d], self.L,
+                                                            self.A, self.scaling[d]
+                                                    ) for d, doc in enumerate(self.C_by_doc))
         else:
-            res = self.parallel(delayed(_doc_backward_pass)(doc, None, self.lnB_by_doc[d], self.L, self.A,
-                                                            self.outside_label) for d, doc in enumerate(self.C_by_doc))
+            res = self.parallel(delayed(_doc_backward_pass)(doc, None, self.lnB_by_doc[d], self.L, self.A, self.scaling[d],
+                                                    ) for d, doc in enumerate(self.C_by_doc))
 
         # reformat results
         self.lnLambda = np.concatenate(res, axis=0)
@@ -823,23 +748,17 @@ class MarkovLabelModel(LabelModel):
 
         lnS = np.repeat(self.lnLambda[:, None, :], L, 1)
 
-        mask = (self.C != 0)
-
-        C = self.C - 1
-
         # flags to indicate whether the entries are valid or should be zeroed out later.
         flags = -np.inf * np.ones_like(lnS)
         flags[np.where(self.ds == 1)[0], self.outside_label, :] = 0
         flags[np.where(self.ds == 0)[0], :L, :] = 0
 
-        Cprev = np.append(np.zeros((1, K), dtype=int) + self.outside_label, C[:-1, :], axis=0)
-        Cprev[self.ds.flatten(), :] = self.outside_label
-        Cprev[Cprev == -1] = self.outside_label
+        Cprev = np.append(np.zeros((1, K), dtype=int) - 1, self.C[:-1, :], axis=0)
 
         for l in range(L):
 
             # Non-doc-starts
-            lnPi_terms = self.A.read_lnPi(l, C, Cprev, np.arange(K)[None, :], self.L, self.blanks)
+            lnPi_terms = self.A.read_lnPi(l, self.C, Cprev, np.arange(K)[None, :], self.L, self.blanks)
             if self.Cdata is not None and len(self.Cdata):
                 lnPi_data_terms = np.zeros(self.Cdata[0].shape[0], dtype=float)
 
@@ -853,13 +772,13 @@ class MarkovLabelModel(LabelModel):
                         weights = self.Cdata[model_idx][:, m:m + 1] * C_data_prev
 
                         for n in range(L):
-                            lnPi_data_terms_mn = weights[:, n] * self.A.read_lnPi_data(l, m, n, 0, self.L, model_idx)
+                            lnPi_data_terms_mn = weights[:, n] * self.A.read_lnPi_data(l, m, n, self.L, model_idx)
                             lnPi_data_terms_mn[np.isnan(lnPi_data_terms_mn)] = 0
                             lnPi_data_terms += lnPi_data_terms_mn
             else:
                 lnPi_data_terms = 0
 
-            loglikelihood_l = (np.sum(lnPi_terms * mask, 1) + lnPi_data_terms)[:, None]
+            loglikelihood_l = (np.sum(lnPi_terms, 1) + lnPi_data_terms)[:, None]
 
             # for the other times. The document starts will get something invalid written here too, but it will be killed off by the flags
             # print('_expec_joint_t_quick: For class %i: adding the R terms from previous data points' % l)
@@ -905,9 +824,6 @@ class MarkovLabelModel(LabelModel):
         else:
             lnEB = lnEB[None, :, :] + word_ll[:, None, :]
 
-        lnEPi = self.A.lnEPi()
-        lnEPi_data = self.A.lnEPi_data()
-
         # split into documents
         lnEB_by_doc = np.split(lnEB, np.where(self.ds)[0][1:], axis=0)
 
@@ -933,6 +849,29 @@ class MarkovLabelModel(LabelModel):
 
         return pseq, seq
 
+    def lowerbound_terms(self):
+        lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+        lnB[np.isinf(lnB) | np.isnan(lnB)] = 0
+        lnpt = lnB * self.Et_joint
+        lnpt = np.sum(lnpt)
+
+        # trying to handle warnings
+        qt_sum = np.sum(self.Et_joint, axis=2)[:, :, None]
+        qt_sum[qt_sum==0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
+        q_t_cond = self.Et_joint / qt_sum
+        q_t_cond[q_t_cond == 0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
+        lnqt = self.Et_joint * np.log(q_t_cond)
+        lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
+        lnqt = np.sum(lnqt)
+        warnings.filterwarnings('always')
+
+        lnpB = log_dirichlet_pdf(self.beta0, lnB, 1)
+        lnqB = log_dirichlet_pdf(self.beta, lnB, 1)
+        lnpB = np.sum(lnpB)
+        lnqB = np.sum(lnqB)
+
+        return lnpt + lnpB, lnqt + lnqB
+
 
 class IndependentLabelModel(LabelModel):
 
@@ -952,11 +891,9 @@ class IndependentLabelModel(LabelModel):
         if np.any(np.isnan(self.lnB)):
             print('_calc_q_A: nan value encountered!')
 
-    def init_t(self, C, doc_start, A, blanks, gold):
+    def init_t(self, C, doc_start, A, blanks, gold=None):
 
         super().init_t(C, doc_start, A, blanks, gold)
-
-        C = C - 1
 
         beta0 = self.beta0
 
@@ -971,9 +908,8 @@ class IndependentLabelModel(LabelModel):
 
     def update_t(self, parallel, C_data):
         Krange = np.arange(self.C.shape[1], dtype=int)
-        Ccurr = self.C - 1
-        Cprev = np.concatenate((np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :] - 1), axis=0)
-        Cprev[self.ds, :] =  int(self.outside_label)
+        Ccurr = self.C
+        Cprev = np.concatenate((np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :]), axis=0)
 
         self.Et = np.copy(self.lnB)
 
@@ -981,14 +917,14 @@ class IndependentLabelModel(LabelModel):
         for model_idx in range(len(C_data)):
 
             C_m = C_data[model_idx]
-            C_m_prev = np.concatenate((np.zeros((1, self.L)) + self.outside_label, C_data[model_idx][:-1, :]), axis=0)
+            C_m_prev = np.concatenate((np.zeros((1, self.L)), C_data[model_idx][:-1, :]), axis=0)
 
             for m in range(self.L):
                 for n in range(self.L):
-                    lnPi_data_terms += self.A.read_lnPi_data(None, m, n, 0, self.L, model_idx)[:, :, 0] * \
+                    lnPi_data_terms += self.A.read_lnPi_data(None, m, n, self.L, model_idx)[:, :, 0] * \
                                        C_m[:, m][None, :] * C_m_prev[:, n][None, :]
 
-        Elnpi = self.A.read_lnPi(None, Ccurr, Cprev, Krange[None, :], self.L)
+        Elnpi = self.A.read_lnPi(None, Ccurr, Cprev, Krange[None, :], self.L, self.blanks)
         self.Et += (np.sum(Elnpi, axis=2) + lnPi_data_terms).T
 
         self.Et = np.exp(self.Et)
@@ -1005,7 +941,7 @@ class IndependentLabelModel(LabelModel):
         return np.max(self.Et, axis=1), np.argmax(self.Et, axis=1)
 
 
-def _doc_forward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
+def _doc_forward_pass(C, C_data, lnB, L, worker_model, outside_label):
     '''
     Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -1016,73 +952,71 @@ def _doc_forward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
 
     # initialise variables
     lnR_ = np.zeros((T, L))
+    scaling = np.zeros(T)
 
-    mask = C != 0
+    blanks = C == -1
 
     # For the first data point
-    lnPi_terms = worker_model.read_lnPi(None, C[0:1, :] - 1, before_doc_idx, Krange[None, :], L)
+    lnPi_terms = worker_model.read_lnPi(None, C[0:1, :], np.zeros((1, K), dtype=int)-1, Krange[None, :], L, blanks[0:1])
     lnPi_data_terms = 0
 
     if C_data is not None:
         for m in range(L):
             for model_idx in range(len(C_data)):
-                lnPi_data_terms += (worker_model.read_lnPi_data(None, m, before_doc_idx, 0, L, model_idx)[:, :, 0]
+                lnPi_data_terms += (worker_model.read_lnPi_data(None, m, outside_label, L, model_idx)[:, :, 0]
                                     * C_data[model_idx][0, m])[:, 0]
 
-    lnR_[0, :] = lnB[0, before_doc_idx, :] + np.dot(lnPi_terms[:, 0, :], mask[0, :][:, None])[:, 0] + lnPi_data_terms
-    lnR_[0, :] = lnR_[0, :] - logsumexp(lnR_[0, :])
+    lnR_[0, :] = lnB[0, outside_label, :] + np.sum(lnPi_terms[:, 0, :], axis=1) + lnPi_data_terms
+    scaling[0] = logsumexp(lnR_[0, :])
+    lnR_[0, :] = lnR_[0, :] - scaling[0]
 
-    Cprev = C - 1
-    Cprev[Cprev == -1] = before_doc_idx
-    Cprev = Cprev[:-1, :]
-    Ccurr = C[1:, :] - 1
+    Cprev = C[:-1, :]
+    Ccurr = C[1:, :]
 
     # the other data points
-    lnPi_terms = worker_model.read_lnPi(None, Ccurr, Cprev, Krange[None, :], L)
+    lnPi_terms = worker_model.read_lnPi(None, Ccurr, Cprev, Krange[None, :], L, blanks[1:])
     lnPi_data_terms = 0
     if C_data is not None:
         for m in range(L):
             for n in range(L):
                 for model_idx in range(len(C_data)):
-                    lnPi_data_terms += worker_model.read_lnPi_data(None, m, n, 0, L, model_idx)[:, :, 0] * \
+                    lnPi_data_terms += worker_model.read_lnPi_data(None, m, n, L, model_idx)[:, :, 0] * \
                                        C_data[model_idx][1:, m][None, :] * C_data[model_idx][:-1, n][None, :]
 
-    likelihood_next = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms  # L x T-1
+    likelihood_next = np.sum(lnPi_terms, axis=2) + lnPi_data_terms  # L x T-1
     # lnPi[:, Ccurr, Cprev, Krange[None, :]]
 
     # iterate through all tokens, starting at the beginning going forward
     for t in range(1, T):
         # iterate through all possible labels
         # prev_idx = Cprev[t - 1, :]
-        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB[t, :, :], axis=0) + likelihood_next[:, t-1][None, :]
+        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB[t, :, :] + likelihood_next[:, t-1][None, :], axis=0)
         # , np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
 
         # normalise
-        lnR_[t, :] = lnR_t - logsumexp(lnR_t)
+        scaling[t] = logsumexp(lnR_t)
+        lnR_[t, :] = lnR_t - scaling[t]
 
-    return lnR_
+    return lnR_, scaling
 
-def _doc_backward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
+def _doc_backward_pass(C, C_data, lnB, L, worker_model, scaling):
     '''
     Perform the backward pass of the Forward-Backward bsc (for a single document).
     '''
     # infer number of tokens, labels, and annotators
     T = C.shape[0]
-    L = lnB.shape[-1]
     K = C.shape[-1]
     Krange = np.arange(K)
 
     # initialise variables
     lnLambda = np.zeros((T, L))
 
-    mask = (C != 0)
-
-    Ccurr = C - 1
-    Ccurr[Ccurr == -1] = before_doc_idx
+    Ccurr = C
     Ccurr = Ccurr[:-1, :]
-    Cnext = C[1:, :] - 1
+    Cnext = C[1:, :]
+    blanks = Cnext == -1
 
-    lnPi_terms = worker_model.read_lnPi(None, Cnext, Ccurr, Krange[None, :], L)
+    lnPi_terms = worker_model.read_lnPi(None, Cnext, Ccurr, Krange[None, :], L, blanks)
     lnPi_data_terms = 0
     if C_data is not None:
         for model_idx in range(len(C_data)):
@@ -1092,13 +1026,13 @@ def _doc_backward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
 
             for m in range(L):
                 for n in range(L):
-                    terms_mn = worker_model.read_lnPi_data(None, m, n, 0, L, model_idx)[:, :, 0] \
+                    terms_mn = worker_model.read_lnPi_data(None, m, n, L, model_idx)[:, :, 0] \
                                * C_data_next[:, m][None, :] \
                                * C_data_curr[:, n][None, :]
                     terms_mn[:, (C_data_next[:, m] * C_data_curr[:, n]) == 0] = 0
                     lnPi_data_terms += terms_mn
 
-    likelihood_next = np.sum(mask[None, 1:, :] * lnPi_terms, axis=2) + lnPi_data_terms
+    likelihood_next = np.sum(lnPi_terms, axis=2) + lnPi_data_terms
 
     # iterate through all tokens, starting at the end going backwards
     for t in range(T - 2, -1, -1):
@@ -1106,7 +1040,7 @@ def _doc_backward_pass(C, C_data, lnB, L, worker_model, before_doc_idx=1):
         lnLambda_t = logsumexp(lnB[t+1, :, :] + lnLambda[t + 1, :][None, :] + likelihood_next[:, t][None, :], axis=1)
 
         # logsumexp over the L classes of the current timestep to normalise
-        lnLambda[t] = lnLambda_t - logsumexp(lnLambda_t)
+        lnLambda[t] = lnLambda_t - scaling[t+1] # logsumexp(lnLambda_t)
 
     if (np.any(np.isnan(lnLambda))):
         print('backward pass: nan value encountered at indexes: ')
@@ -1118,18 +1052,19 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, K, worker_model, before_doc_
     lnV = np.zeros((C.shape[0], L))
     prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
 
-    mask = C != 0
+    mask = C != -1
+    blanks = C == -1
 
     t = 0
     for l in range(L):
-        lnPi_terms = worker_model.read_lnPi(l, C[t, :] - 1, before_doc_idx, np.arange(K), L)
+        lnPi_terms = worker_model.read_lnEPi(l, C[t:t+1, :] - 1, np.zeros((1, C.shape[1]), dtype=int)-1, np.arange(K), L, blanks[t:t+1, :])
 
         lnPi_data_terms = 0
         if C_data is not None:
             for model_idx, C_data_m in enumerate(C_data):
                 for m in range(L):
-                    terms_startm = C_data_m[t, m] * worker_model.read_lnPi_data(l, m, before_doc_idx,
-                                                                                0, L, model_idx)
+                    terms_startm = C_data_m[t, m] * worker_model.read_lnEPi_data(l, m, before_doc_idx,
+                                                                                L, model_idx)
                     if C_data_m[t, m] == 0:
                         terms_startm = 0
 
@@ -1139,11 +1074,10 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, K, worker_model, before_doc_
 
         lnV[t, l] = lnEB[t, before_doc_idx, l] + likelihood_current
 
-    Cnext = C[1:, :] - 1
-    Cprev = C[:-1, :] - 1
-    Cprev[Cprev == -1] = before_doc_idx
+    Cnext = C[1:, :]
+    Cprev = C[:-1, :]
 
-    lnPi_terms = worker_model.read_lnPi(None, Cnext, Cprev, np.arange(K), L)
+    lnPi_terms = worker_model.read_lnPi(None, Cnext, Cprev, np.arange(K), L, blanks[1:, :])
     lnPi_data_terms = 0
     if C_data is not None:
         for model_idx, C_data_m in enumerate(C_data):
@@ -1151,7 +1085,7 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, K, worker_model, before_doc_
                 for n in range(L):
                     weights = (C_data_m[1:, m] * C_data_m[:-1, n])[None, :]
                     terms_mn = weights * worker_model.read_lnPi_data(None,
-                                                                     m, n, 0, L, model_idx)[:, :, 0]
+                                                                     m, n, L, model_idx)[:, :, 0]
                     terms_mn[:, weights[0] == 0] = 0
 
                     lnPi_data_terms += terms_mn
