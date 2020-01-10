@@ -223,6 +223,8 @@ class Experiment(object):
 
     random_sampling = False
 
+    use_lb = False
+
     def __init__(self, generator, nclasses=None, nannotators=None, config=None, alpha0_factor=1.0, alpha0_diags=1.0,
                  beta0_factor=0.1, max_iter=20, crf_probs=False, rep=0, max_internal_iter=20, begin_factor=1.0):
 
@@ -578,7 +580,7 @@ class Experiment(object):
                             inside_labels=inside_labels, outside_label=outside_label, beginning_labels=begin_labels,
                             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, alpha0_outside_factor=self.begin_factor,
                             beta0_factor=self.nu0_factor, worker_model=self.bsc_worker_model, tagging_scheme='IOB2',
-                            data_model=data_model, transition_model=transition_model, no_words=no_words)
+                            data_model=data_model, transition_model=transition_model, no_words=no_words, use_lowerbound=self.use_lb)
 
         bsc_model.verbose = True
 

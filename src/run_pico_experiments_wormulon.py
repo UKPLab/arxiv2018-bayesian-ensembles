@@ -105,7 +105,7 @@ regen_data = False
 # For BSC-CV: need to decrease precision slightly and increase recall. Can do by using nu0_words=0.1? For BSC-seq this harmed prec a little much. Try also the alterative setting commented out in the code?
 datadir = 'bio'
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, data_folder=datadir, debug_subset_size=50000)
+    load_data.load_biomedical_data(regen_data, data_folder=datadir) # , debug_subset_size=50000)
 
 # # ------------------------------------------------------------------------------------------------
 # # Almost. Lower outside factor to somewhere between 1 and 2 to boost recall and drop prec slightly

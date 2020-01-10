@@ -148,7 +148,7 @@ class BSC(object):
                         self.blanks[0:1, :]), axis=2).T.dot(self.Et[0:1, :].T)
 
         Cprev = self.C[:-1]
-        Cprev[self.doc_start] = self.outside_label
+        Cprev[self.doc_start[1:]] = self.outside_label
 
         lnpC += np.sum( np.sum(self.A.read_lnPi(None, self.C[1:], Cprev,
                         np.arange(self.K)[None, :], self.L,

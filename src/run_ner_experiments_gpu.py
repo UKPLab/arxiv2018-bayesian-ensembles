@@ -237,6 +237,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
+exp.use_lb = True
 
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 1
@@ -265,6 +266,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
+exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 10
@@ -299,6 +301,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
+exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 1
@@ -326,6 +329,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
+exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 1
@@ -353,6 +357,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
+exp.use_lb = True
 
 exp.nu0_factor = 10
 exp.alpha0_diags = 10
@@ -380,6 +385,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
+exp.use_lb = True
 
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 10
