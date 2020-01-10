@@ -143,15 +143,12 @@ class BSC(object):
 
         lnq_Cdata = np.sum(lnq_Cdata)
 
-        lnpC = 0
-
-        for j in range(self.L):
-            # self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]]
-            lnpCj = np.sum(self.A.read_lnPi(j, self.C[0], self.outside_label, np.arange(self.K)[None, :], self.L, self.blanks[0:1]) * self.Et[0, j])
-            lnpCj += np.sum(self.A.read_lnPi(j, self.C[1:], self.C[:-1], np.arange(self.K)[None, :], self.L, self.blanks[1:]) * self.Et[1:, j:j + 1])
-            lnpC += lnpCj
-
-        lnpC = lnpC
+        lnpC = np.sum(self.A.read_lnPi(None, self.C[0:1, :], self.outside_label,
+                        np.arange(self.K)[None, :], self.L,
+                        self.blanks[0:1, :]), axis=2).T.dot(self.Et[0:1, :].T)
+        lnpC += np.sum( np.sum(self.A.read_lnPi(None, self.C[1:], self.C[:-1],
+                        np.arange(self.K)[None, :], self.L,
+                        self.blanks[1:]), axis=2) * self.Et[1:, :].T )
 
         lnpPi, lnqPi = self.A.lowerbound_terms()
 
@@ -634,6 +631,7 @@ class MarkovLabelModel(LabelModel):
         super().init_t(C, doc_start, A, blanks, gold)
 
         doc_start = doc_start.flatten()
+        self.Cprev = np.append(np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :], axis=0)
 
         B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
 
@@ -693,6 +691,7 @@ class MarkovLabelModel(LabelModel):
         if self.C_by_doc is None:
             self.splitidxs = np.where(self.ds)[0][1:]
             self.C_by_doc = np.split(self.C, self.splitidxs, axis=0)
+            # self.Cprev_by_doc = np.split(self.Cprev, self.splitidxs, axis=0)
 
         self.lnB_by_doc = np.split(self.lnB, self.splitidxs, axis=0)
 
@@ -752,12 +751,10 @@ class MarkovLabelModel(LabelModel):
         flags[np.where(self.ds == 1)[0], self.outside_label, :] = 0
         flags[np.where(self.ds == 0)[0], :L, :] = 0
 
-        Cprev = np.append(np.zeros((1, K), dtype=int) - 1, self.C[:-1, :], axis=0)
-
         for l in range(L):
 
             # Non-doc-starts
-            lnPi_terms = self.A.read_lnPi(l, self.C, Cprev, np.arange(K)[None, :], self.L, self.blanks)
+            lnPi_terms = self.A.read_lnPi(l, self.C, self.Cprev, np.arange(K)[None, :], self.L, self.blanks)
             if self.Cdata is not None and len(self.Cdata):
                 lnPi_data_terms = np.zeros(self.Cdata[0].shape[0], dtype=float)
 
@@ -907,8 +904,6 @@ class IndependentLabelModel(LabelModel):
 
     def update_t(self, parallel, C_data):
         Krange = np.arange(self.C.shape[1], dtype=int)
-        Ccurr = self.C
-        Cprev = np.concatenate((np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :]), axis=0)
 
         self.Et = np.copy(self.lnB)
 
@@ -923,7 +918,7 @@ class IndependentLabelModel(LabelModel):
                     lnPi_data_terms += self.A.read_lnPi_data(None, m, n, self.L, model_idx)[:, :, 0] * \
                                        C_m[:, m][None, :] * C_m_prev[:, n][None, :]
 
-        Elnpi = self.A.read_lnPi(None, Ccurr, Cprev, Krange[None, :], self.L, self.blanks)
+        Elnpi = self.A.read_lnPi(None, self.C, self.Cprev, Krange[None, :], self.L, self.blanks)
         self.Et += (np.sum(Elnpi, axis=2) + lnPi_data_terms).T
 
         self.Et = np.exp(self.Et)

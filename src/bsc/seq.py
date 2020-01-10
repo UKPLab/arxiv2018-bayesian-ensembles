@@ -116,7 +116,7 @@ class SequentialWorker(VectorWorker):
                     if np.any(blanks_prev):
                         Cprev = np.copy(Cprev)
                         Cprev[Cprev == -1] = self.outside_label
-                        
+
                 result = lnPi[l, C, Cprev, Krange]
                 result[blanks] = 0
 

@@ -25,6 +25,16 @@ best_acc_bias = 0
 
 gt = gt_task1_val # for development
 
+# -------------------- debug with subset -------
+# s = 2000
+# idxs = np.argwhere(gt!=-1)[:s, 0]
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# text = text[idxs]
+# gt_task1_val = gt_task1_val[idxs]
+# # -------------------------
+
 # best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 # best_bac_wm_score = -np.inf
 
@@ -167,17 +177,6 @@ gt = gt_task1_val # for development
 #     ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
 #     new_data=regen_data, ground_truth_all_points=gt_all
 # )
-
-# # -------------------- debug with subset -------
-# s = 2000
-# idxs = np.argwhere(gt!=-1)[:s, 0]
-# gt = gt[idxs]
-# annos = annos[idxs]
-# doc_start = doc_start[idxs]
-# text = text[idxs]
-# gt_task1_val = gt_task1_val[idxs]
-# # -------------------------
-
 # niter = 20 # variational inference iterations
 #
 # exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
@@ -245,7 +244,7 @@ exp.alpha0_factor = 1
 # exp.begin_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
-                'bac_seq_integrateIF',
+                #'bac_seq_integrateIF',
                 'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
