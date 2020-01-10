@@ -125,38 +125,21 @@ class BSC(object):
     def lowerbound(self):
         '''
         Compute the variational lower bound on the log marginal likelihood.
+
+        TODO: it looks like this still has a small error in it.
         '''
-        lnpCdata = 0
         lnq_Cdata = 0
 
         for midx, Cdata in enumerate(self.C_data):
-            Cdata_prev = np.concatenate((np.zeros((1, self.L), dtype=int), Cdata[:-1, :]))
-            Cdata_prev[self.doc_start.flatten(), :] = 0
-            for m in range(self.L):
-                for n in range(self.L):
-                    lnpCdata += np.sum(self.Et * self.A.read_lnPi_data(None, m, n, self.L, midx)[None, :]
-                                       * Cdata[:, m:m+1] * Cdata_prev[:, n:n+1])
-
             lnq_Cdata_m = Cdata * np.log(Cdata)
             lnq_Cdata_m[Cdata == 0] = 0
             lnq_Cdata += lnq_Cdata_m
 
         lnq_Cdata = np.sum(lnq_Cdata)
 
-        lnpC = np.sum(self.A.read_lnPi(None, self.C[0:1, :], self.outside_label,
-                        np.arange(self.K)[None, :], self.L,
-                        self.blanks[0:1, :]), axis=2).T.dot(self.Et[0:1, :].T)
-
-        Cprev = self.C[:-1]
-        Cprev[self.doc_start[1:, 0]] = self.outside_label
-
-        lnpC += np.sum( np.sum(self.A.read_lnPi(None, self.C[1:], Cprev,
-                        np.arange(self.K)[None, :], self.L,
-                        self.blanks[1:]), axis=2) * self.Et[1:, :].T )
-
         lnpPi, lnqPi = self.A.lowerbound_terms()
 
-        lnptB, lnqtB = self.LM.lowerbound_terms()
+        lnpCtB, lnqtB = self.LM.lowerbound_terms()
 
         if self.no_words:
             lnpRho = 0
@@ -168,10 +151,10 @@ class BSC(object):
             lnqRho = np.sum(gammaln(np.sum(self.nu,0)) - np.sum(gammaln(self.nu),0) + sum((self.nu - 1) * self.ElnRho, 0))
 
 
-        print('Computing LB: %f, %f, %f, %f, %f' % (lnpC, lnpCdata-lnq_Cdata,
-                                                                lnpPi-lnqPi, lnptB-lnqtB, lnpRho-lnqRho))
+        print('Computing LB: %f, %f, %f' % (lnpCtB-lnq_Cdata-lnqtB,
+                                                                lnpPi-lnqPi, lnpRho-lnqRho))
 
-        lb = lnpC + lnpCdata - lnq_Cdata + lnpPi - lnqPi + lnptB - lnqtB + lnpRho - lnqRho
+        lb = lnpCtB - lnq_Cdata + lnpPi - lnqPi - lnqtB + lnpRho - lnqRho
         return lb
 
     def optimize(self, C, doc_start, features=None, maxfun=50, converge_workers_first=False):
@@ -496,7 +479,7 @@ class BSC(object):
         The bsc has _converged when the maximum difference of an entry of q_t between two iterations is
         smaller than the given epsilon.
         '''
-        if self.iter == 0:
+        if self.iter <= 1:
             return False # don't bother to check because some of the variables have not even been initialised yet!
 
         diff = self._convergence_diff()
@@ -552,6 +535,8 @@ class LabelModel(object):
         self.lnB = psi(self.beta0) - beta0_sum
         self.lnB = np.tile(self.lnB, (self.N, 1, 1))
 
+        self.Cprev = np.append(np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :], axis=0)
+
 
     def update_t(self):
         pass
@@ -560,28 +545,14 @@ class LabelModel(object):
         pass
 
     def lowerbound_terms(self):
-        lnB = psi(self.beta) - psi(np.sum(self.beta, -1))
-        lnB[np.isinf(lnB) | np.isnan(lnB)] = 0
-        lnpt = lnB * self.Et
-        lnpt = np.sum(lnpt)
-
-        lnqt = np.log(self.Et)
-        lnqt[self.Et == 0] = 0
-        lnqt *= self.Et
-        lnqt = np.sum(lnqt)
-
-        lnpB = log_dirichlet_pdf(self.beta0, lnB, 0)
-        lnqB = log_dirichlet_pdf(self.beta, lnB, 0)
-        lnpB = np.sum(lnpB)
-        lnqB = np.sum(lnqB)
-
-        return lnpt + lnpB, lnqt + lnqB
+        pass
 
 class MarkovLabelModel(LabelModel):
     def __init__(self, beta0, L, verbose, tagging_scheme,
                  beginning_labels, inside_labels, outside_label, rare_transition_pseudocount):
 
         self.C_by_doc = None
+        self.lnR_ = None
 
         super().__init__(beta0, L, outside_label, verbose)
 
@@ -635,7 +606,6 @@ class MarkovLabelModel(LabelModel):
         super().init_t(C, doc_start, A, blanks, gold)
 
         doc_start = doc_start.flatten()
-        self.Cprev = np.append(np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :], axis=0)
 
         B = self.beta0 / np.sum(self.beta0, axis=1)[:, None]
 
@@ -723,6 +693,7 @@ class MarkovLabelModel(LabelModel):
         # reformat results
         self.lnR_ = np.concatenate([r[0] for r in res], axis=0)
         self.scaling = [r[1] for r in res]
+
 
     def _parallel_backward_pass(self):
         '''
@@ -850,12 +821,9 @@ class MarkovLabelModel(LabelModel):
         return pseq, seq
 
     def lowerbound_terms(self):
-        lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
-        lnB[np.isinf(lnB) | np.isnan(lnB)] = 0
-        lnpt = lnB * self.Et_joint
-        lnpt = np.sum(lnpt)
+        lnpCt = (self.lnR_ + np.concatenate(self.scaling, axis=0)[:, None]) * self.Et
+        lnpCt = np.sum(lnpCt)
 
-        # trying to handle warnings
         qt_sum = np.sum(self.Et_joint, axis=2)[:, :, None]
         qt_sum[qt_sum==0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
         q_t_cond = self.Et_joint / qt_sum
@@ -863,14 +831,14 @@ class MarkovLabelModel(LabelModel):
         lnqt = self.Et_joint * np.log(q_t_cond)
         lnqt[np.isinf(lnqt) | np.isnan(lnqt)] = 0
         lnqt = np.sum(lnqt)
-        warnings.filterwarnings('always')
 
+        lnB = psi(self.beta) - psi(np.sum(self.beta, 1))[:, None]
         lnpB = log_dirichlet_pdf(self.beta0, lnB, 1)
         lnqB = log_dirichlet_pdf(self.beta, lnB, 1)
         lnpB = np.sum(lnpB)
         lnqB = np.sum(lnqB)
 
-        return lnpt + lnpB, lnqt + lnqB
+        return lnpCt + lnpB, lnqt + lnqB
 
 
 class IndependentLabelModel(LabelModel):
@@ -909,7 +877,7 @@ class IndependentLabelModel(LabelModel):
     def update_t(self, parallel, C_data):
         Krange = np.arange(self.C.shape[1], dtype=int)
 
-        self.Et = np.copy(self.lnB)
+        self.lnp_Ct = np.copy(self.lnB)
 
         lnPi_data_terms = 0
         for model_idx in range(len(C_data)):
@@ -923,10 +891,10 @@ class IndependentLabelModel(LabelModel):
                                        C_m[:, m][None, :] * C_m_prev[:, n][None, :]
 
         Elnpi = self.A.read_lnPi(None, self.C, self.Cprev, Krange[None, :], self.L, self.blanks)
-        self.Et += (np.sum(Elnpi, axis=2) + lnPi_data_terms).T
+        self.lnp_Ct += (np.sum(Elnpi, axis=2) + lnPi_data_terms).T
 
-        self.Et = np.exp(self.Et)
-        self.Et /= np.sum(self.Et, axis=1)[:, None]
+        p_Ct = np.exp(self.lnp_Ct)
+        self.Et = p_Ct / np.sum(p_Ct, axis=1)[:, None]
 
         if self.gold is not None:
             goldidxs = self.gold != -1
@@ -937,6 +905,26 @@ class IndependentLabelModel(LabelModel):
 
     def most_probable_sequence(self, word_ll):
         return np.max(self.Et, axis=1), np.argmax(self.Et, axis=1)
+
+
+    def lowerbound_terms(self):
+        lnB = psi(self.beta) - psi(np.sum(self.beta, -1))
+        lnB[np.isinf(lnB) | np.isnan(lnB)] = 0
+
+        lnpt = self.lnp_Ct * self.Et
+        lnpt = np.sum(lnpt)
+
+        lnqt = np.log(self.Et)
+        lnqt[self.Et == 0] = 0
+        lnqt *= self.Et
+        lnqt = np.sum(lnqt)
+
+        lnpB = log_dirichlet_pdf(self.beta0, lnB, 0)
+        lnqB = log_dirichlet_pdf(self.beta, lnB, 0)
+        lnpB = np.sum(lnpB)
+        lnqB = np.sum(lnqB)
+
+        return lnpt + lnpB, lnqt + lnqB
 
 
 def _doc_forward_pass(C, C_data, lnB, L, worker_model, outside_label):

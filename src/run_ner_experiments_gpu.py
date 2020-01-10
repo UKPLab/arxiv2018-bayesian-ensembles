@@ -237,7 +237,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-exp.use_lb = True
+# exp.use_lb = True
 
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 1
@@ -266,7 +266,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-exp.use_lb = True
+# exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 10
@@ -280,7 +280,7 @@ exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM 
                 # 'bac_ibcc_noHMM',
                 # 'bac_seq_noHMM',
                 'bac_seq_integrateIF',
-                'bac_ibcc_integrateIF',
+                # 'bac_ibcc_integrateIF',
                 # 'bac_seq',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
@@ -301,7 +301,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-exp.use_lb = True
+# exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 1
@@ -329,7 +329,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-exp.use_lb = True
+# exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 1
@@ -357,7 +357,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-exp.use_lb = True
+# exp.use_lb = True
 
 exp.nu0_factor = 10
 exp.alpha0_diags = 10
@@ -385,7 +385,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-exp.use_lb = True
+# exp.use_lb = True
 
 exp.nu0_factor = 0.1
 exp.alpha0_diags = 10
