@@ -244,7 +244,7 @@ exp.alpha0_factor = 1
 # exp.begin_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
-                #'bac_seq_integrateIF',
+                'bac_seq_integrateIF',
                 'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
