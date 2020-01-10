@@ -43,7 +43,7 @@ class BSC(object):
                  alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-6,
-                 verbose=False, use_lowerbound=False):
+                 verbose=False, use_lowerbound=True):
 
         self.verbose = verbose
 
