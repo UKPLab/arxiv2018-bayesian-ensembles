@@ -146,7 +146,11 @@ class BSC(object):
         lnpC = np.sum(self.A.read_lnPi(None, self.C[0:1, :], self.outside_label,
                         np.arange(self.K)[None, :], self.L,
                         self.blanks[0:1, :]), axis=2).T.dot(self.Et[0:1, :].T)
-        lnpC += np.sum( np.sum(self.A.read_lnPi(None, self.C[1:], self.C[:-1],
+
+        Cprev = self.C[:-1]
+        Cprev[self.doc_start] = self.outside_label
+
+        lnpC += np.sum( np.sum(self.A.read_lnPi(None, self.C[1:], Cprev,
                         np.arange(self.K)[None, :], self.L,
                         self.blanks[1:]), axis=2) * self.Et[1:, :].T )
 
@@ -749,7 +753,7 @@ class MarkovLabelModel(LabelModel):
         # flags to indicate whether the entries are valid or should be zeroed out later.
         flags = -np.inf * np.ones_like(lnS)
         flags[np.where(self.ds == 1)[0], self.outside_label, :] = 0
-        flags[np.where(self.ds == 0)[0], :L, :] = 0
+        flags[np.where(self.ds == 0)[0], :, :] = 0
 
         for l in range(L):
 
