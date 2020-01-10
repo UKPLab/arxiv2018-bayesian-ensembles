@@ -144,15 +144,14 @@ class BSC(object):
         lnq_Cdata = np.sum(lnq_Cdata)
 
         lnpC = 0
-        C = self.C.astype(int)
-        C_prev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int)-1, C[:-1, :]))
 
         for j in range(self.L):
             # self.lnPi[j, C - 1, C_prev - 1, np.arange(self.K)[None, :]]
-            lnpCj = self.A.read_lnPi(j, C, C_prev, np.arange(self.K)[None, :], self.L, self.blanks) * self.Et[:, j:j + 1]
+            lnpCj = np.sum(self.A.read_lnPi(j, self.C[0], self.outside_label, np.arange(self.K)[None, :], self.L, self.blanks[0:1]) * self.Et[0, j])
+            lnpCj += np.sum(self.A.read_lnPi(j, self.C[1:], self.C[:-1], np.arange(self.K)[None, :], self.L, self.blanks[1:]) * self.Et[1:, j:j + 1])
             lnpC += lnpCj
 
-        lnpC = np.sum(lnpC)
+        lnpC = lnpC
 
         lnpPi, lnqPi = self.A.lowerbound_terms()
 

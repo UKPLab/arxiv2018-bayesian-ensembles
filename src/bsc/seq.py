@@ -108,7 +108,8 @@ class SequentialWorker(VectorWorker):
                         Cprev = self.outside_label
                     result = lnPi[l, C, Cprev, Krange]
             else:
-                Cprev[Cprev == -1] = self.outside_label
+                if not np.isscalar(Cprev):
+                    Cprev[Cprev == -1] = self.outside_label
                 result = lnPi[l, C, Cprev, Krange]
                 result[blanks] = 0
 

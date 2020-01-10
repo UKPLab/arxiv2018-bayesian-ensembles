@@ -105,7 +105,7 @@ regen_data = False
 # For BSC-CV: need to decrease precision slightly and increase recall. Can do by using nu0_words=0.1? For BSC-seq this harmed prec a little much. Try also the alterative setting commented out in the code?
 datadir = 'bio'
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
-    load_data.load_biomedical_data(regen_data, data_folder=datadir)#, debug_subset_size=50000)
+    load_data.load_biomedical_data(regen_data, data_folder=datadir)  # , debug_subset_size=50000)
 
 # # ------------------------------------------------------------------------------------------------
 # # Almost. Lower outside factor to somewhere between 1 and 2 to boost recall and drop prec slightly
@@ -174,7 +174,7 @@ best_diags = 1
 best_factor = 1
 best_outside_factor = 1
 
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_outside_factor)
 
 exp.save_results = True
 exp.opt_hyper = False
@@ -203,7 +203,7 @@ best_diags = 10
 best_factor = 100
 best_outside_factor = 10
 
-exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
+exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_outside_factor)
 
 exp.save_results = True
 exp.opt_hyper = False
@@ -268,7 +268,7 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
 # best_factor = 0.1
 # best_outside_factor = 1
 #
-# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, outside_factor=best_outside_factor)
+# exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_outside_factor)
 #
 # exp.save_results = True
 # exp.opt_hyper = False
