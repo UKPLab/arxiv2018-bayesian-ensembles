@@ -111,5 +111,6 @@ def log_dirichlet_pdf(alpha, lnPi, sum_dim):
     x[invalid_alphas] = 0
     x = np.sum(x, axis=sum_dim)
     z = gammaln(np.sum(alpha, sum_dim)) - np.sum(gammaln_alpha, sum_dim)
-    z[np.isinf(z)] = 0
+    if not np.isscalar(z):
+        z[np.isinf(z)] = 0
     return np.sum(x + z)

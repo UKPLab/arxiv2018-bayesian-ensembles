@@ -23,6 +23,8 @@ best_diags = 10
 best_factor = 10
 best_acc_bias = 0
 
+gt = gt_task1_val # for development
+
 # best_bac_wm = 'bac_seq' #'unknown' # choose model with best score for the different BAC worker models
 # best_bac_wm_score = -np.inf
 
@@ -167,7 +169,7 @@ best_acc_bias = 0
 # )
 
 # # -------------------- debug with subset -------
-# s = 1000
+# s = 2000
 # idxs = np.argwhere(gt!=-1)[:s, 0]
 # gt = gt[idxs]
 # annos = annos[idxs]
@@ -244,7 +246,7 @@ exp.alpha0_factor = 1
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
                 'bac_seq_integrateIF',
-                # 'bac_seq_integrateIF',
+                'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -271,8 +273,14 @@ exp.alpha0_factor = 10
 # exp.begin_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
+                # 'bac_ibcc_integrateIF',
+                # 'bac_ibcc_integrateIF_noHMM',
+                # 'ibcc',
+                # 'bac_ibcc_noHMM',
+                # 'bac_seq_noHMM',
                 'bac_seq_integrateIF',
-                # 'bac_seq_integrateIF',
+                'bac_ibcc_integrateIF',
+                # 'bac_seq',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -299,6 +307,7 @@ exp.alpha0_factor = 1
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 'bac_seq_integrateIF',
+                'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -325,6 +334,7 @@ exp.alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 'bac_seq_integrateIF',
+                'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -351,6 +361,7 @@ exp.alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 'bac_seq_integrateIF',
+                'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -377,6 +388,7 @@ exp.alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 'bac_seq_integrateIF',
+                'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]

@@ -182,7 +182,7 @@ class SequentialWorker(VectorWorker):
 
             # Ban jumps between Is of different types
             for typeid, other_restricted_label in enumerate(restricted_labels):
-                if other_restricted_label == restricted_label:
+                if typeid == i:
                     continue
 
                 # set the disallowed transition to as close to zero as possible

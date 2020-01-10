@@ -570,8 +570,8 @@ class LabelModel(object):
         lnqt *= self.Et
         lnqt = np.sum(lnqt)
 
-        lnpB = log_dirichlet_pdf(self.beta0, lnB, 1)
-        lnqB = log_dirichlet_pdf(self.beta, lnB, 1)
+        lnpB = log_dirichlet_pdf(self.beta0, lnB, 0)
+        lnqB = log_dirichlet_pdf(self.beta, lnB, 0)
         lnpB = np.sum(lnpB)
         lnqB = np.sum(lnqB)
 
@@ -825,20 +825,20 @@ class MarkovLabelModel(LabelModel):
             lnEB = lnEB[None, :, :] + word_ll[:, None, :]
 
         # split into documents
-        lnEB_by_doc = np.split(lnEB, np.where(self.ds)[0][1:], axis=0)
+        lnEB_by_doc = np.split(lnEB, self.splitidxs, axis=0)
 
         C_data_by_doc = []
         for C_data_m in self.Cdata:
-            C_data_by_doc.append(np.split(C_data_m, np.where(self.ds)[0][1:], axis=0))
+            C_data_by_doc.append(np.split(C_data_m, self.splitidxs, axis=0))
         if len(self.Cdata) >= 1:
             C_data_by_doc = list(zip(*C_data_by_doc))
 
             res = self.parallel(delayed(_doc_most_probable_sequence)(doc, C_data_by_doc[d], lnEB_by_doc[d], self.L,
-                                                                     self.C.shape[1], self.A, self.outside_label)
+                                                         self.C.shape[1], self.A, self.outside_label)
                            for d, doc in enumerate(self.C_by_doc))
         else:
             res = self.parallel(delayed(_doc_most_probable_sequence)(doc, None, lnEB_by_doc[d], self.L,
-                                                                     self.C.shape[1], self.A, self.outside_label)
+                                                         self.C.shape[1], self.A, self.outside_label)
                            for d, doc in enumerate(self.C_by_doc))
 
         # note: we are using ElnPi instead of lnEPi, I think is not strictly correct.
@@ -1052,49 +1052,31 @@ def _doc_most_probable_sequence(C, C_data, lnEB, L, K, worker_model, before_doc_
     lnV = np.zeros((C.shape[0], L))
     prev = np.zeros((C.shape[0], L), dtype=int)  # most likely previous states
 
-    mask = C != -1
-    blanks = C == -1
-
-    t = 0
     for l in range(L):
-        lnPi_terms = worker_model.read_lnEPi(l, C[t:t+1, :] - 1, np.zeros((1, C.shape[1]), dtype=int)-1, np.arange(K), L, blanks[t:t+1, :])
+        if l != before_doc_idx:
+            lnEB[0, l, :] = -np.inf
 
-        lnPi_data_terms = 0
-        if C_data is not None:
-            for model_idx, C_data_m in enumerate(C_data):
-                for m in range(L):
-                    terms_startm = C_data_m[t, m] * worker_model.read_lnEPi_data(l, m, before_doc_idx,
-                                                                                L, model_idx)
-                    if C_data_m[t, m] == 0:
-                        terms_startm = 0
+    blanks = C == -1
+    Cprev = np.concatenate((np.zeros((1, C.shape[1]), dtype=int) - 1, C[:-1, :]), axis=0)
 
-                    lnPi_data_terms += terms_startm
-
-        likelihood_current = np.sum(mask[t, :] * lnPi_terms) + lnPi_data_terms
-
-        lnV[t, l] = lnEB[t, before_doc_idx, l] + likelihood_current
-
-    Cnext = C[1:, :]
-    Cprev = C[:-1, :]
-
-    lnPi_terms = worker_model.read_lnPi(None, Cnext, Cprev, np.arange(K), L, blanks[1:, :])
+    lnPi_terms = worker_model.read_lnPi(None, C, Cprev, np.arange(K), L, blanks)
     lnPi_data_terms = 0
     if C_data is not None:
         for model_idx, C_data_m in enumerate(C_data):
+            C_data_m_prev = np.concatenate((np.zeros((1, L), dtype=int) - 1, C_data_m[:-1, :]), axis=0)
             for m in range(L):
                 for n in range(L):
-                    weights = (C_data_m[1:, m] * C_data_m[:-1, n])[None, :]
-                    terms_mn = weights * worker_model.read_lnPi_data(None,
-                                                                     m, n, L, model_idx)[:, :, 0]
+                    weights = (C_data_m[:, m] * C_data_m_prev[:, n])[None, :]
+                    terms_mn = weights * worker_model.read_lnPi_data(None, m, n, L, model_idx)[:, :, 0]
                     terms_mn[:, weights[0] == 0] = 0
 
                     lnPi_data_terms += terms_mn
 
-    likelihood_next = np.sum(mask[1:, :][None, :, :] * lnPi_terms, axis=2) + lnPi_data_terms
+    likelihood = np.sum(lnPi_terms, axis=2) + lnPi_data_terms
 
-    for t in range(1, C.shape[0]):
+    for t in range(0, C.shape[0]):
         for l in range(L):
-            p_current = lnV[t - 1, :] + lnEB[t, :L, l] + likelihood_next[l, t - 1]
+            p_current = lnV[t - 1, :] + lnEB[t, :, l] + likelihood[l, t]
             lnV[t, l] = np.max(p_current)
             prev[t, l] = np.argmax(p_current, axis=0)
 
