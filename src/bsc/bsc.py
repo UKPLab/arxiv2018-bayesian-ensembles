@@ -323,7 +323,7 @@ class BSC(object):
         # timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
         # main inference loop
-        with Parallel(n_jobs=-1, prefer='threads') as parallel: #, backend='threading') as parallel:
+        with Parallel(n_jobs=-1, backend='threading') as parallel: #) as parallel:
 
             while not self._converged() or not self.workers_converged:
 
