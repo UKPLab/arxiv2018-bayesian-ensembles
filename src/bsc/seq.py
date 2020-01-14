@@ -47,19 +47,25 @@ class SequentialWorker(VectorWorker):
             for l in range(nscores):
                 self.C_binary[l] = C == l
 
-        for j in range(nscores):
-            Tj = E_t[:, j]
+        self.alpha[:] = self.alpha0
 
-            for l in range(nscores):
-                counts = (self.C_binary[l] * doc_start).T.dot(Tj).reshape(-1)
-                counts +=  ((self.C_binary[l][1:, :]) * self.C_binary[-1][:-1, :] * np.invert(doc_start[1:])).T.dot(Tj[1:]) # add counts of where
-                # previous tokens are missing.
+        not_doc_starts = np.invert(doc_start[1:])
 
-                self.alpha[j, l, self.outside_label, :] = self.alpha0[j, l, self.outside_label, :] + counts
+        for l in range(nscores):
+            # counts of C==l for doc starts
+            counts = (self.C_binary[l] * doc_start).T.dot(E_t)
 
-                for m in range(nscores):
-                    counts = (self.C_binary[l][1:, :] * np.invert(doc_start[1:]) * self.C_binary[m][:-1, :]).T.dot(Tj[1:])
-                    self.alpha[j, l, m, :] = self.alpha0[j, l, m, :] + counts
+            # get counts where C == l
+            C_eq_l_counts = self.C_binary[l][1:, :] * not_doc_starts
+
+            # add counts of where previous tokens are missing.
+            counts +=  (C_eq_l_counts * self.C_binary[-1][:-1, :]).T.dot(E_t[1:])
+            self.alpha[:, l, self.outside_label, :] += counts.T
+
+            # add counts for all other preceding tokens
+            for m in range(nscores):
+                counts = (C_eq_l_counts * self.C_binary[m][:-1, :]).T.dot(E_t[1:])
+                self.alpha[:, l, m, :] += counts.T
 
 
     def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters

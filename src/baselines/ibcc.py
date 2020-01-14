@@ -571,7 +571,7 @@ class IBCC(object):
         lnqPi = self.q_lnPi()
         lnqKappa = self.q_lnkappa()
         H = lnqT + lnqPi + lnqKappa
-        
+
         # Lower Bound
         L = EEnergy - H
         if self.verbose:
@@ -729,7 +729,7 @@ def _expec_t(lnpCT, testidxs):
     if testidxs is not None:
         joint = lnpCT[testidxs, :]
     else:
-        joint = lnpCT
+        joint = np.copy(lnpCT)
 
     # ensure that the values are not too small 
     joint -= np.max(joint, 1)[:, np.newaxis]

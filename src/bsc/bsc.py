@@ -26,8 +26,6 @@ class BSC(object):
     K = None  # number of annotators
     L = None  # number of class labels
 
-    beta0 = None  # ground truth priors
-
     lnB = None  # transition matrix
     lnPi = None  # worker confusion matrices
 
@@ -42,7 +40,7 @@ class BSC(object):
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
                  alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
-                 model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-6,
+                 model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-12,
                  verbose=False, use_lowerbound=True):
 
         self.verbose = verbose
@@ -126,7 +124,7 @@ class BSC(object):
         '''
         Compute the variational lower bound on the log marginal likelihood.
 
-        TODO: it looks like this still has a small error in it.
+        TODO: it looks like this still has a small error in it, but this may be due to machine precision.
         '''
         lnq_Cdata = 0
 
@@ -149,7 +147,6 @@ class BSC(object):
             nu0 = np.zeros((1, self.L)) + self.nu0
             lnpRho = np.sum(gammaln(np.sum(nu0)) - np.sum(gammaln(nu0)) + sum((nu0 - 1) * self.ElnRho, 0)) + lnpwords
             lnqRho = np.sum(gammaln(np.sum(self.nu,0)) - np.sum(gammaln(self.nu),0) + sum((self.nu - 1) * self.ElnRho, 0))
-
 
         print('Computing LB: %f, %f, %f' % (lnpCtB-lnq_Cdata-lnqtB,
                                                                 lnpPi-lnqPi, lnpRho-lnqRho))
@@ -429,7 +426,7 @@ class BSC(object):
             C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
             self.blanks = C == 0
 
-            self.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+            self.LM.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
 
             if self.no_words:
                 lnptext_given_t = np.zeros((len(doc_start), self.L))
@@ -448,7 +445,7 @@ class BSC(object):
                 lnptext_given_t = self.ElnRho[features, :] + np.array(available)[:, None]
                 lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
 
-            self.lnB = self.lnB[None, :, :] + lnptext_given_t[:, None, :]
+            self.LM.lnB = self.LM.lnB[None, :, :] + lnptext_given_t[:, None, :]
 
             C_data = []
             for model in self.data_model:
@@ -921,8 +918,6 @@ class IndependentLabelModel(LabelModel):
 
         lnpB = log_dirichlet_pdf(self.beta0, lnB, 0)
         lnqB = log_dirichlet_pdf(self.beta, lnB, 0)
-        lnpB = np.sum(lnpB)
-        lnqB = np.sum(lnqB)
 
         return lnpt + lnpB, lnqt + lnqB
 

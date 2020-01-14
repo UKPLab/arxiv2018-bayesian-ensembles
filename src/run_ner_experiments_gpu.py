@@ -23,10 +23,12 @@ best_diags = 10
 best_factor = 10
 best_acc_bias = 0
 
+# TODO: is the pico expt still taking too long?
+
 gt = gt_task1_val # for development
 
 # # -------------------- debug with subset -------
-# s = 2000
+# s = 10000
 # idxs = np.argwhere(gt!=-1)[:s, 0]
 # gt = gt[idxs]
 # annos = annos[idxs]
@@ -230,7 +232,7 @@ gt = gt_task1_val # for development
 #     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
 #     new_data=regen_data
 # )
-
+#
 #-------------------------------------------------------------------------------------
 niter = 20 # variational inference iterations
 
@@ -246,7 +248,7 @@ exp.alpha0_factor = 1
 output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
                 'bac_seq_integrateIF',
-                # 'bac_ibcc_integrateIF',
+                'bac_ibcc_integrateIF',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
 ]
@@ -266,7 +268,7 @@ niter = 20 # variational inference iterations
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
-# exp.use_lb = True
+exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 10
@@ -280,7 +282,7 @@ exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM 
                 # 'bac_ibcc_noHMM',
                 # 'bac_seq_noHMM',
                 'bac_seq_integrateIF',
-                # 'bac_ibcc_integrateIF',
+                'bac_ibcc_integrateIF',
                 # 'bac_seq',
                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
                 # best_bac_wm + '_integrateIF_then_LSTM',
