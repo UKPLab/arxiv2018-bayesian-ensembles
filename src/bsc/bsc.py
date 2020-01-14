@@ -2,7 +2,7 @@
 Bayesian sequence combination, variational Bayes implementation.
 '''
 import datetime
-
+import copy
 import numpy as np
 from scipy.sparse.coo import coo_matrix
 from scipy.special import logsumexp, psi, gammaln
@@ -268,6 +268,9 @@ class BSC(object):
         # validate input data
         assert C.shape[0] == doc_start.shape[0]
 
+        if self.verbose:
+            print('Aggregating annotation matrix with shape = %s' % str(C.shape))
+
         # C = C.astype(int) + 1
         doc_start = doc_start.astype(bool)
         if doc_start.ndim == 1:
@@ -320,7 +323,7 @@ class BSC(object):
         # timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
         # main inference loop
-        with Parallel(n_jobs=-1) as parallel: #, backend='threading') as parallel:
+        with Parallel(n_jobs=-1, prefer='threads') as parallel: #, backend='threading') as parallel:
 
             while not self._converged() or not self.workers_converged:
 
@@ -329,9 +332,6 @@ class BSC(object):
                     print("BAC iteration %i in progress" % self.iter)
 
                 self.Et_old = self.Et
-
-                if self.verbose:
-                    print('Updating with C shape = %s' % str(C.shape))
 
                 if self.iter > 0:
                     self.Et = self.LM.update_t(parallel, self.C_data)
@@ -663,6 +663,7 @@ class MarkovLabelModel(LabelModel):
             self.splitidxs = np.where(self.ds)[0][1:]
             self.C_by_doc = np.split(self.C, self.splitidxs, axis=0)
             # self.Cprev_by_doc = np.split(self.Cprev, self.splitidxs, axis=0)
+            self.blanks_by_doc = np.split(self.blanks, self.splitidxs, axis=0)
 
         self.lnB_by_doc = np.split(self.lnB, self.splitidxs, axis=0)
 
@@ -679,12 +680,13 @@ class MarkovLabelModel(LabelModel):
             if len(self.Cdata) >= 1:
                 self.C_data_by_doc = list(zip(*self.C_data_by_doc))
 
-            res = self.parallel(delayed(_doc_forward_pass)(C_doc, self.C_data_by_doc[d], self.lnB_by_doc[d],
-                                                           self.L, self.A, self.outside_label)
+            res = self.parallel(delayed(_doc_forward_pass)(C_doc, self.C_data_by_doc[d], self.blanks_by_doc[d],
+                                                           self.lnB_by_doc[d],
+                                                           self.A, self.outside_label)
                            for d, C_doc in enumerate(self.C_by_doc))
         else:
-            res = self.parallel(delayed(_doc_forward_pass)(C_doc, None, self.lnB_by_doc[d],
-                                                           self.L, self.A, self.outside_label)
+            res = self.parallel(delayed(_doc_forward_pass)(C_doc, None, self.blanks_by_doc[d], self.lnB_by_doc[d],
+                                                           self.A, self.outside_label)
                            for d, C_doc in enumerate(self.C_by_doc))
 
         # reformat results
@@ -697,11 +699,13 @@ class MarkovLabelModel(LabelModel):
         Perform the backward pass of the Forward-Backward bsc (for multiple documents in parallel).
         '''
         if self.Cdata is not None and len(self.Cdata) > 0:
-            res = self.parallel(delayed(_doc_backward_pass)(doc, self.C_data_by_doc[d], self.lnB_by_doc[d], self.L,
+            res = self.parallel(delayed(_doc_backward_pass)(doc, self.C_data_by_doc[d], self.blanks_by_doc[d],
+                                                            self.lnB_by_doc[d], self.L,
                                                             self.A, self.scaling[d]
                                                     ) for d, doc in enumerate(self.C_by_doc))
         else:
-            res = self.parallel(delayed(_doc_backward_pass)(doc, None, self.lnB_by_doc[d], self.L, self.A, self.scaling[d],
+            res = self.parallel(delayed(_doc_backward_pass)(doc, None, self.blanks_by_doc[d], self.lnB_by_doc[d],
+                                                            self.L, self.A, self.scaling[d],
                                                     ) for d, doc in enumerate(self.C_by_doc))
 
         # reformat results
@@ -922,7 +926,7 @@ class IndependentLabelModel(LabelModel):
         return lnpt + lnpB, lnqt + lnqB
 
 
-def _doc_forward_pass(C, C_data, lnB, L, worker_model, outside_label):
+def _doc_forward_pass(C, C_data, blanks, lnB, worker_model, outside_label):
     '''
     Perform the forward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -934,9 +938,7 @@ def _doc_forward_pass(C, C_data, lnB, L, worker_model, outside_label):
     # initialise variables
     lnR_ = np.zeros((T, L))
     scaling = np.zeros(T)
-
-    blanks = C == -1
-
+    # blanks = C == -1
     # For the first data point
     lnPi_terms = worker_model.read_lnPi(None, C[0:1, :], np.zeros((1, K), dtype=int)-1, Krange[None, :], L, blanks[0:1])
     lnPi_data_terms = 0
@@ -968,10 +970,12 @@ def _doc_forward_pass(C, C_data, lnB, L, worker_model, outside_label):
     # lnPi[:, Ccurr, Cprev, Krange[None, :]]
 
     # iterate through all tokens, starting at the beginning going forward
+    sum_trans_likelihood = lnB[1:] + likelihood_next.T[:, None, :]
+
     for t in range(1, T):
         # iterate through all possible labels
         # prev_idx = Cprev[t - 1, :]
-        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + lnB[t, :, :] + likelihood_next[:, t-1][None, :], axis=0)
+        lnR_t = logsumexp(lnR_[t - 1, :][:, None] + sum_trans_likelihood[t-1], axis=0)
         # , np.sum(mask[t, :] * lnPi[:, C[t, :] - 1, prev_idx, Krange], axis=1)
 
         # normalise
@@ -980,7 +984,7 @@ def _doc_forward_pass(C, C_data, lnB, L, worker_model, outside_label):
 
     return lnR_, scaling
 
-def _doc_backward_pass(C, C_data, lnB, L, worker_model, scaling):
+def _doc_backward_pass(C, C_data, blanks, lnB, L, worker_model, scaling):
     '''
     Perform the backward pass of the Forward-Backward bsc (for a single document).
     '''
@@ -992,10 +996,9 @@ def _doc_backward_pass(C, C_data, lnB, L, worker_model, scaling):
     # initialise variables
     lnLambda = np.zeros((T, L))
 
-    Ccurr = C
-    Ccurr = Ccurr[:-1, :]
+    Ccurr = C[:-1, :]
     Cnext = C[1:, :]
-    blanks = Cnext == -1
+    blanks = blanks[1:]#Cnext == -1
 
     lnPi_terms = worker_model.read_lnPi(None, Cnext, Ccurr, Krange[None, :], L, blanks)
     lnPi_data_terms = 0
@@ -1018,7 +1021,7 @@ def _doc_backward_pass(C, C_data, lnB, L, worker_model, scaling):
     # iterate through all tokens, starting at the end going backwards
     for t in range(T - 2, -1, -1):
         # logsumexp over the L classes of the next timestep
-        lnLambda_t = logsumexp(lnB[t+1, :, :] + lnLambda[t + 1, :][None, :] + likelihood_next[:, t][None, :], axis=1)
+        lnLambda_t = logsumexp(lnLambda[t + 1, :][None, :] + lnB[t+1, :, :] + likelihood_next[:, t][None, :], axis=1)
 
         # logsumexp over the L classes of the current timestep to normalise
         lnLambda[t] = lnLambda_t - scaling[t+1] # logsumexp(lnLambda_t)
