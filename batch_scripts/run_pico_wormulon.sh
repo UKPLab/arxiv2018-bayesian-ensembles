@@ -16,4 +16,4 @@
 
 # module load intel python/3.6.8
 source /ukp-storage-1/simpson/git/bayesian_annotator_combination/env/bin/activate
-python -u /ukp-storage-1/simpson/git/bayesian_annotator_combination/src/run_pico_experiments_wormulon.py
+python OMP_NUM_THREADS=8 -u /ukp-storage-1/simpson/git/bayesian_annotator_combination/src/run_pico_experiments_wormulon.py
