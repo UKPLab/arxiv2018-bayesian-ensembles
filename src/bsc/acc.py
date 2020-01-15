@@ -33,6 +33,9 @@ class AccuracyWorker(Annotator):
 
         # init to prior
         self.alpha = np.copy(self.alpha0)
+        self.alpha_data = {}
+        for midx in range(self.nModels):
+            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
 
 
     def _calc_q_pi(self, alpha):
@@ -45,7 +48,7 @@ class AccuracyWorker(Annotator):
         return self.lnPi
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -65,12 +68,12 @@ class AccuracyWorker(Annotator):
                 self.alpha[0, :] += incorrect_count
 
 
-    def _post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
         nclasses = E_t.shape[1]
-        self.alpha_data[model_idx] = self.alpha0_data.copy()
+        self.alpha_data[model_idx] = self.alpha0_data[model_idx].copy()
 
         for j in range(nclasses):
             Tj = E_t[:, j]

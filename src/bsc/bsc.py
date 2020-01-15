@@ -294,15 +294,13 @@ class BSC(object):
 
             self.blanks = C == -1
 
-        # reset the data model guesses to zero for the first iteration after we restart iterative learning
-        for model in self.data_model:
+        self.C_data = []
+        for midx, model in enumerate(self.data_model):
             model.init(self.C.shape[0], features, doc_start, self.L,
                       self.max_data_updates_at_end if converge_workers_first else self.max_iter, crf_probs,
                       dev_sentences, self.A, self.max_internal_iters)
-            self.A.qpi_data(model)
+            self.A.q_pi_data(midx)
 
-        self.C_data = []
-        for midx, model in enumerate(self.data_model):
             if C_data_initial is None:
                 self.C_data.append(np.zeros((self.C.shape[0], self.L)) ) #+ (1.0 / self.L)
             else:
@@ -312,13 +310,9 @@ class BSC(object):
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()) )
 
-        self.data_model_updated = self.max_data_updates_at_end
-        if converge_workers_first:
-            for model in self.data_model:
-                if type(model) == LSTM:
-                    self.data_model_updated = 0
-
+        self.data_model_updates = 0
         self.workers_converged = False
+        self.converge_workers_first = converge_workers_first
 
         # timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
 
@@ -363,9 +357,6 @@ class BSC(object):
                             seq = self.LM.most_probable_sequence(self.word_ll(self.features))[1]
                             self.C_data[midx] = model.fit_predict(seq)
 
-                        if type(model) == LSTM:
-                            self.data_model_updated += 1
-
                         if self.verbose:
                             print("BAC iteration %i: updated feature-based predictions from %s" %
                                   (self.iter, type(model)))
@@ -376,7 +367,7 @@ class BSC(object):
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
-                        self.A._post_alpha_data(self.Et, self.C_data[midx], doc_start, self.L)
+                        self.A.update_post_alpha_data(self.Et, self.C_data[midx], doc_start, self.L)
                         self.A.q_pi_data(midx)
 
                         if self.verbose:
@@ -388,9 +379,11 @@ class BSC(object):
                     elif C_data_initial is None: # model is switched off
                         self.C_data[midx][:] = 0
 
+                if not converge_workers_first or self.workers_converged:
+                    self.data_model_updates += 1 # count how many times we updated the data models
 
                 # update E_lnpi
-                self.A._post_alpha(self.Et, self.C, doc_start, self.L)
+                self.A.update_post_alpha(self.Et, self.C, doc_start, self.L)
                 self.A.q_pi()
 
                 if self.verbose:
@@ -479,24 +472,33 @@ class BSC(object):
         if self.iter <= 1:
             return False # don't bother to check because some of the variables have not even been initialised yet!
 
-        diff = self._convergence_diff()
 
-        if self.verbose:
-            print("BSC: max. difference at iteration %i: %.5f" % (self.iter, diff))
-
-        if not self.workers_converged:
-            converged = self.iter >= self.max_iter
+        if self.workers_converged:
+            # do we have to wait for data models to converge now?
+            converged = (not self.converge_workers_first) or (self.data_model_updates >= self.max_data_updates_at_end)
         else:
-            converged = self.data_model_updated >= self.max_data_updates_at_end
+            # have we run out of iterations for learning worker models?
+            converged = self.iter >= self.max_iter
 
-        if not converged and self.data_model_updated != 1: # we need to allow at least one more iteration after the data
-            # model has been updated because it will not yet have changed q_t
+        # We have not reached max number of iterations yet. Check to see if updates have already converged.
+        # Don't perform this check if the data_model has been updated once: it will not yet have resulted in changes to
+        # self.Et, so diff will be ~0 but we need to do at least one more iteration.
+        # If self.data_model_updates == 0 then data model is either not used or not yet updated, in which case, check
+        # for convergence of worker models now.
+        if not converged and self.data_model_updates != 1:
+
+            diff = self._convergence_diff()
+
+            if self.verbose:
+                print("BSC: max. difference at iteration %i: %.5f" % (self.iter, diff))
+
             converged = diff < self.eps
 
+        # The worker models have converged now, but we may still have data models to update
         if converged and not self.workers_converged:
-            # the worker model has converged, but we need to do more iterations to converge the data model
             self.workers_converged = True
-            converged = False
+            if self.converge_workers_first:
+                converged = False
 
         return converged
 

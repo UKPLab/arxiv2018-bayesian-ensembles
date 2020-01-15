@@ -6,6 +6,14 @@ from scipy.special import gammaln
 
 class Annotator():
 
+    def update_post_alpha(self, E_t, C, doc_start, nscores):
+        pass
+
+
+    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):
+        pass
+
+
     def read_lnPi(self, l, C, Cprev, Krange, nscores, blanks):
         return self._read_lnPi(self.lnPi, l, C, Cprev, Krange, nscores, blanks)
 

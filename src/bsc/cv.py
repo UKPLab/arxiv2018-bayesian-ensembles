@@ -34,10 +34,12 @@ class VectorWorker(Annotator):
     def _init_lnPi(self):
         # init to prior
         self.alpha = np.copy(self.alpha0)
+        self.alpha_data = {}
+        for midx in range(self.nModels):
+            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
 
         # Returns the initial values for alpha and lnPi
         self.lnPi = self.q_pi()
-
 
     def _calc_q_pi(self, alpha):
         '''
@@ -60,7 +62,7 @@ class VectorWorker(Annotator):
         return self.lnpi
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -75,19 +77,19 @@ class VectorWorker(Annotator):
                 self.alpha[j, l, :] += counts
 
 
-    def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
         dims = self.alpha0_data.shape
-        self.alpha_data = self.alpha0_data.copy()
+        self.alpha_data[model_idx] = self.alpha0_data.copy()
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
                 counts = (C[:, l:l+1]).T.dot(Tj).reshape(-1)
-                self.alpha_data[j, l, :] += counts
+                self.alpha_data[model_idx][j, l, :] += counts
 
 
     def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):

@@ -257,7 +257,7 @@ class Test(unittest.TestCase):
         alpha0[1,0,0,0] = 5
         alpha0[1,1,1,0] = 3
 
-        result = seq.SequentialWorker._post_alpha(E_t, C, alpha0, None, doc_start, 2)
+        result = seq.SequentialWorker.update_post_alpha(E_t, C, alpha0, None, doc_start, 2)
         
         target = np.ones((2,2,3,1)) * .5
         

@@ -23,10 +23,10 @@ best_diags = 10
 best_factor = 10
 best_acc_bias = 0
 
-# gt = gt_task1_val # for development
+gt = gt_task1_val # for development
 
 # # -------------------- debug with subset -------
-# s = 10000
+# s = 100
 # idxs = np.argwhere(gt!=-1)[:s, 0]
 # gt = gt[idxs]
 # annos = annos[idxs]
@@ -279,9 +279,9 @@ exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM 
                 # 'ibcc',
                 # 'bac_ibcc_noHMM',
                 # 'bac_seq_noHMM',
-                'bac_seq_integrateIF',
-                'bac_ibcc_integrateIF',
-                # 'bac_seq',
+                # 'bac_seq_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # # 'bac_seq',
                 'bac_seq_integrateIF_then_LSTM',
                 'bac_seq_integrateIF_integrateLSTM_atEnd',
 ]

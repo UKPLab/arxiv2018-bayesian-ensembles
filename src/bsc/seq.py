@@ -24,9 +24,13 @@ class SequentialWorker(VectorWorker):
         # Returns the initial values for alpha and lnPi
         psi_alpha_sum = psi(np.sum(self.alpha0, 1))
         self.lnPi = psi(self.alpha0) - psi_alpha_sum[:, None, :, :]
+        self.lnPi_data = {}
 
         # init to prior
         self.alpha = np.copy(self.alpha0)
+        self.alpha_data = {}
+        for midx in range(self.nModels):
+            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
 
 
     def _calc_q_pi(self, alpha):
@@ -38,7 +42,7 @@ class SequentialWorker(VectorWorker):
         return self.lnPi
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -68,24 +72,26 @@ class SequentialWorker(VectorWorker):
                 self.alpha[:, l, m, :] += counts.T
 
 
-    def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
-        dims = self.alpha0_data.shape
-        self.alpha_data = self.alpha0_data.copy()
+        if model_idx not in self.alpha_data:
+            self.alpha_data[model_idx] = self.alpha0_data[model_idx].copy()
+        else:
+            self.alpha_data[model_idx][:] = self.alpha0_data[model_idx]
 
-        for j in range(dims[0]):
+        for j in range(nscores):
             Tj = E_t[:, j]
 
-            for l in range(dims[1]):
+            for l in range(nscores):
 
                 counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
-                self.alpha[j, l, self.outside_label, :] += counts
+                self.alpha_data[model_idx][j, l, self.outside_label, :] += counts
 
-                for m in range(dims[1]):
+                for m in range(nscores):
                     counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
-                    self.alpha[j, l, m, :] += counts
+                    self.alpha_data[model_idx][j, l, m, :] += counts
 
 
     def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):

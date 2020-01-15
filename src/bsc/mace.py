@@ -43,6 +43,9 @@ class MACEWorker(Annotator):
 
         # init to prior
         self.alpha = np.copy(self.alpha0)
+        self.alpha_data = {}
+        for midx in range(self.nModels):
+            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
 
 
     def _calc_q_pi(self, alpha):
@@ -57,7 +60,7 @@ class MACEWorker(Annotator):
         return psi(alpha) - psi_alpha_sum
 
 
-    def _post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -117,7 +120,7 @@ class MACEWorker(Annotator):
             self.alpha[l+2, :] = self.alpha0[l+2, :] + strategy_count_l
 
 
-    def _post_alpha_data(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -127,9 +130,9 @@ class MACEWorker(Annotator):
         pspamming = 0
 
         Pi = np.zeros_like(self.alpha)
-        Pi[0, :] = self.alpha_data[0, :] / (self.alpha_data[0, :] + self.alpha_data[1, :])
-        Pi[1, :] = self.alpha_data[1, :] / (self.alpha_data[0, :] + self.alpha_data[1, :])
-        Pi[2:, :] = self.alpha_data[2:, :] / np.sum(self.alpha_data[2:, :], 0)[None, :]
+        Pi[0, :] = self.alpha_data[model_idx][0, :] / (self.alpha_data[model_idx][0, :] + self.alpha_data[model_idx][1, :])
+        Pi[1, :] = self.alpha_data[model_idx][1, :] / (self.alpha_data[model_idx][0, :] + self.alpha_data[model_idx][1, :])
+        Pi[2:, :] = self.alpha_data[model_idx][2:, :] / np.sum(self.alpha_data[model_idx][2:, :], 0)[None, :]
 
         pspamming_j_unnormed = 0
         for j in range(C.shape[1]):
@@ -149,12 +152,12 @@ class MACEWorker(Annotator):
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
-        self.alpha_data[1, :] = self.alpha0_data[1, :] + correct_count
-        self.alpha_data[0, :] = self.alpha0_data[0, :] + incorrect_count
+        self.alpha_data[model_idx][1, :] = self.alpha0_data[model_idx][1, :] + correct_count
+        self.alpha_data[model_idx][0, :] = self.alpha0_data[model_idx][0, :] + incorrect_count
 
         for l in range(nscores):
             strategy_count_l = np.sum((C[:, l:l+1]) * pspamming, 0)
-            self.alpha_data[l+2, :] = self.alpha0_data[l+2, :] + strategy_count_l
+            self.alpha_data[model_idx][l+2, :] = self.alpha0_data[model_idx][l+2, :] + strategy_count_l
 
 
     def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
