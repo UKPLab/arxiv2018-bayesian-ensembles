@@ -367,7 +367,7 @@ class BSC(object):
 
                     if not converge_workers_first or self.workers_converged or C_data_initial is not None:
 
-                        self.A.update_post_alpha_data(self.Et, self.C_data[midx], doc_start, self.L)
+                        self.A.update_post_alpha_data(midx, self.Et, self.C_data[midx], doc_start, self.L)
                         self.A.q_pi_data(midx)
 
                         if self.verbose:

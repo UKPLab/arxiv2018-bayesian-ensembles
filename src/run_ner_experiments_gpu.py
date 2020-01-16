@@ -19,9 +19,8 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 niter = 20
 
 best_nu0factor = 1
-best_diags = 10
+best_diags = 1
 best_factor = 10
-best_acc_bias = 0
 
 gt = gt_task1_val # for development
 
@@ -261,39 +260,39 @@ gt = gt_task1_val # for development
 # )
 
 #-------------------------------------------------------------------------------------
-niter = 20 # variational inference iterations
-
-exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
-exp.save_results = True
-exp.opt_hyper = False#True
-exp.use_lb = True
-
-exp.nu0_factor = 1
-exp.alpha0_diags = 10
-exp.alpha0_factor = 10
-# exp.begin_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
-exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
-                # 'bac_ibcc_integrateIF',
-                # 'bac_ibcc_integrateIF_noHMM',
-                # 'ibcc',
-                # 'bac_ibcc_noHMM',
-                # 'bac_seq_noHMM',
-                # 'bac_seq_integrateIF',
-                # 'bac_ibcc_integrateIF',
-                # # 'bac_seq',
-                'bac_seq_integrateIF_then_LSTM',
-                'bac_seq_integrateIF_integrateLSTM_atEnd',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(
-    annos, gt, doc_start, output_dir, text,
-    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-    # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-    ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
-    new_data=regen_data
-)
+# niter = 20 # variational inference iterations
+#
+# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
+# exp.save_results = True
+# exp.opt_hyper = False#True
+# exp.use_lb = True
+#
+# exp.nu0_factor = 1
+# exp.alpha0_diags = 10
+# exp.alpha0_factor = 10
+# # exp.begin_factor = 10
+# output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+# exp.methods =  [ # acc seems to be broken; seq has a minor error somewhere; HMM has bigger error, probably in the lower bound qt computation
+#                 # 'bac_ibcc_integrateIF',
+#                 # 'bac_ibcc_integrateIF_noHMM',
+#                 # 'ibcc',
+#                 # 'bac_ibcc_noHMM',
+#                 # 'bac_seq_noHMM',
+#                 # 'bac_seq_integrateIF',
+#                 # 'bac_ibcc_integrateIF',
+#                 # # 'bac_seq',
+#                 'bac_seq_integrateIF_then_LSTM',
+#                 'bac_seq_integrateIF_integrateLSTM_atEnd',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
+#     new_data=regen_data
+# )
 
 # #-------------------------------------------------------------------------------------
 # niter = 20 # variational inference iterations
@@ -323,33 +322,39 @@ exp.run_methods(
 #     new_data=regen_data
 # )
 #
-# #-------------------------------------------------------------------------------------
-# niter = 20 # variational inference iterations
-#
-# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
-# exp.save_results = True
-# exp.opt_hyper = False#True
-# # exp.use_lb = True
-#
-# exp.nu0_factor = 1
-# exp.alpha0_diags = 1
-# exp.alpha0_factor = 10
-# output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
-# exp.methods =  [
-#                 'bac_seq_integrateIF',
-#                 'bac_ibcc_integrateIF',
-#                 # best_bac_wm + '_integrateIF_integrateLSTM_atEnd',
-#                 # best_bac_wm + '_integrateIF_then_LSTM',
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(
-#     annos, gt, doc_start, output_dir, text,
-#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
-#     new_data=regen_data
-# )
+#-------------------------------------------------------------------------------------
+niter = 20 # variational inference iterations
+
+exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
+exp.save_results = True
+exp.opt_hyper = False#True
+# exp.use_lb = True
+
+exp.nu0_factor = 1
+exp.alpha0_diags = 1
+exp.alpha0_factor = 10
+output_dir = os.path.join(load_data.output_root_dir, 'ner2_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+exp.methods =  [
+                # 'bac_ibcc_integrateIF',
+                # 'bac_ibcc_integrateIF_noHMM',
+                # 'ibcc',
+                # 'bac_ibcc_noHMM',
+                # 'bac_seq_noHMM',
+                # 'bac_seq_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # # 'bac_seq',
+                'bac_seq_integrateIF_then_LSTM',
+                'bac_seq_integrateIF_integrateLSTM_atEnd',
+]
+
+# should run both task 1 and 2.
+exp.run_methods(
+    annos, gt, doc_start, output_dir, text,
+    ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+    # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+    ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
+    new_data=regen_data
+)
 #
 # #-------------------------------------------------------------------------------------
 # niter = 20 # variational inference iterations

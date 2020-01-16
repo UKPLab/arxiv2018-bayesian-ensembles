@@ -32,12 +32,19 @@ class Annotator():
         return self._read_lnPi(lnEPi_data[model_idx], l, C, Cprev, 0, nscores, None)
 
 
+    def _read_lnPi(self, lnPi, l, C, Cprev, workeridxs, nscores, blanks):
+        pass
+
+
     def q_pi(self):
         self.lnPi = self._calc_q_pi(self.alpha)
 
 
     def q_pi_data(self, model_idx):
         self.lnPi_data[model_idx] = self._calc_q_pi(self.alpha_data[model_idx])
+
+    def _calc_q_pi(self, alpha):
+        pass
 
 
     def lnEPi(self):
