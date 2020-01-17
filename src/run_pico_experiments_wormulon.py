@@ -170,9 +170,9 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
 
 # THE BEST SO FAR, but with different outside factor
 best_nu0factor = 1
-best_diags = 100
+best_diags = 10
 best_factor = 10
-best_begin_factor = 1
+best_begin_factor = 10
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_begin_factor)
 
@@ -185,8 +185,9 @@ exp.nu0_factor = best_nu0factor
 
 # # run all the methods that don't require tuning here
 exp.methods =  [
-                'ibcc',
-                'bac_seq_integrateIF',
+                # 'bac_seq_integrateIF',
+                'bac_seq_integrateIF_then_LSTM',
+                'bac_seq_integrateIF_integrateLSTM_atEnd',
 ]
 
 output_dir = os.path.join(load_data.output_root_dir, 'pico_wormulon_%f_%f_%f_%f_%s_betaOO_nu0_1_prior'
