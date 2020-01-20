@@ -212,9 +212,9 @@ exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-exp.nu0_factor = 10
-exp.alpha0_diags = 1
-exp.alpha0_factor = 1
+exp.nu0_factor = 1
+exp.alpha0_diags = 10
+exp.alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
 exp.methods =  [
@@ -237,9 +237,9 @@ exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
 exp.save_results = True
 exp.opt_hyper = False#True
 
-exp.nu0_factor = 0.1
+exp.nu0_factor = 1
 exp.alpha0_diags = 100
-exp.alpha0_factor = 0.1
+exp.alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 
 exp.methods =  [
