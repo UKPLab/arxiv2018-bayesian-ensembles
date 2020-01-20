@@ -186,7 +186,7 @@ exp.nu0_factor = best_nu0factor
 # # run all the methods that don't require tuning here
 exp.methods =  [
                 # 'bac_seq_integrateIF',
-                'bac_seq_integrateIF_then_LSTM',
+                # 'bac_seq_integrateIF_then_LSTM',
                 'bac_seq_integrateIF_integrateLSTM_atEnd',
 ]
 
