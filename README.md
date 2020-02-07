@@ -5,56 +5,63 @@ The implementation allows you to test different configurations of annotator mode
 LSTM sequence tagger. The crowd of annotators plus automated taggers together form an ensemble.
 
 This is the implementation of the method first presented
-in 'Ba'
-in the following paper -- 
-please use the following citation:
+in 'A Bayesian Approach for Sequence Tagging with Crowds'
+and extended in 'Low Resource Sequence Tagging with Weak Labels'.
+The intructions for running the experiments for each are outlined below.
+
+For the code BSC method, please use the following citation:
 
 ```bibtex
-@article{DBLP:journals/corr/abs-1811-00780,
-  author    = {Edwin Simpson and
-               Iryna Gurevych},
-  title     = {Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging},
-  journal   = {CoRR},
-  volume    = {abs/1811.00780},
-  year      = {2018},
-  url       = {http://arxiv.org/abs/1811.00780},
-  archivePrefix = {arXiv},
-  eprint    = {1811.00780},
-  timestamp = {Thu, 22 Nov 2018 17:58:30 +0100},
-  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1811-00780},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+@inproceedings{simpson2019bayesian,
+    title = "A {B}ayesian Approach for Sequence Tagging with Crowds",
+    author = "Simpson, Edwin D.  and
+      Gurevych, Iryna",
+    booktitle = "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+    month = nov,
+    year = "2019",
+    address = "Hong Kong, China",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/D19-1101",
+    doi = "10.18653/v1/D19-1101",
+    pages = "1093--1104",
+    abstract = "Current methods for sequence tagging, a core task in NLP, are data hungry, which motivates the use of crowdsourcing as a cheap way to obtain labelled data. However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation error. To address this, we propose a Bayesian method for aggregating sequence tags that reduces errors by modelling sequential dependencies between the annotations as well as the ground-truth labels. By taking a Bayesian approach, we account for uncertainty in the model due to both annotator errors and the lack of data for modelling annotators who complete few tasks. We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining, showing that our sequential model outperforms the previous state of the art, and that Bayesian approaches outperform non-Bayesian alternatives. We also find that our approach can reduce crowdsourcing costs through more effective active learning, as it better captures uncertainty in the sequence labels when there are few annotations.",
 }
 ```
-
-This software was extended for the following paper:
-```bibtex
-@article{DBLP:journals/corr/abs-1811-00780,
-  author    = {Edwin Simpson and
-               Iryna Gurevych},
-  title     = {Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging},
-  journal   = {CoRR},
-  volume    = {abs/1811.00780},
-  year      = {2018},
-  url       = {http://arxiv.org/abs/1811.00780},
-  archivePrefix = {arXiv},
-  eprint    = {1811.00780},
-  timestamp = {Thu, 22 Nov 2018 17:58:30 +0100},
-  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1811-00780},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
-}
-```
-
 
 > **Abstract:** 
 Current methods for sequence tagging, a core task in NLP, are data hungry, which motivates the use of crowdsourcing as a cheap way to obtain labelled data. However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation errors. To address this, we propose a Bayesian method for aggregating sequence tags that reduces errors by modelling sequential dependencies between the annotations as well  as  the  ground-truth  labels. By  taking a  Bayesian  approach, we account for uncertainty in the model due to both annotator errors and the lack of data for modelling annotators who complete few tasks. We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining, showing that our sequential model outperforms the previous state of the art.   We also find that our approach can reduce crowdsourcing costs through more effective active learning, as it better captures uncertainty in the sequence labels when there are few annotations.
 
-Contact person:
 
-Edwin Simpson, simpson@ukp.informatik.tu-darmstadt.de
+This software was extended for the following paper. 
+When citing the work on combining automated sequence taggers
+with human annotators,
+please cite the following:
+```bibtex
+@inproceedings{simpson2020lowresource,
+    title = "Low Resource Sequence Tagging with Weak Labels",
+    author = "Simpson, Edwin D. and Pfeiffer, Jonas and
+      Gurevych, Iryna",
+    booktitle = "Proceedings of the Thirty-fourth AAAI Conference on Artificial Intelligence (AAAI)",
+    month = feb,
+    year = "2020",
+    address = "New York, USA",
+    publisher = "AAAI",
+    url = "https://public.ukp.informatik.tu-darmstadt.de/UKP_Webpage/publications/2020/2020_AAAI_SE_LowResourceSequence.pdf",
+    pages = "to appear",
+}
+```
+> **Abstract:**
+Current methods for sequence tagging depend on large quantities of domain-specific training data, limiting their use in new, user-defined tasks with few or no annotations. While crowdsourcing can be a cheap source of labels, it often introduces errors that degrade the performance of models trained on such crowdsourced data. Another solution is to use transfer learning to tackle low resource sequence labelling, but current approaches rely heavily on similar high resource datasets in different languages. In this paper, we propose a domain adaptation method using Bayesian sequence combination to exploit pretrained models and unreliable crowdsourced data that does not require high resource data in a different language. Our method boosts performance by learning the relationship between each labeller and the target task and trains a sequence labeller on the target domain with little or no gold-standard data. We apply our approach to labelling diagnostic classes in medical and educational case studies, showing that the model achieves strong performance though zero-shot transfer learning and is more effective than alternative ensemble methods. Using NER and information extraction tasks, we show how our approach can train a model directly from crowdsourced labels, outperforming pipeline approaches that first aggregate the crowdsourced data, then train on the aggregated labels.
+
+
+For both cases, the contact person is:
+
+Edwin Simpson, edwin.simpson@gmail.com (previously: simpson@ukp.informatik.tu-darmstadt.de).
 
 https://www.ukp.tu-darmstadt.de/
 
-Please send us an e-mail or report an issue, if something is broken or if you have further questions.
+Please send us an e-mail or report an issue, if something is broken or if you have further questions on how to 
+reproduce the experiments or run the method in a new project.
 
 ## Project structure
 
@@ -120,10 +127,15 @@ where the path `~/git/PICO-data/` should be replaced with location where you che
 
 6. For the ARG dataset, unzip the data from `data/argmin_LMU.zip` and move it to `../../data/bayesian_sequence_combination/data`.
  
-## Running the experiments
+## Running the experiments from EMNLP 2019
 
- If you don't need to reproduce the experiments from the paper, you can skip this part and go to
- the next section.
+These instructions are for "A Bayesian Approach To Sequence Tagging with Crowds".
+
+ If you just want to use BSC for a new project,
+  you don't need to reproduce the experiments from the paper, 
+  so you can skip this part
+  and the next part, and go to
+ the section "Using Bayesian Sequence Combination (BSC)".
  
  For all of these scripts, please run them from the root
  directory of this repository. No command line arguments are needed,
@@ -187,6 +199,52 @@ Now, run `src/evaluation/error_analysis.py`.
 ### Annotator models
 
 The plots in Figure 1 were made using `src/plot_pico_worker_models.py`.
+
+## Running the Experiments from AAAI 2020
+
+These instructions are for the experiments in 
+"Low Resource Sequence Tagging with Weak Labels".
+
+### Transfer Learning by Combining Models 
+
+These are the experiments with FAMULUS data.
+
+
+To run the zero-shot experiments (Table 3):
+
+Run `src/run_famulus_unsupervised.py <"TEd"|"Med">`.
+
+The results will be printed to the console. Change line 49 `basemodels = ` to
+modify whether CRF or LSTM base models are used.
+Choose either "TEd" or "Med" to run with one of the two 
+FAMULUS datasets.
+
+To reprint the key results:
+
+Run `src/give_me_the_headlines.py 1 "'bilstm-crf', 'crf'" <"TEd"|"Med">` 
+
+To run the semi-supervised learning experiments (Figure 2):
+
+Run `src/run_famulus_semisupervised.py`.
+
+Results are plotted and saved to `results/test3_spanf1_<class ID>.pdf`.
+
+
+### Enhancing a Crowd with an Automated Sequence Tagger
+
+These are the experiments with NER and PICO crowdsourced data.
+
+
+Run `src/run_ner_experiments_gpu.py` and
+`src/run_pico_experiments_gpu.py`.  
+
+Uncomment methods in the code to enable or disable them.
+The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
+comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters. 
+
+Results are saved to `~\data\bayesian_sequence_combination\output\ner3\result_started_<date>_<time>...csv`
+and `~\data\bayesian_sequence_combination\output\pico3\result_started_<date>_<time>...csv`.
+
 
 ## Using Bayesian Sequence Combination (BSC)
 

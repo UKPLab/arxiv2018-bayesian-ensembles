@@ -1,7 +1,7 @@
 '''
 Like test 1 but we add in some training data
 
-SEMI-SUPERVISED: use a little bit of training data from the target domain --------------------------------------------
+SEMI-SUPERVISED learning on FAMULUS: use a little bit of training data from the target domain --------------------------------------------
 
 '''
 import os

@@ -8,7 +8,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = os.path.join(load_data.output_root_dir, 'ner')
+output_dir = os.path.join(load_data.output_root_dir, 'ner3')
 
 regen_data = False
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, gt_all = \
@@ -25,7 +25,7 @@ exp.opt_hyper = False#True
 exp.nu0_factor = 1
 exp.alpha0_diags = 1
 exp.alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+output_dir = os.path.join(load_data.output_root_dir, 'ner3')  #_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 # 'bac_seq_integrateIF',
                 'bac_seq_integrateIF_then_LSTM',
@@ -52,7 +52,7 @@ exp.opt_hyper = False#True
 exp.nu0_factor = 1
 exp.alpha0_diags = 10
 exp.alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+output_dir = os.path.join(load_data.output_root_dir, 'ner3')  #_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
 exp.methods =  [
                 # 'bac_seq_integrateIF',
                 'bac_seq_integrateIF_then_LSTM',

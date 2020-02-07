@@ -1,6 +1,10 @@
 import json, numpy as np, pandas as pd, os
 from scipy.stats import wilcoxon
 
+'''
+Compute statistical significance of some of the key results in the EMNLP paper.
+'''
+
 outroot = os.path.expanduser('~/data/bayesian_sequence_combination/output/')
 
 baseline = outroot + 'ner/pred_started-2019-05-17-09-52-22-Nseen29704.csv'

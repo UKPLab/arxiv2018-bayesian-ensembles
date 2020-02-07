@@ -1,6 +1,6 @@
 '''
 
-Hypothesis 1: ensemble learning with BCC improves performance with smaller amounts of data.
+Hypothesis 1: ensemble learning with BCC improves performance with no training data.
 
 
 *Plot* the F1 score with increasing amounts of training data for BCC. Tested methods:
@@ -20,30 +20,6 @@ just a few labels still useful, does it add noise, or does it get ignored?).
 (e) a shallow linear model trained on the target domain (does a simpler model work better with very
 small data?)
 (f) linear model added to the ensemble.
-
-TODO: plot the results from the semi-supe bit.
-
-TODO: Currently, the ensemble is weaker than the best base model (baseline_z). If baseline_z is excluded, MV is the best
-aggregation method, likely because the models are too weak and are all of similar strength. When baseline_z is included,
-the other models are not really adding independent errors except for noise.
-We can try adding in more ensemble members:
-- combine CRFs with the NNs; then there will be two baseline_z models, which may boost their chances
-of being favoured by the aggregator
-- NER
-- POS tagger
-- argument component tagger
-Get these from flair! https://github.com/zalandoresearch/flair/blob/master/resources/docs/TUTORIAL_2_TAGGING.md
-See terman models.
-
-TODO: try the semi-supe setup with AL instead of random samples. With small labelled data size and
-all labellers being quite weak, there is a good chance of biasing the weights in the wrong way. This
-would affect BSC most, since the conf. matrix is very large.
-
-TODO: Discuss with JP which f1 scores to use. The span-level ones may favour BSC. Also ask about overlapping annotations --
-are they in a different dataset?
-
-TODO: why does BSC produce strange results? Currently, the B token is becoming too popular, so that O->B is a popular
-transition, even when there are very few B labels. We may need to step through to find out why.
 
 '''
 import os
