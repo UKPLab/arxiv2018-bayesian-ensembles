@@ -4,7 +4,9 @@ Aggregate sequential annotations from a crowd of annotators, accounting for thei
 The implementation allows you to test different configurations of annotator models + optional
 LSTM sequence tagger. The crowd of annotators plus automated taggers together form an ensemble.
 
-This is the implementation of the method discussed in the following paper -- 
+This is the implementation of the method first presented
+in 'Ba'
+in the following paper -- 
 please use the following citation:
 
 ```bibtex
@@ -23,6 +25,25 @@ please use the following citation:
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 ```
+
+This software was extended for the following paper:
+```bibtex
+@article{DBLP:journals/corr/abs-1811-00780,
+  author    = {Edwin Simpson and
+               Iryna Gurevych},
+  title     = {Bayesian Ensembles of Crowds and Deep Learners for Sequence Tagging},
+  journal   = {CoRR},
+  volume    = {abs/1811.00780},
+  year      = {2018},
+  url       = {http://arxiv.org/abs/1811.00780},
+  archivePrefix = {arXiv},
+  eprint    = {1811.00780},
+  timestamp = {Thu, 22 Nov 2018 17:58:30 +0100},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1811-00780},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+```
+
 
 > **Abstract:** 
 Current methods for sequence tagging, a core task in NLP, are data hungry, which motivates the use of crowdsourcing as a cheap way to obtain labelled data. However, annotators are often unreliable and current aggregation methods cannot capture common types of span annotation errors. To address this, we propose a Bayesian method for aggregating sequence tags that reduces errors by modelling sequential dependencies between the annotations as well  as  the  ground-truth  labels. By  taking a  Bayesian  approach, we account for uncertainty in the model due to both annotator errors and the lack of data for modelling annotators who complete few tasks. We evaluate our model on crowdsourced data for named entity recognition, information extraction and argument mining, showing that our sequential model outperforms the previous state of the art.   We also find that our approach can reduce crowdsourcing costs through more effective active learning, as it better captures uncertainty in the sequence labels when there are few annotations.
@@ -111,56 +132,47 @@ where the path `~/git/PICO-data/` should be replaced with location where you che
  
 ### NER experiments
 
-You can run the table 2 and table 4 experiments using the following:
+You can run the table 2 experiments using the following:
 
-`src/run_ner_experiments.py` for non-LSTM methods and 
-`src/run_ner_experiments_gpu.py` for those that can make use of a GPU.
+Run `src/run_ner_experiments.py`.
 
 Uncomment methods in the code to enable or disable them.
-To tune the method on the dev set, see the comments in the code
-and uncomment the appropriate bit. 
+The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
+comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters. 
 
 Results are saved to `~\data\bayesian_sequence_combination\output\ner\result_started_<date>_<time>...csv`.
 
 For the active learning simulation:
 
-Run `src/run_ner_active_learning.py` 
-and `src/run_ner_active_learning_nogpu.py`.
+Edit `src/run_ner_active_learning.py` to enable or disable the methods you want to test.
 
-Now edit `src/evaluation/plot_active_learning.py` to uncomment
-the block referring to 'NER_AL'. Run this script to output the plots
-to the specified directory.
+Run `src/run_ner_active_learning.py`. 
+
+Run `src/evaluation/plot_active_learning.py` 
+to output plots for active learning (the plots are output to the directory specified in this script).
 
 ### PICO experiments
 
 You can get the table 2 results using the following:
 
-`src/run_pico_experiments.py` for non-LSTM methods and 
-`src/run_pico_experiments_gpu.py` for those that can make use of a GPU.
+Run `src/run_pico_experiments.py`.
 
 Uncomment methods in the code to enable or disable them.
-To tune the method on the dev set, see the comments in the code
-and uncomment the appropriate bit.
+The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
+comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters. 
 
 Results are saved to `~\data\bayesian_sequence_combination\output\pico\result_started_<date>_<time>...csv`.
 
-For table 4:
+### ARG experiments
 
-`src/run_pico_experiments_task2.py`
+For the ARG results in table 2, the scripts follow the same pattern as for NER
+and PICO. Please run `src/run_arg_experiments.py`.
 
-Results are saved to `~\data\bayesian_sequence_combination\output\pico_task2\result_nocrowd_started_<date>_<time>...csv`.
-
-For the active learning simulation:
-
-Run `src/run_pico_active_learning.py` 
-and `src/run_pico_active_learning_nogpu.py`.
-
-Now edit `src/evaluation/plot_active_learning.py` to uncomment
-the block referring to 'PICO_AL'. Run this script to output the plots
-to the specified directory.
+Results are saved to `~\data\bayesian_sequence_combination\output\arg_LMU_corrected_gold_2\result_started_<date>_<time>...csv`.
 
 ### Error analysis
 
+To reproduce the results for Table 3.
 First you need to run one of the experiment scripts above, 
 e.g. `src/run_ner_experiments.py`,
 to obtain some results.
@@ -176,7 +188,7 @@ Now, run `src/evaluation/error_analysis.py`.
 
 The plots in Figure 1 were made using `src/plot_pico_worker_models.py`.
 
-## Running Bayesian Sequence Combination
+## Using Bayesian Sequence Combination (BSC)
 
 ### Data Format
 

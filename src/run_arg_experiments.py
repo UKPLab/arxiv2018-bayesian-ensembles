@@ -12,8 +12,6 @@ import pandas as pd
 
 output_dir = os.path.join(load_data.output_root_dir, 'arg_LMU_corrected_gold_2')
 
-# TODO try the simple BIO task as well as 5-class thing
-
 def cap_number_of_workers(crowd, doc_start, max_workers_per_doc):
     print('Reducing number of workers per document to %i' % max_workers_per_doc)
     doc_start_idxs = np.where(doc_start)[0]
