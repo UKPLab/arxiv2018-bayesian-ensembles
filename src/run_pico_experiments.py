@@ -9,7 +9,7 @@ from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = os.path.join(load_data.output_root_dir, 'pico_no_outside_factor_weighting')
+output_dir = os.path.join(load_data.output_root_dir, 'pico')
 regen_data = False
 
 gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
@@ -17,11 +17,10 @@ gt, annos, doc_start, text, gt_task1_dev, gt_dev, doc_start_dev, text_dev = \
 
 # ------------------------------------------------------------------------------------------------
 
-# this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 best_nu0factor = 1
-best_diags = 100
+best_diags = 10
 best_factor = 10
-best_outside_factor = 1
+best_outside_factor = 10
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_outside_factor)
 
@@ -54,7 +53,6 @@ exp.run_methods(annos, gt, doc_start, output_dir, text,
                 )
 # ------------------------------------------------------------------------------------------------
 #
-# # this is the one we used in the paper, result_started-2019-08-22-06-17-54-Nseen56858.csv
 # best_nu0factor = 10
 # best_diags = 100
 # best_factor = 10
