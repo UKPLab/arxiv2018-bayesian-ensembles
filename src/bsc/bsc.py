@@ -419,7 +419,7 @@ class BSC(object):
             C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
             self.blanks = C == 0
 
-            self.LM.lnB = psi(self.beta) - psi(np.sum(self.beta, -1))[:, None]
+            self.LM.lnB = psi(self.LM.beta) - psi(np.sum(self.LM.beta, -1))[:, None]
 
             if self.no_words:
                 lnptext_given_t = np.zeros((len(doc_start), self.L))

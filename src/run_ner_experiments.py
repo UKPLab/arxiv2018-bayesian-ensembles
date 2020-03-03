@@ -12,7 +12,7 @@ import numpy as np
 output_dir = os.path.join(load_data.output_root_dir, 'ner')
 
 regen_data = False
-gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task1_val, gt_val, doc_start_val, text_val, _ = \
+gt, annos, doc_start, text, _, _, _, gt_task1_val, gt_val, doc_start_val, text_val, _ = \
     load_data.load_ner_data(regen_data)
 
 
@@ -25,9 +25,6 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 # text = text[idxs]
 # gt_task1_val = gt_task1_val[idxs]
 #
-# gt_nocrowd = None
-# text_nocrowd = None
-# doc_start_nocrowd = None
 # # -------------------------
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=20)
@@ -87,8 +84,6 @@ for m, method in enumerate(methods_to_tune):
     exp.methods = [method]
     exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, return_model=False,
                 ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-                ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd,
-                text_nocrowd=text_nocrowd,
                 new_data=regen_data
                 )
 
@@ -115,8 +110,6 @@ for m, method in enumerate(methods_to_tune):
 # exp.run_methods(
 #     annos, gt, doc_start, output_dir, text,
 #     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
 #     new_data=regen_data
 # )
 #
@@ -140,8 +133,6 @@ for m, method in enumerate(methods_to_tune):
 # exp.run_methods(
 #     annos, gt, doc_start, output_dir, text,
 #     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
-#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
-#     ground_truth_nocrowd=None, doc_start_nocrowd=None, text_nocrowd=None,
 #     new_data=regen_data
 # )
 #
