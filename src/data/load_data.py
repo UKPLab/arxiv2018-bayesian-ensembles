@@ -978,25 +978,28 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     gt_val_task2 = pd.read_csv(savepath + '/task2_val_gt.csv', skip_blank_lines=False, header=None).values
 
     # fix some invalid transitions in the data. These seem to be caused by some bad splitting between sentences.
-    restricted = [0, 3, 5, 7]
-    unrestricted = [2, 4, 6, 8]
-    outside = 1
-    for typeid, r in enumerate(restricted):
-        for tok in range(len(annos)):
-            # correct O->I transitions to O->B. There are some errors in the data itself.
-            if tok == 0:
-                annos[tok, annos[tok] == r] = unrestricted[typeid]
-                if gt[tok] == r:
-                    gt[tok] = unrestricted[typeid]
-                if gt_val_task1[tok] == r:
-                    gt_val_task1[tok] = unrestricted[typeid]
-            else:
-                annos[tok, (annos[tok] == r) & (annos[tok - 1] == outside)] = unrestricted[typeid]
-                annos[tok, (annos[tok] == r) & doc_start[tok]] = unrestricted[typeid]
-                if gt[tok] == r and (gt[tok - 1] == outside or doc_start[tok]):
-                    gt[tok] = unrestricted[typeid]
-                if gt_val_task1[tok] == r and (gt_val_task1[tok - 1] == outside or doc_start[tok]):
-                    gt_val_task1[tok] = unrestricted[typeid]
+    # restricted = [0, 3, 5, 7]
+    # unrestricted = [2, 4, 6, 8]
+    # outside = 1
+    # for typeid, r in enumerate(restricted):
+    #     for tok in range(len(annos)):
+    #         # correct O->I transitions to O->B. There are some errors in the data itself.
+    #         if tok == 0:
+    #             #annos[tok, annos[tok] == r] = unrestricted[typeid]
+    #             if gt[tok] == r:
+    #                 gt[tok] = unrestricted[typeid]
+    #             if gt_val_task1[tok] == r:
+    #                 gt_val_task1[tok] = unrestricted[typeid]
+    #         else:
+    #             #if doc_start[tok]:
+    #             #    annos[tok, (annos[tok] == r) & doc_start[tok]] = unrestricted[typeid]
+    #             #else:
+    #             #    annos[tok, (annos[tok] == r) & (annos[tok - 1] == outside)] = unrestricted[typeid]
+    #
+    #             if gt[tok] == r and (gt[tok - 1] == outside or doc_start[tok]):
+    #                 gt[tok] = unrestricted[typeid]
+    #             if gt_val_task1[tok] == r and (gt_val_task1[tok - 1] == outside or doc_start[tok]):
+    #                 gt_val_task1[tok] = unrestricted[typeid]
 
     return gt, annos, doc_start, text, gt_task2, doc_start_task2, text_task2, \
            gt_val_task1, gt_val_task2, doc_start_val_task2, text_val_task2, gt_all

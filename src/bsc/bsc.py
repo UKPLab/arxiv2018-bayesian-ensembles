@@ -413,29 +413,31 @@ class BSC(object):
 
     def predict(self, doc_start, text):
 
+        self.LM.C_by_doc = None
+
         with Parallel(n_jobs=-1, backend='threading') as parallel:
 
             doc_start = doc_start.astype(bool)
-            C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
-            self.blanks = C == 0
+            self.C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
+            self.blanks = self.C == 0
 
             self.LM.lnB = psi(self.LM.beta) - psi(np.sum(self.LM.beta, -1))[:, None]
 
             if self.no_words:
                 lnptext_given_t = np.zeros((len(doc_start), self.L))
-                features = None
+                self.features = None
             else:
                 # get the expected log word likelihoods of each token
-                features = []  # list of mapped index values for each token
+                self.features = []  # list of mapped index values for each token
                 available = []
                 for feat in text.flatten():
                     if feat not in self.feat_map:
                         available.append(0)
-                        features.append(0)
+                        self.features.append(0)
                     else:
                         available.append(1)
-                        features.append(self.feat_map[feat])
-                lnptext_given_t = self.ElnRho[features, :] + np.array(available)[:, None]
+                        self.features.append(self.feat_map[feat])
+                lnptext_given_t = self.ElnRho[self.features, :] + np.array(available)[:, None]
                 lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
 
             self.LM.lnB = self.LM.lnB[None, :, :] + lnptext_given_t[:, None, :]
@@ -444,7 +446,7 @@ class BSC(object):
             for model in self.data_model:
                 C_data.append(model.predict(doc_start, text))
 
-            self.LM.init_t(C, doc_start, self.A)
+            self.LM.init_t(self.C, doc_start, self.A, self.blanks)
             q_t = self.LM.update_t(parallel, C_data)
 
             seq = self.LM.most_probable_sequence(self.word_ll(self.features))[1]
