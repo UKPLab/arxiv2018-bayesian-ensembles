@@ -714,10 +714,11 @@ def _calc_q_A(E_t, nu0, use_ml=False):
     return lnkappa, nu
 
 def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True, use_ml=False):
-    alpha_sum = np.sum(alpha, 1) - alpha.shape[1]
+    alpha_sum = np.sum(alpha, 1)
     for s in range(nscores): 
 
         if use_ml:
+            alpha_sum -= alpha.shape[1]
             lnPi[:, s, :] = np.log( (alpha[:, s, :]-1) / float(alpha_sum )) # mode of a dirichlet
         else:
             lnPi[:, s, :] = psi(alpha[:, s, :]) - psi(alpha_sum)

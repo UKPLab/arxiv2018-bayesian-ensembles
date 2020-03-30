@@ -1,16 +1,13 @@
 import os
 import sys
 
-from baselines.ibcc import IBCC
-from baselines.majority_voting import MajorityVoting
-from bsc.bsc import BSC
-from data import data_utils
-from evaluation.experiment import Experiment, calculate_scores
+from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 import pandas as pd
 
 output_dir = os.path.join(load_data.output_root_dir, 'arg_LMU_corrected_gold_2')
+data_dir = os.path.join(load_data.data_root_dir, 'argmin_LMU')
 
 def cap_number_of_workers(crowd, doc_start, max_workers_per_doc):
     print('Reducing number of workers per document to %i' % max_workers_per_doc)
@@ -66,14 +63,12 @@ def split_dev_set(gt, crowd, text, doc_start):
 
 def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only=False, gold_labelled_only=False,
                        max_workers_per_doc=5):
-    data_dir = '../../data/bayesian_sequence_combination/data/argmin_LMU/'
-
-    if not regen_data and os.path.exists(data_dir + 'evaluation_gold.csv'):
+    if not regen_data and os.path.exists(os.path.join(data_dir, 'evaluation_gold.csv')):
         #reload the data for the experiments from cache files
-        gt = pd.read_csv(data_dir + 'evaluation_gold.csv', usecols=[1]).values.astype(int)
-        crowd = pd.read_csv(data_dir + 'evaluation_crowd.csv').values[:, 1:].astype(int)
-        doc_start = pd.read_csv(data_dir + 'evaluation_doc_start.csv', usecols=[1]).values.astype(int)
-        text = pd.read_csv(data_dir + 'evaluation_text.csv', usecols=[1]).values
+        gt = pd.read_csv(os.path.join(data_dir, 'evaluation_gold.csv'), usecols=[1]).values.astype(int)
+        crowd = pd.read_csv(os.path.join(data_dir, 'evaluation_crowd.csv')).values[:, 1:].astype(int)
+        doc_start = pd.read_csv(os.path.join(data_dir, 'evaluation_doc_start.csv'), usecols=[1]).values.astype(int)
+        text = pd.read_csv(os.path.join(data_dir, 'evaluation_text.csv'), usecols=[1]).values
 
         if second_batch_workers_only:
             crowd = crowd[:, 26:]
@@ -93,16 +88,16 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
 
         return gt, crowd, doc_start, text, crowd_dev, gt_dev, doc_start_dev, text_dev
 
-    expert_file = data_dir + 'expert_corrected_disagreements.csv'
+    expert_file = os.path.join(data_dir, 'expert_corrected_disagreements.csv')
 
     gold_text = pd.read_csv(expert_file, sep=',', usecols=[6]).values
     gold_doc_start = pd.read_csv(expert_file, sep=',', usecols=[1]).values
     gold = pd.read_csv(expert_file, sep=',', usecols=[7]).values.astype(int).flatten()
 
-    crowd_on_gold_file = data_dir + 'crowd_on_expert_labelled_sentences.csv'
+    crowd_on_gold_file = os.path.join(data_dir, 'crowd_on_expert_labelled_sentences.csv')
     crowd_on_gold = pd.read_csv(crowd_on_gold_file, sep=',', usecols=range(2,28)).values
 
-    crowd_no_gold_file = data_dir + 'crowd_on_sentences_with_no_experts.csv'
+    crowd_no_gold_file = os.path.join(data_dir, 'crowd_on_sentences_with_no_experts.csv')
     crowd_without_gold = pd.read_csv(crowd_no_gold_file, sep=',', usecols=range(2,100)).values
     nogold_doc_start = pd.read_csv(crowd_no_gold_file, sep=',', usecols=[1]).values
     nogold_text = pd.read_csv(crowd_no_gold_file, sep=',', usecols=[100]).values
@@ -168,10 +163,10 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
         text = text[:debug_size]
 
     # save files for our experiments with the tag 'evaluation_'
-    pd.DataFrame(gt).to_csv(data_dir + 'evaluation_gold.csv')
-    pd.DataFrame(crowd).to_csv(data_dir + 'evaluation_crowd.csv')
-    pd.DataFrame(doc_start).to_csv(data_dir + 'evaluation_doc_start.csv')
-    pd.DataFrame(text).to_csv(data_dir + 'evaluation_text.csv')
+    pd.DataFrame(gt).to_csv(os.path.join(data_dir, 'evaluation_gold.csv'))
+    pd.DataFrame(crowd).to_csv(os.path.join(data_dir, 'evaluation_crowd.csv'))
+    pd.DataFrame(doc_start).to_csv(os.path.join(data_dir, 'evaluation_doc_start.csv'))
+    pd.DataFrame(text).to_csv(os.path.join(data_dir, 'evaluation_text.csv'))
 
     if second_batch_workers_only:
         crowd = crowd[:, 26:]
@@ -281,13 +276,19 @@ if __name__ == '__main__':
     exp.alpha0_factor = best_factor
 
     exp.methods =  [
+        'majority',
+        # 'ds'
+        # 'best',
+        # 'worst'
         # 'bac_seq_integrateIF',
         # 'bac_seq',
-        'bac_seq_integrateIF_noHMM',
+        # 'bac_seq_integrateIF_noHMM',
     ]
 
-    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
-    #
+    # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
+
+
+
     # # values obtained from tuning on dev:
     # best_nu0factor = 0.1
     # best_diags = 10
@@ -335,30 +336,32 @@ if __name__ == '__main__':
     #
     # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, test_no_crowd=False)
     #
-    # settings obtained from tuning on dev:
-    # best_nu0factor = 1.0
-    # best_diags = 1.0
-    # best_factor = 5.0
-    #
-    # exp.nu0_factor = best_nu0factor
-    # exp.alpha0_diags = best_diags
-    # exp.alpha0_factor = best_factor
-    #
-    # exp.methods =  [
-    #                 # 'majority',
-    #                 # 'mace',
-    #                 # 'ds',
-    #                 'ibcc',
-    #                 # 'best',
-    #                 # 'worst',
-    #                 # 'bac_seq_integrateIF_weakprior',
-    #                 # 'bac_ibcc_integrateIF_weakprior',
-    #                 # 'bac_vec_integrateIF_weakprior',
-    # ]
-    #
-    # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
 
-    # # settings obtained from tuning on dev:
+
+    # settings obtained from tuning on dev:
+    best_nu0factor = 0.1
+    best_diags = 0.1
+    best_factor = 1.0
+
+    exp.nu0_factor = best_nu0factor
+    exp.alpha0_diags = best_diags
+    exp.alpha0_factor = best_factor
+
+    exp.methods =  [
+                    # 'majority',
+                    # 'mace',
+                    'ds',
+                    #'ibcc',
+                    # 'best',
+                    # 'worst',
+                    # 'bac_seq_integrateIF_weakprior',
+                    # 'bac_ibcc_integrateIF_weakprior',
+                    # 'bac_vec_integrateIF_weakprior',
+    ]
+
+    exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
+
+    # # # settings obtained from tuning on dev:
     # best_nu0factor = 0.1
     # best_diags = 0.1
     # best_factor = 0.1
@@ -371,5 +374,5 @@ if __name__ == '__main__':
     #     # 'bac_vec_integrateIF',
     #     'HMM_crowd',
     # ]
-
+    #
     # exp.run_methods(annos, gt, doc_start, output_dir, text, rerun_all=True, new_data=True)
