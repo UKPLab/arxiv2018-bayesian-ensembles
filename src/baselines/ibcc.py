@@ -158,7 +158,6 @@ class IBCC(object):
             self.lnPi[np.arange(self.nclasses), np.arange(self.nclasses), :] = np.log(0.9)
 
     def init_t(self):
-        kappa = (self.nu0 / np.sum(self.nu0, axis=0)).T
         if np.any(self.E_t):
             if self.sparse:
                 oldE_t = self.E_t_sparse
@@ -170,7 +169,13 @@ class IBCC(object):
                     Nold = self.N
         else:
             oldE_t = []
-        self.E_t = np.zeros((self.N, self.nclasses)) + kappa
+
+        # initialise t to the vote distributions
+        self.E_t = np.zeros((self.N, self.nclasses)) + self.nu0.T
+        for l in range(self.nclasses):
+            self.E_t[:, l] += np.sum(self.C[l], axis=1)
+        self.E_t /= np.sum(self.E_t, axis=1)[:, None]
+
         if np.any(oldE_t):
             self.E_t[0:Nold, :] = oldE_t[0:Nold, :]
         uncert_trainidxs = self.trainidxs.copy()  # look for labels that are not discrete values of valid classes
@@ -422,16 +427,9 @@ class IBCC(object):
         oldL = -np.inf
         _converged = False
         self.nIts = 0 #object state so we can check it later
+
         while not _converged and self.keeprunning:
             oldET = self.E_t.copy()
-            #update targets
-            #self._expec_t()
-            self.lnjoint()
-
-            if self.testidxs is not None:
-                self.E_t[self.testidxs, :] = _expec_t(self.lnpCT, self.testidxs)
-            else:
-                self.E_t = _expec_t(self.lnpCT, self.testidxs)
 
             #update params
             #self._calc_q_A()
@@ -440,6 +438,16 @@ class IBCC(object):
             if np.any(self.E_t):
                 self._post_alpha()
             self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores, self.use_ml)
+
+            # update targets
+            # self._expec_t()
+            self.lnjoint()
+
+            if self.testidxs is not None:
+                self.E_t[self.testidxs, :] = _expec_t(self.lnpCT, self.testidxs)
+            else:
+                self.E_t = _expec_t(self.lnpCT, self.testidxs)
+
             #check convergence every x iterations
             if np.mod(self.nIts, self.conv_check_freq) == self.conv_check_freq - 1:
                 if self.uselowerbound:

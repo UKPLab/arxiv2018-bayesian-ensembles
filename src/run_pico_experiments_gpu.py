@@ -26,9 +26,6 @@ best_begin_factor = 10
 
 exp = Experiment(None, 3, annos.shape[1], None, max_iter=20, begin_factor=best_begin_factor)
 
-exp.save_results = True
-exp.opt_hyper = False
-
 exp.alpha0_diags = best_diags
 exp.alpha0_factor = best_factor
 exp.nu0_factor = best_nu0factor

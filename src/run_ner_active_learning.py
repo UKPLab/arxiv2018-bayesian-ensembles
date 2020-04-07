@@ -32,8 +32,6 @@ for rep in range(1, num_reps):
         os.mkdir(output_dir)
 
     exp = Experiment(None, 9, annos.shape[1], None, max_iter=20, crf_probs=True, rep=rep)
-    exp.save_results = True
-    exp.opt_hyper = False#True
 
     exp.nu0_factor = 0.1
     exp.alpha0_diags = 1 # best_diags

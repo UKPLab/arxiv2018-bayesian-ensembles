@@ -9,14 +9,14 @@ class SequentialWorker(VectorWorker):
     # Worker model: sequential model of workers-----------------------------------------------------------------------------
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels, tagging_scheme,
-                 beginning_labels, inside_labels, outside_label, alpha0_outside_factor, rare_transition_pseudocount):
+                 beginning_labels, inside_labels, outside_label, alpha0_B_factor, rare_transition_pseudocount):
         super().__init__(alpha0_diags, alpha0_factor, L, nModels)
 
         self.tagging_scheme = tagging_scheme
         self.beginning_labels = beginning_labels
         self.inside_labels = inside_labels
         self.outside_label = outside_label
-        self.alpha0_outside_factor = alpha0_outside_factor
+        self.alpha0_B_factor = alpha0_B_factor
         self.rare_transition_pseudocount = rare_transition_pseudocount
         self.C_binary = {}
 
@@ -166,8 +166,8 @@ class SequentialWorker(VectorWorker):
 
         # The outside labels often need a stronger bias because they are way more frequent
         # we ought to change this to test whether amping up the outside labels really helps!
-        self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_outside_factor
-        #self.alpha0_data[self.outside_labels[0], self.outside_labels[0], :, :] *= self.alpha0_outside_factor
+        self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_B_factor
+        # self.alpha0[self.outside_label, self.outside_label] *= self.alpha0_B_factor
 
         # set priors for pseudo-counts invalid transitions (to low values)
         for i, restricted_label in enumerate(restricted_labels):
@@ -207,13 +207,12 @@ class SequentialWorker(VectorWorker):
 
                 # set the disallowed transition to as close to zero as possible
                 # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count
-
-                # disallowed_count = self.alpha0_data[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                # self.alpha0_data[:, other_restricted_label, other_restricted_label, :] += disallowed_count # sticks to wrong type
-
+                # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count #TMP
                 self.alpha0[:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
+
                 for midx in range(self.nModels):
+                    # disallowed_count = self.alpha0_data[midx][:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                    # self.alpha0_data[midx][:, other_restricted_label, other_restricted_label, :] += disallowed_count  # TMP sticks to wrong type
                     self.alpha0_data[midx][:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
 
     def _calc_EPi(self, alpha):

@@ -138,7 +138,28 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_task
 #     new_data=regen_data
 # )
 #
-# #----------------------------------------------------------------------------
+# niter = 20 # variational inference iterations
+#
+# exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
+#
+# exp.nu0_factor = 0.1
+# exp.alpha0_diags = 0.1#100
+# exp.alpha0_factor = 1
+# output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (exp.nu0_factor, exp.alpha0_diags, exp.alpha0_factor))
+#
+# exp.methods =  [
+#                 'ibcc',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(
+#     annos, gt, doc_start, output_dir, text,
+#     # ground_truth_nocrowd=gt_nocrowd, doc_start_nocrowd=doc_start_nocrowd, text_nocrowd=text_nocrowd,
+#     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
+#     new_data=regen_data
+# )
+
+#----------------------------------------------------------------------------
 niter = 20 # variational inference iterations
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
@@ -164,4 +185,4 @@ exp.run_methods(
     ground_truth_val=gt_val, doc_start_val=doc_start_val, text_val=text_val,
     new_data=regen_data
 )
-#
+

@@ -18,9 +18,6 @@ gt, annos, doc_start, text, _, _, _, gt_task1_val, gt_val, doc_start_val, text_v
 niter = 20 # variational inference iterations
 
 exp = Experiment(None, 9, annos.shape[1], None, max_iter=niter)
-exp.save_results = True
-exp.opt_hyper = False#True
-# exp.use_lb = True
 
 exp.nu0_factor = 1
 exp.alpha0_diags = 1

@@ -210,7 +210,7 @@ class Experiment(object):
 
     num_classes = None
 
-    save_results = False
+    save_results = True
     save_plots = False
     show_plots = False
 
@@ -310,7 +310,7 @@ class Experiment(object):
 
         scores = np.zeros((len(nu0factor_proposals) * len(alpha0diag_proposals), len(alpha0factor_proposals)))
 
-        best_scores = np.zeros(4)
+        best_scores = np.zeros(4) - np.inf
         best_idxs = np.zeros(4)
 
         for h, nu0factor in enumerate(nu0factor_proposals):
@@ -345,7 +345,11 @@ class Experiment(object):
                                                                  text_val=text_val,
                                                                  bootstrapping=False,
                                                                  new_data=new_data)
-                    scores[(h*len(alpha0diag_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :] # 3 is F1score
+                    if metric_idx_to_optimise != 5:
+                        scores[(h*len(alpha0diag_proposals)) + i, j] = all_scores[metric_idx_to_optimise, :]
+                    else:
+                        scores[(h*len(alpha0diag_proposals)) + i, j] = -all_scores[metric_idx_to_optimise, :]
+
                     print('Scores for %f, %f, %f: %f' % (nu0factor, alpha0diag, alpha0factor,
                                                          scores[(h*len(alpha0diag_proposals)) + i, j]))
 
@@ -478,16 +482,18 @@ class Experiment(object):
 
         return agg, probs
 
+
     def _run_ds(self, annotations):
         probs = ds(annotations, self.num_classes, self.nu0_factor, self.max_iter)
         agg = np.argmax(probs, axis=1)
         return agg, probs
 
-    # def _run_ibcc(self, annotations, use_ml=False):
-    #     probs, _ = ibccvb(annotations, self.num_classes, self.nu0_factor,
-    #                       self.alpha0_factor, self.alpha0_diags, self.begin_factor, self.max_iter)
-    #     agg = np.argmax(probs, axis=1)
-    #     return agg, probs
+
+    def _run_ibcc2(self, annotations, use_ml=False):
+        probs, _ = ibccvb(annotations, self.num_classes, self.nu0_factor,
+                          self.alpha0_factor, self.alpha0_diags, self.begin_factor, self.max_iter)
+        agg = np.argmax(probs, axis=1)
+        return agg, probs
 
 
     def _run_ibcc(self, annotations, use_ml=False):
@@ -576,10 +582,10 @@ class Experiment(object):
 
         # annotations = annotations[:, np.any(annotations!=-1, axis=0)]
 
-        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter, # eps=-1,
+        bsc_model = bsc.BSC(L=L, K=annotations.shape[1], max_iter=self.max_iter,  # eps=-1,
                             inside_labels=inside_labels, outside_label=outside_label, beginning_labels=begin_labels,
                             alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
-                            alpha0_outside_factor=self.begin_factor,
+                            alpha0_B_factor=self.begin_factor,
                             beta0_factor=self.nu0_factor, worker_model=self.bsc_worker_model, tagging_scheme='IOB2',
                             data_model=data_model, transition_model=transition_model, no_words=no_words,
                             use_lowerbound=False)
@@ -992,6 +998,9 @@ class Experiment(object):
                 elif  method.split('_')[0] == 'ibcc':
                     agg, probs = self._run_ibcc(annotations)
 
+                elif method.split('_')[0] == 'ibcc2': # this is the newer and simpler implementation
+                    agg, probs = self._run_ibcc2(annotations)
+
                 elif method.split('_')[0] == 'bac':
 
                     method_bits = method.split('_')
@@ -1128,9 +1137,9 @@ class Experiment(object):
                     with open(outputdir + 'probs_nocrowd_%s.pkl' % file_identifier, 'wb') as fh:
                         pickle.dump(probs_allmethods_nocrowd, fh)
 
-                    if model is not None and not active_learning and return_model:
-                        with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
-                            pickle.dump(model, fh)
+                    # if model is not None and not active_learning and return_model:
+                    #     with open(outputdir + 'model_%s.pkl' % method, 'wb') as fh:
+                    #         pickle.dump(model, fh)
 
                 if active_learning and Nseen < Nannos:
 

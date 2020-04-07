@@ -38,7 +38,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
-                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
+                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_B_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-12,
                  verbose=False, use_lowerbound=True):
@@ -54,7 +54,6 @@ class BSC(object):
 
         self.L = L
         self.K = K
-
 
         self.nu0 = nu0
 
@@ -98,7 +97,7 @@ class BSC(object):
 
         elif worker_model == 'seq':
             self.A = SequentialWorker(alpha0_diags, alpha0_factor, L, len(data_model), tagging_scheme,
-                                      beginning_labels, inside_labels, outside_label, alpha0_outside_factor,
+                                      beginning_labels, inside_labels, outside_label, alpha0_B_factor,
                                       rare_transition_pseudocount)
             self.alpha_shape = (self.L, self.L)
 
@@ -106,7 +105,7 @@ class BSC(object):
             self.A = VectorWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (self.L, self.L)
 
-        self.alpha0_outside_factor = alpha0_outside_factor
+        self.alpha0_B_factor = alpha0_B_factor
 
         self.rare_transition_pseudocount = rare_transition_pseudocount
 
@@ -571,7 +570,7 @@ class MarkovLabelModel(LabelModel):
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             disallowed_counts = self.beta0[outside_label, restricted_label] - rare_transition_pseudocount
-            # self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            # self.beta0[outside_label, unrestricted_labels[i]] += disallowed_counts
             self.beta0[outside_label, outside_label] += disallowed_counts
             self.beta0[outside_label, restricted_label] = rare_transition_pseudocount
 
@@ -587,6 +586,8 @@ class MarkovLabelModel(LabelModel):
             for j, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
                     continue
+                # disallowed_counts = self.beta0[other_restricted_label, restricted_label] - rare_transition_pseudocount
+                # self.beta0[other_restricted_label, other_restricted_label] += disallowed_counts
                 self.beta0[other_restricted_label, restricted_label] = rare_transition_pseudocount
 
 
@@ -621,6 +622,20 @@ class MarkovLabelModel(LabelModel):
         self.Et_joint[doc_start, self.outside_label, :] = self.Et[doc_start, :] * B[self.outside_label, :]
 
         self.Et_joint /= np.sum(self.Et_joint, axis=(1, 2))[:, None, None]
+
+        # # initialise using the fraction of votes for each label
+        # self.Et_joint = np.zeros((self.N, self.L, self.L))
+        # for l in range(self.L):
+        #     for m in range(self.L):
+        #         self.Et_joint[1:, l, m] = np.sum((C[:-1]==l) & (C[1:]==m), axis=1)
+        # self.Et_joint += self.beta0[None, :, :]
+        # self.Et_joint[doc_start, :, :] = 0
+        # for l in range(self.L):
+        #     self.Et_joint[doc_start, self.outside_label, l] = np.sum(C[doc_start, :]==l, axis=1) \
+        #                                                       + self.beta0[self.outside_label, l]
+        # self.Et_joint /= np.sum(self.Et_joint, axis=(1, 2))[:, None, None]
+        #
+        # self.Et = np.sum(self.Et_joint, axis=1)
 
         return self.Et
 
@@ -868,10 +883,8 @@ class IndependentLabelModel(LabelModel):
 
         super().init_t(C, doc_start, A, blanks, gold)
 
-        beta0 = self.beta0
-
         # initialise using the fraction of votes for each label
-        self.Et = np.zeros((C.shape[0], self.L)) + beta0
+        self.Et = np.zeros((C.shape[0], self.L)) + self.beta0
         for l in range(self.L):
             self.Et[:, l] += np.sum(C == l, axis=1)
         self.Et /= np.sum(self.Et, axis=1)[:, None]
