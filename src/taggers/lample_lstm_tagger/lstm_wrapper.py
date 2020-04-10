@@ -3,24 +3,29 @@ import pickle
 import sys
 import time
 from collections import OrderedDict
-import itertools
 
 import sklearn.metrics as skm
 
-from lample_lstm_tagger.utils import create_input
-from lample_lstm_tagger.utils import models_path, evaluate, eval_script, eval_temp
-from lample_lstm_tagger.loader import word_mapping, char_mapping, tag_mapping
-from lample_lstm_tagger.loader import update_tag_scheme, prepare_dataset
-from lample_lstm_tagger.loader import augment_with_pretrained
-from lample_lstm_tagger.model import Model
+from taggers.lample_lstm_tagger.utils import create_input
+from taggers.lample_lstm_tagger.utils import models_path
+from taggers.lample_lstm_tagger.loader import word_mapping, char_mapping
+from taggers.lample_lstm_tagger.loader import prepare_dataset
+from taggers.lample_lstm_tagger.model import Model
 
 import numpy as np
 from scipy.special import logsumexp
 
 MAX_NO_EPOCHS = 25 # number of epochs recommended to try before testing against dev set for the first time
 
-def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0, include_missing=False):
-    sentences_list = np.empty(int(np.sum(doc_start[:nannotations])), dtype=object)
+def data_to_lstm_format(text, doc_start, labels, nclasses=0, include_missing=False):
+
+    # use only the data points with labels
+    text = text[labels != -1]
+    doc_start = doc_start[labels != -1]
+    labels = labels[labels != -1]
+    nannotations = len(doc_start)
+
+    sentences_list = np.empty(int(np.sum(doc_start)), dtype=object)
 
     labels = labels.flatten()
 

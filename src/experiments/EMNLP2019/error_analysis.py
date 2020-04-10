@@ -180,7 +180,7 @@ def error_analysis(gt_path, anno_path, doc_start_path, prediction_path1, output_
                         gt[slice_],
                         doc_start[slice_])).T
 
-        # add on the original annotations
+        # add on the original annos
         if annos is not None:
             err = np.concatenate((err, annos[slice_, :]), axis=1)
 
@@ -387,14 +387,14 @@ if __name__ == '__main__':
 
     # PICO --------------------------------------------------------------------
 
-    prior_str = 'pico_task1_ibcc_IF'
-    error_analysis(dataroot + '/data/bio/gt.csv',
-                   dataroot + '/data/bio/annos.csv',
-                   dataroot + '/data/bio/doc_start.csv',
-                   outroot + '/pico2/pred_started-2019-05-11-05-58-08-Nseen56858.csv',
-                   outroot + '/analysis_%s' % prior_str,
-                   outroot + '/analysis_counts_%s' % prior_str,
-                   0, remove_val=True)
+    # prior_str = 'pico_task1_ibcc_IF'
+    # error_analysis(dataroot + '/data/bio/gt.csv',
+    #                dataroot + '/data/bio/annos.csv',
+    #                dataroot + '/data/bio/doc_start.csv',
+    #                outroot + '/pico2/pred_started-2019-05-11-05-58-08-Nseen56858.csv',
+    #                outroot + '/analysis_%s' % prior_str,
+    #                outroot + '/analysis_counts_%s' % prior_str,
+    #                0, remove_val=True)
 
     # prior_str = 'pico_task1_bac_ibcc_IF'
     # error_analysis(dataroot + '/data/bio/gt.csv',

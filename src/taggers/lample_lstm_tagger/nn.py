@@ -1,6 +1,6 @@
 import theano
 import theano.tensor as T
-from lample_lstm_tagger.utils import shared
+from taggers.lample_lstm_tagger.utils import shared
 
 
 class HiddenLayer(object):

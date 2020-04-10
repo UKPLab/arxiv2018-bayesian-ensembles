@@ -89,14 +89,30 @@ reproduce the experiments or run the method in a new project.
 
 Python 3.5 or higher.
 
-Use virtualenv to install the packages listed in requirements.txt -- you can use the script `setup.sh` to automatically set up a new
-virtual environment in the directory `env`.
-Please also run:
-
-~~~bash
-python -m spacy download en_core_web_sm
-python -m spacy download en
+Installation: there are two installation scripts. If you want to run the
+experiments from either of the papers, use:
 ~~~
+chmod +x setup_with_expts.sh
+./setup_with_expts.sh
+~~~
+
+If you don't need to run the experiments and just want to use the methods,
+you can use:
+~~~
+chmod +x setup.sh
+./setup.sh
+~~~
+
+These scripts use virtualenv to set up a new
+virtual environment in the directory `env` and 
+install the packages listed in requirements.txt.
+The script `setup_with_expts.sh` also adds the paths for experiment scripts and installs the Spacy packages
+required for some experiments.
+
+Set data path: in `src/evaluation/experiments.py`, change `data_root_dir` to point
+to the location where you would like to store datasets and results.
+Create the directories `<data_root_dir>/data`  and
+`<data_root_dir>/output`.
 
 ### Obtaining Datasets
 
@@ -106,29 +122,25 @@ follow these steps
 to install the datasets. The data for the transfer learning experiments in the
 AAAI 2020 paper is already in the correct place.  
 
-1. Create the directories `../../data/bayesian_sequence_combination/data`  and
-`../../data/bayesian_sequence_combination/output`.
-The `../../` is relative to the directory containing this repository.
-If you want to put the data or results somewhere else,
-you can replace all references to '../../data' in the code with the desired location.
+1. Set the data_root_dir, data and output paths as described above.
 
 2. Extract the NER crowdsourced data from `data/crf-ma-NER-task1.zip`.
-Move the directory to `../../data/bayesian_sequence_combination/data`.
+Move the directory to `<data_root_dir>/data`.
 
 3. Extract the NER test data from `data/English NER.zip` and
-move it to `../../data/bayesian_sequence_combination/data`.
+move it to `<data_root_dir>/data`.
 
 4. For the PICO dataset,
-extract the data from `data/bio.zip` and move it to `../../data/bayesian_sequence_combination/data`.
+extract the data from `data/bio.zip` and move it to `<data_root_dir>/data`.
 If you want to get the original data that these files were derived from,
 checkout the git repo https://github.com/yinfeiy/PICO-data/ (you don't need these
 to repeat the experiments).
 
 5. Create a link to the PICO data:
-`ln -s ~/git/PICO-data/ ../../data/bayesian_sequence_combination/data/bio-PICO`,
+`ln -s ~/git/PICO-data/ <data_root_dir>/data/bio-PICO`,
 where the path `~/git/PICO-data/` should be replaced with location where you checked out the PICO-data.
 
-6. For the ARG dataset, unzip the data from `data/argmin_LMU.zip` and move it to `../../data/bayesian_sequence_combination/data`.
+6. For the ARG dataset, unzip the data from `data/argmin_LMU.zip` and move it to `<data_root_dir>/data`.
 
 ## Running the experiments from EMNLP 2019
 
@@ -149,55 +161,55 @@ These instructions are for "A Bayesian Approach To Sequence Tagging with Crowds"
 
 You can run the table 2 experiments using the following:
 
-Run `src/run_ner_experiments.py`.
+Run `python src/experiments/EMNLP2019/run_ner_experiments.py`.
 
 Uncomment methods in the code to enable or disable them.
 The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
 comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters.
 
-Results are saved to `~\data\bayesian_sequence_combination\output\ner\result_started_<date>_<time>...csv`.
+Results are saved to `<data_root_dir>\output\ner\result_started_<date>_<time>...csv`.
 
 For the active learning simulation:
 
-Edit `src/run_ner_active_learning.py` to enable or disable the methods you want to test.
+Edit `src/experiments/EMNLP2019/run_ner_active_learning.py` to enable or disable the methods you want to test.
 
-Run `src/run_ner_active_learning.py`.
+Run `python src/experiments/EMNLP2019/run_ner_active_learning.py`.
 
-Run `src/evaluation/plot_active_learning.py`
+Run `python src/experiments/EMNLP2019/plot_active_learning.py`
 to output plots for active learning (the plots are output to the directory specified in this script).
 
 ### PICO experiments
 
 You can get the table 2 results using the following:
 
-Run `src/run_pico_experiments.py`.
+Run `python src/experiments/EMNLP2019/run_pico_experiments.py`.
 
 Uncomment methods in the code to enable or disable them.
 The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
 comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters.
 
-Results are saved to `~\data\bayesian_sequence_combination\output\pico\result_started_<date>_<time>...csv`.
+Results are saved to `<data_root_dir>\output\pico\result_started_<date>_<time>...csv`.
 
 ### ARG experiments
 
 For the ARG results in table 2, the scripts follow the same pattern as for NER
-and PICO. Please run `src/run_arg_experiments.py`.
+and PICO. Please run `src/experiments/EMNLP2019/run_arg_experiments.py`.
 
-Results are saved to `~\data\bayesian_sequence_combination\output\arg_LMU_<hyperparameters>\result_started_<date>_<time>...csv`.
+Results are saved to `<data_root_dir>\output\arg_LMU_<hyperparameters>\result_started_<date>_<time>...csv`.
 
 ### Error analysis
 
 To reproduce the results for Table 3.
 First you need to run one of the experiment scripts above,
-e.g. `src/run_ner_experiments.py`,
+e.g. `python src/run_ner_experiments.py`,
 to obtain some results.
 
 Then, modify the error analysis script,
  `src/evaluation/error_analysis.py`,
  to point to the `pred_start_<date>_<time>...csv`
-file that was output by your experiment in `~\data\bayesian_sequence_combination\output\`.
+file that was output by your experiment in `<data_root_dir>\output\`.
 
-Now, run `src/evaluation/error_analysis.py`.
+Now, run `python src/experiments/error_analysis.py`.
 
 ### Annotator models
 
@@ -216,7 +228,7 @@ First, download the German Fasttext embeddings from `https://dl.fbaipublicfiles.
 
 To run the zero-shot experiments (Table 3):
 
-Run `src/run_famulus_unsupervised.py <"TEd"|"Med">`.
+Run `python src/experiments/AAAI2020/run_famulus_unsupervised.py <"TEd"|"Med">`.
 
 The results will be printed to the console. Change line 49 `basemodels = ` to
 modify whether CRF or LSTM base models are used.
@@ -225,11 +237,11 @@ FAMULUS datasets.
 
 To reprint the key results:
 
-Run `src/give_me_the_headlines.py 1 "'bilstm-crf', 'crf'" <"TEd"|"Med">`
+Run `python src/experiments/AAAI2020/give_me_the_headlines.py 1 "'bilstm-crf', 'crf'" <"TEd"|"Med">`
 
 To run the semi-supervised learning experiments (Figure 2):
 
-Run `src/run_famulus_semisupervised.py`.
+Run `python src/experiments/AAAI2020/run_famulus_semisupervised.py`.
 
 Results are plotted and saved to `results/test3_spanf1_<class ID>.pdf`.
 
@@ -239,15 +251,15 @@ Results are plotted and saved to `results/test3_spanf1_<class ID>.pdf`.
 These are the experiments with NER and PICO crowdsourced data.
 
 
-Run `src/run_ner_experiments_gpu.py` and
-`src/run_pico_experiments_gpu.py`.  
+Run `python src/experiments/AAAI2020/run_ner_experiments_gpu.py` and
+`python src/experiments/AAAI2020/run_pico_experiments_gpu.py`.  
 
 Uncomment methods in the code to enable or disable them.
 The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
 comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters.
 
-Results are saved to `~\data\bayesian_sequence_combination\output\ner3\result_started_<date>_<time>...csv`
-and `~\data\bayesian_sequence_combination\output\pico3\result_started_<date>_<time>...csv`.
+Results are saved to `<data_root_dir>\output\ner3\result_started_<date>_<time>...csv`
+and `<data_root_dir>\pico3\result_started_<date>_<time>...csv`.
 
 
 ## Using Bayesian Sequence Combination (BSC)

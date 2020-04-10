@@ -9,8 +9,8 @@ import numpy as np
 #from flair.models import SequenceTagger
 from sklearn_crfsuite.estimator import CRF
 
-from helpers import get_root_dir
-from lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
+from AAAI2020.helpers import get_root_dir
+from taggers.lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
 
 
 embpath = os.path.join(get_root_dir(), 'cc.de.300.vec')
@@ -148,11 +148,8 @@ class lample:
 
             labeller = LSTMWrapper(self.dir, embpath)
 
-            N = len(labels)
-            train_sentences, IOB_map, IOB_label = data_to_lstm_format(N, text, doc_start, labels.flatten(), self.nclasses)
-
-            Nde = len(delabels)
-            dev_sentences, _, _ = data_to_lstm_format(Nde, detext, dedoc_start, delabels.flatten(), self.nclasses)
+            train_sentences, IOB_map, IOB_label = data_to_lstm_format(text, doc_start, labels.flatten(), self.nclasses)
+            dev_sentences, _, _ = data_to_lstm_format(detext, dedoc_start, delabels.flatten(), self.nclasses)
 
             all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 
@@ -172,6 +169,6 @@ class lample:
 
     def predict(self, text, doc_start):
         Nte = len(text)
-        test_sentences, _, _ = data_to_lstm_format(Nte, text, doc_start, np.ones(Nte), self.nclasses)
+        test_sentences, _, _ = data_to_lstm_format(text, doc_start, np.ones(Nte), self.nclasses)
         preds_s, _ = self.labeller.predict_LSTM(test_sentences)
         return preds_s

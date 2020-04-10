@@ -1,8 +1,7 @@
 import os, numpy as np, json
 
-from helpers import evaluate, get_root_dir
-from lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
-from seq_taggers import simple_crf, lample, flair_ner, flair_pos
+from AAAI2020.helpers import evaluate, get_root_dir
+from AAAI2020.seq_taggers import simple_crf, lample, flair_ner, flair_pos
 
 '''
 Structure of data folder:
@@ -15,9 +14,9 @@ In each directory there are the same files.
 Files with names ending in '.txt_ed' contain:
     column 0 = text
     last column = doc_start
-    columns 1, 2, 3, 4 = individual annotations for various numbers of classes using the BIO notation
+    columns 1, 2, 3, 4 = individual annos for various numbers of classes using the BIO notation
     column 5 = gold in BIO notation?
-    column 6, 7, 8, 9 = individual annotations as numeric class IDs
+    column 6, 7, 8, 9 = individual annos as numeric class IDs
         0 = I
         1 = O
         2 = B

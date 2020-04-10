@@ -29,9 +29,9 @@ import numpy as np
 import json
 
 from baselines.dawid_and_skene import ibccvb
-from base_models import run_base_models
+from AAAI2020.base_models import run_base_models
 from bsc import bsc
-from helpers import evaluate, Dataset, get_anno_matrix, get_root_dir
+from AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir
 
 reload = True
 rerun_aggregators = True

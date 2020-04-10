@@ -49,7 +49,7 @@ class BSC(object):
         if self.use_lb:
             self.lb = -np.inf
 
-        # tagging_scheme can be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
+        # tagging_scheme can be 'IOB2' (all annos start with B) or 'IOB' (only annos
         # that follow another start with B).
 
         self.L = L
@@ -87,11 +87,11 @@ class BSC(object):
             self.A = AccuracyWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (2)
 
-        elif worker_model == 'mace':
+        elif worker_model == 'mace' or worker_model == 'spam':
             self.A = MACEWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (2 + self.L)
 
-        elif worker_model == 'ibcc':
+        elif worker_model == 'ibcc' or worker_model == 'CM':
             self.A = ConfusionMatrixWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (self.L, self.L)
 
@@ -101,7 +101,7 @@ class BSC(object):
                                       rare_transition_pseudocount)
             self.alpha_shape = (self.L, self.L)
 
-        elif worker_model == 'vec':
+        elif worker_model == 'vec' or worker_model == 'CV':
             self.A = VectorWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (self.L, self.L)
 
@@ -246,9 +246,9 @@ class BSC(object):
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
             gold_labels=None, C_data_initial=None):
         '''
-        Runs the BAC bsc with the given annotations and list of document starts.
+        Runs the BAC bsc with the given annos and list of document starts.
 
-        C: use -1 to indicate where the annotations are missing. In future we may want to change
+        C: use -1 to indicate where the annos are missing. In future we may want to change
         this to a sparse format?
 
         '''
@@ -417,7 +417,7 @@ class BSC(object):
         with Parallel(n_jobs=-1, backend='threading') as parallel:
 
             doc_start = doc_start.astype(bool)
-            self.C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
+            self.C = np.zeros((len(doc_start), self.K), dtype=int) - 1  # all blank
             self.blanks = self.C == 0
 
             self.LM.lnB = psi(self.LM.beta) - psi(np.sum(self.LM.beta, -1))[:, None]
@@ -601,7 +601,7 @@ class MarkovLabelModel(LabelModel):
         self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
 
         if np.any(np.isnan(self.lnB)):
-            print('_calc_q_A: nan value encountered!')
+            print('update_B: nan value encountered!')
 
     def init_t(self, C, doc_start, A, blanks, gold=None):
 
@@ -877,7 +877,7 @@ class IndependentLabelModel(LabelModel):
         self.lnB = self.lnB[None, :] + ln_word_likelihood
 
         if np.any(np.isnan(self.lnB)):
-            print('_calc_q_A: nan value encountered!')
+            print('_update_B: nan value encountered!')
 
     def init_t(self, C, doc_start, A, blanks, gold=None):
 

@@ -15,7 +15,6 @@ import pickle
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.cm as cm
 import matplotlib.patheffects as path_effects
 
@@ -130,9 +129,8 @@ for w, worker_model in enumerate(worker_models):
         model.max_iter = 20
 
         if data_model is not None and 'LSTM' in data_model:
-            import lample_lstm_tagger.lstm_wrapper as lstm_wrapper
-            dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(len(gt_dev), text_dev,
-                                                                   doc_start_dev, gt_dev)
+            import taggers.lample_lstm_tagger.lstm_wrapper as lstm_wrapper
+            dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(text_dev, doc_start_dev, gt_dev)
         else:
             dev_sentences = None
 

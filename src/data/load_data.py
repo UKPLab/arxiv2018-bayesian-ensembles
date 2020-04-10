@@ -8,19 +8,11 @@ Created on Jul 6, 2017
 '''
 
 import os
-import re
-import sys
-
 import pandas as pd
 import numpy as np
-import glob
+from evaluation.experiment import data_root_dir
 
-from sklearn.feature_extraction.text import CountVectorizer
-
-from evaluation.experiment import Experiment
-
-
-all_root_dir = os.path.expanduser('~/data/bayesian_sequence_combination')
+all_root_dir = data_root_dir#os.path.expanduser('~/data/bayesian_sequence_combination')
 data_root_dir = os.path.join(all_root_dir, 'data')
 output_root_dir = os.path.join(all_root_dir, 'output')
 
@@ -143,10 +135,10 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
         print(regen_data_files)
         print(os.path.isfile(savepath + '/annos.csv'))
 
-        anno_path_root = os.path.join(data_root_dir, 'bio-PICO/annotations/')
+        anno_path_root = os.path.join(data_root_dir, 'bio-PICO/annos/')
 
         # There are four folders here:
-        # acl17-test: the only one containing 'professional' annotations. 191 docs
+        # acl17-test: the only one containing 'professional' annos. 191 docs
         # train: 3549 docs
         # dev: 500 docs
         # test: 500 docs
@@ -240,7 +232,7 @@ def _map_ner_str_to_labels(arr):
     try:
         arr_ints = arr.astype(int)
     except:
-        print("Could not map all annotations to integers. The annotations we found were:")
+        print("Could not map all annos to integers. The annos we found were:")
         uannos = []
         for anno in arr:
             if anno not in uannos:
@@ -287,8 +279,8 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                 annos_to_keep[t] = False
 
 
-        # compare the tokens in the worker annotations to the gold labels. They are misaligned in the dataset. We will
-        # skip labels in the worker annotations that are assigned to only a part of a token in the gold dataset.
+        # compare the tokens in the worker annos to the gold labels. They are misaligned in the dataset. We will
+        # skip labels in the worker annos that are assigned to only a part of a token in the gold dataset.
         char_counter = 0
         gold_tok_idx = 0
 
@@ -323,7 +315,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                 if char_counter < gold_char_idx and \
                         (last_accepted_tok + tok) in gold_tokens[doc_str][gold_tok_idx-1]:
-                    print('Correcting misaligned annotations (split word in worker data): %i, %s' % (t, tok))
+                    print('Correcting misaligned annos (split word in worker data): %i, %s' % (t, tok))
 
                     skip_sentence = True
 
@@ -339,7 +331,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     char_counter += len(tok)
 
                 elif tok not in gold_tok or (tok == '' and gold_tok != ''):
-                    print('Correcting misaligned annotations (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
+                    print('Correcting misaligned annos (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
 
                     skip_sentence = True
 
@@ -497,7 +489,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         os.mkdir(savepath)
 
     # within each of these folders below is an mturk_train_data folder, containing crowd labels, and a ground_truth
-    # folder. Rodrigues et al. have assigned document IDs that allow us to match up the annotations from each worker.
+    # folder. Rodrigues et al. have assigned document IDs that allow us to match up the annos from each worker.
     # Nguyen et al. have split the training set into the val/test folders for task 1. Data is otherwise the same as in
     # the Rodrigues folder under mturk/extracted_data.
     task1_val_path = os.path.join(data_root_dir, 'crf-ma-NER-task1/val/')
@@ -508,8 +500,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     task2_test_path = os.path.join(data_root_dir, 'English NER/eng.testb')
 
     if regen_data_files or not os.path.isfile(savepath + '/task1_val_annos.csv'):
-        # Steps to load data (all steps need to map annotations to consecutive integer labels).
-        # 1. Create an annos.csv file containing all the annotations in task1_val_path and task1_test_path.
+        # Steps to load data (all steps need to map annos to consecutive integer labels).
+        # 1. Create an annos.csv file containing all the annos in task1_val_path and task1_test_path.
 
         # load the gold data in the same way as the worker data
         gold_data = _load_rodrigues_annotations(os.path.join(task1_val_path, 'ground_truth/'), 'gold')
@@ -523,7 +515,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # merge gold with the worker data
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
-        num_annotations = np.zeros(data.shape[0]) # count annotations per token
+        num_annotations = np.zeros(data.shape[0]) # count annos per token
         for col in annotator_cols:
             num_annotations += np.invert(data[col].isna())
 
@@ -534,15 +526,15 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
             # get the annotation counts for this doc
             counts = num_annotations[drows]
 
-            # check that all tokens have same number of annotations
+            # check that all tokens have same number of annos
             if len(np.unique(counts)) > 1:
                 print('Validation data: we have some misaligned labels.')
                 print(counts)
 
             if np.any(counts.values == 0):
-                print('Removing document %s with no annotations.' % doc)
+                print('Removing document %s with no annos.' % doc)
 
-        # remove any lines with no annotations
+        # remove any lines with no annos
         annotated_idxs = num_annotations >= 1
         data = data[annotated_idxs]
 
@@ -559,7 +551,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # save the annos.csv
         data.to_csv(savepath + '/task1_val_gt.csv', columns=['gold'], header=False, index=False)
 
-        # 3. Load worker annotations for test set.
+        # 3. Load worker annos for test set.
         # load the gold data in the same way as the worker data
         gold_data = _load_rodrigues_annotations(
             os.path.join(task1_test_path, 'ground_truth/'), 'gold')
@@ -574,7 +566,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
 
-        num_annotations = np.zeros(data.shape[0]) # count annotations per token
+        num_annotations = np.zeros(data.shape[0]) # count annos per token
         for col in annotator_cols:
             num_annotations += np.invert(data[col].isna())
 
@@ -585,15 +577,15 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
             # get the annotation counts for this doc
             counts = num_annotations[drows]
 
-            # check that all tokens have same number of annotations
+            # check that all tokens have same number of annos
             if len(np.unique(counts)) > 1:
                 print('Test data: we have some misaligned labels.')
                 print(counts)
 
             if np.any(counts.values == 0):
-                print('Removing document %s with no annotations.' % doc)
+                print('Removing document %s with no annos.' % doc)
 
-        # remove any lines with no annotations
+        # remove any lines with no annos
         annotated_idxs = num_annotations >= 1
         data = data[annotated_idxs]
 
@@ -610,7 +602,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # save the annos.csv
         data.to_csv(savepath + '/task1_test_gt.csv', columns=['gold'], header=False, index=False)
 
-        # 5. Create a file containing only the words for the task 2 validation set, i.e. like annos.csv with no annotations.
+        # 5. Create a file containing only the words for the task 2 validation set, i.e. like annos.csv with no annos.
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_val_path but blank out the task_1 labels
         # (for tuning the LSTM for task 2)
 
@@ -635,7 +627,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         eng_val.to_csv(savepath + '/task2_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
 
-        # 6. Create a file containing only the words for the task 2 test set, i.e. like annos.csv with no annotations.
+        # 6. Create a file containing only the words for the task 2 test set, i.e. like annos.csv with no annos.
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_test_path but blank out the task_1 labels/
         eng_test = pd.read_csv(task2_test_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'],
                                skip_blank_lines=True, quoting=csv.QUOTE_NONE)
@@ -677,14 +669,14 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     print('loading annos for task1 val...')
     annos_v = pd.read_csv(savepath + '/task1_val_annos.csv', skip_blank_lines=False)
 
-    # remove any lines with no annotations
+    # remove any lines with no annos
     # annotated_idxs = np.argwhere(np.any(annos_v != -1, axis=1)).flatten()
     # annos_v = annos_v.iloc[annotated_idxs, :]
 
     annos = pd.concat((annos, annos_v), axis=0)
     annos = annos.fillna(-1)
     annos = annos.values
-    print('loaded annotations for %i tokens' % annos.shape[0])
+    print('loaded annos for %i tokens' % annos.shape[0])
 
     print('loading text data for task1 val...')
     text_v = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
@@ -724,17 +716,6 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     print('loading ground truth for task 2 test')
     gt_task2 = pd.read_csv(savepath + '/task2_test_gt.csv', skip_blank_lines=False, header=None).values
 
-    # validation sets for methods that predict on features only
-    print('loading text data for task 2 val')
-    text_val_task2 = pd.read_csv(savepath + '/task2_val_text.csv', skip_blank_lines=False, header=None)
-    text_val_task2 = text_val_task2.fillna(' ').values
-
-    print('loading doc_starts for task 2 val')
-    doc_start_val_task2 = pd.read_csv(savepath + '/task2_val_doc_start.csv', skip_blank_lines=False, header=None).values
-
-    print('loading ground truth for task 2 val')
-    gt_val_task2 = pd.read_csv(savepath + '/task2_val_gt.csv', skip_blank_lines=False, header=None).values
-
     # fix some invalid transitions in the data. These seem to be caused by some bad splitting between sentences.
     # restricted = [0, 3, 5, 7]
     # unrestricted = [2, 4, 6, 8]
@@ -760,7 +741,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     #                 gt_val_task1[tok] = unrestricted[typeid]
 
     return gt, annos, doc_start, text, gt_task2, doc_start_task2, text_task2, \
-           gt_val_task1, gt_val_task2, doc_start_val_task2, text_val_task2, gt_all
+           gt_val_task1, gt_all
 
 
 def cap_number_of_workers(crowd, doc_start, max_workers_per_doc):
@@ -850,8 +831,15 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
         if max_workers_per_doc > 0:
             crowd = cap_number_of_workers(crowd, doc_start, max_workers_per_doc)
 
+
         # split dev set
         gt, crowd_dev, gt_dev, doc_start_dev, text_dev = split_dev_set(gt, crowd, text, doc_start)
+
+        if debug_size:
+            gt = gt[:debug_size]
+            crowd = crowd[:debug_size]
+            doc_start = doc_start[:debug_size]
+            text = text[:debug_size]
 
         return gt, crowd, doc_start, text, crowd_dev, gt_dev, doc_start_dev, text_dev
 
@@ -872,7 +860,7 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
 
     print('Number of tokens = %i' % crowd_without_gold.shape[0])
 
-    # some of these data points may have no annotations
+    # some of these data points may have no annos
     valididxs = np.any(crowd_without_gold != -1, axis=1)
     crowd_without_gold = crowd_without_gold[valididxs, :]
     doc_start = nogold_doc_start[valididxs]
@@ -924,11 +912,6 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
     crowd[ICon_idxs] = 3
     crowd[BCon_idxs] = 4
 
-    if debug_size:
-        gt = gt[:debug_size]
-        crowd = crowd[:debug_size]
-        doc_start = doc_start[:debug_size]
-        text = text[:debug_size]
 
     # save files for our experiments with the tag 'evaluation_'
     pd.DataFrame(gt).to_csv(os.path.join(data_dir, 'evaluation_gold.csv'))
@@ -952,5 +935,11 @@ def load_arg_sentences(debug_size=0, regen_data=False, second_batch_workers_only
         crowd = cap_number_of_workers(crowd, doc_start, max_workers_per_doc)
 
     gt, crowd_dev, gt_dev, doc_start_dev, text_dev = split_dev_set(gt, crowd, text, doc_start)
+
+    if debug_size:
+        gt = gt[:debug_size]
+        crowd = crowd[:debug_size]
+        doc_start = doc_start[:debug_size]
+        text = text[:debug_size]
 
     return gt, crowd, doc_start, text, crowd_dev, gt_dev, doc_start_dev, text_dev

@@ -1,8 +1,8 @@
 import os
 import re
 import codecs
-from lample_lstm_tagger.utils import create_dico, create_mapping, zero_digits
-from lample_lstm_tagger.utils import iob2, iob_iobes
+from taggers.lample_lstm_tagger.utils import create_dico, create_mapping, zero_digits
+from taggers.lample_lstm_tagger.utils import iob2, iob_iobes
 
 
 def load_sentences(path, lower, zeros):

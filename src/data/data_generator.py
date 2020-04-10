@@ -182,7 +182,7 @@ class DataGenerator(object):
                 os.makedirs(output_dir)
                 
             np.savetxt(output_dir + 'full_data.csv', np.concatenate((doc_start,ground_truth, annotations),1), fmt='%s', delimiter=',')
-            np.savetxt(output_dir + 'annotations.csv', annotations, fmt='%s', delimiter=',')
+            np.savetxt(output_dir + 'annos.csv', annotations, fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'ground_truth.csv', ground_truth, fmt='%s', delimiter=',')
             np.savetxt(output_dir + 'doc_start.csv', doc_start, fmt='%s', delimiter=',')
         

@@ -2,17 +2,16 @@
 
 import os
 import numpy as np
-import optparse
 import itertools
 from collections import OrderedDict
-from lample_lstm_tagger.utils import create_input
-import lample_lstm_tagger.loader as loader
+from taggers.lample_lstm_tagger.utils import create_input
+import taggers.lample_lstm_tagger.loader as loader
 
-from lample_lstm_tagger.utils import models_path, evaluate, eval_script, eval_temp
-from lample_lstm_tagger.loader import word_mapping, char_mapping, tag_mapping
-from lample_lstm_tagger.loader import update_tag_scheme, prepare_dataset
-from lample_lstm_tagger.loader import augment_with_pretrained
-from lample_lstm_tagger.model import Model
+from taggers.lample_lstm_tagger.utils import models_path, evaluate
+from taggers.lample_lstm_tagger.loader import word_mapping, char_mapping, tag_mapping
+from taggers.lample_lstm_tagger.loader import update_tag_scheme, prepare_dataset
+from taggers.lample_lstm_tagger.loader import augment_with_pretrained
+from taggers.lample_lstm_tagger.model import Model
 
 # Parse parameters
 

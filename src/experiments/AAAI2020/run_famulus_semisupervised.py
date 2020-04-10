@@ -5,15 +5,14 @@ SEMI-SUPERVISED learning on FAMULUS: use a little bit of training data from the 
 
 '''
 import os
-import sys
 
 import numpy as np
 import json
 
 from baselines.dawid_and_skene import ibccvb
-from base_models import run_base_models
+from AAAI2020.base_models import run_base_models
 from bsc import bsc
-from helpers import evaluate, Dataset, get_anno_matrix, get_root_dir, append_training_labels
+from AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir, append_training_labels
 
 reload = True
 verbose = False

@@ -15,7 +15,7 @@ def ibccvb(annotation_matrix, num_classes, class_proportion_smoothing=0.001, ann
     over class labels and estimate annotator informativeness.
 
     :param annotation_matrix: A matrix containing the labels from multiple annotators, where
-    each row is a vector of labels for one data point, and each column contains the annotations from one annotator.
+    each row is a vector of labels for one data point, and each column contains the annos from one annotator.
     :param num_classes: number of target classes.
     :param class_proportion_smoothing: the method learns the proportion of each class label in the dataset.
     Increasing this value smooths the estimate of the class proportion to prevent overfitting
@@ -35,7 +35,7 @@ def ibccvb(annotation_matrix, num_classes, class_proportion_smoothing=0.001, ann
     set to -1.
     :param uniform_priors:
     A list or np array containing indices of annotators for whom a uniform prior should be applied. Use this if you
-    have no expectation that the annotations will correlate with ground truth.
+    have no expectation that the annos will correlate with ground truth.
     :return t:
     The posterior distribution over the true labels. Each row corrsponds to one data point and sums to one.
     :return annotator_acc:

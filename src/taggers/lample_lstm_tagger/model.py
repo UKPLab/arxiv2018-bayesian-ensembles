@@ -7,9 +7,9 @@ import theano.tensor as T
 import codecs
 import pickle
 
-from lample_lstm_tagger.utils import shared, set_values, get_name, reverse_mapping
-from lample_lstm_tagger.nn import HiddenLayer, EmbeddingLayer, DropoutLayer, LSTM, forward
-from lample_lstm_tagger.optimization import Optimization
+from taggers.lample_lstm_tagger.utils import shared, set_values, get_name, reverse_mapping
+from taggers.lample_lstm_tagger.nn import HiddenLayer, EmbeddingLayer, DropoutLayer, LSTM, forward
+from taggers.lample_lstm_tagger.optimization import Optimization
 
 
 class Model(object):

@@ -1,4 +1,5 @@
 import datetime
+import os
 
 import numpy as np
 
@@ -7,7 +8,7 @@ class LSTM:
 
     train_type = 'MLE'#'Bayes'
 
-    def __init__(self, model_dir=None, reload_model=False, embeddings_file=None):
+    def __init__(self, model_dir, reload_model=False, embeddings_file=None):
         self.model_dir = model_dir
         self.reload_model = reload_model
         self.emb_file = embeddings_file
@@ -26,13 +27,12 @@ class LSTM:
 
         labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
 
-        from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format, LSTMWrapper
+        from taggers.lample_lstm_tagger.lstm_wrapper import data_to_lstm_format, LSTMWrapper
 
-        self.sentences, self.IOB_map, self.IOB_label = data_to_lstm_format(N, text, doc_start, labels, nclasses)
+        self.sentences, self.IOB_map, self.IOB_label = data_to_lstm_format(text, doc_start, labels, nclasses)
 
-        if self.model_dir is None:
-            timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
-            self.model_dir = './models_bac_%s' % timestamp
+        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
+        self.model_dir = os.path.join(self.model_dir, './models_bac_%s' % timestamp)
 
         self.LSTMWrapper = LSTMWrapper(self.model_dir, embeddings=self.emb_file, reload_from_disk=self.reload_model)
 
@@ -139,9 +139,8 @@ class LSTM:
         return probs
 
     def predict(self, doc_start, text):
-        from lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
-        N = len(doc_start)
-        test_sentences, _, _ = data_to_lstm_format(N, text, doc_start, np.ones(N), self.nclasses)
+        from taggers.lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
+        test_sentences, _, _ = data_to_lstm_format(text, doc_start, np.ones(N), self.nclasses)
 
         # now make predictions for all sentences
         agg, probs = self.LSTMWrapper.predict_LSTM(test_sentences)

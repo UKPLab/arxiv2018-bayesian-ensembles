@@ -9,7 +9,7 @@ import pickle
 from argparse import ArgumentParser
 
 import data.load_data as load_data
-from evaluation.experiment import calculate_scores
+from evaluation.metrics import calculate_scores
 import pandas as pd
 import numpy as np
 import os
@@ -26,8 +26,6 @@ if __name__ == '__main__':
     if args.dataset == 'NER':
         gt, annos, doc_start, _, gt_nocrowd, doc_start_nocrowd, _, _, gt_val, doc_start_val, _ = \
             load_data.load_ner_data(False)
-
-
 
     elif args.dataset == 'PICO': # task 1
         gt, annos, doc_start, _, _, gt_nocrowd, doc_start_nocrowd, _ = load_data.load_biomedical_data(False)

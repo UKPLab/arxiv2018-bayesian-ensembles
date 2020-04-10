@@ -117,7 +117,7 @@ def docs_with_gt(gt_fn):
 if __name__ == '__main__':
     from .corpus import Corpus, Doc
 
-    anno_path = '../../annotations/'
+    anno_path = '../../annos/'
     anno_fn = anno_path + 'PICO-annos-crowdsourcing.json'
     gt_fn = anno_path + 'PICO-annos-professional.json'
 
