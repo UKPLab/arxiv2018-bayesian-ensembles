@@ -2,10 +2,10 @@ import numpy as np
 from scipy.special import logsumexp
 from scipy.special.basic import psi
 
-from bsc.annotator_model import Annotator, log_dirichlet_pdf
+from bayesian_combination.annotator_models.annotator_model import Annotator, log_dirichlet_pdf
 
 
-class MACEWorker(Annotator):
+class SpamAnnotator(Annotator):
     # Worker model: MACE-like spammer model --------------------------------------------------------------------------------
 
     # alpha[0,:] and alpha[1,:] are parameters for the spamming probability
@@ -16,21 +16,24 @@ class MACEWorker(Annotator):
     # lnPi[2:2+nscores, :] = ln p(label given worker is spamming/incorrect)
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
+        self.alpha_shape = (2 + L)
+
         # for incorrect answers and for spamming pattern, pseudocount is alpha0_factor
         self.alpha0 = alpha0_factor * np.ones((2 + L))
         # for corrent answers, pseudocount is alpha0_factor + alpha0_diags
         self.alpha0[1] = alpha0_diags  # diags are bias toward correct answer
 
-        self.alpha0_data = {}
+        self.alpha0_taggers = {}
         self.lnPi = {}
+        self.lnPi_taggers = {}
         for m in range(nModels):
-            self.alpha0_data[m] = np.copy(self.alpha0)
-            self.alpha0_data[m][:] = alpha0_factor
+            self.alpha0_taggers[m] = np.copy(self.alpha0)
+            self.alpha0_taggers[m][:] = alpha0_factor
 
         self.nModels = nModels
 
 
-    def _init_lnPi(self):
+    def init_lnPi(self, N):
         # Returns the initial values for alpha and lnPi
 
         psi_alpha_sum = np.zeros_like(self.alpha0)
@@ -43,9 +46,9 @@ class MACEWorker(Annotator):
 
         # init to prior
         self.alpha = np.copy(self.alpha0)
-        self.alpha_data = {}
+        self.alpha_taggers = {}
         for midx in range(self.nModels):
-            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
+            self.alpha_taggers[midx] = np.copy(self.alpha0_taggers[midx])
 
 
     def _calc_q_pi(self, alpha):
@@ -60,7 +63,7 @@ class MACEWorker(Annotator):
         return psi(alpha) - psi_alpha_sum
 
 
-    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -120,7 +123,7 @@ class MACEWorker(Annotator):
             self.alpha[l+2, :] = self.alpha0[l+2, :] + strategy_count_l
 
 
-    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
@@ -129,10 +132,10 @@ class MACEWorker(Annotator):
         pknowing = 0
         pspamming = 0
 
-        Pi = np.zeros_like(self.alpha)
-        Pi[0, :] = self.alpha_data[model_idx][0, :] / (self.alpha_data[model_idx][0, :] + self.alpha_data[model_idx][1, :])
-        Pi[1, :] = self.alpha_data[model_idx][1, :] / (self.alpha_data[model_idx][0, :] + self.alpha_data[model_idx][1, :])
-        Pi[2:, :] = self.alpha_data[model_idx][2:, :] / np.sum(self.alpha_data[model_idx][2:, :], 0)[None, :]
+        Pi = np.zeros_like(self.alpha_taggers[model_idx])
+        Pi[0, :] = self.alpha_taggers[model_idx][0, :] / (self.alpha_taggers[model_idx][0, :] + self.alpha_taggers[model_idx][1, :])
+        Pi[1, :] = self.alpha_taggers[model_idx][1, :] / (self.alpha_taggers[model_idx][0, :] + self.alpha_taggers[model_idx][1, :])
+        Pi[2:, :] = self.alpha_taggers[model_idx][2:, :] / np.sum(self.alpha_taggers[model_idx][2:, :], 0)[None, :]
 
         pspamming_j_unnormed = 0
         for j in range(C.shape[1]):
@@ -152,25 +155,20 @@ class MACEWorker(Annotator):
         correct_count = np.sum(pknowing, 0)
         incorrect_count = np.sum(pspamming, 0)
 
-        self.alpha_data[model_idx][1, :] = self.alpha0_data[model_idx][1, :] + correct_count
-        self.alpha_data[model_idx][0, :] = self.alpha0_data[model_idx][0, :] + incorrect_count
+        self.alpha_taggers[model_idx][1, :] = self.alpha0_taggers[model_idx][1, :] + correct_count
+        self.alpha_taggers[model_idx][0, :] = self.alpha0_taggers[model_idx][0, :] + incorrect_count
 
         for l in range(nscores):
             strategy_count_l = np.sum((C[:, l:l+1]) * pspamming, 0)
-            self.alpha_data[model_idx][l+2, :] = self.alpha0_data[model_idx][l+2, :] + strategy_count_l
+            self.alpha_taggers[model_idx][l + 2, :] = self.alpha0_taggers[model_idx][l + 2, :] + strategy_count_l
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
 
-        ll_incorrect = lnPi[0, Krange] + lnPi[C+2, Krange]
+        ll_incorrect = self.lnPi[0, Krange] + self.lnPi[C+2, Krange]
 
-        if np.isscalar(C):
-            N = 1
-            if C == -1:
-                ll_incorrect = 0
-        else:
-            N = C.shape[0]
-            ll_incorrect[C == -1] = 0
+        N = C.shape[0]
+        ll_incorrect[C == -1] = 0
 
         if np.isscalar(Krange):
             K = 1
@@ -181,41 +179,44 @@ class MACEWorker(Annotator):
             ll_correct = np.zeros((nscores, N, K))
             for m in range(nscores):
 
-                if np.isscalar(C) and C == m:
-                    ll_correct[m] = lnPi[1, Krange]
+                idx = (C == m).astype(int)
 
-                elif np.isscalar(C) and C != m:
-                    ll_correct[m] = - np.inf
-
-                else:
-                    idx = (C == m).astype(int)
-
-                    ll_correct[m] = lnPi[1, Krange] * idx
-                    ll_correct[m, idx==0] = -np.inf
+                ll_correct[m] = self.lnPi[1, Krange] * idx
+                ll_correct[m, idx==0] = -np.inf
 
             ll_incorrect = np.tile(ll_incorrect, (nscores, 1, 1))
         else:
-            if np.isscalar(C) and C == l:
-                ll_correct = lnPi[1, Krange]
-
-            elif np.isscalar(C) and C != l:
-                ll_correct = - np.inf
-
-            else:
-                idx = (C == l).astype(int)
-                ll_correct = lnPi[1, Krange] * idx
-                ll_correct[idx == 0] = - np.inf
+            idx = (C == l).astype(int)
+            ll_correct = self.lnPi[1, Krange] * idx
+            ll_correct[idx == 0] = - np.inf
 
         result = logsumexp([ll_correct, ll_incorrect], axis=0)
-        if not np.isscalar(C) and l is None:
+
+        if l is None:
             result[:, blanks] = 0
-        elif not np.isscalar(C):
+        else:
             result[blanks] = 0
 
-        return result
+        return np.sum(result, axis=-1)
 
 
-    def _expand_alpha0(self, K, nscores):
+    def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
+        ll_incorrect = self.lnPi_taggers[model_idx][0, 0] + self.lnPi_taggers[model_idx][C+2, 0]
+
+        if l is None:
+            ll_incorrect = np.tile(ll_incorrect, nscores)
+            ll_correct = np.zeros(nscores) - np.inf
+            ll_correct[C] = self.lnPi_taggers[model_idx][1, 0]
+        else:
+            if l == C:
+                ll_correct = self.lnPi_taggers[model_idx][1, 0]
+            else:
+                ll_correct = - np.inf
+
+        return logsumexp([ll_correct, ll_incorrect], axis=0)
+
+
+    def expand_alpha0(self, C, K, doc_start, nscores):
         '''
         Take the alpha0 for one worker and expand.
         :return:
@@ -232,11 +233,11 @@ class MACEWorker(Annotator):
             self.alpha0 = np.tile(self.alpha0, (1, K))
 
         for midx in range(self.nModels):
-            if self.alpha0_data[midx] is None:
-                self.alpha0_data[midx] = np.ones((nscores + 2, 1))
-                self.alpha0_data[midx][1, :] += 1.0
-            elif self.alpha0_data[midx].ndim == 1:
-                self.alpha0_data[midx] = self.alpha0_data[midx][:, None]
+            if self.alpha0_taggers[midx] is None:
+                self.alpha0_taggers[midx] = np.ones((nscores + 2, 1))
+                self.alpha0_taggers[midx][1, :] += 1.0
+            elif self.alpha0_taggers[midx].ndim == 1:
+                self.alpha0_taggers[midx] = self.alpha0_taggers[midx][:, None]
 
 
     def _calc_EPi(self, alpha):
@@ -258,11 +259,11 @@ class MACEWorker(Annotator):
         lnqPi_correct = log_dirichlet_pdf(self.alpha[0:2, :], self.lnPi[0:2, :], sum_dim)
         lnqPi_strategy = log_dirichlet_pdf(self.alpha[2:, :], self.lnPi[2:, :], sum_dim)
 
-        for midx in range(len(self.alpha0_data)):
-            lnpPi_correct += log_dirichlet_pdf(self.alpha0_data[midx][0:2, :], self.lnPi_data[midx][0:2, :], sum_dim)
-            lnpPi_strategy += log_dirichlet_pdf(self.alpha0_data[midx][2:, :], self.lnPi_data[midx][2:, :], sum_dim)
+        for midx in range(len(self.alpha0_taggers)):
+            lnpPi_correct += log_dirichlet_pdf(self.alpha0_taggers[midx][0:2, :], self.lnPi_taggers[midx][0:2, :], sum_dim)
+            lnpPi_strategy += log_dirichlet_pdf(self.alpha0_taggers[midx][2:, :], self.lnPi_taggers[midx][2:, :], sum_dim)
 
-            lnqPi_correct += log_dirichlet_pdf(self.alpha_data[midx][0:2, :], self.lnPi_data[midx][0:2, :], sum_dim)
-            lnqPi_strategy += log_dirichlet_pdf(self.alpha_data[midx][2:, :], self.lnPi_data[midx][2:, :], sum_dim)
+            lnqPi_correct += log_dirichlet_pdf(self.alpha_taggers[midx][0:2, :], self.lnPi_taggers[midx][0:2, :], sum_dim)
+            lnqPi_strategy += log_dirichlet_pdf(self.alpha_taggers[midx][2:, :], self.lnPi_taggers[midx][2:, :], sum_dim)
 
         return lnpPi_correct + lnpPi_strategy, lnqPi_correct + lnqPi_strategy

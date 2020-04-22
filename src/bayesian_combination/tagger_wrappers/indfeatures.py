@@ -3,23 +3,20 @@ from scipy.sparse import coo_matrix
 from scipy.special import logsumexp
 from scipy.special.basic import psi
 
+from bayesian_combination.tagger_wrappers.tagger import Tagger
 
-class IndependentFeatures:
 
-    train_type = 'Bayes'
+class IndependentFeatures(Tagger):
 
-    def init(self, N, text, doc_start, nclasses, max_iters_after_workers_converge,
-             crf_probs, dev_sentences, A, max_internal_iters):
-
-        self.N = N
-
+    def __init__(self, nclasses, features):
+        self.train_type = 'Bayes'
         self.nclasses = nclasses
-
         self.feat_map = {}
-
         self.features = []
 
-        for feat in text.flatten():
+        self.N = len(features)
+
+        for feat in features.flatten():
             if feat not in self.feat_map:
                 self.feat_map[feat] = len(self.feat_map)
 
@@ -28,7 +25,7 @@ class IndependentFeatures:
         self.features = np.array(self.features).astype(int)
 
         # sparse matrix of one-hot encoding, nfeatures x N
-        self.features_mat = coo_matrix((np.ones(len(text)), (self.features, np.arange(N)))).tocsr()
+        self.features_mat = coo_matrix((np.ones(len(features)), (self.features, np.arange(self.N)))).tocsr()
 
         self.beta0 = np.ones((len(self.feat_map), self.nclasses)) * 0.001
 
@@ -48,13 +45,14 @@ class IndependentFeatures:
 
         return pt_given_text
 
-    def predict(self, doc_start, text):
+
+    def predict(self, doc_start, features):
         N = len(doc_start)
 
         test_features = np.zeros(N, dtype=int)
         valid_feats = np.zeros(N, dtype=bool)
 
-        for i, feat in enumerate(text.flatten()):
+        for i, feat in enumerate(features.flatten()):
             if feat in self.feat_map:
                 valid_feats[i] = True
                 test_features[i] = self.feat_map[feat]
@@ -68,6 +66,7 @@ class IndependentFeatures:
         probs[valid_feats, :] = pt_given_text
 
         return probs
+
 
     def log_likelihood(self, C_data, E_t):
 

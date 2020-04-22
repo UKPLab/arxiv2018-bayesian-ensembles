@@ -14,12 +14,13 @@ import numpy as np
 
 import taggers.lample_lstm_tagger.lstm_wrapper as lstm_wrapper
 from baselines.dawid_and_skene import ds, ibccvb
+from bayesian_combination.ibcc import IBCC, HeatmapBCC
 from evaluation.metrics import calculate_scores
 from evaluation.plots import SCORE_NAMES
 from baselines.hmmcrowd import HMM_crowd
 from baselines.util import crowd_data, data_to_hmm_crowd_format, subset_hmm_crowd_data
 from baselines import ibcc, clustering, majority_voting
-from bsc import bsc
+from bayesian_combination import bayesian_combination
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -384,6 +385,12 @@ class Experiment(object):
         elif method.split('_')[0] == 'ibcc2':  # this is the newer and simpler implementation
             agg, probs = self._run_ibcc2()
 
+        elif method.split('_')[0] == 'ibcc3': # use BSC with all sequential stuff switched off
+            agg, probs = self._run_ibcc3()
+
+        elif method.split('_')[0] == 'heatmapbcc': # use BSC with all sequential stuff switched off, GP on
+            agg, probs = self._run_heatmapBCC()
+
         elif method.split('_')[0] == 'bsc' or method.split('_')[0] == 'bac':
 
             if method not in self.aggs:
@@ -428,9 +435,10 @@ class Experiment(object):
             self.scores = np.zeros((len(SCORE_NAMES), len(self.methods)))
             self.score_std = np.zeros((len(SCORE_NAMES) - 3, len(self.methods)))
 
-        self.scores[:, method_idx][:, None], self.score_std[:, method_idx] = calculate_scores(
-            self.postprocess, agg, self.gold.flatten(), probs, self.doc_start_all,
-            self.bootstrapping, print_per_class_results=True)
+        self.scores[:, method_idx][:, None], self.score_std[:, method_idx] = \
+            calculate_scores(self.postprocess, agg, self.gold.flatten(), probs, self.doc_start_all, self.bootstrapping,
+                             print_per_class_results=True
+                             )
 
 
     def calculate_nocrowd_scores(self, agg, probs, method_idx):
@@ -520,6 +528,36 @@ class Experiment(object):
         return agg, probs
 
 
+    def _run_heatmapBCC(self):
+        bsc_model = HeatmapBCC(L=self.num_classes, K=self.annos.shape[1], max_iter=self.max_iter,  # eps=-1,
+                     alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, beta0_factor=self.beta0_factor,
+                     use_lowerbound=False)
+        bsc_model.verbose = True
+
+        if self.opt_hyper:
+            np.random.seed(592)  # for reproducibility
+            probs, agg = bsc_model.optimize(self.annos, self.doc_start, self.text, maxfun=1000)
+        else:
+            probs, agg, pseq = bsc_model.fit_predict(self.annos, self.doc_start, self.text)
+
+        return agg, probs
+
+
+    def _run_ibcc3(self):
+        bsc_model = IBCC(L=self.num_classes, K=self.annos.shape[1], max_iter=self.max_iter,  # eps=-1,
+                     alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, beta0_factor=self.beta0_factor,
+                     use_lowerbound=False)
+        bsc_model.verbose = True
+
+        if self.opt_hyper:
+            np.random.seed(592)  # for reproducibility
+            probs, agg = bsc_model.optimize(self.annos, self.doc_start, self.text, maxfun=1000)
+        else:
+            probs, agg, pseq = bsc_model.fit_predict(self.annos, self.doc_start, self.text)
+
+        return agg, probs
+
+
     def _run_ibcc2(self):
         probs, _ = ibccvb(self.annos, self.num_classes, self.beta0_factor,
                           self.alpha0_factor, self.alpha0_diags, self.begin_factor, self.max_iter)
@@ -584,6 +622,8 @@ class Experiment(object):
 
         if method_bits[-1] == 'noHMM':
             transition_model = 'None'
+        elif method_bits[-1] == 'GP':
+            transition_model = 'GP'
         else:
             transition_model = 'HMM'
 
@@ -601,6 +641,14 @@ class Experiment(object):
         else:
             use_IF = False
 
+        if len(method_bits) > 2 and 'integrateGP' in method_bits:
+            if len(method_bits) > 3 and 'atEnd' in method_bits:
+                use_GP = 2
+            else:
+                use_GP = 1
+        else:
+            use_GP = 0
+
         worker_model = method_bits[1]
 
         L = self.num_classes
@@ -615,34 +663,32 @@ class Experiment(object):
         dev_sentences = []
 
         if use_LSTM > 0:
-            data_model.append('LSTM')
+            if self.crf_probs:
+                data_model.append('LSTM_crf')
+            else:
+                data_model.append('LSTM')
 
             if self.gold_val is not None and self.doc_start_val is not None and self.text_val is not None:
                 dev_sentences, _, _ = lstm_wrapper.data_to_lstm_format(self.text_val,
                                                                        self.doc_start_val, self.gold_val)
 
-        if use_IF:
-            no_words = False
-        else:
-            no_words = True
+        if use_GP:
+            data_model.append('GP')
 
-        bsc_model = bsc.BSC(L=L, K=self.annos.shape[1], max_iter=self.max_iter,  # eps=-1,
-                            inside_labels=inside_labels, outside_label=outside_label, beginning_labels=begin_labels,
-                            alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor,
-                            alpha0_B_factor=self.begin_factor,
-                            beta0_factor=self.beta0_factor, worker_model=worker_model, tagging_scheme='IOB2',
-                            data_model=data_model, transition_model=transition_model, no_words=no_words,
-                            use_lowerbound=False, model_dir=self.outputdir)
+        bsc_model = bayesian_combination.BC(L=L, K=self.annos.shape[1], max_iter=self.max_iter,  # eps=-1,
+                        inside_labels=inside_labels, outside_label=outside_label, beginning_labels=begin_labels,
+                        alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, alpha0_B_factor=self.begin_factor,
+                        beta0_factor=self.beta0_factor, annotator_model=worker_model, tagging_scheme='IOB2',
+                        taggers=data_model, true_label_model=transition_model, discrete_feature_likelihoods=use_IF,
+                        use_lowerbound=False, model_dir=self.outputdir, converge_workers_first=(use_LSTM==2) or (use_GP==2))
         bsc_model.verbose = True
         bsc_model.max_internal_iters = self.max_internal_iter
 
         if self.opt_hyper:
             np.random.seed(592)  # for reproducibility
-            probs, agg = bsc_model.optimize(self.annos, self.doc_start, self.text, maxfun=1000,
-                                      converge_workers_first=use_LSTM==2, dev_sentences=dev_sentences)
+            probs, agg = bsc_model.optimize(self.annos, self.doc_start, self.text, maxfun=1000, dev_sentences=dev_sentences)
         else:
-            probs, agg, pseq = bsc_model.run(self.annos, self.doc_start, self.text,
-                             converge_workers_first=use_LSTM==2, crf_probs=self.crf_probs, dev_sentences=dev_sentences)
+            probs, agg, pseq = bsc_model.fit_predict(self.annos, self.doc_start, self.text, dev_sentences=dev_sentences)
 
         if self.gold_nocrowd is not None and '_thenLSTM' not in method:
             probs_nocrowd, agg_nocrowd = bsc_model.predict(self.doc_start_nocrowd, self.text_nocrowd)
@@ -657,6 +703,7 @@ class Experiment(object):
             agg_unseen = None
 
         return agg, probs, pseq, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
+
 
     def _run_hmmcrowd(self, doc_subset, nselected_by_doc,
                       overwrite_data_file=False):

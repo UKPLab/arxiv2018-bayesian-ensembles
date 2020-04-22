@@ -100,12 +100,12 @@ def _load_bio_folder(anno_path_root, folder_name):
             doc_data['gold'] = np.zeros(doc_length, dtype=int) - 1  # -1 for missing gold values
 
         text_d = [spacytoken.text for spacytoken in text_d]
-        doc_data['text'] = text_d
+        doc_data['features'] = text_d
 
         doc_start = np.zeros(doc_length, dtype=int)
         doc_start[0] = 1
 
-        doc_gaps = doc_data['text'] == '\n\n' # sentence breaks
+        doc_gaps = doc_data['features'] == '\n\n' # sentence breaks
         doc_start[doc_gaps[doc_gaps].index[:-1] + 1] = 1
         doc_data['doc_start'] = doc_start
 
@@ -161,7 +161,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
             all_data.to_csv(savepath + '/annos.csv', columns=all_workerids, header=False, index=False)
             all_data.to_csv(savepath + '/gt.csv', columns=['gold'], header=False, index=False)
             all_data.to_csv(savepath + '/doc_start.csv', columns=['doc_start'], header=False, index=False)
-            all_data.to_csv(savepath + '/text.csv', columns=['text'], header=False, index=False)
+            all_data.to_csv(savepath + '/features.csv', columns=['features'], header=False, index=False)
 
     print('loading annos...')
     annos = pd.read_csv(savepath + '/annos.csv', header=None, nrows=debug_subset_size)
@@ -169,8 +169,8 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
     annos = annos.values
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
-    print('loading text data...')
-    text = pd.read_csv(savepath + '/text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
+    print('loading features data...')
+    text = pd.read_csv(savepath + '/features.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
     text = text.fillna(' ').values
 
     print('loading doc starts...')
@@ -181,7 +181,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
     gt = pd.read_csv(savepath + '/gt.csv', header=None, nrows=debug_subset_size).values # np.genfromtxt(savepath + '/gt.csv')
 
     if len(text) == len(annos) - 1:
-        # sometimes the last line of text is blank and doesn't get loaded into text, but doc_start and gt contain labels
+        # sometimes the last line of features is blank and doesn't get loaded into features, but doc_start and gt contain labels
         # for the newline token
         annos = annos[:-1]
         doc_start = doc_start[:-1]
@@ -255,13 +255,13 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
         #print('Processing %s' % f)
 
-        new_data = pd.read_csv(f, names=['text', worker_str], skip_blank_lines=False,
-                               dtype={'text':str, worker_str:str}, na_filter=False, delim_whitespace=True)
+        new_data = pd.read_csv(f, names=['features', worker_str], skip_blank_lines=False,
+                               dtype={'features':str, worker_str:str}, na_filter=False, delim_whitespace=True)
 
-        doc_gaps = (new_data['text'] == '') & (new_data[worker_str] == '')
+        doc_gaps = (new_data['features'] == '') & (new_data[worker_str] == '')
         doc_start = np.zeros(doc_gaps.shape[0], dtype=int)
         doc_start[doc_gaps[:-1][doc_gaps[:-1]].index + 1] = 1 # the indexes after the gaps
-        doc_content = new_data['text'] != ''
+        doc_content = new_data['features'] != ''
 
         new_data['doc_start'] = doc_start
         new_data = new_data[doc_content]
@@ -269,11 +269,11 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
         annos_to_keep = np.ones(new_data.shape[0], dtype=bool)
 
-        for t, tok in enumerate(new_data['text']):
+        for t, tok in enumerate(new_data['features']):
 
             if len(tok.split('/')) > 1:
                 tok = tok.split('/')[0]
-                new_data['text'].iat[t] = tok
+                new_data['features'].iat[t] = tok
 
             if len(tok) == 0:
                 annos_to_keep[t] = False
@@ -294,7 +294,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
             last_accepted_tok = ''
             last_accepted_idx = -1
 
-            for t, tok in enumerate(new_data['text']):
+            for t, tok in enumerate(new_data['features']):
 
                 if skip_imperfect_matches and skip_sentence:
                     new_data[worker_str].iloc[t] = -1
@@ -323,7 +323,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
 
                     annos_to_keep[last_accepted_idx] = False  # skip the previous ones until the end
 
-                    new_data['text'].iat[t] = last_accepted_tok
+                    new_data['features'].iat[t] = last_accepted_tok
                     new_data['doc_start'].iat[t] = new_data['doc_start'].iat[last_accepted_idx]
 
                     last_accepted_idx = t
@@ -331,7 +331,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     char_counter += len(tok)
 
                 elif tok not in gold_tok or (tok == '' and gold_tok != ''):
-                    print('Correcting misaligned annos (spurious text in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
+                    print('Correcting misaligned annos (spurious features in worker data): %i, %s vs. %s' % (t, tok, gold_tok))
 
                     skip_sentence = True
 
@@ -347,7 +347,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                         skip_sentence = True
 
                     while char_counter > gold_char_idx:
-                        print('error in text alignment between worker and gold!')
+                        print('error in features alignment between worker and gold!')
                         len_to_skip = gold_chars[gold_tok_idx - 1] - gold_chars[gold_tok_idx - 2]
 
                         # move the gold counter along to the next token because gold is behind
@@ -371,7 +371,7 @@ def _load_rodrigues_annotations(dir, worker_str, gold_char_idxs=None, gold_token
                     if new_data['doc_start'].iat[t]: # now we are skipping this token but we don't want to lose the doc_start record.
                         new_data['doc_start'].iat[t+1] = 1
 
-        # no more text in this document, but the last sentence must be skipped
+        # no more features in this document, but the last sentence must be skipped
         if skip_imperfect_matches and skip_sentence:
             # annos_to_keep[sentence_start:t+1] = False
             new_data[worker_str].iloc[sentence_start:t+1] = -1
@@ -403,7 +403,7 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
     chars = {}
 
     char_counter = 0
-    for t, tok in enumerate(gold_data['text']):
+    for t, tok in enumerate(gold_data['features']):
         if gold_data['doc_id'].iloc[t] not in char_idx_word_starts:
             char_counter = 0
             starts = []
@@ -437,7 +437,7 @@ def _load_rodrigues_annotations_all_workers(annotation_data_path, gold_data, ski
         if data is None:
             data = worker_data
         else:
-            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'text', 'doc_start'], how='outer', sort=True, validate='1:1')
+            data = data.merge(worker_data, on=['doc_id', 'tok_idx', 'features', 'doc_start'], how='outer', sort=True, validate='1:1')
 
     return data, annotator_cols
 
@@ -495,7 +495,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     task1_val_path = os.path.join(data_root_dir, 'crf-ma-NER-task1/val/')
     task1_test_path = os.path.join(data_root_dir, 'crf-ma-NER-task1/test')
 
-    # These are just two files that we use for text features + ground truth labels.
+    # These are just two files that we use for features features + ground truth labels.
     task2_val_path = os.path.join(data_root_dir, 'English NER/eng.testa')
     task2_test_path = os.path.join(data_root_dir, 'English NER/eng.testb')
 
@@ -513,7 +513,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
 
         # 2. Create ground truth CSV for task1_val_path (for tuning the LSTM)
         # merge gold with the worker data
-        data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
+        data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'features'], sort=True)
 
         num_annotations = np.zeros(data.shape[0]) # count annos per token
         for col in annotator_cols:
@@ -542,8 +542,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         data.to_csv(savepath + '/task1_val_annos.csv', columns=annotator_cols, index=False,
                     float_format='%.f', na_rep=-1)
 
-        # save the text in same order
-        data.to_csv(savepath + '/task1_val_text.csv', columns=['text'], header=False, index=False)
+        # save the features in same order
+        data.to_csv(savepath + '/task1_val_text.csv', columns=['features'], header=False, index=False)
 
         # save the doc starts
         data.to_csv(savepath + '/task1_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
@@ -564,7 +564,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # 4. Create ground truth CSV for task1_test_path
         # merge with the worker data
 
-        data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'text'], sort=True)
+        data = data.merge(gold_data, how='outer', on=['doc_id', 'tok_idx', 'doc_start', 'features'], sort=True)
 
         num_annotations = np.zeros(data.shape[0]) # count annos per token
         for col in annotator_cols:
@@ -593,8 +593,8 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         data.to_csv(savepath + '/task1_test_annos.csv', columns=annotator_cols, index=False,
                     float_format='%.f', na_rep=-1)
 
-        # save the text in same order
-        data.to_csv(savepath + '/task1_test_text.csv', columns=['text'], header=False, index=False)
+        # save the features in same order
+        data.to_csv(savepath + '/task1_test_text.csv', columns=['features'], header=False, index=False)
 
         # save the doc starts
         data.to_csv(savepath + '/task1_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
@@ -607,45 +607,45 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
         # (for tuning the LSTM for task 2)
 
         import csv
-        eng_val = pd.read_csv(task2_val_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'],
+        eng_val = pd.read_csv(task2_val_path, delimiter=' ', usecols=[0,3], names=['features', 'gold'],
                               skip_blank_lines=True, quoting=csv.QUOTE_NONE)
 
         doc_starts = np.zeros(eng_val.shape[0])
-        docstart_token = eng_val['text'][0]
+        docstart_token = eng_val['features'][0]
 
-        doc_starts[1:] = (eng_val['text'] == docstart_token)[:-1]
+        doc_starts[1:] = (eng_val['features'] == docstart_token)[:-1]
         eng_val['doc_start'] = doc_starts
 
         eng_val['tok_idx'] = eng_val.index
-        eng_val = eng_val[eng_val['text'] != docstart_token] # remove all the docstart labels
+        eng_val = eng_val[eng_val['features'] != docstart_token] # remove all the docstart labels
 
         eng_val['gold'] = _map_ner_str_to_labels(eng_val['gold'])
         eng_val['gold'] = IOB_to_IOB2(eng_val['gold'].values)
 
         eng_val.to_csv(savepath + '/task2_val_gt.csv', columns=['gold'], header=False, index=False)
-        eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['text'], header=False, index=False)
+        eng_val.to_csv(savepath + '/task2_val_text.csv', columns=['features'], header=False, index=False)
         eng_val.to_csv(savepath + '/task2_val_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
 
         # 6. Create a file containing only the words for the task 2 test set, i.e. like annos.csv with no annos.
         # Create ground truth CSV for task1_val_path, task1_test_path and task2_test_path but blank out the task_1 labels/
-        eng_test = pd.read_csv(task2_test_path, delimiter=' ', usecols=[0,3], names=['text', 'gold'],
+        eng_test = pd.read_csv(task2_test_path, delimiter=' ', usecols=[0,3], names=['features', 'gold'],
                                skip_blank_lines=True, quoting=csv.QUOTE_NONE)
 
         doc_starts = np.zeros(eng_test.shape[0])
-        docstart_token = eng_test['text'][0]
+        docstart_token = eng_test['features'][0]
 
-        doc_starts[1:] = (eng_test['text'] == docstart_token)[:-1]
+        doc_starts[1:] = (eng_test['features'] == docstart_token)[:-1]
         eng_test['doc_start'] = doc_starts
 
         eng_test['tok_idx'] = eng_test.index
-        eng_test = eng_test[eng_test['text'] != docstart_token] # remove all the docstart labels
+        eng_test = eng_test[eng_test['features'] != docstart_token] # remove all the docstart labels
 
         eng_test['gold'] = _map_ner_str_to_labels(eng_test['gold'])
         eng_test['gold'] = IOB_to_IOB2(eng_test['gold'].values)
 
         eng_test.to_csv(savepath + '/task2_test_gt.csv', columns=['gold'], header=False, index=False)
-        eng_test.to_csv(savepath + '/task2_test_text.csv', columns=['text'], header=False, index=False)
+        eng_test.to_csv(savepath + '/task2_test_text.csv', columns=['features'], header=False, index=False)
         eng_test.to_csv(savepath + '/task2_test_doc_start.csv', columns=['doc_start'], header=False, index=False)
 
 
@@ -653,7 +653,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     print('loading annos for task1 test...')
     annos = pd.read_csv(savepath + '/task1_test_annos.csv', skip_blank_lines=False)
 
-    print('loading text data for task1 test...')
+    print('loading features data for task1 test...')
     text = pd.read_csv(savepath + '/task1_test_text.csv', skip_blank_lines=False, header=None)
 
     print('loading doc_starts for task1 test...')
@@ -678,7 +678,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     annos = annos.values
     print('loaded annos for %i tokens' % annos.shape[0])
 
-    print('loading text data for task1 val...')
+    print('loading features data for task1 val...')
     text_v = pd.read_csv(savepath + '/task1_val_text.csv', skip_blank_lines=False, header=None)
     # text_v = text_v.iloc[annotated_idxs]
 
@@ -706,7 +706,7 @@ def load_ner_data(regen_data_files, skip_sen_with_dirty_data=False):
     gt_all = pd.concat((gt_t, gt_v_real), axis=0).values
     print('loaded ground truth for %i tokens' % gt.shape[0])
 
-    print('loading text data for task 2 test')
+    print('loading features data for task 2 test')
     text_task2 = pd.read_csv(savepath + '/task2_test_text.csv', skip_blank_lines=False, header=None)
     text_task2 = text_task2.fillna(' ').values
 
@@ -797,7 +797,7 @@ def split_dev_set(gt, crowd, text, doc_start):
     #
     # crowd_dev.append(crowd[moreidxs])
     # gt_dev.append(gt[moreidxs])
-    # text_dev.append(text[moreidxs])
+    # text_dev.append(features[moreidxs])
     # doc_start_dev.append(doc_start[moreidxs])
 
     crowd_dev = np.concatenate(crowd_dev, axis=0)

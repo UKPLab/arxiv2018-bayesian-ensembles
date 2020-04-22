@@ -1,46 +1,34 @@
 import datetime
 import os
-
 import numpy as np
 
+from bayesian_combination.tagger_wrappers.tagger import Tagger
+from taggers.lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
 
-class LSTM:
 
-    train_type = 'MLE'#'Bayes'
+class LSTM(Tagger):
 
-    def __init__(self, model_dir, reload_model=False, embeddings_file=None):
-        self.model_dir = model_dir
-        self.reload_model = reload_model
+    def __init__(self, nclasses, features, doc_start, dev_sentences, max_epochs, max_vb_iters, crf_probs, model_dir,
+                 embeddings_file=None):
+        self.train_type = 'MLE'
+        self.reload_model = False
         self.emb_file = embeddings_file
         self.completed_epochs = 0
-
-    def init(self, N, text, doc_start, nclasses, max_vb_iters, crf_probs, dev_sentences, A, max_epochs=10):
-
-        self.max_epochs = max_epochs # sets the total number of training epochs allowed. After this, it will just let the BSC
-        #  model converge.
-        self.n_epochs_per_vb_iter = 1
-
         self.crf_probs = crf_probs
         self.max_vb_iters = max_vb_iters
-
-        self.N = N
-
-        labels = np.zeros(N) # blank at this point. The labels get changed in each VB iteration
-
-        from taggers.lample_lstm_tagger.lstm_wrapper import data_to_lstm_format, LSTMWrapper
-
-        self.sentences, self.IOB_map, self.IOB_label = data_to_lstm_format(text, doc_start, labels, nclasses)
-
-        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
-        self.model_dir = os.path.join(self.model_dir, './models_bac_%s' % timestamp)
-
-        self.LSTMWrapper = LSTMWrapper(self.model_dir, embeddings=self.emb_file, reload_from_disk=self.reload_model)
-
-        self.Ndocs = self.sentences.shape[0]
-
+        self.max_epochs = max_epochs  # sets the total number of training epochs allowed.
+        self.n_epochs_per_vb_iter = 1
+        self.nclasses = nclasses
         self.train_data_objs = None
 
-        self.nclasses = nclasses
+        # create a new model for each dataset
+        timestamp = datetime.datetime.now().strftime('started-%Y-%m-%d-%H-%M-%S')
+        self.model_dir = os.path.join(model_dir, './models_bac_%s' % timestamp)
+        self.LSTMWrapper = LSTMWrapper(self.model_dir, embeddings=self.emb_file, reload_from_disk=self.reload_model)
+
+        self.N = len(doc_start)
+        self.sentences, self.IOB_map, self.IOB_label = data_to_lstm_format(features, doc_start, np.zeros(self.N), self.nclasses)
+        self.Ndocs = self.sentences.shape[0]
 
         self.dev_sentences = dev_sentences
         if dev_sentences is not None:
@@ -53,16 +41,6 @@ class LSTM:
         else:
             self.all_sentences = self.sentences
 
-        self.tdev = np.zeros((len(self.dev_labels), self.nclasses))
-        self.tdev[np.arange(self.tdev.shape[0]), self.dev_labels] = 1
-        self.doc_start_dev = np.zeros((self.tdev.shape[0], 1))
-        pointer = 0
-        for sen in self.dev_sentences:
-            self.doc_start_dev[pointer] = 1
-            pointer += len(sen)
-
-        self.A = A
-
 
     def fit_predict(self, labels):
 
@@ -70,9 +48,6 @@ class LSTM:
             labels = np.argmax(labels, axis=1) # uses the mode
 
         print('Training LSTM on labels: ' + str(np.unique(labels)))
-        print(np.sum(labels == 0))
-        print(np.sum(labels == 1))
-        print(np.sum(labels == 2))
 
         l = 0
         labels_by_sen = []
@@ -133,14 +108,11 @@ class LSTM:
         else:
             probs = self.probs
 
-        # self.alpha0_data = self.A._post_alpha_data(self.tdev, self.dev_probs, self.alpha0_data_prior, self.alpha0_data,
-        #                                            self.doc_start_dev, self.nclasses, -1)
-
         return probs
 
-    def predict(self, doc_start, text):
+    def predict(self, doc_start, features):
         from taggers.lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
-        test_sentences, _, _ = data_to_lstm_format(text, doc_start, np.ones(N), self.nclasses)
+        test_sentences, _, _ = data_to_lstm_format(features, doc_start, np.ones(N), self.nclasses)
 
         # now make predictions for all sentences
         agg, probs = self.LSTMWrapper.predict_LSTM(test_sentences)

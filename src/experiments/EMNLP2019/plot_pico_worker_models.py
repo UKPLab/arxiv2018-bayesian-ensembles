@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patheffects as path_effects
 
-from bsc.bsc import BSC
+from bayesian_combination.bayesian_combination import BC
 import data.load_data as load_data
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
@@ -81,7 +81,7 @@ for w, worker_model in enumerate(worker_models):
         goldidxs_dev = gt_task1_dev != -1
         gt[goldidxs_dev] = gt_task1_dev[goldidxs_dev]
 
-        nu0_factor = 0.1
+        beta0_factor = 0.1
         alpha0_diags = 0.1
         alpha0_factor = 0.1
 
@@ -104,10 +104,11 @@ for w, worker_model in enumerate(worker_models):
 
         data_model = data_models[w]
 
-        model = BSC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_label=outside_labels,
-                    beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor,
-                    beta0_factor=nu0_factor, before_doc_idx=1, worker_model=worker_model, tagging_scheme='IOB2',
-                    data_model=data_model, transition_model='HMM')
+        model = BC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_label=outside_labels,
+                   beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor,
+                   beta0_factor=beta0_factor, before_doc_idx=1, annotator_model=worker_model, tagging_scheme='IOB2',
+                   taggers=data_model, true_label_model='HMM',
+                   converge_workers_first=2 if data_model is not None and 'LSTM' in data_model else 0)
 
         model.verbose = True
 
@@ -134,14 +135,12 @@ for w, worker_model in enumerate(worker_models):
         else:
             dev_sentences = None
 
-        probs, agg, _ = model.run(annos, doc_start, text, converge_workers_first=2 if data_model is not None and
-                                                                                      'LSTM' in data_model else 0,
-                                  gold_labels=gt)
+        probs, agg, _ = model.fit_predict(annos, doc_start, text, gold_labels=gt)
 
         print('completed training with worker model = %s and data models %s' % (worker_model, data_model))
 
         # DATA MODELS
-        for d, dm in enumerate(model.data_model):
+        for d, dm in enumerate(model.taggers):
             alpha_data = dm.alpha_data
             EPi = model.A._calc_EPi(alpha_data)
 

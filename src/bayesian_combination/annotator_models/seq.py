@@ -1,36 +1,39 @@
 import numpy as np
 from scipy.special.basic import psi
 
-from bsc.annotator_model import log_dirichlet_pdf
-from bsc.cv import VectorWorker
+from bayesian_combination.annotator_models.annotator_model import log_dirichlet_pdf
+from bayesian_combination.annotator_models.cv import ConfusionVectorAnnotator
 
 
-class SequentialWorker(VectorWorker):
+class SequentialAnnotator(ConfusionVectorAnnotator):
     # Worker model: sequential model of workers-----------------------------------------------------------------------------
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels, tagging_scheme,
-                 beginning_labels, inside_labels, outside_label, alpha0_B_factor, rare_transition_pseudocount):
+                 beginning_labels, inside_labels, outside_label, alpha0_B_factor):
         super().__init__(alpha0_diags, alpha0_factor, L, nModels)
+
+        self.alpha_shape = (L, L)
 
         self.tagging_scheme = tagging_scheme
         self.beginning_labels = beginning_labels
         self.inside_labels = inside_labels
         self.outside_label = outside_label
         self.alpha0_B_factor = alpha0_B_factor
-        self.rare_transition_pseudocount = rare_transition_pseudocount
-        self.C_binary = {}
+        self.rare_transition_pseudocount = 1e-12
+        self.C_lm = {}
 
-    def _init_lnPi(self):
+
+    def init_lnPi(self, N):
         # Returns the initial values for alpha and lnPi
         psi_alpha_sum = psi(np.sum(self.alpha0, 1))
         self.lnPi = psi(self.alpha0) - psi_alpha_sum[:, None, :, :]
-        self.lnPi_data = {}
+        self.lnPi_taggers = {}
 
         # init to prior
         self.alpha = np.copy(self.alpha0)
-        self.alpha_data = {}
+        self.alpha_taggers = {}
         for midx in range(self.nModels):
-            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
+            self.alpha_taggers[midx] = np.copy(self.alpha0_taggers[midx])
 
 
     def _calc_q_pi(self, alpha):
@@ -42,44 +45,58 @@ class SequentialWorker(VectorWorker):
         return self.lnPi
 
 
-    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
-        if len(self.C_binary) == 0:
-            self.C_binary[-1] = C == -1
+        # cache all the counts that we only need to compute once
+        if len(self.C_lm) == 0:
+
+            not_doc_starts = np.invert(doc_start[1:])
+
+            self.C_eq_l_ds_counts = {}
+            self.C_eq_l_restart_counts = {}
+
+            C_binary = {}
+            C_binary[-1] = C == -1
+
             for l in range(nscores):
-                self.C_binary[l] = C == l
+                C_binary[l] = C == l
+
+            for l in range(nscores):
+                self.C_lm[l] = {}
+                self.C_eq_l_ds_counts[l] = (C_binary[l] * doc_start).T
+                C_eq_l_counts = C_binary[l][1:, :] * not_doc_starts
+                self.C_eq_l_restart_counts[l] = (C_eq_l_counts * C_binary[-1][:-1, :]).T
+                for m in range(nscores):
+                    self.C_lm[l][m] = (C_eq_l_counts * C_binary[m][:-1, :]).T
 
         self.alpha[:] = self.alpha0
 
-        not_doc_starts = np.invert(doc_start[1:])
-
         for l in range(nscores):
             # counts of C==l for doc starts
-            counts = (self.C_binary[l] * doc_start).T.dot(E_t)
-
-            # get counts where C == l
-            C_eq_l_counts = self.C_binary[l][1:, :] * not_doc_starts
+            counts = self.C_eq_l_ds_counts[l].dot(E_t)
 
             # add counts of where previous tokens are missing.
-            counts +=  (C_eq_l_counts * self.C_binary[-1][:-1, :]).T.dot(E_t[1:])
+            if np.any(self.C_eq_l_restart_counts[l]):
+                counts +=  self.C_eq_l_restart_counts[l].dot(E_t[1:])
+
             self.alpha[:, l, self.outside_label, :] += counts.T
 
             # add counts for all other preceding tokens
             for m in range(nscores):
-                counts = (C_eq_l_counts * self.C_binary[m][:-1, :]).T.dot(E_t[1:])
+                counts = self.C_lm[l][m].dot(E_t[1:])
                 self.alpha[:, l, m, :] += counts.T
 
 
-    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
-        if model_idx not in self.alpha_data:
-            self.alpha_data[model_idx] = self.alpha0_data[model_idx].copy()
+        if model_idx not in self.alpha_taggers:
+            self.alpha_taggers[model_idx] = self.alpha0_taggers[model_idx].copy()
         else:
-            self.alpha_data[model_idx][:] = self.alpha0_data[model_idx]
+            self.alpha_taggers[model_idx][:] = self.alpha0_taggers[model_idx]
 
         for j in range(nscores):
             Tj = E_t[:, j]
@@ -87,55 +104,46 @@ class SequentialWorker(VectorWorker):
             for l in range(nscores):
 
                 counts = ((C[:,l:l+1]) * doc_start).T.dot(Tj).reshape(-1)
-                self.alpha_data[model_idx][j, l, self.outside_label, :] += counts
+                self.alpha_taggers[model_idx][j, l, self.outside_label, :] += counts
 
                 for m in range(nscores):
                     counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
-                    self.alpha_data[model_idx][j, l, m, :] += counts
+                    self.alpha_taggers[model_idx][j, l, m, :] += counts
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
         # shouldn't it use the outside factor instead of Cprev if there is a doc start?
 
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]
-            if np.isscalar(C):
-                C = np.array([C])[:, None]
-                if Cprev == -1:
-                    Cprev = self.outside_label
-            else:
-                blanks_prev = Cprev == -1
-                if np.any(blanks_prev):
-                    Cprev = np.copy(Cprev)
-                    Cprev[Cprev == -1] = self.outside_label
+            blanks_prev = Cprev == -1
+            if np.any(blanks_prev):
+                Cprev = np.copy(Cprev)
+                Cprev[Cprev == -1] = self.outside_label
 
-            result = lnPi[:, C, Cprev, Krange]
-
-            if not np.isscalar(C):
-                result[:, blanks] = 0
+            result = self.lnPi[:, C, Cprev, Krange]
+            result[:, blanks] = 0
         else:
-            if np.isscalar(C):
-                if C == -1:
-                    result = 0
-                else:
-                    if Cprev == -1:
-                        Cprev = self.outside_label
-                    result = lnPi[l, C, Cprev, Krange]
-            else:
-                if not np.isscalar(Cprev):
-                    blanks_prev = Cprev == -1
-                    if np.any(blanks_prev):
-                        Cprev = np.copy(Cprev)
-                        Cprev[Cprev == -1] = self.outside_label
+            blanks_prev = Cprev == -1
+            if np.any(blanks_prev):
+                Cprev = np.copy(Cprev)
+                Cprev[Cprev == -1] = self.outside_label
 
-                result = lnPi[l, C, Cprev, Krange]
-                result[blanks] = 0
+            result = self.lnPi[l, C, Cprev, Krange]
+            result[blanks] = 0
 
-        return result
+        return np.sum(result, axis=-1)
 
 
-    def _expand_alpha0(self, K, nscores):
+    def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
+        if l is None:
+            return self.lnPi_taggers[model_idx][:, C, Cprev, 0]
+        else:
+            return self.lnPi_taggers[model_idx][l, C, Cprev, 0]
+
+
+    def expand_alpha0(self, C, K, doc_start, nscores):
         '''
         Take the alpha0 for one worker and expand.
         :return:
@@ -151,11 +159,11 @@ class SequentialWorker(VectorWorker):
             self.alpha0 = np.tile(self.alpha0, (1, 1, nscores, K))
 
         for midx in range(self.nModels):
-            if self.alpha0_data[midx] is None:
-                self.alpha0_data[midx] = np.ones((L, L, L, 1)) + 1.0 * np.eye(L)[:, :, None, None]
-            elif self.alpha0_data[midx].ndim == 2:
-                self.alpha0_data[midx] = self.alpha0_data[midx][:, :, None, None]
-                self.alpha0_data[midx] = np.tile(self.alpha0_data[midx], (1, 1, L, 1))
+            if self.alpha0_taggers[midx] is None:
+                self.alpha0_taggers[midx] = np.ones((L, L, L, 1)) + 1.0 * np.eye(L)[:, :, None, None]
+            elif self.alpha0_taggers[midx].ndim == 2:
+                self.alpha0_taggers[midx] = self.alpha0_taggers[midx][:, :, None, None]
+                self.alpha0_taggers[midx] = np.tile(self.alpha0_taggers[midx], (1, 1, L, 1))
 
         if self.tagging_scheme == 'IOB':
             restricted_labels = self.beginning_labels  # labels that cannot follow an outside label
@@ -178,9 +186,9 @@ class SequentialWorker(VectorWorker):
             self.alpha0[:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
             for midx in range(self.nModels):
-                disallowed_count = self.alpha0_data[midx][:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
-                self.alpha0_data[midx][:, unrestricted_labels[i], self.outside_label] += disallowed_count
-                self.alpha0_data[midx][:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
+                disallowed_count = self.alpha0_taggers[midx][:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
+                self.alpha0_taggers[midx][:, unrestricted_labels[i], self.outside_label] += disallowed_count
+                self.alpha0_taggers[midx][:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
             # Ban jumps from a B of one type to an I of another type
             for typeid, other_unrestricted_label in enumerate(unrestricted_labels):
@@ -196,9 +204,9 @@ class SequentialWorker(VectorWorker):
                 self.alpha0[:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
 
                 for midx in range(self.nModels):
-                    disallowed_count = self.alpha0_data[midx][:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
-                    self.alpha0_data[midx][:, restricted_labels[typeid], other_unrestricted_label] += disallowed_count # sticks to wrong type
-                    self.alpha0_data[midx][:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
+                    disallowed_count = self.alpha0_taggers[midx][:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
+                    self.alpha0_taggers[midx][:, restricted_labels[typeid], other_unrestricted_label] += disallowed_count # sticks to wrong type
+                    self.alpha0_taggers[midx][:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
 
             # Ban jumps between Is of different types
             for typeid, other_restricted_label in enumerate(restricted_labels):
@@ -211,9 +219,9 @@ class SequentialWorker(VectorWorker):
                 self.alpha0[:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
 
                 for midx in range(self.nModels):
-                    # disallowed_count = self.alpha0_data[midx][:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                    # self.alpha0_data[midx][:, other_restricted_label, other_restricted_label, :] += disallowed_count  # TMP sticks to wrong type
-                    self.alpha0_data[midx][:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
+                    # disallowed_count = self.alpha0_taggers[midx][:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                    # self.alpha0_taggers[midx][:, other_restricted_label, other_restricted_label, :] += disallowed_count  # TMP sticks to wrong type
+                    self.alpha0_taggers[midx][:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
 
     def _calc_EPi(self, alpha):
         return alpha / np.sum(alpha, axis=1)[:, None, :, :]
@@ -226,8 +234,8 @@ class SequentialWorker(VectorWorker):
         lnpPi = log_dirichlet_pdf(self.alpha0, self.lnPi, sum_dim)
         lnqPi = log_dirichlet_pdf(self.alpha, self.lnPi, sum_dim)
 
-        for midx, alpha0_data in enumerate(self.alpha0_data):
-            lnpPi += log_dirichlet_pdf(alpha0_data, self.lnPi_data[midx], sum_dim)
-            lnqPi += log_dirichlet_pdf(self.alpha_data[midx], self.lnPi_data[midx], sum_dim)
+        for midx, alpha0_taggers in enumerate(self.alpha0_taggers):
+            lnpPi += log_dirichlet_pdf(alpha0_taggers, self.lnPi_taggers[midx], sum_dim)
+            lnqPi += log_dirichlet_pdf(self.alpha_taggers[midx], self.lnPi_taggers[midx], sum_dim)
 
         return lnpPi, lnqPi

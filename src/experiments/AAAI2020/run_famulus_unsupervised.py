@@ -30,7 +30,7 @@ import json
 
 from baselines.dawid_and_skene import ibccvb
 from AAAI2020.base_models import run_base_models
-from bsc import bsc
+from bayesian_combination import bayesian_combination
 from AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir
 
 reload = True
@@ -86,7 +86,7 @@ for classid in [0, 1, 2, 3]:
             basepreds, basetrpreds, baseres = run_base_models(dataset2, classid2, uberdomain, base_model_str, reload)
             for key in basepreds:
 
-                if key == 'a' or key == 'MV' or key == 'baseline_every' or 'ibcc' in key or 'bsc-seq' in key:
+                if key == 'a' or key == 'MV' or key == 'baseline_every' or 'ibcc' in key or 'bayesian_combination-seq' in key:
                     continue # 'a' is the in-domain performance. We don't use the in-domain model as part of an ensemble.
                     # The others are crap that shouldn't be in there.
 
@@ -141,7 +141,7 @@ for classid in [0, 1, 2, 3]:
     max_iter = 100
     alpha0_factor = 0.1
     alpha0_diags = 0.1
-    nu0_factor = 0.1
+    beta0_factor = 0.1
 
     if rerun_aggregators or 'agg_ibcc' not in res or not len(res['agg_ibcc']):
 
@@ -155,8 +155,8 @@ for classid in [0, 1, 2, 3]:
             K = annos.shape[1] # number of annotators
 
             # now run IBCC
-            probs, _ = ibccvb(annos, 3, nu0_factor, alpha0_factor, alpha0_diags, max_iter, None, uniform_priors,
-                              verbose=True)
+            probs, _ = ibccvb(annos, 3, beta0_factor, alpha0_factor, alpha0_diags, max_iter=max_iter,
+                              uniform_priors=uniform_priors, verbose=True)
             agg = np.argmax(probs, axis=1)
             aggibcc = agg
             preds['agg_ibcc'].append(agg.flatten().tolist())
@@ -185,7 +185,7 @@ for classid in [0, 1, 2, 3]:
 
     alpha0_factor = 0.1
     alpha0_diags = 10
-    nu0_factor = 0.1
+    beta0_factor = 0.1
 
     if rerun_aggregators or 'agg_bsc-seq' not in res or not len(res['agg_bsc-seq']):
 
@@ -199,16 +199,15 @@ for classid in [0, 1, 2, 3]:
             K = annos.shape[1] # number of annotators
 
             # now run BSC-seq
-            bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
-                        alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
-                        worker_model='seq', tagging_scheme='IOB2', data_model=[], transition_model='HMM',
-                        no_words=False)
+            bsc_model = bayesian_combination.BC(L=3, K=K, max_iter=max_iter, outside_label=1,
+                            alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=beta0_factor,
+                            annotator_model='seq', tagging_scheme='IOB2', taggers=[], true_label_model='HMM',
+                            discrete_feature_likelihoods=True, converge_workers_first=False)
 
             bsc_model.verbose = False
             bsc_model.max_internal_iters = max_iter
             # why does Beta put a lot of weight on going from 2 to 0? Too much trust in 1 labels?
-            probs, agg, pseq = bsc_model.run(annos, dataset.tedocstart[tedomain], dataset.tetext[tedomain],
-                                             converge_workers_first=False, uniform_priors=uniform_priors)
+            probs, agg, pseq = bsc_model.fit_predict(annos, dataset.tedocstart[tedomain], dataset.tetext[tedomain])
             preds['agg_bsc-seq'].append(agg.flatten().tolist())
 
             aggprob = np.argmax(probs, axis=1)

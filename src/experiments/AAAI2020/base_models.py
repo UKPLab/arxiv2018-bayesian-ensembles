@@ -1,7 +1,7 @@
 import os, numpy as np, json
 
 from AAAI2020.helpers import evaluate, get_root_dir
-from AAAI2020.seq_taggers import simple_crf, lample, flair_ner, flair_pos
+from AAAI2020.seq_taggers import simple_crf, lample #, flair_ner, flair_pos
 
 '''
 Structure of data folder:
@@ -12,7 +12,7 @@ Sub-directories: subsets of data for different cases or ...?
 In each directory there are the same files.
 
 Files with names ending in '.txt_ed' contain:
-    column 0 = text
+    column 0 = features
     last column = doc_start
     columns 1, 2, 3, 4 = individual annos for various numbers of classes using the BIO notation
     column 5 = gold in BIO notation?
@@ -48,14 +48,14 @@ For each fold, there is a particular set of classes.
 #
 #         labels = dataset.trgold[domain]
 #         doc_start = dataset.trdocstart[domain]
-#         text = dataset.trtext[domain]
+#         features = dataset.trtext[domain]
 #
 #         delabels = dataset.degold[domain]
 #         dedoc_start = dataset.dedocstart[domain]
 #         detext = dataset.detext[domain]
 #
 #         N = len(labels)
-#         train_sentences, IOB_map, IOB_label = data_to_lstm_format(N, text, doc_start, labels.flatten(), 3)
+#         train_sentences, IOB_map, IOB_label = data_to_lstm_format(N, features, doc_start, labels.flatten(), 3)
 #
 #         Nde = len(delabels)
 #         dev_sentences, _, _ = data_to_lstm_format(Nde, detext, dedoc_start, delabels.flatten(), 3)

@@ -2,15 +2,17 @@ import numpy as np
 from scipy.special._logsumexp import logsumexp
 from scipy.special.basic import psi
 
-from bsc.annotator_model import Annotator, log_dirichlet_pdf
+from bayesian_combination.annotator_models.annotator_model import Annotator, log_dirichlet_pdf
 
-class VectorWorker(Annotator):
+class ConfusionVectorAnnotator(Annotator):
 # Worker model: confusion/accuracy vector for workers ----------------------------------------------------------------------------
 
 # the alphas are counted as for IBCC for simplicity. However, when Pi is computed, the counts for incorrect answers
 # are summed together to compute lnPi_incorrect, then exp(lnPi_incorrect) is divided by nclasses - 1.
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
+
+        self.alpha_shape = (L, L)
 
         # WORKING SETUP FOR NER AND PICO:
         # for the incorrect answers, the psuedo count splits the alpha0_factor equally
@@ -23,26 +25,27 @@ class VectorWorker(Annotator):
         self.alpha0 = alpha0_base * np.ones((L, L)) + \
                  alpha0_correct * np.eye(L)
 
-        self.alpha0_data = {}
-        self.lnPi_data = {}
+        self.alpha0_taggers = {}
+        self.lnPi_taggers = {}
         for m in range(nModels):
-            self.alpha0_data[m] = np.copy(self.alpha0)
-            self.alpha0_data[m][:] = alpha0_base
+            self.alpha0_taggers[m] = np.copy(self.alpha0)
+            self.alpha0_taggers[m][:] = alpha0_base
 
         self.nModels = nModels
 
         print(self.alpha0)
 
 
-    def _init_lnPi(self):
+    def init_lnPi(self, N):
         # init to prior
         self.alpha = np.copy(self.alpha0)
-        self.alpha_data = {}
+        self.alpha_taggers = {}
         for midx in range(self.nModels):
-            self.alpha_data[midx] = np.copy(self.alpha0_data[midx])
+            self.alpha_taggers[midx] = np.copy(self.alpha0_taggers[midx])
 
         # Returns the initial values for alpha and lnPi
         self.lnPi = self.q_pi()
+
 
     def _calc_q_pi(self, alpha):
         '''
@@ -65,7 +68,7 @@ class VectorWorker(Annotator):
         return self.lnpi
 
 
-    def update_post_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
         '''
@@ -80,43 +83,44 @@ class VectorWorker(Annotator):
                 self.alpha[j, l, :] += counts
 
 
-    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
+    def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
         '''
-        dims = self.alpha0_data.shape
-        self.alpha_data[model_idx] = self.alpha0_data.copy()
+        dims = self.alpha0_taggers[model_idx].shape
+        self.alpha_taggers[model_idx] = self.alpha0_taggers[model_idx].copy()
 
         for j in range(dims[0]):
             Tj = E_t[:, j]
 
             for l in range(dims[1]):
                 counts = (C[:, l:l+1]).T.dot(Tj).reshape(-1)
-                self.alpha_data[model_idx][j, l, :] += counts
+                self.alpha_taggers[model_idx][j, l, :] += counts
 
 
-    def _read_lnPi(self, lnPi, l, C, Cprev, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]
-            if np.isscalar(C):
-                C = np.array([C])[:, None]
 
-            result = lnPi[:, C, Krange]
+            result = self.lnPi[:, C, Krange]
             if not np.isscalar(C):
                 result[:, blanks] = 0
         else:
-            result = lnPi[l, C, Krange]
-            if np.isscalar(C):
-                if C == -1:
-                    result = 0
-            else:
-                result[blanks] = 0
+            result = self.lnPi[l, C, Krange]
+            result[blanks] = 0
 
-        return result
+        return np.sum(result, axis=-1)
 
 
-    def _expand_alpha0(self, K, nscores):
+    def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
+        if l is None:
+            return self.lnPi_taggers[model_idx][:, C, 0]
+        else:
+            return self.lnPi_taggers[model_idx][l, C, 0]
+
+
+    def expand_alpha0(self, C, K, doc_start, nscores):
         '''
         Take the alpha0 for one worker and expand.
         :return:
@@ -132,10 +136,10 @@ class VectorWorker(Annotator):
             self.alpha0 = np.tile(self.alpha0, (1, 1, K))
 
         for midx in range(self.nModels):
-            if self.alpha0_data[midx] is None:
-                self.alpha0_data[midx] = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
-            elif self.alpha0_data[midx].ndim == 2:
-                self.alpha0_data[midx] = self.alpha0_data[midx][:, :, None]
+            if self.alpha0_taggers[midx] is None:
+                self.alpha0_taggers[midx] = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
+            elif self.alpha0_taggers[midx].ndim == 2:
+                self.alpha0_taggers[midx] = self.alpha0_taggers[midx][:, :, None]
 
 
     def _calc_EPi(self, alpha):
@@ -178,20 +182,20 @@ class VectorWorker(Annotator):
 
         lnqPi = log_dirichlet_pdf(alpha, lnpi, sum_dim)
 
-        for midx, alpha0_data in enumerate(self.alpha0_data):
-            correctcounts = alpha0_data[range(L), range(L)]
-            incorrectcounts = np.sum(alpha0_data, axis=1) - correctcounts
-            alpha0_data = np.concatenate((correctcounts, incorrectcounts), axis=1)
+        for midx, alpha0_taggers in enumerate(self.alpha0_taggers):
+            correctcounts = alpha0_taggers[range(L), range(L)]
+            incorrectcounts = np.sum(alpha0_taggers, axis=1) - correctcounts
+            alpha0_taggers = np.concatenate((correctcounts, incorrectcounts), axis=1)
 
-            correctcounts = self.alpha_data[midx][range(L), range(L)]
-            incorrectcounts = np.sum(self.alpha_data[midx], axis=1) - correctcounts
-            alpha_data = np.concatenate((correctcounts, incorrectcounts), axis=1)
+            correctcounts = self.alpha_taggers[midx][range(L), range(L)]
+            incorrectcounts = np.sum(self.alpha_taggers[midx], axis=1) - correctcounts
+            alpha_taggers = np.concatenate((correctcounts, incorrectcounts), axis=1)
 
-            lnpicorrect = self.lnPi_data[midx][range(L), range(L), :]
-            lnpiincorrect = np.sum(self.lnPi_data[midx], axis=1) - lnpicorrect
-            lnpi_data = np.concatenate((lnpicorrect, lnpiincorrect), axis=1)
+            lnpicorrect = self.lnPi_taggers[midx][range(L), range(L), :]
+            lnpiincorrect = np.sum(self.lnPi_taggers[midx], axis=1) - lnpicorrect
+            lnpi_taggers = np.concatenate((lnpicorrect, lnpiincorrect), axis=1)
 
-            lnpPi += log_dirichlet_pdf(alpha0_data, lnpi_data, sum_dim)
-            lnqPi += log_dirichlet_pdf(alpha_data, lnpi_data, sum_dim)
+            lnpPi += log_dirichlet_pdf(alpha0_taggers, lnpi_taggers, sum_dim)
+            lnqPi += log_dirichlet_pdf(alpha_taggers, lnpi_taggers, sum_dim)
 
         return lnpPi, lnqPi

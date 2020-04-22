@@ -11,10 +11,10 @@ import json
 
 from baselines.dawid_and_skene import ibccvb
 from AAAI2020.base_models import run_base_models
-from bsc import bsc
+from bayesian_combination import bayesian_combination
 from AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir, append_training_labels
 
-reload = True
+reload = False
 verbose = False
 rerun = False
 
@@ -71,7 +71,7 @@ def run_test3(uberdomain):
             basepreds, basetrpreds, baseres = run_base_models(dataset, classid, uberdomain, base_model_str, reload)
             for key in basepreds:
 
-                if key == 'a' or key == 'MV' or key == 'baseline_every' or 'ibcc' in key or 'bsc-seq' in key:
+                if key == 'a' or key == 'MV' or key == 'baseline_every' or 'ibcc' in key or 'bayesian_combination-seq' in key:
                     continue # 'a' is the in-domain performance. We don't use the in-domain model as part of an ensemble.
                     # The others are crap that shouldn't be in there.
 
@@ -154,11 +154,12 @@ def run_test3(uberdomain):
                 max_iter = 100
                 alpha0_factor = 0.1
                 alpha0_diags = 0.1
-                nu0_factor = 0.1
+                beta0_factor = 0.1
 
                 # now run IBCC
                 if rerun or 'agg_ibcc' not in preds or len(preds['agg_ibcc'][didx]) <= b:
-                    probs, _ = ibccvb(annos, 3, nu0_factor, alpha0_factor, alpha0_diags, max_iter, trlabels)
+                    probs, _ = ibccvb(annos, 3, beta0_factor, alpha0_factor, alpha0_diags, max_iter=max_iter,
+                                      target_labels=trlabels)
                     agg = np.argmax(probs, axis=1)
                     agg = agg[:N] # ignore the training items
                     preds['agg_ibcc'][didx].append(agg.flatten().tolist())
@@ -167,19 +168,19 @@ def run_test3(uberdomain):
 
                 alpha0_factor = 0.1
                 alpha0_diags = 10
-                nu0_factor = 0.1
+                beta0_factor = 0.1
 
                 if rerun or 'agg_bsc-seq' not in preds or len(preds['agg_bsc-seq'][didx]) <= b:
                     # # now run BSC-seq
-                    bsc_model = bsc.BSC(L=3, K=K, max_iter=max_iter, before_doc_idx=1,
-                                    alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=nu0_factor,
-                                    worker_model='seq', tagging_scheme='IOB2', data_model=[], transition_model='HMM',
-                                    no_words=False)
+                    bsc_model = bayesian_combination.BC(L=3, K=K, max_iter=max_iter, outside_label=1,
+                                alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor, beta0_factor=beta0_factor,
+                                annotator_model='seq', tagging_scheme='IOB2', taggers=[], true_label_model='HMM',
+                                discrete_feature_likelihoods=True, converge_workers_first=False)
 
                     bsc_model.verbose = False
                     bsc_model.max_internal_iters = max_iter
 
-                    probs, agg, pseq = bsc_model.run(annos, docstart, text, converge_workers_first=False, gold_labels=trlabels)
+                    probs, agg, pseq = bsc_model.fit_predict(annos, docstart, text, gold_labels=trlabels)
                     agg = agg[:N] # forget the training points
                     preds['agg_bsc-seq'][didx].append(agg.flatten().tolist())
 

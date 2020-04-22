@@ -9,7 +9,7 @@ import data.load_data as load_data
 import numpy as np
 
 regen_data = False
-gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, _ = \
+gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, _ = \
     load_data.load_ner_data(regen_data)
 
 # -------------------- debug or tune with subset -------
@@ -31,7 +31,7 @@ gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val,
 # gt = gt[idxs]
 # annos = annos[idxs]
 # doc_start = doc_start[idxs]
-# text = text[idxs]
+# features = features[idxs]
 # gt_val = gt_val[idxs]
 
 #-------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ beta0_factor = 1
 alpha0_diags = 1
 alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
+exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                  max_iter=20)
@@ -57,7 +57,7 @@ beta0_factor = 1
 alpha0_diags = 10
 alpha0_factor = 10
 output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
+exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                  max_iter=20)
@@ -76,7 +76,7 @@ beta0_factor = 0.1
 alpha0_diags = 0.1
 alpha0_factor = 0.1
 output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
+exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                  max_iter=20)

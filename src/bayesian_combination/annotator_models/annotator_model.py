@@ -6,33 +6,27 @@ from scipy.special import gammaln
 
 class Annotator():
 
-    def update_post_alpha(self, E_t, C, doc_start, nscores):
+    def init_lnPi(self, N):
         pass
 
 
-    def update_post_alpha_data(self, model_idx, E_t, C, doc_start, nscores):
+    def expand_alpha0(self, C, K, doc_start, nscores):
         pass
 
 
-    def read_lnPi(self, l, C, Cprev, Krange, nscores, blanks):
-        return self._read_lnPi(self.lnPi, l, C, Cprev, Krange, nscores, blanks)
+    def update_alpha(self, E_t, C, doc_start, nscores):
+        pass
 
 
-    def read_lnPi_data(self, l, C, Cprev, nscores, model_idx):
-        return self._read_lnPi(self.lnPi_data[model_idx], l, C, Cprev, 0, nscores, None)
+    def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):
+        pass
 
 
-    def read_lnEPi(self, l, C, Cprev, Krange, nscores, blanks):
-        lnEPi = self.lnEPi()
-        return self._read_lnPi(lnEPi, l, C, Cprev, Krange, nscores, blanks)
+    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
+        pass
 
 
-    def read_lnEPi_data(self, l, C, Cprev, nscores, model_idx):
-        lnEPi_data = self.lnEPi_data()
-        return self._read_lnPi(lnEPi_data[model_idx], l, C, Cprev, 0, nscores, None)
-
-
-    def _read_lnPi(self, lnPi, l, C, Cprev, workeridxs, nscores, blanks):
+    def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
         pass
 
 
@@ -40,37 +34,12 @@ class Annotator():
         self.lnPi = self._calc_q_pi(self.alpha)
 
 
-    def q_pi_data(self, model_idx):
-        self.lnPi_data[model_idx] = self._calc_q_pi(self.alpha_data[model_idx])
+    def q_pi_taggers(self, model_idx):
+        self.lnPi_taggers[model_idx] = self._calc_q_pi(self.alpha_taggers[model_idx])
+
 
     def _calc_q_pi(self, alpha):
         pass
-
-
-    def lnEPi(self):
-        EPi = self._calc_EPi(self.alpha)
-
-        lnEPi = np.zeros_like(EPi)
-        lnEPi[EPi != 0] = np.log(EPi[EPi != 0])
-        lnEPi[EPi == 0] = -np.inf
-
-        return lnEPi
-
-
-    def lnEPi_data(self):
-        if len(self.alpha0_data) == 0:
-            return 0
-
-        lnEPi_data = []
-
-        for midx, _ in enumerate(self.alpha_data):
-            EPi_m = self._calc_EPi(self.alpha_data[midx])
-            lnEPi_m = np.zeros_like(EPi_m)
-            lnEPi_m[EPi_m != 0] = np.log(EPi_m[EPi_m != 0])
-            lnEPi_m[EPi_m == 0] = -np.inf
-            lnEPi_data.append(lnEPi_m)
-
-        return lnEPi_data
 
 
     def annotator_accuracy(self):

@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     # Load ARG dataset ---------------------------------------------------------------------
 
-    N = 4521 # set to 0 to use all, any other number will debug on a subset
+    N = 0 # set to 0 to use all, any other number will debug on a subset
     gt, annos, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev = load_data.load_arg_sentences(
         N, regen_data, second_batch_workers_only, gold_labelled_only)
     N = float(len(gt))

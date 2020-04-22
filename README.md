@@ -1,16 +1,46 @@
-# Bayesian Sequence Combination
+# Bayesian Combination
 
-Aggregate sequential annotations from a crowd of annotators, accounting for their unreliability.
-The implementation allows you to test different configurations of annotator models + optional
-LSTM sequence tagger. The crowd of annotators plus automated taggers together form an ensemble.
+## Contents
 
-This is the implementation of the method first presented
+ * [Introduction](#introduction)
+ * [Publications](#publications)
+ * [Project Structure](#project-structure)
+ * [Requirements and Installation](#requirements-and-installation)
+ * [Running the experiments from EMNLP 2019](#running-the-experiments-from-emnlp-2019)
+ * [Running the Experiments from AAAI 2020](#running-the-experiments-from-aaai-2020)
+ * [How to Use Bayesian Combination (BC)](#how-to-use-bayesian-combination-bc)
+
+## Introduction
+
+This package implements several key methods for aggregating annotations from a 
+multiple annotators, accounting for each individual's reliability.
+The annotations may be sequence labels (e.g., text span annotations) or 
+classifications of independent data points (e.g., image or document classification).
+The annotators may be experts, crowd workers, or automated classifiers in an ensemble.
+
+The methods that we implement are:
+   * BSC (all variants) -- "A Bayesian Approach for Sequence Tagging with Crowds", Simpson & Gurevych (2019), EMNLP; See below for details on experiments in this paper;
+   * Variational combined supervision (VCS) -- "Low Resource Sequence Tagging with Weak Labels", Simpson et al. (2020), AAAI; See below for details on experiments;
+   * Independent Bayesian Classifier Combination (IBCC-VB) -- Simpson, et al. "Dynamic Bayesian combination of multiple imperfect classifiers", Simpson et al. (2013);
+   * MACE -- "Learning Whom to Trust with MACE", Hovy et al. (2013), NAACL;
+   * Dynamic IBCC (DynIBCC) -- Simpson, et al. "Dynamic Bayesian combination of multiple imperfect classifiers", Simpson et al. (2013);
+   * BCCWords -- "Language understanding in the wild: Combining crowdsourcing and machine learning.", Simpson et al. (2015), WWW;
+   * HeatmapBCC -- "Bayesian heatmaps: probabilistic classification with multiple unreliable information sources.", Simpson et al. (2017), ECML-PKDD.
+
+This implementation uses a common variational Bayes framework to infer gold labels using
+ different annotator models and labelling models. 
+ It can also integrate sequence taggers or automated classifiers to improve performance, 
+ which it directly trains from the crowd's annotations. 
+ The crowd of annotators plus automated taggers together form an ensemble.
+
+## Publications
+
+This is the first implementation of the method presented
 in 'A Bayesian Approach for Sequence Tagging with Crowds'
 and extended in 'Low Resource Sequence Tagging with Weak Labels'.
 The intructions for running the experiments for each are outlined below.
 
-For the code BSC method, please use the following citation:
-
+For the BSC method, please use the following citation:
 ```bibtex
 @inproceedings{simpson2019bayesian,
     title = "A {B}ayesian Approach for Sequence Tagging with Crowds",
@@ -65,27 +95,30 @@ reproduce the experiments or run the method in a new project.
 
 ## Project structure
 
-   * `src` -- contains all the python code, with the scripts for running experiments in the paper at the top level
-   * `src/baselines` -- implementations of the methods we evaluate BSC against
-   * `src/bsc` -- the core implementation of our method, including various annotator models
+   * `src` -- contains all the python code
+   * `src/baselines` -- implementations of the methods we evaluate BSC against, including the MACE implementation in Java, see NOTICE.txt
+   * `src/bayesian_combination` -- the core implementation of the variational Bayes method
+   * `src/bayesian_combination/annotator_models` -- various models of annotator reliability
+   * `src/bayesian_combination/label_models` -- models for sequential labels, classification without features, and classification with features
+   * `src/bayesian_combination/tagger_wrappers` -- wrapper classes for integrating automated classifiers using variational combined supervision (VCS)
    * `src/data` -- simualted data generation and loaders for our test datasets
    * `src/evaluation` -- experimental code for calling all aggregation methods, running the active learning simulation
    and computing evaluation metrics
-   * `src/lample_lstm_tagger` -- LSTM-based model for sequence tagging, see NOTICE.txt
-   * `src/models` -- temporary storage of LSTM models
+   * `src/experiments` -- scripts for running experiments in the papers, see below
+   * `src/taggers` -- Implementations of automated taggers for inclusion using VCS, including the BiLSTM-CRF for sequence tagging, see NOTICE.txt
    * `src/test` -- simple unit tests
    * `batch_scripts` -- for running on a cluster with SLURM
    * `config` -- config files for the simulations
    * `data` -- datasets and outputs from error analysis
-   * `documents` -- tex files for the paper.
-   * `MACE` -- MACE implementation in Java, see NOTICE.txt
+   * `documents` -- tex files for the EMNLP paper.
 
-## Third-pary code included in this repository:
+### Third-pary code included in this repository
 
-* MACE -- by Dirk Hovy, https://github.com/dirkhovy/MACE
+* src/baselines/MACE -- by Dirk Hovy, https://github.com/dirkhovy/MACE
 * src/baselines/hmm.py -- by An Tanh Nguyen, https://github.com/thanhan
+* src/taggers/lample_lstm_tagger -- by Guillaume Lample, https://github.com/glample/tagger 
 
-## Requirements and installation.
+## Requirements and Installation
 
 Python 3.5 or higher.
 
@@ -142,7 +175,7 @@ where the path `~/git/PICO-data/` should be replaced with location where you che
 
 6. For the ARG dataset, unzip the data from `data/argmin_LMU.zip` and move it to `<data_root_dir>/data`.
 
-## Running the experiments from EMNLP 2019
+## Running the Experiments from EMNLP 2019
 
 These instructions are for "A Bayesian Approach To Sequence Tagging with Crowds".
 
@@ -261,17 +294,23 @@ comment this section and uncomment code to repeat selected methods with pre-dete
 Results are saved to `<data_root_dir>\output\ner3\result_started_<date>_<time>...csv`
 and `<data_root_dir>\pico3\result_started_<date>_<time>...csv`.
 
-
-## Using Bayesian Sequence Combination (BSC)
+## How to Use Bayesian Combination (BC)
 
 ### Data Format
 
-The crowdsourced data is an annotation matrix where columns correspond to workers, and rows correspond
-to tokens. Where a worker has not labeled a token, the entry in the matrix is -1.
-Rows containing the annotations for all documents/sentences (i.e. the blocks of text
-that the annotators labeled) should be concatenated. The start points of each block of text
-is indicated by a vector, doc_start, which has '1' to indicate that a token is the first in
+The crowdsourced data is an annotation matrix, `annotations`,
+ where columns correspond to workers, and rows correspond
+to data points. 
+For sequence labelling of text, each data point is a token, 
+and their corresponding rows should be ordered as in the documents.
+the annotations for all documents should be concatenated into a single matrix.
+Where a worker has not labeled a data point, 
+the entry in the matrix is -1.
+The start points of each sequence (e.g., block of text)
+are indicated by a vector, `doc_start`, which has '1' to indicate that a token is the first in
 a new block of text and '0' for all other tokens.
+If there is no sequence to the labels (i.e., for standard classification tasks),
+then `doc_start=None`.
 
 The default setup in the example below assumes that the labels in the annotation matrix  
 are as follows:
@@ -286,40 +325,58 @@ the constructor.
 
 ### Aggregating Crowdsourced Data
 
-The main method implementation is in src/algorithm/bsc.py. It can be run as follows. First,
-construct the object for an IOB tagging problem:
-~~~
-num_classes = 3 # B, I and O
+The main method implementation is in src/bayesian_combination/bc.py. 
+This package also contains several configurations 
+that implement BSC, IBCC, MACE. See the doc strings 
+in bayesian_combination.py for more details on arguments
+to the methods. 
 
-bsc_model = bsc.BSC(L=num_classes, K=num_annotators, worker_model='seq')
+BC can be run as follows. First,
+construct the object for a labelling task. Let's
+ say we have an IOB sequence tagging problem, and wish to use the BSC-seq method:
+~~~python
+num_classes = 3 # Beginning, Inside and Outside
 
-bsc_model.verbose = True # to get extra debugging info
+bc_model = BSC(L=num_classes, K=num_annotators, annotator_model='seq')
 ~~~
-The constructor takes an argument, 'worker_model', which determines the type of
-annotator model. In the example above it is set to "worker_model='seq'", which
+The same thing can be achieved by calling Bayesian Combination directly with the correct configuration:
+~~~python
+bc_model = BC(L=num_classes, K=num_annotators, annotator_model='seq', true_labl_model='HMM',
+                discrete_feature_likelihoods=True)
+~~~
+In the example above, the annotator model is set to 'seq', which
 uses the default sequential annotator model. However, if the results are not looking good
-on some datasets, you may also wish to try "worker_model='ibcc''" (this is the confusion matrix or 'cm' model in the paper),
+on some datasets, you may also wish to try "annotator_model='CM'" (this is the confusion matrix in the EMNLP 2019 paper),
 which will use a simpler annotator model.
-Further alternatives are "worker_model='vec'" (called 'cv' or confusion vector in the paper),
- "worker_model='mace'" (called 'spam' in the paper),
+Further alternatives are "worker_model='CV'" (confusion vector),
+ "worker_model='spam'" (as used by MACE),
 and "worker_model='acc' (a single accuracy value for each worker).
 
 A single call is used to train the model and produce the aggregated labels:
+~~~python
+probs, agg = bc_model.fit_predict(annotations, doc_start, features)
 ~~~
-probs, agg = bsc_model.run(annotations, doc_start, features)
-~~~
-The features object is a numpy array that typically contains strings, i.e. a column vector of text tokens.
-Other features can also be provided as additional columns. The shape of features is num_tokens x num_features_per_token.
+For sequence labelling, doc_start is an optional array of zeros and ones, as above.
+The features object is a numpy array that typically contains strings, 
+i.e. a column vector of text tokens.
+Other features can also be provided as additional columns if using 
+the GP label model. 
+The shape of features is num_tokens x num_features_per_token.
 If we consider only the text tokens as features, num_features_per_token == 1.
 
-The method outputs both 'probs', i.e. the class label probabilities for each token, and
-'agg', which is the most likely sequence of labels aggregated from the crowdsourced data.
+The `fit_predict` method outputs 'probs',
+ i.e. the class label probabilities for each token, 
+'agg', which is the most likely sequence of labels aggregated 
+from the crowd's data,
+and 'plabels', which is the probability of the most likely labels.
 
-### Sequential label model
+### Label model
 
 The method can also be applied to non-sequential classification tasks by turning off the
 sequential label model. This is achieved by passing an optional constructor argument
-"transition_model='noHMM'".
+"true_label_model='noHMM'". Alternatively, if you have continuous feature data,
+you can use "true_label_model='GP'" to use a Gaussian process label model, as in the
+HeatmapBCC method.
 
 ## Competence Scores
 
@@ -327,7 +384,7 @@ A competence score that rates the ability of an annotator can be useful for sele
 Given a `bsc_model` object, after calling `run()` as described above,
 we can compute the annotator accuracy as follows:
 ~~~python
-acc = bsc_model.annotator_accuracy()
+acc = bc_model.A.annotator_accuracy()
 print(acc)
 ~~~
 This returns a vector of accuracies for the annotators.
@@ -339,7 +396,7 @@ a worker consistently confuses one class for another.
 A better metric is based on the expected information gain, i.e. the reduction in uncertainty
 about a true label given the label from a particular worker. We call this 'informativeness':
 ~~~python
-infor = bsc_model.informativeness()
+infor = bc_model.A.informativeness()
 print(infor)
 ~~~
 The informativeness is also returned as a vector and can also be used to rank workers (higher is better).

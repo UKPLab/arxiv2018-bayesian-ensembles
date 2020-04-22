@@ -121,7 +121,8 @@ def append_training_labels(annos, basemodels_str, dataset, classid, didx, tedoma
 
             Nother = len(trpreds[othername][didx])
             trpreds[newname][didx] = (np.zeros(Nother) - 1).tolist()
-        trannos, _ = get_anno_matrix(classid, trpreds, didx, include_all=False)
+
+    trannos, _ = get_anno_matrix(classid, trpreds, didx, include_all=False)
 
     # get the training labels for the training set
     Ndoc = np.sum(dataset.trdocstart[tedomain])
@@ -185,21 +186,21 @@ class Dataset:
                 return labels
 
             data = pd.read_csv(os.path.join(subsetdir, 'eda_train_ES.tsv'), sep='\t', usecols=[0, goldcol, 11],
-                               names=['text', 'gold', 'doc_start'])
+                               names=['features', 'gold', 'doc_start'])
             self.trgold[subset] = to_IOB(data['gold'].values)
-            self.trtext[subset] = data['text'].values
+            self.trtext[subset] = data['features'].values
             self.trdocstart[subset] = data['doc_start'].values
 
             data = pd.read_csv(os.path.join(subsetdir, 'eda_dev_ES.tsv'), sep='\t', usecols=[0, goldcol, 11],
-                               names=['text', 'gold', 'doc_start'])
+                               names=['features', 'gold', 'doc_start'])
             self.degold[subset] = to_IOB(data['gold'].values)
-            self.detext[subset] = data['text'].values
+            self.detext[subset] = data['features'].values
             self.dedocstart[subset] = data['doc_start'].values
 
             data = pd.read_csv(os.path.join(subsetdir, 'eda_test_ES.tsv'), sep='\t', usecols=[0, goldcol, 11],
-                               names=['text', 'gold', 'doc_start'])
+                               names=['features', 'gold', 'doc_start'])
             self.tegold[subset] = to_IOB(data['gold'].values)
-            self.tetext[subset] = data['text'].values
+            self.tetext[subset] = data['features'].values
             self.tedocstart[subset] = data['doc_start'].values
 
             Ntargettr = len(self.trdocstart[subset])

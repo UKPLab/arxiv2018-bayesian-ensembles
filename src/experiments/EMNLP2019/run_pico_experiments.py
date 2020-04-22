@@ -11,17 +11,17 @@ import numpy as np
 
 
 regen_data = False
-gt, annos, doc_start, text, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data)
+gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data)
 #, debug_subset_size=1000) # include this argument to debug with small dataset
 output_dir = os.path.join(load_data.output_root_dir, 'pico')
 
-# ------------------------------------------------------------------------------------------------
-
+# # ------------------------------------------------------------------------------------------------
+#
 # beta0_factor = 0.1
 # alpha0_diags = 10
 # alpha0_factor = 10
 # best_begin_factor = 1
-# exp = Experiment(output_dir, 3, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
+# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
 #                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
 #                  max_iter=20, begin_factor=best_begin_factor)
 # # # run all the methods that don't require tuning here
@@ -38,7 +38,7 @@ output_dir = os.path.join(load_data.output_root_dir, 'pico')
 # alpha0_diags = 10
 # alpha0_factor = 10
 # best_begin_factor = 10
-# exp = Experiment(output_dir, 3, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
+# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
 #                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
 #                  max_iter=20, begin_factor=best_begin_factor)
 # # run all the methods that don't require tuning here
@@ -64,7 +64,7 @@ output_dir = os.path.join(load_data.output_root_dir, 'pico')
 # alpha0_diags = 100
 # alpha0_factor = 10
 # best_begin_factor = 1
-# exp = Experiment(output_dir, 3, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
+# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
 #                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
 #                  max_iter=20, begin_factor=best_begin_factor)
 # # run all the methods that don't require tuning here
@@ -102,7 +102,7 @@ elif ndocs < s:  # not enough validation data
 
 tune_annos = annos[idxs]
 tune_doc_start = doc_start[idxs]
-tune_text = text[idxs]
+tune_text = features[idxs]
 gt_val = gt_val[idxs]
 
 beta_factors = [0.01, 0.1, 1]
@@ -125,7 +125,7 @@ methods_to_tune = [
                 # 'bac_mace_noHMM'
                    ]
 
-exp = Experiment(output_dir, 3, annos, gt, doc_start, text, tune_annos, gt_val, tune_doc_start, tune_text,
+exp = Experiment(output_dir, 3, annos, gt, doc_start, features, tune_annos, gt_val, tune_doc_start, tune_text,
                  max_iter=20, begin_factor=10)
 
 for m, method in enumerate(methods_to_tune):

@@ -9,7 +9,8 @@ import numpy as np
 from joblib import Parallel
 
 from src.baselines import ibcc
-from src.bsc import bsc, seq
+from src.bayesian_combination import bayesian_combination
+from bayesian_combination.annotator_models import seq
 from src.data.data_generator import DataGenerator
 
     
@@ -93,7 +94,7 @@ class Test(unittest.TestCase):
         alpha[0,:,:,0] = [[2,1,2],[2,1,2]]
         alpha[1,:,:,0] = [[1,2,1],[1,2,1]]
         
-        lnPi = seq.SequentialWorker._calc_q_pi(alpha)
+        lnPi = seq.SequentialAnnotator._calc_q_pi(alpha)
         
         # print lnPi[0,:,:,0]
         # print lnPi[1,:,:,0]
@@ -126,7 +127,7 @@ class Test(unittest.TestCase):
         lnR_ = np.log(np.ones((10,4))) 
         lnLambda = np.log(np.ones((10,4)) * (np.array(list(range(4))) + 1)[:, None].T)
         
-        result = bsc._expec_t(lnR_, lnLambda)
+        result = bayesian_combination._expec_t(lnR_, lnLambda)
         
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(result,1), 1, atol=1e-10)
@@ -149,7 +150,7 @@ class Test(unittest.TestCase):
         C = np.ones((T,1), dtype=int)
         doc_start = np.array([1,0,0])
 
-        result = bsc._expec_joint_t(lnR_, lnLambda, lnB, lnPi, None, C, None, doc_start, 3, seq.SequentialWorker)
+        result = bayesian_combination._expec_joint_t(lnR_, lnLambda, lnB, lnPi, None, C, None, doc_start, 3, seq.SequentialAnnotator)
         
         # ensure all rows sum up to 1
         assert np.allclose(np.sum(np.sum(result,-1),-1),1, atol=1e-10)
@@ -172,8 +173,8 @@ class Test(unittest.TestCase):
         doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
 
         with Parallel(n_jobs=-1) as parallel:
-            lnR_ = bsc._parallel_forward_pass(parallel, C, None, lnB, lnPi, None, initProbs, doc_start, 2,
-                                              seq.SequentialWorker, skip=False)
+            lnR_ = bayesian_combination._parallel_forward_pass(parallel, C, None, lnB, lnPi, None, initProbs, doc_start, 2,
+                                                               seq.SequentialAnnotator, skip=False)
         
         r_ = np.exp(lnR_)
         
@@ -192,10 +193,10 @@ class Test(unittest.TestCase):
         
         doc_start = np.array([1,0,0,0,0,1,0,0,0,0])
 
-        A = seq.SequentialWorker
+        A = seq.SequentialAnnotator
 
         with Parallel(n_jobs=-1) as parallel:
-            lnLambd = bsc._parallel_backward_pass(parallel, C, None, lnB, lnPi, None, doc_start, 2, A, skip=False)
+            lnLambd = bayesian_combination._parallel_backward_pass(parallel, C, None, lnB, lnPi, None, doc_start, 2, A, skip=False)
         
             lambd = np.exp(lnLambd)
         
@@ -221,9 +222,9 @@ class Test(unittest.TestCase):
         doc_start = np.zeros((5,1))
         doc_start[[0,2]] = 1
         
-        myBac = bsc.BSC(L=3, K=10)
+        myBac = bayesian_combination.BC(L=3, K=10)
         
-        result, _ =  myBac.run(C, doc_start)
+        result, _ =  myBac.fit_predict(C, doc_start)
         target = np.zeros((5,3))
         target[:,1] = 1
         
@@ -239,9 +240,9 @@ class Test(unittest.TestCase):
         doc_start = np.zeros((20,1))
         doc_start[[0,10]] = 1
         
-        myBac = bsc.BSC(L=3, K=10)
+        myBac = bayesian_combination.BC(L=3, K=10)
         
-        _, result = myBac.run(C, doc_start)
+        _, result = myBac.fit_predict(C, doc_start)
         
         assert np.allclose(gt.flatten(), result, atol=1e-4)
         
@@ -257,7 +258,7 @@ class Test(unittest.TestCase):
         alpha0[1,0,0,0] = 5
         alpha0[1,1,1,0] = 3
 
-        result = seq.SequentialWorker.update_post_alpha(E_t, C, alpha0, None, doc_start, 2)
+        result = seq.SequentialAnnotator.update_alpha(E_t, C, alpha0, None, doc_start, 2)
         
         target = np.ones((2,2,3,1)) * .5
         

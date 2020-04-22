@@ -11,15 +11,15 @@ import os
 gt, annos, doc_start, text, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_val, _ = \
     load_data.load_ner_data(False)
 
-# debug with subset -------
-s = 100
-idxs = np.argwhere(gt!=-1)[:s, 0]
-gt = gt[idxs]
-annos = annos[idxs]
-doc_start = doc_start[idxs]
-text = text[idxs]
-gt_val = gt_val[idxs]
-# -------------------------
+# # debug with subset -------
+# s = 100
+# idxs = np.argwhere(gt!=-1)[:s, 0]
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# text = text[idxs]
+# gt_val = gt_val[idxs]
+# # -------------------------
 
 num_reps = 10
 batch_frac = 0.03
