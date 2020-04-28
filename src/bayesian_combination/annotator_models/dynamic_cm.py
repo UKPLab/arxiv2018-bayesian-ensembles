@@ -22,9 +22,19 @@ def alpha_to_state(alpha, l):
     :param l:
     :return: mean vector and 2-D covariance vector.
     '''
-    Wmean = np.log(alpha[:, l]) - np.log(np.sum(alpha, axis=1) - alpha[:, l])
+    counts = alpha[:, l]
+    other_counts = np.sum(alpha, axis=1) - alpha[:, l]
+
+    # if np.any(counts < 1e-300):
+    #     print('alpha_to_state fix small counts')
+    #     counts[counts < 1e-300] = 1e-300 # artificial bottom to prevent NaNs
+    # if np.any(other_counts < 1e-300):
+    #     print('alpha_to_state fix small other_counts')
+    #     other_counts[other_counts < 1e-300] = 1e-300 # artificial bottom to prevent NaNs
+
+    Wmean = np.log(counts) - np.log(other_counts)
     Wmean = Wmean.flatten()
-    diag_vals = (1 / alpha[:, l]) + (1 / (np.sum(alpha, axis=1) - alpha[:, l]))
+    diag_vals = (1 / counts) + (1 / (other_counts))
     P = np.diagflat(diag_vals)
     return Wmean, P
 
@@ -34,15 +44,11 @@ class DynamicConfusionMatrixAnnotator(ConfusionMatrixAnnotator):
     # We do apply the dynamic confusion matrix only to the annotators, not the taggers. The integrated taggers make
     # predictions at one time using the same model, so their behaviour does not vary over time.
 
-    def __init__(self, alpha0_diags, alpha0_factor, L, nModels, change_noise='previous', prior_type='consistent'):
+    def __init__(self, alpha0_diags, alpha0_factor, L, nModels, prior_type='consistent'):
         super().__init__(alpha0_diags, alpha0_factor, L, nModels)
         self.L = L
-        self.change_noise = change_noise # do we use the change noise estimate at the previous step or current step?
-        # Latter might break VB.
-        # Values may be 'previous' or 'current'.
 
-        self.prior_type = prior_type # Are the priors applied to the start of the sequence only,
-        # or to the whole sequence?
+        self.prior_type = prior_type # Are the priors applied to the start of the sequence only, or to whole sequence?
         # Values may be 'initial' or 'consistent'.
 
 
@@ -121,7 +127,7 @@ class DynamicConfusionMatrixAnnotator(ConfusionMatrixAnnotator):
                     confmat_id = self.confmat_ids[n]
                     Wmean_pr, P_pr = alpha_to_state(self.alpha0[:, :, confmat_id], l)
                 else:
-                    Wmean_pr, P_pr = alpha_to_state(1e-2 * np.ones((self.L, self.L)), 0)
+                    Wmean_pr, P_pr = alpha_to_state(np.ones((self.L, self.L)), 0)
             else:
                 Wmean_pr = Wmean_po[:, n - 1]
                 P_pr = P_po[n - 1]
@@ -142,7 +148,6 @@ class DynamicConfusionMatrixAnnotator(ConfusionMatrixAnnotator):
             # update to get posterior given current time-step
             alpha_tilde_po = alpha_tilde_pr + c
             alpha_tilde_po_sum = alpha_tilde_pr_sum + 1
-            # print("Alpha_tilde_po " + str(alpha_tilde_po) + ", tau=" + str(tau))
 
             # state change variance used in next iteration: if the posterior is more uncertain, we estimate it by
             # taking the different in variance. If the posterior is less or equally uncertain, we assume no state change
@@ -156,8 +161,13 @@ class DynamicConfusionMatrixAnnotator(ConfusionMatrixAnnotator):
             q[n] = (u_po > u_pr[self.annotator_by_tok_ids[n]]) * (u_po - u_pr[self.annotator_by_tok_ids[n]])
 
             # get posteriors in latent state form
-            eta_po = np.log(alpha_tilde_po / (alpha_tilde_po_sum-alpha_tilde_po))
-            r_po = (1.0 / alpha_tilde_po) + (1.0 / (alpha_tilde_po_sum-alpha_tilde_po))
+            other_counts = alpha_tilde_po_sum - alpha_tilde_po
+            if other_counts > alpha_tilde_po/1e-300:
+                print('update_alpha fixing small other counts')
+                other_counts = 1e-300
+
+            eta_po = np.log(alpha_tilde_po / other_counts)
+            r_po = (1.0 / alpha_tilde_po) + (1.0 / other_counts)
 
             # Kalman update equations
             Kalman[n] = (P_pr.T.dot(h_cov) / r_pr[n])  # J
@@ -205,7 +215,6 @@ class DynamicConfusionMatrixAnnotator(ConfusionMatrixAnnotator):
             pi_var = np.diag(P_po[n])
             alpha_l, alphasum = state_to_alpha(Wmean_po[:, n], pi_var)
 
-            # print("Alpha: " + str(alpha_l))
             confmat_id = self.confmat_ids[n]
 
             self.alpha[:, l, confmat_id] = alpha_l
@@ -224,10 +233,6 @@ class DynamicConfusionMatrixAnnotator(ConfusionMatrixAnnotator):
 
         if self.prior_type == 'consistent':
             self.alpha += self.alpha0
-
-        # np.set_printoptions(suppress=True)
-        # print(self.alpha[0, :, 0])
-        # print(self.alpha[0, :, 45])
 
 
     def read_lnPi(self, l, C, Cprev, doc_ids, Krange, nscores, blanks):

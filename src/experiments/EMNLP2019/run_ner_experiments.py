@@ -128,6 +128,21 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, features_nocrowd,
 #
 # #----------------------------------------------------------------------------
 
+# beta0_factor = 0.1
+# alpha0_diags = 0.1
+# alpha0_factor = 0.1
+# output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  # gt_nocrowd, doc_start_nocrowd, features_nocrowd,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+# exp.methods =  [
+#                 'bsc_dyn.initial_noHMM',
+# ]
+# exp.opt_hyper = False
+# exp.run_methods(new_data=regen_data)
+
+# #----------------------------------------------------------------------------
+
 beta0_factor = 0.1
 alpha0_diags = 0.1#100
 alpha0_factor = 1
@@ -139,23 +154,7 @@ exp.methods =  [
                 'ibcc3',
                 #'ibcc2',
                 # 'ibcc',
-                'bsc_dyn.previous.consistent_noHMM',
-]
-exp.opt_hyper = False
-exp.run_methods(new_data=regen_data)
-
-# #----------------------------------------------------------------------------
-
-beta0_factor = 0.1
-alpha0_diags = 0.1
-alpha0_factor = 0.1
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 # gt_nocrowd, doc_start_nocrowd, features_nocrowd,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
-exp.methods =  [
-                # 'bsc_dyn.consistent_noHMM',
-                'bsc_dyn.initial_noHMM',
+                # 'bsc_dyn.previous.consistent_noHMM',
 ]
 exp.opt_hyper = False
 exp.run_methods(new_data=regen_data)
