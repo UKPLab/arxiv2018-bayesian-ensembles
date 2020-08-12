@@ -17,7 +17,8 @@ from lample_lstm_tagger.model import Model
 import numpy as np
 from scipy.special import logsumexp
 
-MAX_NO_EPOCHS = 25 # number of epochs recommended to try before testing against dev set for the first time
+MAX_NO_EPOCHS = 25  # number of epochs recommended to try before testing against dev set for the first time
+
 
 def data_to_lstm_format(nannotations, text, doc_start, labels, nclasses=0, include_missing=False):
     sentences_list = np.empty(int(np.sum(doc_start[:nannotations])), dtype=object)
