@@ -165,13 +165,16 @@ move it to `<data_root_dir>/data`.
 
 4. For the PICO dataset,
 extract the data from `data/bio.zip` and move it to `<data_root_dir>/data`.
-If you want to get the original data that these files were derived from,
-checkout the git repo https://github.com/yinfeiy/PICO-data/ (you don't need these
-to repeat the experiments).
 
-5. Create a link to the PICO data:
+5. If you want to get the original data that `bio/` 
+folder was derived from,
+checkout the git repo https://github.com/yinfeiy/PICO-data/ (you don't need these
+to repeat the experiments). You can regenerate the files by deleting the `bio/` 
+folder, creating a link to the PICO-data repo, and running the PICO experiments
+as instructed below. The link should be:
 `ln -s ~/git/PICO-data/ <data_root_dir>/data/bio-PICO`,
-where the path `~/git/PICO-data/` should be replaced with location where you checked out the PICO-data.
+where the path `~/git/PICO-data/` should be replaced with location where you 
+checked out PICO-data.
 
 6. For the ARG dataset, unzip the data from `data/argmin_LMU.zip` and move it to `<data_root_dir>/data`.
 

@@ -25,7 +25,7 @@ from bayesian_combination import bayesian_combination
 logging.basicConfig(level=logging.DEBUG)
 
 
-data_root_dir = '../../../data/bayesian_sequence_combination/'
+data_root_dir = '.'  # '../../../data/bayesian_sequence_combination/'
 
 
 def _append_to_csv(outputdir, method, method_idx, new_data, filename, file_identifier):

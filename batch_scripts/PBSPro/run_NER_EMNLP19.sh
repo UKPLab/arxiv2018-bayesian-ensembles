@@ -19,7 +19,7 @@
 module load lang/python/anaconda/pytorch lang/cuda
 
 # We might need to add the global paths to our code to the pythonpath. Also set the data directories globally.
-cd /work/es1595/arxiv2018-bayesian-ensembles/src
+cd /work/es1595/arxiv2018-bayesian-ensembles
 export PYTHONPATH=$PYTHONPATH:"/work/es1595/arxiv2018-bayesian-ensembles/src"
 
 #  run the script
