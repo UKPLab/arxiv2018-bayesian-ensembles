@@ -3,7 +3,7 @@
 
 virtualenv env -p python3
 source env/bin/activate
-pip install -r requirements.txt
+pip install -r requirements_expts.txt
 source virtualenvwrapper.sh
 add2virtualenv src
 add2virtualenv src/experiments/EMNLP2019
