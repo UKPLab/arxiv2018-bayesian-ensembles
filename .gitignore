@@ -1,3 +1,6 @@
+data/bio
+data/crf-ma-NER-task1
+data/English NER
 *.log
 tmp
 *.ipynb
@@ -34,7 +37,6 @@ documents/bayesian_annotator_combination.aux
 documents/bayesian_annotator_combination.blg
 output/data/*
 *.dat.out
-*.pyc
 *.pyo
 
 output/nguyen_class_bias_exp_25

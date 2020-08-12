@@ -38,7 +38,7 @@ for rep in range(1, num_reps):
     exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
                      alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                      max_iter=20, crf_probs=True, rep=rep)
-    exp.methods =  [
+    exp.methods = [
         'bac_seq_integrateIF',
         'HMM_crowd',
     ]

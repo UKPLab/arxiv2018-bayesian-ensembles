@@ -161,7 +161,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
             all_data.to_csv(savepath + '/annos.csv', columns=all_workerids, header=False, index=False)
             all_data.to_csv(savepath + '/gt.csv', columns=['gold'], header=False, index=False)
             all_data.to_csv(savepath + '/doc_start.csv', columns=['doc_start'], header=False, index=False)
-            all_data.to_csv(savepath + '/features.csv', columns=['features'], header=False, index=False)
+            all_data.to_csv(savepath + '/text.csv', columns=['features'], header=False, index=False)
 
     print('loading annos...')
     annos = pd.read_csv(savepath + '/annos.csv', header=None, nrows=debug_subset_size)
@@ -170,7 +170,7 @@ def load_biomedical_data(regen_data_files, debug_subset_size=None, data_folder='
     #np.genfromtxt(savepath + '/annos.csv', delimiter=',')
 
     print('loading features data...')
-    text = pd.read_csv(savepath + '/features.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
+    text = pd.read_csv(savepath + '/text.csv', skip_blank_lines=False, header=None, nrows=debug_subset_size)
     text = text.fillna(' ').values
 
     print('loading doc starts...')

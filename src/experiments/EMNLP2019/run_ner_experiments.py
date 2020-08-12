@@ -67,7 +67,7 @@ methods_to_tune = [
     # 'bsc_dyn.consistent_noHMM',
     # 'bsc_dyn.initial_noHMM',
     'ibcc',
-    'HMM_crowd',
+    # 'HMM_crowd',
     'mace',
     'bac_vec_integrateIF',
     'bac_ibcc_integrateIF',
