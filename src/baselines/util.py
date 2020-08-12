@@ -2,7 +2,7 @@
 
 
 '''
-
+import numpy
 import numpy as np
 import os
 #import re
@@ -1160,5 +1160,101 @@ def to_huang_ner(out_file, cd, n_workers = 47, max_line = 1000):
             f.write('\n')
 
     f.close()
-    
 
+
+def data_to_hmm_crowd_format(annotations, text, doc_start, outputdir, overwrite=False):
+
+    filename = outputdir + '/hmm_crowd_text_data.pkl'
+
+    if not os.path.exists(filename) or overwrite:
+        if text is not None:
+
+            ufeats = {}
+            features = np.zeros(len(text))
+            for t, tok in enumerate(text.flatten()):
+
+                if np.mod(t, 10000) == 0:
+                    print('converting data to hmm format: token %i / %i' % (t, len(text)))
+
+                if tok not in ufeats:
+                    ufeats[tok] = len(ufeats)
+
+                features[t] = ufeats[tok]
+
+            features = features.astype(int)
+
+        else:
+            features = []
+            ufeats = []
+
+        sentences_inst = []
+        crowd_labels = []
+
+        for i in range(annotations.shape[0]):
+
+            if len(features):
+                token_feature_vector = [features[i]]
+            else:
+                token_feature_vector = []
+
+            label = 0
+
+            if doc_start[i]:
+                sentence_inst = []
+                sentence_inst.append(instance(token_feature_vector, label + 1))
+                sentences_inst.append(sentence_inst)
+
+                crowd_labs = []
+                for worker in range(annotations.shape[1]):
+
+                    if annotations[i, worker] == -1: # worker has not seen this doc
+                        continue
+
+                    worker_labs = crowdlab(worker, len(sentences_inst) - 1, [int(annotations[i, worker])])
+
+                    crowd_labs.append(worker_labs)
+                crowd_labels.append(crowd_labs)
+
+            else:
+                sentence_inst.append(instance(token_feature_vector, label + 1))
+
+
+                for widx, worker_labs in enumerate(crowd_labs):
+                    crowd_labs[widx].sen.append(int(annotations[i, worker_labs.wid]))
+
+        nfeats = len(ufeats)
+
+        print('writing HMM pickle file...')
+        with open(filename, 'wb') as fh:
+            pickle.dump([sentences_inst, crowd_labels, nfeats], fh)
+    else:
+        with open(filename, 'rb') as fh:
+            data = pickle.load(fh)
+        sentences_inst = data[0]
+        crowd_labels = data[1]
+        nfeats = data[2]
+
+    return sentences_inst, crowd_labels, nfeats
+
+def subset_hmm_crowd_data(sentences_inst, crowd_labels, docsubsetidxs, nselected_by_doc):
+
+    if docsubsetidxs is not None:
+        sentences_inst = np.array(sentences_inst)
+        sentences_inst = sentences_inst[docsubsetidxs]
+
+        crowd_labels = [crowd_labels[d] for d in docsubsetidxs]
+
+        for d, crowd_labels_d in enumerate(crowd_labels):
+            crowd_labels[d] = crowd_labels_d[:int(nselected_by_doc[d])]
+        crowd_labels = np.array(crowd_labels)
+
+    if len(sentences_inst[0][0].features) and isinstance(sentences_inst[0][0].features[0], float):
+        # the features need to be ints not floats!
+        for s, sen in enumerate(sentences_inst):
+            for t, tok in enumerate(sen):
+                feat_vec = []
+                for f in range(len(tok.features)):
+                    feat_vec.append(int(sentences_inst[s][t] .features[f]))
+                sentences_inst[s][t] = instance(feat_vec, sentences_inst[s][t].label)
+
+    return sentences_inst, crowd_labels

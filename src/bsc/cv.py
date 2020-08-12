@@ -12,6 +12,7 @@ class VectorWorker(Annotator):
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
 
+        # WORKING SETUP FOR NER AND PICO:
         # for the incorrect answers, the psuedo count splits the alpha0_factor equally
         # between the incorrect answers and multiplies by 2 (why?)
         alpha0_base = alpha0_factor / (L - 1)
@@ -29,6 +30,8 @@ class VectorWorker(Annotator):
             self.alpha0_data[m][:] = alpha0_base
 
         self.nModels = nModels
+
+        print(self.alpha0)
 
 
     def _init_lnPi(self):

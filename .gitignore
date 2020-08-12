@@ -1,3 +1,6 @@
+tmp
+*.ipynb
+.ipynb_checkpoints
 venv
 run_gputest.sh
 src/gpu_tutorial2.py
@@ -107,5 +110,7 @@ documents/Archive.zip
 *.bbl
 *.toc
 *.blg
-data/famulus
+data/famulus/output/f*
+data/famulus/output/t*
+data/famulus/cc.de.300.vec
 results/*

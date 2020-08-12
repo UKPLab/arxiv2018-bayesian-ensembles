@@ -38,7 +38,7 @@ class BSC(object):
     eps = None  # maximum difference of estimate differences in convergence chack
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
-                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_outside_factor=1.0, beta0_factor=1.0, nu0=1,
+                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_B_factor=1.0, beta0_factor=1.0, nu0=1,
                  worker_model='ibcc', data_model=None, tagging_scheme='IOB2', transition_model='HMM', no_words=False,
                  model_dir=None, reload_lstm=False, embeddings_file=None, rare_transition_pseudocount=1e-12,
                  verbose=False, use_lowerbound=True):
@@ -49,12 +49,11 @@ class BSC(object):
         if self.use_lb:
             self.lb = -np.inf
 
-        # tagging_scheme can be 'IOB2' (all annotations start with B) or 'IOB' (only annotations
+        # tagging_scheme can be 'IOB2' (all annos start with B) or 'IOB' (only annos
         # that follow another start with B).
 
         self.L = L
         self.K = K
-
 
         self.nu0 = nu0
 
@@ -88,25 +87,25 @@ class BSC(object):
             self.A = AccuracyWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (2)
 
-        elif worker_model == 'mace':
+        elif worker_model == 'mace' or worker_model == 'spam':
             self.A = MACEWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (2 + self.L)
 
-        elif worker_model == 'ibcc':
+        elif worker_model == 'ibcc' or worker_model == 'CM':
             self.A = ConfusionMatrixWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (self.L, self.L)
 
         elif worker_model == 'seq':
             self.A = SequentialWorker(alpha0_diags, alpha0_factor, L, len(data_model), tagging_scheme,
-                                      beginning_labels, inside_labels, outside_label, alpha0_outside_factor,
+                                      beginning_labels, inside_labels, outside_label, alpha0_B_factor,
                                       rare_transition_pseudocount)
             self.alpha_shape = (self.L, self.L)
 
-        elif worker_model == 'vec':
+        elif worker_model == 'vec' or worker_model == 'CV':
             self.A = VectorWorker(alpha0_diags, alpha0_factor, L, len(data_model))
             self.alpha_shape = (self.L, self.L)
 
-        self.alpha0_outside_factor = alpha0_outside_factor
+        self.alpha0_B_factor = alpha0_B_factor
 
         self.rare_transition_pseudocount = rare_transition_pseudocount
 
@@ -247,9 +246,9 @@ class BSC(object):
     def run(self, C, doc_start, features=None, converge_workers_first=True, crf_probs=False, dev_sentences=[],
             gold_labels=None, C_data_initial=None):
         '''
-        Runs the BAC bsc with the given annotations and list of document starts.
+        Runs the BAC bsc with the given annos and list of document starts.
 
-        C: use -1 to indicate where the annotations are missing. In future we may want to change
+        C: use -1 to indicate where the annos are missing. In future we may want to change
         this to a sparse format?
 
         '''
@@ -413,29 +412,31 @@ class BSC(object):
 
     def predict(self, doc_start, text):
 
+        self.LM.C_by_doc = None
+
         with Parallel(n_jobs=-1, backend='threading') as parallel:
 
             doc_start = doc_start.astype(bool)
-            C = np.zeros((len(doc_start), self.K), dtype=int)  # all blank
-            self.blanks = C == 0
+            self.C = np.zeros((len(doc_start), self.K), dtype=int) - 1  # all blank
+            self.blanks = self.C == 0
 
             self.LM.lnB = psi(self.LM.beta) - psi(np.sum(self.LM.beta, -1))[:, None]
 
             if self.no_words:
                 lnptext_given_t = np.zeros((len(doc_start), self.L))
-                features = None
+                self.features = None
             else:
                 # get the expected log word likelihoods of each token
-                features = []  # list of mapped index values for each token
+                self.features = []  # list of mapped index values for each token
                 available = []
                 for feat in text.flatten():
                     if feat not in self.feat_map:
                         available.append(0)
-                        features.append(0)
+                        self.features.append(0)
                     else:
                         available.append(1)
-                        features.append(self.feat_map[feat])
-                lnptext_given_t = self.ElnRho[features, :] + np.array(available)[:, None]
+                        self.features.append(self.feat_map[feat])
+                lnptext_given_t = self.ElnRho[self.features, :] + np.array(available)[:, None]
                 lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
 
             self.LM.lnB = self.LM.lnB[None, :, :] + lnptext_given_t[:, None, :]
@@ -444,7 +445,7 @@ class BSC(object):
             for model in self.data_model:
                 C_data.append(model.predict(doc_start, text))
 
-            self.LM.init_t(C, doc_start, self.A)
+            self.LM.init_t(self.C, doc_start, self.A, self.blanks)
             q_t = self.LM.update_t(parallel, C_data)
 
             seq = self.LM.most_probable_sequence(self.word_ll(self.features))[1]
@@ -569,7 +570,7 @@ class MarkovLabelModel(LabelModel):
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside
             disallowed_counts = self.beta0[outside_label, restricted_label] - rare_transition_pseudocount
-            # self.beta0[self.outside_labels, self.beginning_labels[i]] += disallowed_counts
+            # self.beta0[outside_label, unrestricted_labels[i]] += disallowed_counts
             self.beta0[outside_label, outside_label] += disallowed_counts
             self.beta0[outside_label, restricted_label] = rare_transition_pseudocount
 
@@ -585,6 +586,8 @@ class MarkovLabelModel(LabelModel):
             for j, other_restricted_label in enumerate(restricted_labels):
                 if other_restricted_label == restricted_label:
                     continue
+                # disallowed_counts = self.beta0[other_restricted_label, restricted_label] - rare_transition_pseudocount
+                # self.beta0[other_restricted_label, other_restricted_label] += disallowed_counts
                 self.beta0[other_restricted_label, restricted_label] = rare_transition_pseudocount
 
 
@@ -598,7 +601,7 @@ class MarkovLabelModel(LabelModel):
         self.lnB = self.lnB[None, :, :] + ln_word_likelihood[:, None, :]
 
         if np.any(np.isnan(self.lnB)):
-            print('_calc_q_A: nan value encountered!')
+            print('update_B: nan value encountered!')
 
     def init_t(self, C, doc_start, A, blanks, gold=None):
 
@@ -619,6 +622,20 @@ class MarkovLabelModel(LabelModel):
         self.Et_joint[doc_start, self.outside_label, :] = self.Et[doc_start, :] * B[self.outside_label, :]
 
         self.Et_joint /= np.sum(self.Et_joint, axis=(1, 2))[:, None, None]
+
+        # # initialise using the fraction of votes for each label
+        # self.Et_joint = np.zeros((self.N, self.L, self.L))
+        # for l in range(self.L):
+        #     for m in range(self.L):
+        #         self.Et_joint[1:, l, m] = np.sum((C[:-1]==l) & (C[1:]==m), axis=1)
+        # self.Et_joint += self.beta0[None, :, :]
+        # self.Et_joint[doc_start, :, :] = 0
+        # for l in range(self.L):
+        #     self.Et_joint[doc_start, self.outside_label, l] = np.sum(C[doc_start, :]==l, axis=1) \
+        #                                                       + self.beta0[self.outside_label, l]
+        # self.Et_joint /= np.sum(self.Et_joint, axis=(1, 2))[:, None, None]
+        #
+        # self.Et = np.sum(self.Et_joint, axis=1)
 
         return self.Et
 
@@ -860,16 +877,14 @@ class IndependentLabelModel(LabelModel):
         self.lnB = self.lnB[None, :] + ln_word_likelihood
 
         if np.any(np.isnan(self.lnB)):
-            print('_calc_q_A: nan value encountered!')
+            print('_update_B: nan value encountered!')
 
     def init_t(self, C, doc_start, A, blanks, gold=None):
 
         super().init_t(C, doc_start, A, blanks, gold)
 
-        beta0 = self.beta0
-
         # initialise using the fraction of votes for each label
-        self.Et = np.zeros((C.shape[0], self.L)) + beta0
+        self.Et = np.zeros((C.shape[0], self.L)) + self.beta0
         for l in range(self.L):
             self.Et[:, l] += np.sum(C == l, axis=1)
         self.Et /= np.sum(self.Et, axis=1)[:, None]

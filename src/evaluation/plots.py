@@ -181,12 +181,9 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         'ds',
         'ibcc',
         'HMM_crowd',
-        #'HMM_crowd_then_LSTM',
         'bac_vec_integrateIF',
         'bac_ibcc_integrateIF',
         'bac_seq_integrateIF',
-        'bac_seq_integrateIF_then_LSTM',
-        'bac_seq_integrateIF_integrateLSTM_atEnd',
     ])
 
     method_names = np.array([
@@ -194,12 +191,9 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
         'DS',
         'IBCC',
         'HMMcrowd',
-        #'HMMcrowd->LSTM',
         'BSC-CV',
         'BSC-CM',
-        'BSC-seq',
-        'BSC-seq->LSTM',
-        'BSC-seq+LSTM',
+        'BSC-seq'
     ])
 
     AL_batch_fraction = 0.03
@@ -325,7 +319,7 @@ def plot_active_learning_results(results_dir, output_dir, intervals, result_str=
     # split the pool data results in two
     plot_results(ndocs, method_names[plot_methods], 6, results[:, :, plot_methods, :], False, True,
                  output_pool_dir, SCORE_NAMES, ylim=ylim, thickness=2, legend_on=intervals=='NER', figsize=(10,5),
-                 colors=['black', 'orange', 'green', 'red', 'purple', 'brown'])
+                 colors=['black', 'orange', 'green', 'red', 'purple', 'brown', 'olive'])
 
     print('Counts of runs with results on pool data:')
     print(run_counts[0, 0, :, 0])

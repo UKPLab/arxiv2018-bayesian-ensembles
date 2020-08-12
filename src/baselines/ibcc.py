@@ -6,7 +6,6 @@ import numpy as np
 from copy import deepcopy
 from scipy.sparse import coo_matrix, csr_matrix
 from scipy.special import psi, gammaln
-from baselines.ibccdata import DataHandler
 from scipy.optimize import fmin, fmin_cobyla
 from scipy.stats import gamma
 
@@ -15,7 +14,7 @@ class IBCC(object):
     verbose = False
     keeprunning = True # set to false causes the combine_classifications method to exit without completing if another 
     # thread is checking whether IBCC is taking too long. Probably won't work well if the optimize_hyperparams is true.    
-# Configuration for variational Bayes (VB) bsc for approximate inference -------------------------------------
+# Configuration for variational Bayes (VB) algorithm for approximate inference -------------------------------------
     # determine convergence by calculating lower bound? Quicker to set=False so we check convergence of target variables
     uselowerbound = False
     min_iterations = 1
@@ -73,6 +72,40 @@ class IBCC(object):
     optimise_alpha0_diagonals = False # simplify optimisation by using diagonal alpha0 only
 # Initialisation ---------------------------------------------------------------------------------------------------
     def __init__(self, nclasses=2, nscores=2, alpha0=None, nu0=None, K=1, uselowerbound=False, dh=None, use_ml=False):
+        '''
+        Independent Bayesian classifier combination. The object can be trained using a data handler object dh,
+        the example in the main function below, and the unit tests for further examples). However,
+        This may be useful if you want IBCC to load the data from CSV files. However, if you are passing the data
+        to IBCC as numpy arrays, do not use dh, and set all the parameters of the constructor manually.
+        
+        The most important functions are the constructor, where hyperparameters are set, and combine_classifications(),
+        where the IBCC model is trained in unsupervised/semi-supervised mode and returns a combined prediction.
+        
+        Parameters
+        ----------
+        
+        nclasses : int
+            number of target classes
+        nclases : int
+            number of scores that the workers/agents/annotators/labellers/base classifiers can assign. Often, this 
+            is the same as nclasses, but may differe when annotators can provide, for example, an "I don't know" label.
+        alpha0 : nclasses x nscores numpy array
+            Hyperparameters for the confusion matrices. Typically this is set to a weak prior, e.g.
+            alpha0=np.ones((nclasses, nscores)) + np.eye(nclasses)
+        nu0 : nclasses numpy array
+            Hyperparameters for class proportions. Each value represents a prior pseudo-count of a target class. Setting
+            nu0 to large values will give a strong prior. Setting one value larger than the others will increase prior
+            probability of that class. A typical default may be nu0=np.ones(nclasses) * 10
+        K : int
+            Number of workers/base classifiers/annotators
+        uselowerbound : bool
+            Flag that determines whether to use the lower bound on the log-marginal likelihood to check for convergence,
+            or to check for convergence in the model parameters. Setting this to true is useful for debugging and is 
+            more likely to detect convergence correctly, but may be more computationally costly.
+        dh : ibccdata.DataHandler object
+            Object for loading the data from CSV files.
+    
+        '''
         if dh != None:
             self.nclasses = dh.nclasses
             self.nscores = len(dh.scores)
@@ -87,7 +120,15 @@ class IBCC(object):
             self.nu0 = nu0
             self.K = K
             self.uselowerbound = uselowerbound
-            
+
+        if self.nu0 is None:
+            self.nu0 = np.ones(self.nclasses)
+
+        if self.alpha0 is None:
+            self.alpha0 = np.ones((self.nclasses, self.nscores))
+            if self.nclasses <= self.nscores:
+                self.alpha0[range(self.nclasses), range(self.nscores)] += 1
+
         # Ensure we have float arrays so we can do division with these parameters properly
         self.nu0 = np.array(self.nu0).astype(float)
         if self.nu0.ndim==1:
@@ -103,8 +144,9 @@ class IBCC(object):
         self.use_ml = use_ml
         if use_ml:
             self.uselowerbound = False
-        
-    def init_params(self, force_reset=False):
+
+
+    def _init_params(self, force_reset=False):
         '''
         Checks that parameters are intialized, but doesn't overwrite them if already set up.
         '''
@@ -112,18 +154,20 @@ class IBCC(object):
             logging.debug('Initialising parameters...Alpha0: ' + str(self.alpha0))
         #if alpha is already initialised, and no new agents, skip this
         if self.alpha == [] or self.alpha.shape[2] != self.K or force_reset:
-            self.init_lnPi()
+            self._init_lnPi()
         if self.verbose:
             logging.debug('Nu0: ' + str(self.nu0))
         if self.nu ==[] or force_reset:
-            self.init_lnkappa()
+            self._init_lnkappa()
 
-    def init_lnkappa(self):
+
+    def _init_lnkappa(self):
         self.nu = deepcopy(np.float64(self.nu0))
         sumNu = np.sum(self.nu)
         self.lnkappa = psi(self.nu) - psi(sumNu)
 
-    def init_lnPi(self):
+
+    def _init_lnPi(self):
         '''
         Always creates new self.alpha and self.lnPi objects and calculates self.alpha and self.lnPi values according to 
         either the prior, or where available, values of self.E_t from previous runs.
@@ -136,15 +180,17 @@ class IBCC(object):
                 self.alpha0_cluster = self.alpha0
                 self.alpha0_length = self.alpha0_cluster.shape[2]
             self.alpha0 = self.alpha0_cluster[:, :, self.clusteridxs_alpha0]        
-        elif len(self.alpha0.shape) == 3 and self.alpha0.shape[2] < self.K:
-            # We have a new dataset with more agents than before -- create more priors.
-            nnew = self.K - self.alpha0.shape[2]
-            alpha0new = self.alpha0[:, :, 0]
-            alpha0new = alpha0new[:, :, np.newaxis]
-            alpha0new = np.repeat(alpha0new, nnew, axis=2)
-            self.alpha0 = np.concatenate((self.alpha0, alpha0new), axis=2)
-        elif len(self.alpha0.shape)==2:
-            self.alpha0  = self.alpha0[:,:,np.newaxis]
+        else:
+            if len(self.alpha0.shape)==2:
+                self.alpha0  = self.alpha0[:,:,np.newaxis]
+            
+            if self.alpha0.shape[2] < self.K:
+                # We have a new dataset with more agents than before -- create more priors.
+                nnew = self.K - self.alpha0.shape[2]
+                alpha0new = self.alpha0[:, :, 0]
+                alpha0new = alpha0new[:, :, np.newaxis]
+                alpha0new = np.repeat(alpha0new, nnew, axis=2)
+                self.alpha0 = np.concatenate((self.alpha0, alpha0new), axis=2)
         # Make sure self.alpha is the right size as well. Values of self.alpha not important as we recalculate below
         self.alpha0 = self.alpha0[:, :, :self.K] # make this the right size if there are fewer classifiers than expected
         self.alpha = np.zeros((self.nclasses, self.nscores, self.K), dtype=np.float) + self.alpha0
@@ -152,13 +198,13 @@ class IBCC(object):
         self.lnPi = np.zeros((self.nclasses, self.nscores, self.K))
 
         if not self.use_ml:
-            self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores, False, self.use_ml) # calculate alpha from the initial/prior values only in the first iteration
+            self._expec_lnpi(self.use_ml) # calculate alpha from the initial/prior values only in the first iteration
         else:
             self.lnPi[:] = np.log(0.1 / float(self.nscores - 1))
             self.lnPi[np.arange(self.nclasses), np.arange(self.nclasses), :] = np.log(0.9)
 
-    def init_t(self):
-        kappa = (self.nu0 / np.sum(self.nu0, axis=0)).T
+
+    def _init_t(self):
         if np.any(self.E_t):
             if self.sparse:
                 oldE_t = self.E_t_sparse
@@ -170,7 +216,13 @@ class IBCC(object):
                     Nold = self.N
         else:
             oldE_t = []
-        self.E_t = np.zeros((self.N, self.nclasses)) + kappa
+
+        # initialise t to the vote distributions
+        self.E_t = np.zeros((self.N, self.nclasses)) + self.nu0.T
+        for l in range(self.nclasses):
+            self.E_t[:, l] += np.sum(self.C[l], axis=1)
+        self.E_t /= np.sum(self.E_t, axis=1)[:, None]
+
         if np.any(oldE_t):
             self.E_t[0:Nold, :] = oldE_t[0:Nold, :]
         uncert_trainidxs = self.trainidxs.copy()  # look for labels that are not discrete values of valid classes
@@ -179,7 +231,7 @@ class IBCC(object):
             row = np.zeros((1, self.nclasses))
             row[0, j] = 1
             jidxs = self.goldlabels == j
-            uncert_trainidxs = uncert_trainidxs & np.invert(jidxs)
+            uncert_trainidxs[jidxs] = False
             self.E_t[jidxs, :] = row
         # deal with uncertain training idxs
         for j in range(self.nclasses):
@@ -194,8 +246,9 @@ class IBCC(object):
         if self.sparse:
             self.E_t_sparse = self.E_t # current working version is a sparse set of observations of the complete space of data points            
 
+
 # Data preprocessing and helper functions --------------------------------------------------------------------------
-    def desparsify_crowdlabels(self, crowdlabels):
+    def _desparsify_crowdlabels(self, crowdlabels):
         '''
         Converts the IDs of data points in the crowdlabels to a set of consecutive integer indexes. If diags data point has
         no crowdlabels when using table format, it will be skipped.   
@@ -219,7 +272,8 @@ class IBCC(object):
                 crowdlabels[:, 1] = mappedidxs
         return crowdlabels
 
-    def preprocess_goldlabels(self, goldlabels):
+
+    def _preprocess_goldlabels(self, goldlabels):
         if np.any(goldlabels) and self.sparse:
             if self.full_N<len(goldlabels):
                 # the full set of test points that we output will come from the gold labels if longer than crowd labels
@@ -247,13 +301,14 @@ class IBCC(object):
             self.goldlabels = np.concatenate((goldlabels, extension))
         else:
             self.goldlabels = goldlabels
-            
-    def set_test_and_train_idxs(self, testidxs=None):
+
+
+    def _set_test_and_train_idxs(self, testidxs=None):
         # record the test and train idxs
         self.trainidxs = self.goldlabels > -1
         self.Ntrain = np.sum(self.trainidxs)
         # self.testidxs only includes points with crowd labels!
-        if testidxs != None:  # include the pre-specified set of unlabelled data points in the inference process. All
+        if testidxs is not None:  # include the pre-specified set of unlabelled data points in the inference process. All
             # other data points are either training data or ignored.
             if self.full_N < len(testidxs): 
                 self.full_N = len(testidxs)
@@ -267,8 +322,9 @@ class IBCC(object):
         if self.Ntest == self.N:
             # we test on all indexes, so avoid using testidxs
             self.testidxs = None
-            
-    def preprocess_crowdlabels(self, crowdlabels):
+
+
+    def _preprocess_crowdlabels(self, crowdlabels):
         # Initialise all objects relating to the crowd labels.
         C = {}
         crowdlabels[np.isnan(crowdlabels)] = -1
@@ -328,8 +384,9 @@ class IBCC(object):
 
         # Reset the pre-calculated data for the training set in case goldlabels has changed
         self.alpha_tr = None
-        
-    def resparsify_t(self):
+
+
+    def _resparsify_t(self):
         '''
         Puts the expectations of target values, E_t, at the points we observed crowd labels back to their original 
         indexes in the output array. Values are inserted for the unobserved indices using only kappa (class proportions).
@@ -339,8 +396,9 @@ class IBCC(object):
         E_t_full[self.observed_idxs,:] = self.E_t
         self.E_t_sparse = self.E_t  # save the sparse version
         self.E_t = E_t_full
-        
-# Run the inference bsc --------------------------------------------------------------------------------------
+
+
+# Run the inference algorithm --------------------------------------------------------------------------------------
     def combine_classifications(self, crowdlabels, goldlabels=None, testidxs=None, optimise_hyperparams=0, maxiter=200, 
                                 table_format=False):
         '''
@@ -371,7 +429,7 @@ class IBCC(object):
             Optional array of boolean values indicating which indices require predictions. If not set, all idxs will be
             predicted. 
         optimise_hyperparams : bool
-            Optimise nu0 and alpha0 using the Nelder-Mead bsc.
+            Optimise nu0 and alpha0 using the Nelder-Mead algorithm.
         max_iter : int
             maximum number of iterations permitted
         table_format : bool
@@ -387,32 +445,37 @@ class IBCC(object):
         '''
         self.table_format_flag = table_format
         oldK = self.K
-        crowdlabels = self.desparsify_crowdlabels(crowdlabels)
-        self.preprocess_goldlabels(goldlabels)        
-        self.set_test_and_train_idxs(testidxs)
-        self.preprocess_crowdlabels(crowdlabels)
-        self.init_t()
+        crowdlabels = self._desparsify_crowdlabels(crowdlabels)
+        self._preprocess_goldlabels(goldlabels)        
+        self._set_test_and_train_idxs(testidxs)
+        self._preprocess_crowdlabels(crowdlabels)
+        self._init_t()
+
         #Check that we have the right number of agents/base classifiers, K, and initialise parameters if necessary
         if self.K != oldK or not np.any(self.nu) or not np.any(self.alpha):  # data shape has changed or not initialised yet
-            self.init_params()
+            self._init_params()  
+
         # Either run the model optimisation or just use the inference method with fixed hyper-parameters  
         if optimise_hyperparams==1 or optimise_hyperparams=='ML':
             self.optimize_hyperparams(maxiter=maxiter)
         elif optimise_hyperparams==2 or optimise_hyperparams=='MAP':
             self.optimize_hyperparams(maxiter=maxiter, use_MAP=True)
         else:
-            self.run_inference() 
+            self._run_inference() 
         if self.sparse:
-            self.resparsify_t()
+            self._resparsify_t()
         return self.E_t      
-    
-    def convergence_measure(self, oldET):
+
+
+    def _convergence_measure(self, oldET):
         return np.max(np.abs(oldET - self.E_t))
 
-    def convergence_check(self):
+
+    def _convergence_check(self):
         return (self.nIts>=self.max_iterations or self.change<self.conv_threshold) and self.nIts>self.min_iterations        
 
-    def run_inference(self):   
+
+    def _run_inference(self):   
         '''
         Variational approximate inference. Assumes that all data and hyper-parameters are ready for use. Overwrite
         do implement EP or Gibbs' sampling etc.
@@ -420,26 +483,19 @@ class IBCC(object):
         logging.info('IBCC: combining %i training points + %i noisy-labelled points' % (np.sum(self.trainidxs), 
                                                                                         len(self.observed_idxs)))
         oldL = -np.inf
-        _converged = False
+        converged = False
         self.nIts = 0 #object state so we can check it later
-        while not _converged and self.keeprunning:
+        while not converged and self.keeprunning:
             oldET = self.E_t.copy()
-            #update targets
-            #self._expec_t()
-            self.lnjoint()
-
-            if self.testidxs is not None:
-                self.E_t[self.testidxs, :] = _expec_t(self.lnpCT, self.testidxs)
-            else:
-                self.E_t = _expec_t(self.lnpCT, self.testidxs)
 
             #update params
-            #self._calc_q_A()
-            self.lnkappa, self.nu = _calc_q_A(self.E_t, self.nu0, self.use_ml)
-            #self._calc_q_pi()
+            self._expec_lnkappa(self.use_ml)
             if np.any(self.E_t):
                 self._post_alpha()
-            self.lnPi = _calc_q_pi(self.lnPi, self.E_t, self.alpha, self.nscores, self.use_ml)
+            self._expec_lnpi(self.use_ml)
+
+            self._expec_t()
+
             #check convergence every x iterations
             if np.mod(self.nIts, self.conv_check_freq) == self.conv_check_freq - 1:
                 if self.uselowerbound:
@@ -452,15 +508,16 @@ class IBCC(object):
                         logging.warning('IBCC iteration %i absolute change was %s. Possible bug or rounding error?' 
                                         % (self.nIts, self.change))                    
                 else:
-                    self.change = self.convergence_measure(oldET)
-                if self.convergence_check():
-                    _converged = True            
+                    self.change = self._convergence_measure(oldET)
+                if self._convergence_check():
+                    converged = True            
                 elif self.verbose:
                     logging.debug('IBCC iteration %i absolute change was %s' % (self.nIts, self.change))
                     
             self.nIts+=1
             
         logging.info('IBCC finished in %i iterations (max iterations allowed = %i).' % (self.nIts, self.max_iterations))
+
 
 # Posterior Updates to Hyperparameters --------------------------------------------------------------------------------
     def _post_alpha(self):  # Posterior Hyperparams
@@ -485,23 +542,52 @@ class IBCC(object):
                 counts = self.Ctest[l].T.dot(Tj).reshape(-1)
                 self.alpha[j, l, :] = self.alpha_tr[j, l, :] + counts
 
-# Expectations: methods for calculating expectations with respect to parameters for the VB bsc ------------------
+
+# Expectations: methods for calculating expectations with respect to parameters for the VB algorithm ------------------
+    def _expec_lnkappa(self, use_ml=False):
+        if use_ml:
+            nu = np.reshape(np.sum(self.E_t, 0), self.nu0.shape)  # ignores nu0
+            lnkappa = np.log((nu - 1) / float(np.sum(nu, 0) - nu.shape[0]))
+        else:
+            nu = self.nu0 + np.reshape(np.sum(self.E_t, 0), self.nu0.shape)
+            lnkappa = (psi(nu) - psi(np.sum(nu, 0)))
+        self.nu = nu
+        self.lnkappa = lnkappa
+
+
+    def _expec_lnpi(self, use_ml=False):
+        alpha_sum = np.sum(self.alpha, 1)
+        for s in range(self.nscores):
+
+            if use_ml:
+                alpha_sum -= self.alpha.shape[1]
+                self.lnPi[:, s, :] = np.log((self.alpha[:, s, :] - 1) / float(alpha_sum))  # mode of a dirichlet
+            else:
+                self.lnPi[:, s, :] = psi(self.alpha[:, s, :]) - psi(alpha_sum)
+
+
     def _expec_t(self):
-        self.lnjoint()
+        self._lnjoint()
         joint = self.lnpCT
         if self.testidxs is not None:
             joint = joint[self.testidxs, :]
+        else:
+            joint = np.copy(joint)
 
         # ensure that the values are not too small
-        largest = np.max(joint, 1)[:, np.newaxis]
-        joint = joint - largest
+        joint -= np.max(joint, 1)[:, np.newaxis]
         joint = np.exp(joint)
         norma = np.sum(joint, axis=1)[:, np.newaxis]
         pT = joint / norma
-        self.E_t[self.testidxs, :] = pT  
+
+        # update targets
+        if self.testidxs is not None:
+            self.E_t[self.testidxs, :] = pT
+        else:
+            self.E_t = pT
    
 # Likelihoods of observations and current estimates of parameters --------------------------------------------------
-    def lnjoint(self, alldata=False):
+    def _lnjoint(self, alldata=False):
         '''
         For use with crowdsourced data in table format (should be converted on input)
         '''
@@ -537,41 +623,41 @@ class IBCC(object):
                 else:
                     self.lnpCT[:, j] = np.array(data).reshape(-1) + self.lnkappa[j]
         
-    def post_lnkappa(self):
+    def _post_lnkappa(self):
         lnpKappa = gammaln(np.sum(self.nu0)) - np.sum(gammaln(self.nu0)) + sum((self.nu0 - 1) * self.lnkappa)
         return lnpKappa
         
-    def q_lnkappa(self):
+    def _q_lnkappa(self):
         lnqKappa = gammaln(np.sum(self.nu)) - np.sum(gammaln(self.nu)) + np.sum((self.nu - 1) * self.lnkappa)
         return lnqKappa
 
-    def q_ln_t(self):
+    def _q_ln_t(self):
         ET = self.E_t[self.E_t != 0]
         return np.sum(ET * np.log(ET))         
 
-    def post_lnpi(self):
+    def _post_lnpi(self):
         x = np.sum((self.alpha0-1) * self.lnPi,1)
         z = gammaln(np.sum(self.alpha0,1)) - np.sum(gammaln(self.alpha0),1)
         return np.sum(x+z)
                     
-    def q_lnPi(self):
+    def _q_lnPi(self):
         x = np.sum((self.alpha-1) * self.lnPi,1)
         z = gammaln(np.sum(self.alpha,1)) - np.sum(gammaln(self.alpha),1)
         return np.sum(x+z)
 # Lower Bound ---------------------------------------------------------------------------------------------------------       
     def lowerbound(self):
         # Expected Energy: entropy given the current parameter expectations
-        lnpCT = self.post_lnjoint_ct()
-        lnpPi = self.post_lnpi()
-        lnpKappa = self.post_lnkappa()
+        lnpCT = self._post_lnjoint_ct()
+        lnpPi = self._post_lnpi()
+        lnpKappa = self._post_lnkappa()
         EEnergy = lnpCT + lnpPi + lnpKappa
         
         # Entropy of the variational distribution
-        lnqT = self.q_ln_t()
-        lnqPi = self.q_lnPi()
-        lnqKappa = self.q_lnkappa()
+        lnqT = self._q_ln_t()
+        lnqPi = self._q_lnPi()
+        lnqKappa = self._q_lnkappa()
         H = lnqT + lnqPi + lnqKappa
-
+        
         # Lower Bound
         L = EEnergy - H
         if self.verbose:
@@ -581,7 +667,7 @@ class IBCC(object):
                                                                                    lnpKappa - lnqKappa, lnpPi - lnqPi))
         return L
 # Hyperparameter Optimisation ------------------------------------------------------------------------------------------
-    def set_hyperparams(self,hyperparams):
+    def _set_hyperparams(self,hyperparams):
         n_alpha_elements = len(hyperparams) - 1 #self.nclasses -- no longer optimising nu0, only its scale factor
         alpha_shape = (self.nclasses, self.nscores, self.alpha0_length)
         
@@ -602,7 +688,7 @@ class IBCC(object):
         self.nu0 = nu0
         return alpha0, nu0
 
-    def get_hyperparams(self):
+    def _get_hyperparams(self):
         if self.clusteridxs_alpha0 != []:
             alpha0 = self.alpha0_cluster
 
@@ -612,17 +698,16 @@ class IBCC(object):
             off_diag_idxs = np.mod(np.arange(self.nclasses) + 1, self.nclasses)
             alpha0_scale = alpha0[range(self.nclasses), off_diag_idxs]
             alpha0 = np.append(alpha0_diags, alpha0_scale)
-
         else:
             alpha0 = self.alpha0
 
         # only the scaling of nu0 is optimised to prevent overfitting
         return np.concatenate((alpha0.flatten(), self.nu0[0]))
     
-    def post_lnjoint_ct(self):
+    def _post_lnjoint_ct(self):
         # If we have not already calculated lnpCT for the lower bound, then make sure we recalculate using all data
         if not self.uselowerbound:
-            self.lnjoint(alldata=True)
+            self._lnjoint(alldata=True)
         if self.sparse:
             lnpCT = np.sum(self.E_t_sparse * self.lnpCT)            
         else:
@@ -654,14 +739,14 @@ class IBCC(object):
             logging.debug("Hyper-parameters: %s" % str(hyperparams))
         if np.any(np.isnan(hyperparams)):
             return np.inf
-        hyperparams = self.set_hyperparams(hyperparams)
+        hyperparams = self._set_hyperparams(hyperparams)
         if np.any(hyperparams[0] <=0 ) or np.any(hyperparams[1] <= 0 ):
             return np.inf
         
         #ensure new alpha0 and nu0 values are used when updating E_t
-        self.init_params(force_reset=True)
-        #run inference bsc
-        self.run_inference() 
+        self._init_params(force_reset=True)
+        #run inference algorithm
+        self._run_inference() 
         
         #calculate likelihood from the fitted model
         data_loglikelihood = self.lowerbound()
@@ -681,7 +766,7 @@ class IBCC(object):
         to contain the optimal values, searched for using BFGS.
         '''
         #Evaluate the first guess using the current value of the hyper-parameters
-        initialguess = self.get_hyperparams()
+        initialguess = self._get_hyperparams()
         initial_nlml = self.neg_marginal_likelihood(initialguess, use_MAP)
         ftol = 1.0 #1e-3 #np.abs(initial_nlml / 1e3)
         #ftol = np.abs(np.log(self.heatGP[1].ls[0]) * 1e-4) 
@@ -691,7 +776,7 @@ class IBCC(object):
         opt_hyperparams, _, _, _, _ = fmin(self.neg_marginal_likelihood, initialguess, args=(use_MAP,), maxfun=maxiter,
                                                      full_output=True, ftol=ftol, xtol=1e100)
 
-        opt_hyperparams = self.set_hyperparams(opt_hyperparams)
+        opt_hyperparams = self._set_hyperparams(opt_hyperparams)
         msg = "Optimal hyper-parameters: "
         for param in opt_hyperparams:
             if not np.isscalar(param):
@@ -702,85 +787,4 @@ class IBCC(object):
         logging.debug(msg)
         
         return self.E_t
-    
-# static functions
-def _calc_q_A(E_t, nu0, use_ml=False):
-    if use_ml:
-        nu = np.reshape(np.sum(E_t, 0), nu0.shape) # ignores nu0
-        lnkappa = np.log((nu - 1) / float(np.sum(nu, 0) - nu.shape[0]))
-    else:
-        nu = nu0 + np.reshape(np.sum(E_t, 0), nu0.shape)
-        lnkappa = (psi(nu) - psi(np.sum(nu, 0)))
-    return lnkappa, nu
 
-def _calc_q_pi(lnPi, E_t, alpha, nscores, posterior=True, use_ml=False):
-    alpha_sum = np.sum(alpha, 1) - alpha.shape[1]
-    for s in range(nscores): 
-
-        if use_ml:
-            lnPi[:, s, :] = np.log( (alpha[:, s, :]-1) / float(alpha_sum )) # mode of a dirichlet
-        else:
-            lnPi[:, s, :] = psi(alpha[:, s, :]) - psi(alpha_sum)
-    
-    return lnPi
-
-def _expec_t(lnpCT, testidxs):
-    # self.lnjoint()
-    if testidxs is not None:
-        joint = lnpCT[testidxs, :]
-    else:
-        joint = np.copy(lnpCT)
-
-    # ensure that the values are not too small 
-    joint -= np.max(joint, 1)[:, np.newaxis]
-    joint = np.exp(joint)
-    norma = np.sum(joint, axis=1)[:, np.newaxis]
-    pT = joint / norma
-    return pT
-    #self.E_t[testidxs, :] = pT  
-    
-def expec_t_trans(E_t):
-    (n, k) = E_t.shape
-    
-    E_t_trans = np.zeros((n,k,k))
-    E_t_trans[0,:,:] = np.array([E_t[0,:]])
-    
-    for i in range(1,n):
-        E_t_trans[i,:,:] = np.outer(E_t[i,:], E_t[i-1,:])
-        
-    return E_t_trans
-    
-# Loader and Runner helper functions -------------------------------------------------------------------------------
-def load_combiner(config_file, ibcc_class=None):
-    dh = DataHandler()
-    dh.loadData(config_file)
-    if ibcc_class==None:
-        heatmapcombiner = IBCC(dh=dh)
-    else:
-        heatmapcombiner = ibcc_class(dh=dh)
-    return heatmapcombiner, dh
-
-def load_and_run_ibcc(configFile, ibcc_class=None, optimise_hyperparams=False):
-    heatmapcombiner, dh = load_combiner(configFile, ibcc_class)
-    #combine labels
-    heatmapcombiner.verbose = True
-    pT = heatmapcombiner.combine_classifications(dh.crowdlabels, dh.goldlabels, optimise_hyperparams=optimise_hyperparams, 
-                                          table_format=dh.table_format)
-
-    if dh.output_file is not None:
-        dh.save_targets(pT)
-
-    dh.save_pi(heatmapcombiner.alpha, heatmapcombiner.nclasses, heatmapcombiner.nscores)
-    dh.save_hyperparams(heatmapcombiner.alpha, heatmapcombiner.nu)
-    pT = dh.map_predictions_to_original_IDs(pT)
-    return pT, heatmapcombiner
-    
-if __name__ == '__main__':
-    
-    logging.basicConfig(level=logging.DEBUG)
-    
-    if len(sys.argv)>1:
-        configFile = sys.argv[1]
-    else:
-        configFile = './config/my_project.py'
-    load_and_run_ibcc(configFile)

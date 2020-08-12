@@ -93,8 +93,8 @@ class MajorityVoting(object):
 
                 # count all votes
                 # for j in range(self.num_annotators):
-                #     if int(self.annotations[i,j]) >= 0:
-                #         votes[i, int(self.annotations[i,j])] += self.accuracies[j]
+                #     if int(self.annos[i,j]) >= 0:
+                #         votes[i, int(self.annos[i,j])] += self.accuracies[j]
                 #
                 # # determine all labels with most votes
                 threshold_i = threshold * np.sum(votes[i, :])
