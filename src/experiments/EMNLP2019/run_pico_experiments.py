@@ -12,6 +12,8 @@ import numpy as np
 
 regen_data = False
 gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data)
+
+
 #, debug_subset_size=1000) # include this argument to debug with small dataset
 output_dir = os.path.join(load_data.output_root_dir, 'pico')
 
@@ -34,29 +36,29 @@ output_dir = os.path.join(load_data.output_root_dir, 'pico')
 #
 # # ------------------------------------------------------------------------------------------------
 #
-# beta0_factor = 1
-# alpha0_diags = 10
-# alpha0_factor = 10
-# best_begin_factor = 10
-# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-#                  max_iter=20, begin_factor=best_begin_factor)
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 'bac_seq_integrateIF',
-#                 # 'majority',
-#                 # 'mace',
-#                 # 'ds',
-#                 # 'ibcc',
-#                 # 'bac_vec_integrateIF',
-#                 # 'bac_ibcc_integrateIF',
-#                 # 'bac_mace_integrateIF',
-#                 # 'HMM_crowd',
-#                 # 'best',
-#                 # 'worst',
-# ]
-# # # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-# exp.run_methods(new_data=regen_data)
+beta0_factor = 1
+alpha0_diags = 10
+alpha0_factor = 10
+best_begin_factor = 10
+exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
+                 max_iter=20, begin_factor=best_begin_factor)
+# run all the methods that don't require tuning here
+exp.methods =  [
+                # 'bac_seq_integrateIF',
+                'majority',
+                # 'mace',
+                'ds',
+                # 'ibcc',
+                # 'bac_vec_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # 'bac_mace_integrateIF',
+                # 'HMM_crowd',
+                'best',
+                'worst',
+]
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(new_data=regen_data)
 #
 # # ------------------------------------------------------------------------------------------------
 #
@@ -110,19 +112,18 @@ diags = [0.1, 1, 10]
 factors = [0.1, 1, 10]
 
 methods_to_tune = [
-                # 'ibcc',
+                'ibcc',
                 'bac_seq_integrateIF',
-                # 'bac_vec_integrateIF',
-                # 'bac_ibcc_integrateIF',
-                # 'HMM_crowd',
-                # 'bac_acc_integrateIF',
-                # 'bac_mace_integrateIF',
-                # # 'bac_ibcc',
-                # # 'bac_ibcc_integrateIF_noHMM',
-                # # 'bac_seq',
-                # # 'bac_seq_integrateIF_noHMM',
-                # 'mace',
-                # 'bac_mace_noHMM'
+                'bac_vec_integrateIF',
+                'bac_ibcc_integrateIF',
+                'HMM_crowd',
+                'bac_acc_integrateIF',
+                'bac_mace_integrateIF',
+                'bac_ibcc',
+                'bac_ibcc_integrateIF_noHMM',
+                'bac_seq',
+                'bac_seq_integrateIF_noHMM',
+                'mace',
                    ]
 
 exp = Experiment(output_dir, 3, annos, gt, doc_start, features, tune_annos, gt_val, tune_doc_start, tune_text,

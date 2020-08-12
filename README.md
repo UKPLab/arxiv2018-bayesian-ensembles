@@ -286,13 +286,17 @@ Results are plotted and saved to `results/test3_spanf1_<class ID>.pdf`.
 
 These are the experiments with NER and PICO crowdsourced data.
 
+For the methods that do not involve an LSTM component, 
+the scripts are the same as for EMNLP 2019:
+ `python src/experiments/EMNLP2019/run_ner_experiments.py` and
+`python src/experiments/EMNLP2019/run_pico_experiments.py`.  
 
-Run `python src/experiments/AAAI2020/run_ner_experiments_gpu.py` and
+For those with the LSTM, run `python src/experiments/AAAI2020/run_ner_experiments_gpu.py` and
 `python src/experiments/AAAI2020/run_pico_experiments_gpu.py`.  
 
 Uncomment methods in the code to enable or disable them.
-The code will tune the methods on the dev set (or for speed, a subsample of the dev set),
-comment this section and uncomment code to repeat selected methods with pre-determined hyperparameters.
+The commented code will tune the methods on the dev set (or for speed, a subsample of the dev set).
+The uncommented code repeats selected methods with previously-tuned hyperparameters.
 
 Results are saved to `<data_root_dir>\output\ner3\result_started_<date>_<time>...csv`
 and `<data_root_dir>\pico3\result_started_<date>_<time>...csv`.

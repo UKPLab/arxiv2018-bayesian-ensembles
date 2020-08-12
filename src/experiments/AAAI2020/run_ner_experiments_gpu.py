@@ -43,7 +43,7 @@ exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, d
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                  max_iter=20)
-exp.methods =  [
+exp.methods = [
                 # 'bac_seq_integrateIF',
                 'bac_seq_integrateIF_thenLSTM',
                 'bac_seq_integrateIF_integrateLSTM_atEnd',
@@ -61,7 +61,7 @@ exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, d
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                  max_iter=20)
-exp.methods =  [
+exp.methods = [
                 # 'bac_seq_integrateIF',
                 'bac_seq_integrateIF_thenLSTM',
                 'bac_seq_integrateIF_integrateLSTM_atEnd',
