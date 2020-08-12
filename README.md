@@ -325,25 +325,30 @@ the constructor.
 
 ### Aggregating Crowdsourced Data
 
-The main method implementation is in src/bayesian_combination/bc.py. 
-This package also contains several configurations 
-that implement BSC, IBCC, MACE. See the doc strings 
-in bayesian_combination.py for more details on arguments
-to the methods. 
+The main method implementation is the BC class in src/bayesian_combination/bc.py. 
+The bayesian_combination package also contains several subclasses of 
+BC that implement BSC, MACE, BCCWords, IBCC-VB (in ibcc module), HeatmapBCC (also in the ibcc module) 
+and DynIBCC (in ibcc module). 
+Each of these methods is implemented by configuring BC in a particular way.
+See the doc strings 
+in bayesian_combination.py for more details on configuration.
 
 BC can be run as follows. First,
 construct the object for a labelling task. Let's
- say we have an IOB sequence tagging problem, and wish to use the BSC-seq method:
+ say we have an IOB sequence tagging problem, and wish to use the BSC-seq method.
+ We can either use the BSC subclass:
 ~~~python
 num_classes = 3 # Beginning, Inside and Outside
 
 bc_model = BSC(L=num_classes, K=num_annotators, annotator_model='seq')
 ~~~
-The same thing can be achieved by calling Bayesian Combination directly with the correct configuration:
+Or, the same thing can be achieved by instantiating Bayesian Combination directly with 
+the correct arguments:
 ~~~python
 bc_model = BC(L=num_classes, K=num_annotators, annotator_model='seq', true_labl_model='HMM',
                 discrete_feature_likelihoods=True)
 ~~~
+These two are equivalent.
 In the example above, the annotator model is set to 'seq', which
 uses the default sequential annotator model. However, if the results are not looking good
 on some datasets, you may also wish to try "annotator_model='CM'" (this is the confusion matrix in the EMNLP 2019 paper),
