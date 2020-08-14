@@ -282,7 +282,12 @@ class Experiment(object):
 
                 agg, probs, most_likely_seq_probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = \
                     self._run_method(method, timestamp, doc_start_unseen, text_unseen, selected_docs, nselected_by_doc,
-                                     new_data if niter==0 else False)
+                                     new_data if niter == 0 else False)
+
+                if not active_learning:  # if we are training on all data at once, we can cache the BSC and HMMCrowd
+                    # results so that any subsequent +LSTM steps can be done more quickly. This makes no sense for AL
+                    self.aggs[method] = agg
+                    self.probs[method] = probs
 
                 if np.any(self.gold != -1):  # don't run this in the case that crowd-labelled data has no gold labels
 
@@ -299,18 +304,18 @@ class Experiment(object):
 
                     self.calculate_experiment_scores(agg, probs, method_idx)
                     preds[:, method_idx] = agg.flatten()
-                    probs_allmethods[:,:,method_idx] = probs
+                    probs_allmethods[:, :, method_idx] = probs
 
                 if self.N_nocrowd > 0:
                     self.calculate_nocrowd_scores(agg_nocrowd, probs_nocrowd, method_idx)
 
                     preds_nocrowd[:, method_idx] = agg_nocrowd.flatten()
-                    probs_allmethods_nocrowd[:,:,method_idx] = probs_nocrowd
+                    probs_allmethods_nocrowd[:, :, method_idx] = probs_nocrowd
 
                 print('...done')
 
                 # Save the results so far after each method has completed.
-                Nseen = np.sum(self.annos[self.doc_start.flatten()==1] != -1) # update the number of documents processed so far
+                Nseen = np.sum(self.annos[self.doc_start.flatten() == 1] != -1) # update the number of documents processed so far
                 print('Nseen = %i' % Nseen)
 
                 # change the timestamps to include AL loop numbers
@@ -397,7 +402,9 @@ class Experiment(object):
 
         elif method.split('_')[0] == 'bsc' or method.split('_')[0] == 'bac':
 
-            if method not in self.aggs:
+            core_method = method.replace('_thenLSTM', '')  # the BSC method without the subsequent LSTM
+
+            if core_method not in self.aggs:
                 agg, probs, most_likely_seq_probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen \
                     = self._run_bsc(
                         method,
@@ -405,8 +412,8 @@ class Experiment(object):
                         text_unseen=text_unseen
                     )
             else:
-                agg = self.aggs[method.replace('_thenLSTM', '')]
-                probs = self.probs[method.replace('_thenLSTM', '')]
+                agg = self.aggs[core_method]
+                probs = self.probs[core_method]
 
         elif 'HMM_crowd' in method:
             if 'HMM_crowd' not in self.aggs:
@@ -427,9 +434,6 @@ class Experiment(object):
         if '_thenLSTM' in method:
             agg, probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen = self._run_LSTM(
                 agg, timestamp, doc_start_unseen, text_unseen)
-
-        self.aggs[method] = agg
-        self.probs[method] = probs
 
         return agg, probs, most_likely_seq_probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
 
@@ -834,7 +838,6 @@ class Experiment(object):
             # new_selected_docs = np.argsort(negentropy_docs)[:batch_size]
             new_selected_docs = np.argsort(most_likely_probs)[:self.batch_size]
 
-
         new_selected_toks = np.in1d(np.cumsum(self.doc_start_test) - 1, new_selected_docs)
 
         new_label_count = np.zeros(self.annos_test.shape[0])
@@ -848,7 +851,7 @@ class Experiment(object):
             # add one for the new round
             new_label_count[selected_toks] += current_label_count
 
-            selected_docs = np.sort(np.unique(np.concatenate((selected_docs, new_selected_docs)) ))
+            selected_docs = np.sort(np.unique(np.concatenate((selected_docs, new_selected_docs))))
 
             new_selected_toks[selected_toks] = True
             selected_toks = new_selected_toks
