@@ -4,6 +4,7 @@
 '''
 import os
 
+import evaluation.experiment
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
@@ -38,7 +39,7 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_
 beta0_factor = 1
 alpha0_diags = 1
 alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
@@ -56,7 +57,7 @@ exp.run_methods(new_data=regen_data)
 beta0_factor = 1
 alpha0_diags = 10
 alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
@@ -75,7 +76,7 @@ exp.run_methods(new_data=regen_data)
 beta0_factor = 0.1
 alpha0_diags = 0.1
 alpha0_factor = 0.1
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  # gt_nocrowd, doc_start_nocrowd, text_nocrowd,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,

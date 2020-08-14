@@ -26,6 +26,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 data_root_dir = '.'  # '../../../data/bayesian_sequence_combination/'
+output_root_dir = os.path.join(data_root_dir, 'output')
 
 
 def _append_to_csv(outputdir, method, method_idx, new_data, filename, file_identifier):
@@ -79,6 +80,9 @@ class Experiment(object):
         self.num_classes = nclasses
         self.postprocess = False  # previous papers did not use this so we leave out to make results comparable.
         self.random_sampling = False
+
+        if not os.path.exists(output_root_dir):
+            os.mkdir(output_root_dir)
 
         self.outputdir = outputdir
         if not os.path.exists(outputdir):
@@ -280,7 +284,7 @@ class Experiment(object):
                     self._run_method(method, timestamp, doc_start_unseen, text_unseen, selected_docs, nselected_by_doc,
                                      new_data if niter==0 else False)
 
-                if np.any(self.gold != -1): # don't run this in the case that crowd-labelled data has no gold labels
+                if np.any(self.gold != -1):  # don't run this in the case that crowd-labelled data has no gold labels
 
                     if active_learning and len(agg) < len(self.gold):
                         agg_all = np.ones(len(self.gold))
@@ -869,4 +873,3 @@ class Experiment(object):
         self.text = self.text_test[selected_toks]
 
         return selected_docs, np.argwhere(selected_toks).flatten(), nselected_by_doc
-

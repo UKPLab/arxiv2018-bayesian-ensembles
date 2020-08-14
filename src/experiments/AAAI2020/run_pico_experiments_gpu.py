@@ -5,11 +5,12 @@ Created on April 27, 2018
 '''
 import os
 
+import evaluation.experiment
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
 
-output_dir = os.path.join(load_data.output_root_dir, 'pico3')
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3')
 regen_data = False
 
 gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data) #, debug_subset_size=1000)

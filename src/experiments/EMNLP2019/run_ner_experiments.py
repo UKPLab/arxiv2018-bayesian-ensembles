@@ -6,6 +6,7 @@ Created on April 27, 2018
 import cProfile
 import os
 
+import evaluation.experiment
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
@@ -58,7 +59,7 @@ doc_start_val = doc_start[idxs]
 features_val = features[idxs]
 gt_val = gt_val[idxs]
 
-output_dir = os.path.join(load_data.output_root_dir, 'ner')
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner')
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos_val, gt_val, doc_start_val, features_val, max_iter=20)
 beta_factors = [0.1, 10, 100]
 diags = [0.1, 1, 10, 100]
@@ -66,7 +67,7 @@ factors = [0.1, 1, 10]
 methods_to_tune = [
     # 'bsc_dyn.consistent_noHMM',
     # 'bsc_dyn.initial_noHMM',
-    'ibcc',
+    # 'ibcc',
     # 'HMM_crowd',
     'mace',
     'bac_vec_integrateIF',

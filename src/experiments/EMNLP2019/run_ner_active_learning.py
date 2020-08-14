@@ -3,6 +3,7 @@ Created on April 27, 2018
 
 @author: Edwin Simpson
 '''
+import evaluation.experiment
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
@@ -25,7 +26,7 @@ num_reps = 10
 batch_frac = 0.03
 AL_iters = 10
 
-output_dir = os.path.join(load_data.output_root_dir, 'ner_al')
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner_al')
 if not os.path.isdir(output_dir):
     os.mkdir(output_dir)
 

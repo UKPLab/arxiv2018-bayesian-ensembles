@@ -5,6 +5,7 @@ Created on April 27, 2018
 '''
 import os
 
+import evaluation.experiment
 from evaluation.experiment import Experiment
 import data.load_data as load_data
 import numpy as np
@@ -15,7 +16,7 @@ gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data
 
 
 #, debug_subset_size=1000) # include this argument to debug with small dataset
-output_dir = os.path.join(load_data.output_root_dir, 'pico')
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico')
 
 # # ------------------------------------------------------------------------------------------------
 #

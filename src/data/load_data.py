@@ -14,7 +14,6 @@ from evaluation.experiment import data_root_dir
 
 all_root_dir = data_root_dir#os.path.expanduser('~/data/bayesian_sequence_combination')
 data_root_dir = os.path.join(all_root_dir, 'data')
-output_root_dir = os.path.join(all_root_dir, 'output')
 
 
 def _load_bio_folder(anno_path_root, folder_name):
