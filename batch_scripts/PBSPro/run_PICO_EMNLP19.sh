@@ -24,6 +24,7 @@ export PYTHONPATH=$PYTHONPATH:"/work/es1595/arxiv2018-bayesian-ensembles/src"
 
 #  run the script
 python -u src/experiments/EMNLP2019/run_pico_experiments.py
+python -u src/experiments/EMNLP2019/plot_pico_worker_models.py
 
 # To submit: qsub run_NER_EMNLP19.sh
 # To display the queue: qstat -Q gpu (this is usually where the GPU job ends up)

@@ -29,9 +29,9 @@ import numpy as np
 import json
 
 from baselines.dawid_and_skene import ibccvb
-from AAAI2020.base_models import run_base_models
+from experiments.AAAI2020.base_models import run_base_models
 from bayesian_combination import bayesian_combination
-from AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir
+from experiments.AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir
 
 reload = True
 rerun_aggregators = True

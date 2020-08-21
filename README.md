@@ -193,6 +193,14 @@ These instructions are for "A Bayesian Approach To Sequence Tagging with Crowds"
  instead you should comment and uncomment the  code
  to disable or enable the methods you want to test.
 
+### First step
+
+Run the experiments from the root directory of the repo: `cd .`
+
+Set the Python path to the src directory:
+
+`export PYTHONPATH=$PYTHONPATH:"./src"`
+
 ### NER experiments
 
 You can run the table 2 experiments using the following:
@@ -255,6 +263,14 @@ The plots in Figure 1 were made using `src/plot_pico_worker_models.py`.
 
 These instructions are for the experiments in
 "Low Resource Sequence Tagging with Weak Labels".
+
+### First step
+
+Run the experiments from the root directory of the repo: `cd .`
+
+Set the Python path to the src directory:
+
+`export PYTHONPATH=$PYTHONPATH:"./src"`
 
 ### Transfer Learning by Combining Models
 

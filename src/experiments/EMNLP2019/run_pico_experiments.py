@@ -35,31 +35,6 @@ output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico')
 # # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 # exp.run_methods(new_data=regen_data)
 #
-# # ------------------------------------------------------------------------------------------------
-#
-beta0_factor = 1
-alpha0_diags = 10
-alpha0_factor = 10
-best_begin_factor = 10
-exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-                 max_iter=20, begin_factor=best_begin_factor)
-# run all the methods that don't require tuning here
-exp.methods =  [
-                # 'bac_seq_integrateIF',
-                'majority',
-                # 'mace',
-                'ds',
-                # 'ibcc',
-                # 'bac_vec_integrateIF',
-                # 'bac_ibcc_integrateIF',
-                # 'bac_mace_integrateIF',
-                # 'HMM_crowd',
-                'best',
-                'worst',
-]
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(new_data=regen_data)
 #
 # # ------------------------------------------------------------------------------------------------
 #
@@ -90,17 +65,17 @@ exp.run_methods(new_data=regen_data)
 # ------------------------------------------------------------------------------------------------
 # tune with small dataset to save time
 s = 300
-idxs = np.argwhere(gt_val != -1)[:, 0] # for tuning
+idxs = np.argwhere(gt_val != -1)[:, 0]  # for tuning
 ndocs = np.sum(doc_start[idxs])
 
 if ndocs > s:
-    idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
+    idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs]) == s)[0][0]]
 elif ndocs < s:  # not enough validation data
     moreidxs = np.argwhere(gt != -1)[:, 0]
     deficit = s - ndocs
     ndocs = np.sum(doc_start[moreidxs])
     if ndocs > deficit:
-        moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
+        moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs]) == deficit)[0][0]]
     idxs = np.concatenate((idxs, moreidxs))
 
 tune_annos = annos[idxs]
@@ -145,3 +120,29 @@ for m, method in enumerate(methods_to_tune):
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
     exp.run_methods(new_data=regen_data)
+
+# # ------------------------------------------------------------------------------------------------
+#
+beta0_factor = 1
+alpha0_diags = 10
+alpha0_factor = 10
+best_begin_factor = 10
+exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
+                 max_iter=20, begin_factor=best_begin_factor)
+# run all the methods that don't require tuning here
+exp.methods =  [
+                # 'bac_seq_integrateIF',
+                'majority',
+                # 'mace',
+                'ds',
+                # 'ibcc',
+                # 'bac_vec_integrateIF',
+                # 'bac_ibcc_integrateIF',
+                # 'bac_mace_integrateIF',
+                # 'HMM_crowd',
+                'best',
+                'worst',
+]
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(new_data=regen_data)

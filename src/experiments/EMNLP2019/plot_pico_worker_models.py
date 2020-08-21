@@ -13,6 +13,9 @@ import os
 import pickle
 
 import matplotlib
+
+from evaluation.experiment import data_root_dir
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -23,7 +26,7 @@ import data.load_data as load_data
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 
-output_dir = '../../data/bayesian_sequence_combination/output/bio_workers/'
+output_dir = os.path.join(data_root_dir, 'output/bio_workers/')
 if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 
