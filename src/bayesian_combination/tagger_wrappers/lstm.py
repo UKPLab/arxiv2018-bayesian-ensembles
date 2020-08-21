@@ -41,13 +41,13 @@ class LSTM(Tagger):
         else:
             self.all_sentences = self.sentences
 
-
     def fit_predict(self, labels):
 
         if self.train_type == 'Bayes':
             labels = np.argmax(labels, axis=1) # uses the mode
 
         print('Training LSTM on labels: ' + str(np.unique(labels)))
+        print('First labels: ' + str(labels[:20]))
 
         l = 0
         labels_by_sen = []
@@ -105,6 +105,8 @@ class LSTM(Tagger):
             agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
             self.probs = probs
             print('LSTM assigned class labels %s' % str(np.unique(agg)) )
+
+            print('LSTM first predictions: ' + str(agg[:20]))
         else:
             probs = self.probs
 
@@ -112,7 +114,7 @@ class LSTM(Tagger):
 
     def predict(self, doc_start, features):
         from taggers.lample_lstm_tagger.lstm_wrapper import data_to_lstm_format
-        test_sentences, _, _ = data_to_lstm_format(features, doc_start, np.ones(N), self.nclasses)
+        test_sentences, _, _ = data_to_lstm_format(features, doc_start, np.ones(features.shape[0]), self.nclasses)
 
         # now make predictions for all sentences
         agg, probs = self.LSTMWrapper.predict_LSTM(test_sentences)
