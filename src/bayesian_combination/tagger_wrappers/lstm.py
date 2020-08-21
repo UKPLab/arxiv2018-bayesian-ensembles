@@ -107,6 +107,7 @@ class LSTM(Tagger):
             print('LSTM assigned class labels %s' % str(np.unique(agg)) )
 
             print('LSTM first predictions: ' + str(agg[:20]))
+            print('LSTM probs: ' + str(probs[:20]))
         else:
             probs = self.probs
 

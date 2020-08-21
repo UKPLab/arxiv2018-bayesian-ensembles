@@ -224,6 +224,8 @@ class BC(object):
                 if self.verbose:
                     print("BC iteration %i: updated label model" % self.iter)
 
+                print('ET: ' + str(self.Et[:20]))
+
                 # Update automated taggers
                 for midx, tagger in enumerate(self.taggers):
                     if not self.converge_workers_first or self.workers_converged:
@@ -244,7 +246,7 @@ class BC(object):
                             print("BC iteration %i: updated tagger of type %s" % (self.iter, str(type(tagger))) )
 
                 if not self.converge_workers_first or self.workers_converged:
-                    self.tagger_updates += 1 # count how many times we updated the data models
+                    self.tagger_updates += 1  # count how many times we updated the data models
 
                 # Update annotator models
                 self.A.update_alpha(self.Et, self.C, self.doc_start, self.L)
@@ -258,6 +260,8 @@ class BC(object):
             # VB has converged or quit -- now, compute the most likely sequence
             if self.verbose:
                 print("BC iteration %i: computing most likely labels..." % self.iter)
+            self.Et = self.LM.update_t(parallel, self.C_data)  # update t here so that we get the latest C_data and Et
+            # values when computing most likely sequence and when returning Et
             plabels, labels = self.LM.most_likely_labels(self._feature_ll(self.features))
 
         if self.verbose:

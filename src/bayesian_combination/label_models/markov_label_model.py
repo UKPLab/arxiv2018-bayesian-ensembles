@@ -302,6 +302,8 @@ class MarkovLabelModel(LabelModel):
         pseq = np.array(list(zip(*res))[0])
         seq = np.concatenate(list(zip(*res))[1], axis=0)
 
+        print('most likely: ' + str(seq[:20]))
+
         return pseq, seq
 
     def lowerbound_terms(self):
