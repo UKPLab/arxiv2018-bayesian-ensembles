@@ -1,5 +1,6 @@
 import os, numpy as np, json
 
+from evaluation.experiment import output_root_dir
 from experiments.AAAI2020.helpers import evaluate, get_root_dir
 from experiments.AAAI2020.seq_taggers import simple_crf, lample #, flair_ner, flair_pos
 
@@ -32,9 +33,9 @@ For each fold, there is a particular set of classes.
 
 '''
 # def rerun_trpreds_lample(dataset, spantype):
-#     resdir = os.path.join(get_root_dir(), 'output/famulus_TEd_results_%s_spantype%i'
+#     resdir = os.path.join(output_root_dir, 'output/famulus_TEd_results_%s_spantype%i'
 #                                 % ('bilstm-crf', spantype))
-#     tmpdir = os.path.join(get_root_dir(), 'output/tmp_spantype%i' % spantype)
+#     tmpdir = os.path.join(get_root_dir, 'tmp_spantype%i' % spantype)
 #
 #     trpredfile = os.path.join(resdir, 'trpreds.json')
 #
@@ -62,7 +63,7 @@ For each fold, there is a particular set of classes.
 #
 #         all_sentences = np.concatenate((train_sentences, dev_sentences), axis=0)
 #
-#         embpath = os.path.join(get_root_dir(), 'cc.de.300.vec')
+#         embpath = os.path.join(output_root_dir, 'cc.de.300.vec')
 #         labeller.labeller = LSTMWrapper(subsetdir, embpath)
 #         labeller.labeller.load_LSTM(False, all_sentences, IOB_label, 3)
 #
@@ -88,7 +89,7 @@ def run_base_models(dataset, spantype, uberdomain, base_model_str='flair', reloa
         print('BASE: Using base model %s' % base_model_str)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    tmpdir = os.path.join(get_root_dir(), 'output/tmp_spantype%i' % spantype)
+    tmpdir = os.path.join(output_root_dir, 'tmp_spantype%i' % spantype)
     if uberdomain != 'TEd':
         tmpdir += '_%s' % uberdomain
 
@@ -96,7 +97,7 @@ def run_base_models(dataset, spantype, uberdomain, base_model_str='flair', reloa
         os.mkdir(tmpdir)
 
     # For each subset, train a base classifier and predict labels for all other subsets
-    resdir = os.path.join(get_root_dir(), 'output/famulus_%s_results_%s_spantype%i'
+    resdir = os.path.join(output_root_dir, 'famulus_%s_results_%s_spantype%i'
                                 % (uberdomain, base_model_str, spantype))
     if not os.path.exists(resdir):
         os.mkdir(resdir)

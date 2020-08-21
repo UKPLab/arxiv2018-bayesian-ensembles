@@ -1,6 +1,7 @@
 import os, json, numpy as np
 import sys
 
+from evaluation.experiment import output_root_dir
 from experiments.AAAI2020.helpers import get_root_dir, Dataset, evaluate
 
 if len(sys.argv) > 1:
@@ -31,10 +32,10 @@ for classid in range(0,4):
     basemodels_str = '--'.join(base_models)
 
     if taskid == 0:
-        resdir = os.path.join(get_root_dir(), 'output/famulus_%s_results_%s_spantype%i'
+        resdir = os.path.join(output_root_dir, 'famulus_%s_results_%s_spantype%i'
                               % (uberdomain, base_models[0], classid))
     else:
-        resdir = os.path.join(get_root_dir(), 'output/famulus_%s_task%i_type%i_basemodels%s' # _crfprobs
+        resdir = os.path.join(output_root_dir, 'famulus_%s_task%i_type%i_basemodels%s' # _crfprobs
                       % (uberdomain, taskid, classid, basemodels_str))
 
     # resfile = os.path.join(resdir, 'res.json') this one contains the macro F1 scores, but this leads to some dodgy

@@ -6,9 +6,11 @@ from sklearn.metrics import f1_score, recall_score, precision_score
 
 from evaluation.span_level_f1 import f1
 
+
 def get_root_dir():
     # return os.path.expanduser('~/data/bayesian_sequence_combination/')
     return './data/famulus/'
+
 
 def evaluate(preds_all_types, gold_all_types, doc_start, spantype=0, f1type='tokens', detailed=False):
 

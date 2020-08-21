@@ -15,6 +15,7 @@ from taggers.lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_fo
 
 embpath = os.path.join(get_root_dir(), 'cc.de.300.vec')
 
+
 class simple_crf:
 
     def get_features(self, feats, doc_start):
