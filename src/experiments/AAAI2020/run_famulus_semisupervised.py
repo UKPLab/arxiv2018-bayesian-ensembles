@@ -10,6 +10,7 @@ import numpy as np
 import json
 
 from baselines.dawid_and_skene import ibccvb
+from evaluation.experiment import output_root_dir
 from experiments.AAAI2020.base_models import run_base_models
 from bayesian_combination import bayesian_combination
 from experiments.AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir, append_training_labels
@@ -42,7 +43,7 @@ def run_test3(uberdomain):
 
         basemodels_str = '--'.join(base_models)
 
-        resdir = os.path.join(get_root_dir(), 'output/famulus_%s_task3_type%i_basemodels%s'
+        resdir = os.path.join(output_root_dir, 'famulus_%s_task3_type%i_basemodels%s'
                               % (uberdomain, classid, '--'.join(base_models)) )
         if not os.path.exists(resdir):
             os.mkdir(resdir)
