@@ -34,8 +34,8 @@ if not os.path.isdir(output_dir):
 for rep in range(1, num_reps):
 
     beta0_factor = 0.1
-    alpha0_diags = 1  # best_diags
-    alpha0_factor = 1  # 9 # best_factor
+    alpha0_diags = 1
+    alpha0_factor = 1
     exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
                      alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                      max_iter=20, crf_probs=True, rep=rep)
@@ -47,28 +47,13 @@ for rep in range(1, num_reps):
         active_learning=True, AL_batch_fraction=batch_frac, max_AL_iters=AL_iters
     )
 
-    beta0_factor = 0.1
-    alpha0_diags = 100 # best_diags
-    alpha0_factor = 0.1 #9 # best_factor
-    exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
-                     alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-                     max_iter=20, crf_probs=True, rep=rep)
-    # run all the methods that don't require tuning here
-    exp.methods =  [
-        'bac_ibcc_integrateIF',
-    ]
-
-    results, preds, probs, results_nocrowd, preds_nocrowd, probs_nocrowd = exp.run_methods(
-                        active_learning=True, AL_batch_fraction=batch_frac, max_AL_iters=AL_iters
-    )
-
     beta0_factor = 10
-    alpha0_diags = 1 # best_diags
-    alpha0_factor = 1#9 # best_factor
+    alpha0_diags = 1
+    alpha0_factor = 1
     exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
                      alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                      max_iter=20, crf_probs=True, rep=rep)
-    exp.methods =  [
+    exp.methods = [
         'bac_vec_integrateIF',
     ]
 
@@ -77,12 +62,12 @@ for rep in range(1, num_reps):
     )
 
     beta0_factor = 0.1
-    alpha0_diags = 1 # best_diags
-    alpha0_factor = 0.1#9 # best_factor
+    alpha0_diags = 1
+    alpha0_factor = 0.1
     exp = Experiment(output_dir, 9, annos, gt, doc_start, text, annos, gt_val, doc_start, text,
                      alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                      max_iter=20, crf_probs=True, rep=rep)
-    exp.methods =  [
+    exp.methods = [
         'ibcc',
         'ds',
         'majority'

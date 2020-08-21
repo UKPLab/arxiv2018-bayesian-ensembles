@@ -43,9 +43,9 @@ if __name__ == '__main__':
     # TUNE on F1 score.
     # If multiple hyperparameters produce same F1, we could use CEE as a tie-breaker?
     output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU_strictF1')
-    beta_factors = [0.1]#, 1, 10]
-    diags = [0.1]#, 1, 10]
-    factors = [0.1, 1]#, 10, 100]
+    beta_factors = [0.1, 1, 10]
+    diags = [0.1, 1, 10]
+    factors = [0.1, 1, 10, 100]
 
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
                      max_iter=20, begin_factor=5.0)
@@ -69,15 +69,15 @@ if __name__ == '__main__':
         exp.methods = [method]
         exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
                      max_iter=20)
 
     methods_to_tune = [
+        'ds',
         'ibcc',
         'bac_ibcc_integrateIF',
         'bac_mace_integrateIF',
-        'ds',
         'bac_vec_integrateIF',
     ]
 
@@ -97,19 +97,20 @@ if __name__ == '__main__':
         exp.run_methods(new_data=regen_data)
 
     # Run with optimal values found during our experiments by tuning on dev set ---------------------------------
-    beta0_factor = 0.1  # this is used by DS but not the other methods here
+    beta0_factor = 0.1  # this is used by DS and mace but not the other methods here
     output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU_%f' % beta0_factor)
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
                      beta0_factor=beta0_factor, max_iter=20)
     exp.methods =  [
-        # 'majority',
-        # 'best',
-        # 'worst'
-        'ds'
+        'majority',
+        'best',
+        'worst'
+        'ds',
+        'mace'
     ]
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 10
     alpha0_diags = 0.1
     alpha0_factor = 10
@@ -122,7 +123,7 @@ if __name__ == '__main__':
     ]
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 0.1
     alpha0_diags = 0.1
     alpha0_factor = 0.1
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     ]
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 1
     alpha0_diags = 0.1
     alpha0_factor = 0.1
@@ -146,20 +147,20 @@ if __name__ == '__main__':
     ]
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 0.1
     alpha0_diags = 1
     alpha0_factor = 100
     output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
                      beta0_factor=beta0_factor, max_iter=20)
-    exp.methods =  [
+    exp.methods = [
         'bac_mace_integrateIF',
     ]
 
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 0.1
     alpha0_diags = 10
     alpha0_factor = 1
@@ -172,14 +173,14 @@ if __name__ == '__main__':
 
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 0.1
     alpha0_diags = 0.1
     alpha0_factor = 10
     output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
                      beta0_factor=beta0_factor, max_iter=20)
-    exp.methods =  [
+    exp.methods = [
         'bac_ibcc_integrateIF',
         'bac_ibcc',
         'bac_ibcc_integrateIF_noHMM',
@@ -187,14 +188,14 @@ if __name__ == '__main__':
 
     exp.run_methods(new_data=regen_data)
 
-
+    # -------------------------------------------------------------------------
     beta0_factor = 0.1
     alpha0_diags = 10
     alpha0_factor = 1
     output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
                      beta0_factor=beta0_factor, max_iter=20, begin_factor=5.0)
-    exp.methods =  [
+    exp.methods = [
         'bac_seq_integrateIF',
         # 'bac_seq',
         # 'bac_seq_integrateIF_noHMM',

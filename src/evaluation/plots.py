@@ -28,7 +28,7 @@ PARAM_NAMES = ['acc_bias',
 SCORE_NAMES = ['accuracy',
                'precision-tokens',
                'recall-tokens',
-               'F1 score',
+               'F1-score',
                'auc-score',
                'cross-entropy-error',
                'precision-spans-strict',
@@ -41,6 +41,7 @@ SCORE_NAMES = ['accuracy',
                'number of invalid labels',
                'mean length error'
                ]
+
 
 def nice_names(methods):
 

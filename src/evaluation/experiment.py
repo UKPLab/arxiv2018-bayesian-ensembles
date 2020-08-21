@@ -518,7 +518,6 @@ class Experiment(object):
 
         return agg, probs
 
-
     def _run_clustering(self):
         cl = clustering.Clustering(self.gold, self.annos, self.doc_start)
         agg = cl.run()
@@ -529,12 +528,10 @@ class Experiment(object):
 
         return agg, probs
 
-
     def _run_ds(self):
         probs = ds(self.annos, self.num_classes, self.beta0_factor, self.max_iter)
         agg = np.argmax(probs, axis=1)
         return agg, probs
-
 
     def _run_heatmapBCC(self):
         bsc_model = HeatmapBCC(L=self.num_classes, K=self.annos.shape[1], max_iter=self.max_iter,  # eps=-1,
@@ -550,7 +547,6 @@ class Experiment(object):
 
         return agg, probs
 
-
     def _run_ibcc3(self):
         bsc_model = IBCC(L=self.num_classes, K=self.annos.shape[1], max_iter=self.max_iter,  # eps=-1,
                      alpha0_diags=self.alpha0_diags, alpha0_factor=self.alpha0_factor, beta0_factor=self.beta0_factor,
@@ -565,13 +561,11 @@ class Experiment(object):
 
         return agg, probs
 
-
     def _run_ibcc2(self):
         probs, _ = ibccvb(self.annos, self.num_classes, self.beta0_factor,
                           self.alpha0_factor, self.alpha0_diags, self.begin_factor, self.max_iter)
         agg = np.argmax(probs, axis=1)
         return agg, probs
-
 
     def _run_ibcc(self, use_ml=False):
         if use_ml:
@@ -599,7 +593,6 @@ class Experiment(object):
 
         return agg, probs
 
-
     def _run_mace(self, timestamp):
         anno_path = os.path.join(self.outputdir, 'annos_tmp_%s' % timestamp)
 
@@ -622,7 +615,6 @@ class Experiment(object):
 
         agg = np.argmax(probs, 1)
         return agg, probs
-
 
     def _run_bsc(self, method, doc_start_unseen=None, text_unseen=None):
 
@@ -712,7 +704,6 @@ class Experiment(object):
 
         return agg, probs, pseq, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
 
-
     def _run_hmmcrowd(self, doc_subset, nselected_by_doc,
                       overwrite_data_file=False):
 
@@ -795,7 +786,6 @@ class Experiment(object):
             probs_unseen = None
 
         return agg, probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
-
 
     def _uncertainty_sampling(self, most_likely_probs, selected_toks, selected_docs):
 
