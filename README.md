@@ -276,7 +276,11 @@ Set the Python path to the src directory:
 
 These are the experiments with FAMULUS data.
 
-First, download the German Fasttext embeddings from `https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.de.300.vec.gz` and unzip to `./data/famulus`.
+First, download the German Fasttext embeddings:
+ `wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.de.300.vec.gz` 
+ then unzip to `./data/famulus`:
+ 
+ `mv cc.de.300.vec.gz ./data/famulus; cd ./data/famulus; gunzip cc.de.300.vec.gz; cd ../..`
 
 To run the zero-shot experiments (Table 3):
 

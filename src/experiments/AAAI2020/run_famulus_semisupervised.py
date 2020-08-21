@@ -10,7 +10,7 @@ import numpy as np
 import json
 
 from baselines.dawid_and_skene import ibccvb
-from evaluation.experiment import output_root_dir
+from evaluation.experiment import output_root_dir, data_root_dir
 from experiments.AAAI2020.base_models import run_base_models
 from bayesian_combination import bayesian_combination
 from experiments.AAAI2020.helpers import evaluate, Dataset, get_anno_matrix, get_root_dir, append_training_labels
@@ -247,7 +247,7 @@ for classid in range(4):
     #plt.ylim(0,80)
     plt.tight_layout()
 
-    plt.savefig('results/test3_tokf1_%i.pdf' % classid)
+    plt.savefig(data_root_dir + '/famulus_results/test3_tokf1_%i.pdf' % classid)
 
     plt.figure(figsize=[2.5,3])
     plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean([means_ibcc[classid], means_ibcc2[classid]], axis=0)[:, 3][:nbatches], label='IBCC', marker='>', linestyle=':')
@@ -260,4 +260,4 @@ for classid in range(4):
     #plt.ylim(0,80)
     plt.tight_layout()
 
-    plt.savefig('results/test3_spanf1_%i.pdf' % classid)
+    plt.savefig(data_root_dir + '/famulus_results/test3_spanf1_%i.pdf' % classid)
