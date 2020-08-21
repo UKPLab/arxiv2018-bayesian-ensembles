@@ -9,7 +9,7 @@ import numpy as np
 #from flair.models import SequenceTagger
 from sklearn_crfsuite.estimator import CRF
 
-from AAAI2020.helpers import get_root_dir
+from experiments.AAAI2020.helpers import get_root_dir
 from taggers.lample_lstm_tagger.lstm_wrapper import LSTMWrapper, data_to_lstm_format
 
 

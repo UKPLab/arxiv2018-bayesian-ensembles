@@ -1,7 +1,7 @@
 import os, json, numpy as np
 import sys
 
-from AAAI2020.helpers import get_root_dir, Dataset, evaluate
+from experiments.AAAI2020.helpers import get_root_dir, Dataset, evaluate
 
 if len(sys.argv) > 1:
     taskid = int(sys.argv[1])

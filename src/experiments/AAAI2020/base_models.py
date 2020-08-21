@@ -1,7 +1,7 @@
 import os, numpy as np, json
 
-from AAAI2020.helpers import evaluate, get_root_dir
-from AAAI2020.seq_taggers import simple_crf, lample #, flair_ner, flair_pos
+from experiments.AAAI2020.helpers import evaluate, get_root_dir
+from experiments.AAAI2020.seq_taggers import simple_crf, lample #, flair_ner, flair_pos
 
 '''
 Structure of data folder:
