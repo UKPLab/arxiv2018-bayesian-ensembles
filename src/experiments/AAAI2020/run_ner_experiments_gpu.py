@@ -14,26 +14,26 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_
     load_data.load_ner_data(regen_data)
 
 # -------------------- debug or tune with subset -------
-s = 500
-idxs = np.argwhere(gt != -1)[:, 0] # for testing
-# idxs = np.argwhere(gt_val != -1)[:, 0] # for tuning
-ndocs = np.sum(doc_start[idxs])
-
-if ndocs > s:
-    idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
-elif ndocs < s:  # not enough validation data
-    moreidxs = np.argwhere(gt != -1)[:, 0]
-    deficit = s - ndocs
-    ndocs = np.sum(doc_start[moreidxs])
-    if ndocs > deficit:
-        moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
-    idxs = np.concatenate((idxs, moreidxs))
-
-gt = gt[idxs]
-annos = annos[idxs]
-doc_start = doc_start[idxs]
-features = features[idxs]
-gt_val = gt_val[idxs]
+# s = 500
+# idxs = np.argwhere(gt != -1)[:, 0] # for testing
+# # idxs = np.argwhere(gt_val != -1)[:, 0] # for tuning
+# ndocs = np.sum(doc_start[idxs])
+#
+# if ndocs > s:
+#     idxs = idxs[:np.argwhere(np.cumsum(doc_start[idxs])==s)[0][0]]
+# elif ndocs < s:  # not enough validation data
+#     moreidxs = np.argwhere(gt != -1)[:, 0]
+#     deficit = s - ndocs
+#     ndocs = np.sum(doc_start[moreidxs])
+#     if ndocs > deficit:
+#         moreidxs = moreidxs[:np.argwhere(np.cumsum(doc_start[moreidxs])==deficit)[0][0]]
+#     idxs = np.concatenate((idxs, moreidxs))
+#
+# gt = gt[idxs]
+# annos = annos[idxs]
+# doc_start = doc_start[idxs]
+# features = features[idxs]
+# gt_val = gt_val[idxs]
 
 #-------------------------------------------------------------------------------------
 beta0_factor = 1
