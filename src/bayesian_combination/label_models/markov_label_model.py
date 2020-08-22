@@ -54,7 +54,6 @@ class MarkovLabelModel(LabelModel):
                 # self.beta0[other_restricted_label, other_restricted_label] += disallowed_counts
                 self.beta0[other_restricted_label, restricted_label] = rare_transition_pseudocount
 
-
     def update_B(self, features, ln_features_likelihood, predict_only=False):
         '''
         Update the transition model.
@@ -67,7 +66,6 @@ class MarkovLabelModel(LabelModel):
 
         if np.any(np.isnan(self.lnB)):
             print('update_B: nan value encountered!')
-
 
     def init_t(self, C, doc_start, A, blanks, gold=None):
 
@@ -102,7 +100,6 @@ class MarkovLabelModel(LabelModel):
         # self.Et = np.sum(self.Et_joint, axis=1)
 
         return self.Et
-
 
     def update_t(self, parallel, C_data):
 
@@ -302,8 +299,6 @@ class MarkovLabelModel(LabelModel):
         pseq = np.array(list(zip(*res))[0])
         seq = np.concatenate(list(zip(*res))[1], axis=0)
 
-        print('most likely: ' + str(seq[:20]))
-
         return pseq, seq
 
     def lowerbound_terms(self):
@@ -311,7 +306,7 @@ class MarkovLabelModel(LabelModel):
         lnpCt = np.sum(lnpCt)
 
         qt_sum = np.sum(self.Et_joint, axis=2)[:, :, None]
-        qt_sum[qt_sum==0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
+        qt_sum[qt_sum == 0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
         q_t_cond = self.Et_joint / qt_sum
         q_t_cond[q_t_cond == 0] = 1.0 # doesn't matter, they will be multiplied by zero. This avoids the warning
         lnqt = self.Et_joint * np.log(q_t_cond)

@@ -22,7 +22,7 @@ class Annotator():
         pass
 
 
-    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
         pass
 
 

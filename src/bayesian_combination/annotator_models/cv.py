@@ -98,7 +98,7 @@ class ConfusionVectorAnnotator(Annotator):
                 self.alpha_taggers[model_idx][j, l, :] += counts
 
 
-    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
         if l is None:
             if np.isscalar(Krange):
                 Krange = np.array([Krange])[None, :]

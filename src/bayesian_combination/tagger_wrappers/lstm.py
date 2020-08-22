@@ -47,7 +47,6 @@ class LSTM(Tagger):
             labels = np.argmax(labels, axis=1) # uses the mode
 
         print('Training LSTM on labels: ' + str(np.unique(labels)))
-        print('First labels: ' + str(labels[:20]))
 
         l = 0
         labels_by_sen = []
@@ -104,10 +103,7 @@ class LSTM(Tagger):
         if model_updated:
             agg, probs = self.LSTMWrapper.predict_LSTM(self.sentences)
             self.probs = probs
-            print('LSTM assigned class labels %s' % str(np.unique(agg)) )
-
-            print('LSTM first predictions: ' + str(agg[:20]))
-            print('LSTM probs: ' + str(probs[:20]))
+            print('LSTM assigned class labels %s' % str(np.unique(agg)))
         else:
             probs = self.probs
 

@@ -18,14 +18,11 @@ class LabelModel(object):
         self.beta0 = beta0
         self.beta_shape = beta0.shape
 
-
     def set_beta0(self, beta0):
         self.beta0 = beta0
 
-
     def update_B(self, features, ln_features_likelihood, predict_only=False):
         pass
-
 
     def init_t(self, C, doc_start, A, blanks, gold=None):
 
@@ -48,8 +45,7 @@ class LabelModel(object):
 
         self.Cprev = np.append(np.zeros((1, self.C.shape[1]), dtype=int) - 1, self.C[:-1, :], axis=0)
 
-
-    def update_t(self):
+    def update_t(self, parallel, C_data):
         pass
 
     def most_likely_labels(self, word_ll):
@@ -243,9 +239,9 @@ def _doc_backward_pass(doc_id, C, C_data, blanks, lnB, L, worker_model, scaling)
         lnLambda_t = logsumexp(lnLambda[t + 1, :][None, :] + lnB[t+1, :, :] + likelihood_next[:, t][None, :], axis=1)
 
         # logsumexp over the L classes of the current timestep to normalise
-        lnLambda[t] = lnLambda_t - scaling[t+1] # logsumexp(lnLambda_t)
+        lnLambda[t] = lnLambda_t - scaling[t+1]  # logsumexp(lnLambda_t)
 
-    if (np.any(np.isnan(lnLambda))):
+    if np.any(np.isnan(lnLambda)):
         print('backward pass: nan value encountered at indexes: ')
         print(np.argwhere(np.isnan(lnLambda)))
 
@@ -270,7 +266,9 @@ def _doc_most_probable_sequence(doc_id, C, C_data, lnEB, L, K, worker_model, bef
     lnPi_data_terms = 0
     if C_data is not None:
         for model_idx, C_data_m in enumerate(C_data):
-            C_data_m_prev = np.concatenate((np.zeros((1, L), dtype=int) - 1, C_data_m[:-1, :]), axis=0)
+            C_data_m_prev_0 = np.zeros((1, L), dtype=int)
+            C_data_m_prev_0[0, before_doc_idx] = 1
+            C_data_m_prev = np.concatenate((C_data_m_prev_0, C_data_m[:-1, :]), axis=0)
             for m in range(L):
                 for n in range(L):
                     weights = (C_data_m[:, m] * C_data_m_prev[:, n])[None, :]

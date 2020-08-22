@@ -104,7 +104,7 @@ if __name__ == '__main__':
     exp.methods =  [
         'majority',
         'best',
-        'worst'
+        'worst',
         'ds',
         'mace'
     ]

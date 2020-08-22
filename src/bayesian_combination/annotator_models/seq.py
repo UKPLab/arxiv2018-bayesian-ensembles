@@ -111,7 +111,7 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                     self.alpha_taggers[model_idx][j, l, m, :] += counts
 
 
-    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
         # shouldn't it use the outside factor instead of Cprev if there is a doc start?
 
         if l is None:

@@ -91,7 +91,7 @@ class AccuracyAnnotator(Annotator):
                 self.alpha_taggers[model_idx][0, :] += incorrect_count
 
 
-    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
 
         N = C.shape[0]
 

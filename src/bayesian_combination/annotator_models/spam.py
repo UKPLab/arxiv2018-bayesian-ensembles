@@ -163,7 +163,7 @@ class SpamAnnotator(Annotator):
             self.alpha_taggers[model_idx][l + 2, :] = self.alpha0_taggers[model_idx][l + 2, :] + strategy_count_l
 
 
-    def read_lnPi(self, l, C, Cprev, doc_start, Krange, nscores, blanks):
+    def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
 
         ll_incorrect = self.lnPi[0, Krange] + self.lnPi[C+2, Krange]
 
