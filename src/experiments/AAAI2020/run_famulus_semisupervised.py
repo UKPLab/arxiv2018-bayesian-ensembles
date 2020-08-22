@@ -247,7 +247,10 @@ for classid in range(4):
     #plt.ylim(0,80)
     plt.tight_layout()
 
-    plt.savefig(data_root_dir + '/famulus_results/test3_tokf1_%i.pdf' % classid)
+    if not os.path.exists(output_root_dir + '/famulus_results'):
+        os.mkdir(output_root_dir + '/famulus_results')
+
+    plt.savefig(output_root_dir + '/famulus_results/test3_tokf1_%i.pdf' % classid)
 
     plt.figure(figsize=[2.5,3])
     plt.plot(np.arange(nbatches)*batchsize, 100 * np.mean([means_ibcc[classid], means_ibcc2[classid]], axis=0)[:, 3][:nbatches], label='IBCC', marker='>', linestyle=':')
@@ -260,4 +263,4 @@ for classid in range(4):
     #plt.ylim(0,80)
     plt.tight_layout()
 
-    plt.savefig(data_root_dir + '/famulus_results/test3_spanf1_%i.pdf' % classid)
+    plt.savefig(output_root_dir + '/famulus_results/test3_spanf1_%i.pdf' % classid)
