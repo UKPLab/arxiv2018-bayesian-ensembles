@@ -529,7 +529,7 @@ class Experiment(object):
         return agg, probs
 
     def _run_ds(self):
-        probs = ds(self.annos, self.num_classes, self.beta0_factor, self.max_iter)
+        probs = ds(self.annos, self.num_classes, max_iter=self.max_iter)
         agg = np.argmax(probs, axis=1)
         return agg, probs
 

@@ -41,7 +41,6 @@ diags = [0.1, 1, 10]
 factors = [0.1, 1, 10]
 
 methods_to_tune = [
-    'ds',
     'ibcc',
     'mace',
     'HMM_crowd',

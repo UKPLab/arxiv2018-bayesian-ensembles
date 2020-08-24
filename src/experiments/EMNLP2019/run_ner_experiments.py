@@ -40,7 +40,7 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, features_nocrowd,
 # ------------------------- HYPERPARAMETER TUNING ----------------------
 
 # tune with small dataset to save time
-s = 500
+s = 250
 idxs = np.argwhere(gt_val != -1)[:, 0]  # for tuning
 ndocs = np.sum(doc_start[idxs])
 
@@ -65,8 +65,7 @@ beta_factors = [0.1, 10, 100]
 diags = [0.1, 1, 10, 100]
 factors = [0.1, 1, 10]
 methods_to_tune = [
-    'ds',
-    'ibcc',
+    'ibcc',  # CEE too high. Wrong version of IBCC implementation?
     'mace',
     'HMM_crowd',
     'bac_acc_integrateIF',
@@ -112,7 +111,7 @@ exp.methods = [
                 'majority',  # does not use the hyperparameters
                 'worst',  # does not use the hyperparameters
                 'best',  # does not use the hyperparameters
-                'ds',
+                'ds',   # does not use the hyperparameters
                 'mace',
 ]
 
