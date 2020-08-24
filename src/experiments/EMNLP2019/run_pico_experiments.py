@@ -13,54 +13,7 @@ import numpy as np
 
 regen_data = False
 gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data)
-
-
-#, debug_subset_size=1000) # include this argument to debug with small dataset
-output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico')
-
-# # ------------------------------------------------------------------------------------------------
-#
-# beta0_factor = 0.1
-# alpha0_diags = 10
-# alpha0_factor = 10
-# best_begin_factor = 1
-# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-#                  max_iter=20, begin_factor=best_begin_factor)
-# # # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 'ds',
-#                 'ibcc',
-# ]
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-# exp.run_methods(new_data=regen_data)
-#
-#
-# # ------------------------------------------------------------------------------------------------
-#
-# beta0_factor = 10
-# alpha0_diags = 100
-# alpha0_factor = 10
-# best_begin_factor = 1
-# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-#                  max_iter=20, begin_factor=best_begin_factor)
-# # run all the methods that don't require tuning here
-# exp.methods =  [
-#                 'bac_seq_integrateIF',
-#                 # 'majority',
-#                 # 'mace',
-#                 # 'ds',
-#                 # 'ibcc',
-#                 # 'bac_vec_integrateIF',
-#                 # 'bac_ibcc_integrateIF',
-#                 # 'bac_mace_integrateIF',
-#                 # 'HMM_crowd',
-#                 # 'best',
-#                 # 'worst',
-# ]
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-# exp.run_methods(new_data=regen_data)
+#  , debug_subset_size=1000) # include this argument to debug with small dataset
 
 # ------------------------------------------------------------------------------------------------
 # tune with small dataset to save time
@@ -88,20 +41,21 @@ diags = [0.1, 1, 10]
 factors = [0.1, 1, 10]
 
 methods_to_tune = [
-                'ibcc',
-                'bac_seq_integrateIF',
-                'bac_vec_integrateIF',
-                'bac_ibcc_integrateIF',
-                'HMM_crowd',
-                'bac_acc_integrateIF',
-                'bac_mace_integrateIF',
-                'bac_ibcc',
-                'bac_ibcc_integrateIF_noHMM',
-                'bac_seq',
-                'bac_seq_integrateIF_noHMM',
-                'mace',
-                   ]
-
+    'ds',
+    'ibcc',
+    'mace',
+    'HMM_crowd',
+    'bac_seq_integrateIF',
+    'bac_acc_integrateIF',
+    'bac_mace_integrateIF',
+    'bac_vec_integrateIF',
+    'bac_ibcc_integrateIF',
+    'bac_ibcc_integrateIF_noHMM',
+    'bac_seq_integrateIF_noHMM',
+    'bac_ibcc',
+    'bac_seq',
+]
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico')
 exp = Experiment(output_dir, 3, annos, gt, doc_start, features, tune_annos, gt_val, tune_doc_start, tune_text,
                  max_iter=20, begin_factor=10)
 
@@ -121,28 +75,70 @@ for m, method in enumerate(methods_to_tune):
     exp.methods = [method]
     exp.run_methods(new_data=regen_data)
 
-# # ------------------------------------------------------------------------------------------------
-#
-beta0_factor = 1
+# ------------------------------------------------------------------------------------------------
+
+beta0_factor = 0.1
 alpha0_diags = 10
 alpha0_factor = 10
-best_begin_factor = 10
+best_begin_factor = 1
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+                                                                                     alpha0_factor))
+exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
+                 max_iter=20, begin_factor=best_begin_factor)
+# # run all the methods that don't require tuning here
+exp.methods = [
+    'ds',
+    'ibcc',
+    'majority',
+    'best',
+    'worst',
+]
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+exp.run_methods(new_data=regen_data)
+
+# ------------------------------------------------------------------------------------------------
+
+beta0_factor = 10
+alpha0_diags = 100
+alpha0_factor = 10
+best_begin_factor = 1
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+                                                                                     alpha0_factor))
 exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
                  max_iter=20, begin_factor=best_begin_factor)
 # run all the methods that don't require tuning here
-exp.methods =  [
-                # 'bac_seq_integrateIF',
-                'majority',
+exp.methods = [
+                'bac_seq_integrateIF',
                 # 'mace',
-                'ds',
-                # 'ibcc',
                 # 'bac_vec_integrateIF',
                 # 'bac_ibcc_integrateIF',
                 # 'bac_mace_integrateIF',
                 # 'HMM_crowd',
-                'best',
-                'worst',
 ]
-# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 exp.run_methods(new_data=regen_data)
+
+# # ------------------------------------------------------------------------------------------------
+#
+# beta0_factor = 1
+# alpha0_diags = 10
+# alpha0_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                      alpha0_factor))
+# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
+#                  max_iter=20, begin_factor=best_begin_factor)
+# # run all the methods that don't require tuning here
+# exp.methods =  [
+#                 # 'bac_seq_integrateIF',
+#                 # 'mace',
+#                 # 'ibcc',
+#                 # 'bac_vec_integrateIF',
+#                 # 'bac_ibcc_integrateIF',
+#                 # 'bac_mace_integrateIF',
+#                 # 'HMM_crowd',
+# ]
+# # # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(new_data=regen_data)
