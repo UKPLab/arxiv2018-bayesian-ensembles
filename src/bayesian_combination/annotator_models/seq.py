@@ -173,7 +173,6 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
             unrestricted_labels = self.beginning_labels
 
         # The outside labels often need a stronger bias because they are way more frequent
-        # we ought to change this to test whether amping up the outside labels really helps!
         self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_B_factor
         # self.alpha0[self.outside_label, self.outside_label] *= self.alpha0_B_factor
 
