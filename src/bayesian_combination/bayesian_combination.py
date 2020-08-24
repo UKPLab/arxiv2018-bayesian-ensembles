@@ -224,12 +224,10 @@ class BC(object):
                 if self.verbose:
                     print("BC iteration %i: updated label model" % self.iter)
 
-                print('ET: ' + str(self.Et[:20]))
-
                 # Update automated taggers
                 for midx, tagger in enumerate(self.taggers):
                     if not self.converge_workers_first or self.workers_converged:
-                        # Update the data model by retraining the integrated task classifier and obtaining its predictions
+                        # Update the data model by retraining the integrated tagger and obtaining its predictions
                         if tagger.train_type == 'Bayes':
                             self.C_data[midx] = tagger.fit_predict(self.Et)
                         elif tagger.train_type == 'MLE':
@@ -237,7 +235,8 @@ class BC(object):
                             self.C_data[midx] = tagger.fit_predict(labels)
 
                         if self.verbose:
-                            print('Tagger %s predicted the labels: %s' % (type(tagger), str(np.unique(np.argmax(self.C_data[midx], axis=1)))))
+                            print('Tagger %s predicted the labels: %s' % (type(tagger), str(np.unique(np.argmax(
+                                self.C_data[midx], axis=1)))))
 
                     if not self.converge_workers_first or self.workers_converged:
                         self.A.update_alpha_taggers(midx, self.Et, self.C_data[midx], self.doc_start, self.L)
