@@ -35,7 +35,7 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_
 # features = features[idxs]
 # gt_val = gt_val[idxs]
 
-#-------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
 beta0_factor = 1
 alpha0_diags = 1
 alpha0_factor = 10

@@ -97,11 +97,11 @@ if __name__ == '__main__':
         exp.run_methods(new_data=regen_data)
 
     # Run with optimal values found during our experiments by tuning on dev set ---------------------------------
-    beta0_factor = 0.1  # this is used by DS and mace but not the other methods here
-    output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU_%f' % beta0_factor)
+    # these methods do not take the tuned values; MACE defaults were best
+    output_dir = os.path.join(evaluation.experiment.output_root_dir, 'arg_LMU')
     exp = Experiment(output_dir, nclasses, annos, gt, doc_start, text, annos_dev, gt_dev, doc_start_dev, text_dev,
-                     beta0_factor=beta0_factor, max_iter=20)
-    exp.methods =  [
+                     max_iter=20)
+    exp.methods = [
         'majority',
         'best',
         'worst',

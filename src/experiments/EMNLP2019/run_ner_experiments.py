@@ -37,6 +37,95 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, features_nocrowd,
 # features = features[idxs]
 # gt_val = gt_val[idxs]
 
+# # ------------------------------------------------------------------------------------------------
+# # Rerunning with found parameters...
+#
+# beta0_factor = 0.1
+# alpha0_diags = 0.1
+# alpha0_factor = 0.1
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+#
+# exp.methods = [
+#                 'best',  # does not use the hyperparameters
+#                 'worst',  # does not use the hyperparameters
+#                 'majority',  # does not use the hyperparameters
+#                 'mace',  # worked best with its own default hyperparameters, smoothing=0.001, alpha=0.5, beta=0.5
+#                 'ds',   # does not use the hyperparameters
+#                 'HMM_Crowd',  # does not use alpha0_diags
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(new_data=regen_data)
+#
+# # ----------------------------------------------------------------------------
+#
+# beta0_factor = 0.1
+# alpha0_diags = 0.1
+# alpha0_factor = 1
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+# exp.methods = [
+#                 'ibcc',
+# ]
+# exp.opt_hyper = False
+# exp.run_methods(new_data=regen_data)
+#
+# # ----------------------------------------------------------------------------
+#
+# beta0_factor = 1
+# alpha0_diags = 10
+# alpha0_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                   alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+#
+# exp.methods = [
+#                 'bsc_cv_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(new_data=regen_data)
+#
+# # ----------------------------------------------------------------------------
+#
+# beta0_factor = 1
+# alpha0_diags = 100
+# alpha0_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                   alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+#
+# exp.methods = [
+#                 'bsc_cm_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(new_data=regen_data)
+
+# ----------------------------------------------------------------------------
+
+beta0_factor = 1
+alpha0_diags = 10 # 1
+alpha0_factor = 10
+output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+                                                                                    alpha0_factor))
+exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+
+exp.methods = [
+                'bsc_seq_integrateIF',
+]
+
+# should run both task 1 and 2.
+exp.run_methods(new_data=regen_data)
+
 # ------------------------- HYPERPARAMETER TUNING ----------------------
 
 # tune with small dataset to save time
@@ -60,29 +149,27 @@ features_val = features[idxs]
 gt_val = gt_val[idxs]
 
 output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner')
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos_val, gt_val, doc_start_val, features_val, max_iter=20)
+exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos_val, gt_val, doc_start_val, features_val,
+                 max_iter=20)
 beta_factors = [0.1, 10, 100]
 diags = [0.1, 1, 10, 100]
-factors = [0.1, 1, 10]
+factors = [0.1, 1, 10],
 methods_to_tune = [
-    'ibcc',  # CEE too high. Wrong version of IBCC implementation?
-    'mace',
-    'HMM_crowd',
-    'bac_acc_integrateIF',
-    'bac_mace_integrateIF',
-    'bac_vec_integrateIF',
-    'bac_ibcc_integrateIF',
-    'bac_seq_integrateIF',
-    'bac_ibcc_integrateIF_noHMM',
-    'bac_seq_integrateIF_noHMM',
-    'bac_ibcc',
-    'bac_seq',
+    'bsc_acc_integrateIF',
+    'bsc_spam_integrateIF',
+    # 'bsc_cv_integrateIF',
+    # 'bsc_cm_integrateIF',
+    # 'bsc_seq_integrateIF',
+    'bsc_cm_integrateIF_noHMM',
+    'bsc_seq_integrateIF_noHMM',
+    'bsc_ibcc',
+    'bsc_seq',
 ]
 #
 for m, method in enumerate(methods_to_tune):
     print('TUNING %s' % method)
 
-    best_scores = exp.tune_alpha0(diags, factors, beta_factors, method)
+    best_scores = exp.tune_alpha0(diags, factors, beta_factors, method, metric_idx_to_optimise=8)
 
     best_idxs = best_scores[1:].astype(int)
     exp.beta0_factor = beta_factors[best_idxs[0]]
@@ -94,93 +181,4 @@ for m, method in enumerate(methods_to_tune):
     # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
     exp.methods = [method]
     exp.run_methods(new_data=regen_data)
-
-# ------------------------------------------------------------------------------------------------
-# Rerunning with found parameters...
-
-beta0_factor = 0.1
-alpha0_diags = 0.1
-alpha0_factor = 0.1
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 gt_nocrowd, doc_start_nocrowd, features_nocrowd,
-                 alpha0_factor, alpha0_diags, beta0_factor,
-                 max_iter=20)
-
-exp.methods = [
-                'majority',  # does not use the hyperparameters
-                'worst',  # does not use the hyperparameters
-                'best',  # does not use the hyperparameters
-                'ds',   # does not use the hyperparameters
-                'mace',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(new_data=regen_data)
-
-# #----------------------------------------------------------------------------
-
-beta0_factor = 0.1
-alpha0_diags = 0.1
-alpha0_factor = 1
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 # gt_nocrowd, doc_start_nocrowd, features_nocrowd,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
-exp.methods = [
-                'ibcc',
-                'HMM_Crowd',
-]
-exp.opt_hyper = False
-exp.run_methods(new_data=regen_data)
-
-# ----------------------------------------------------------------------------
-
-beta0_factor = 1
-alpha0_diags = 10
-alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
-
-exp.methods = [
-                'bac_vec_integrateIF',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(new_data=regen_data)
-
-#----------------------------------------------------------------------------
-
-beta0_factor = 1
-alpha0_diags = 100
-alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
-
-exp.methods = [
-                'bac_ibcc_integrateIF',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(new_data=regen_data)
-
-# ----------------------------------------------------------------------------
-
-beta0_factor = 1
-alpha0_diags = 1
-alpha0_factor = 10
-output_dir = os.path.join(load_data.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 gt_nocrowd, doc_start_nocrowd, features_nocrowd,
-                 alpha0_factor, alpha0_diags, beta0_factor,
-                 max_iter=20)
-
-exp.methods = [
-                'bac_seq_integrateIF',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(new_data=regen_data)
 

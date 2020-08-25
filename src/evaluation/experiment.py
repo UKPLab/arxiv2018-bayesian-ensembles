@@ -115,7 +115,7 @@ class Experiment(object):
         self.beta0_factor = beta0_factor
         self.max_internal_iter = 3
 
-        self.max_iter = max_iter # allow all methods to use a maximum no. iterations
+        self.max_iter = max_iter  # allow all methods to use a maximum no. iterations
 
         np.random.seed(3849)
         self.seed = np.random.randint(1, 1000, 100)[rep] # seeds for AL
@@ -130,7 +130,6 @@ class Experiment(object):
 
         self.scores = None
         self.scores_nocrowd = None
-
 
     def tune_alpha0(self, alpha0diag_proposals, alpha0factor_proposals, beta0factor_proposals,
                     method, metric_idx_to_optimise=8, new_data=False):
@@ -394,10 +393,10 @@ class Experiment(object):
         elif method.split('_')[0] == 'ibcc2':  # this is the newer and simpler implementation
             agg, probs = self._run_ibcc2()
 
-        elif method.split('_')[0] == 'ibcc3': # use BSC with all sequential stuff switched off
+        elif method.split('_')[0] == 'ibcc3':  # use BC with all sequential stuff switched off
             agg, probs = self._run_ibcc3()
 
-        elif method.split('_')[0] == 'heatmapbcc': # use BSC with all sequential stuff switched off, GP on
+        elif method.split('_')[0] == 'heatmapbcc':  # use BSC with all sequential stuff switched off, GP on
             agg, probs = self._run_heatmapBCC()
 
         elif method.split('_')[0] == 'bsc' or method.split('_')[0] == 'bac':
@@ -415,7 +414,7 @@ class Experiment(object):
                 agg = self.aggs[core_method]
                 probs = self.probs[core_method]
 
-        elif 'HMM_crowd' in method:
+        elif 'hmm_crowd' in method.lower():
             if 'HMM_crowd' not in self.aggs:
                 # we pass all annos here so they can be saved and reloaded from a single file in HMMCrowd
                 # format, then the relevant subset selected from that.
@@ -437,7 +436,6 @@ class Experiment(object):
 
         return agg, probs, most_likely_seq_probs, agg_nocrowd, probs_nocrowd, agg_unseen, probs_unseen
 
-
     def calculate_experiment_scores(self, agg, probs, method_idx):
         if self.scores is None:
             self.scores = np.zeros((len(SCORE_NAMES), len(self.methods)))
@@ -448,7 +446,6 @@ class Experiment(object):
                              print_per_class_results=True
                              )
 
-
     def calculate_nocrowd_scores(self, agg, probs, method_idx):
         if self.scores_nocrowd is None:
             # for the additional test set with no crowd labels
@@ -458,7 +455,6 @@ class Experiment(object):
         self.scores_nocrowd[:,method_idx][:,None], self.score_std_nocrowd[:, method_idx] = calculate_scores(
             self.postprocess, agg, self.gold_nocrowd.flatten(), probs, self.doc_start_nocrowd,
             self.bootstrapping, print_per_class_results=True)
-
 
     # Methods -----------------------------------------------------------------
 
@@ -505,8 +501,8 @@ class Experiment(object):
             if not np.any(valididxs):
                 continue
 
-            f1_by_class = skm.f1_score(self.gold.flatten()[valididxs], self.annos[valididxs, w], labels=range(self.num_classes),
-                                       average=None)
+            f1_by_class = skm.f1_score(self.gold.flatten()[valididxs], self.annos[valididxs, w],
+                                       labels=range(self.num_classes), average=None)
             f1scores[valididxs, w] = np.mean(f1_by_class[np.unique(self.gold[valididxs]).astype(int)])
 
         worst_idxs = np.argmin(f1scores, axis=1)
@@ -739,7 +735,7 @@ class Experiment(object):
         labelled_sentences, IOB_map, IOB_label = lstm_wrapper.data_to_lstm_format(
             self.text[valididxs], self.doc_start[valididxs], train_labs.flatten()[valididxs], self.num_classes)
 
-        np.random.seed(592) # for reproducibility
+        np.random.seed(592)  # for reproducibility
 
         if self.gold_val is None or self.doc_start_val is None or self.text_val is None:
             # If validation set is unavailable, select a random subset of combined data to use for validation
