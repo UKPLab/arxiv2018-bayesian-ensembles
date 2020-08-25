@@ -127,20 +127,21 @@ class BC(object):
         self.embeddings_file = embeddings_file # pretrained word embeddings
 
         # choose type of worker model
+        annotator_model = annotator_model.lower()
         if annotator_model == 'acc':
             self.A = AccuracyAnnotator(alpha0_diags, alpha0_factor, L, N_taggers)
 
         elif annotator_model == 'mace' or annotator_model == 'spam':
             self.A = SpamAnnotator(alpha0_diags, alpha0_factor, L, N_taggers)
 
-        elif annotator_model == 'ibcc' or annotator_model == 'CM':
+        elif annotator_model == 'ibcc' or annotator_model == 'cm':
             self.A = ConfusionMatrixAnnotator(alpha0_diags, alpha0_factor, L, N_taggers)
 
         elif annotator_model == 'seq':
             self.A = SequentialAnnotator(alpha0_diags, alpha0_factor, L, N_taggers, tagging_scheme,
                                          beginning_labels, inside_labels, outside_label, alpha0_B_factor)
 
-        elif annotator_model == 'vec' or annotator_model == 'CV':
+        elif annotator_model == 'vec' or annotator_model == 'cv':
             self.A = ConfusionVectorAnnotator(alpha0_diags, alpha0_factor, L, N_taggers)
 
         elif 'dyn' == annotator_model.split('.')[0]:
