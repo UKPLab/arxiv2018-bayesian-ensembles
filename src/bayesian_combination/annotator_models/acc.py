@@ -90,7 +90,6 @@ class AccuracyAnnotator(Annotator):
                 incorrect_count = C[:, l:l+1].T.dot(Tj).reshape(-1)
                 self.alpha_taggers[model_idx][0, :] += incorrect_count
 
-
     def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
 
         N = C.shape[0]
@@ -114,7 +113,6 @@ class AccuracyAnnotator(Annotator):
             result[blanks] = 0
 
         return np.sum(result, axis=-1)
-
 
     def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
         if l is None:

@@ -37,30 +37,12 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, text_nocrowd, gt_
 
 # -------------------------------------------------------------------------------------
 beta0_factor = 1
-alpha0_diags = 1
-alpha0_factor = 10
-output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags, alpha0_factor))
-exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-                 max_iter=20)
-exp.methods = [
-    # 'bac_seq_integrateIF',
-    'bac_seq_integrateIF_integrateLSTM_atEnd',
-    'bac_seq_integrateIF_thenLSTM',
-]
-
-# should run both task 1 and 2.
-exp.run_methods(new_data=regen_data)
-
-# -------------------------------------------------------------------------------------
-beta0_factor = 1
 alpha0_diags = 10
 alpha0_factor = 10
 output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
                                                                                     alpha0_factor))
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-                 max_iter=20)
+                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
 exp.methods = [
                 # 'bac_seq_integrateIF',
                 'bac_seq_integrateIF_thenLSTM',
@@ -78,8 +60,7 @@ alpha0_factor = 0.1
 output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
                                                                                     alpha0_factor))
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-                 max_iter=20)
+                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
 # run all the methods that don't require tuning here
 exp.methods = [
                 'gt_thenLSTM', # train the LSTM on the real gold labels

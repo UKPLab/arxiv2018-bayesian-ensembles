@@ -76,6 +76,40 @@ gt, annos, doc_start, features, gt_nocrowd, doc_start_nocrowd, features_nocrowd,
 # exp.run_methods(new_data=regen_data)
 #
 # # ----------------------------------------------------------------------------
+#
+# beta0_factor = ?
+# alpha0_diags = ?
+# alpha0_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                   alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+#
+# exp.methods = [
+#                 'bsc_acc_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(new_data=regen_data)
+#
+# # ----------------------------------------------------------------------------
+#
+# beta0_factor = ?
+# alpha0_diags = ?
+# alpha0_factor = ?
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                   alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+#
+# exp.methods = [
+#                 'bsc_spam_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(new_data=regen_data)
+
+# ----------------------------------------------------------------------------
 
 beta0_factor = 1
 alpha0_diags = 10
@@ -91,40 +125,40 @@ exp.methods = [
 
 # should run both task 1 and 2.
 exp.run_methods(new_data=regen_data)
-#
-# # ----------------------------------------------------------------------------
-#
-# beta0_factor = 1
-# alpha0_diags = 100
-# alpha0_factor = 10
-# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
-#                                                                                     alpha0_factor))
-# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-#                   alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
-#
-# exp.methods = [
-#                 'bsc_cm_integrateIF',
-# ]
-#
-# # should run both task 1 and 2.
-# exp.run_methods(new_data=regen_data)
 
 # ----------------------------------------------------------------------------
 
 beta0_factor = 1
-alpha0_diags = 10 # 1
+alpha0_diags = 100
 alpha0_factor = 10
 output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
                                                                                     alpha0_factor))
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
 
 exp.methods = [
-                'bsc_seq_integrateIF',
+                'bsc_cm_integrateIF',
 ]
 
 # should run both task 1 and 2.
 exp.run_methods(new_data=regen_data)
+
+# # ----------------------------------------------------------------------------
+#
+# beta0_factor = 1
+# alpha0_diags = 10
+# alpha0_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                     alpha0_factor))
+# exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor, max_iter=20)
+#
+# exp.methods = [
+#                 'bsc_seq_integrateIF',
+# ]
+#
+# # should run both task 1 and 2.
+# exp.run_methods(new_data=regen_data)
 
 # ------------------------- HYPERPARAMETER TUNING ----------------------
 
@@ -151,17 +185,17 @@ gt_val = gt_val[idxs]
 output_dir = os.path.join(evaluation.experiment.output_root_dir, 'ner')
 exp = Experiment(output_dir, 9, annos, gt, doc_start, features, annos_val, gt_val, doc_start_val, features_val,
                  max_iter=20)
-beta_factors = [0.1, 10, 100]
+beta_factors = [0.1, 1, 10]
 diags = [0.1, 1, 10, 100]
-factors = [0.1, 1, 10],
+factors = [0.1, 1, 10]
 methods_to_tune = [
     # 'ibcc',
     # 'HMM_crowd',
     'bsc_acc_integrateIF',
     'bsc_spam_integrateIF',
-    # 'bsc_cv_integrateIF',
-    # 'bsc_cm_integrateIF',
-    # 'bsc_seq_integrateIF',
+    'bsc_cv_integrateIF',
+    'bsc_cm_integrateIF',
+    'bsc_seq_integrateIF',
     'bsc_cm_integrateIF_noHMM',
     'bsc_seq_integrateIF_noHMM',
     'bsc_ibcc',
