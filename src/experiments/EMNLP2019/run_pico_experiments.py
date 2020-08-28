@@ -165,8 +165,6 @@ factors = [0.1, 1, 10]
 
 methods_to_tune = [
     'ibcc',
-    # 'HMM_crowd',
-    # 'bac_seq_integrateIF',
     'bac_acc_integrateIF',
     'bac_mace_integrateIF',
     # 'bac_vec_integrateIF',
