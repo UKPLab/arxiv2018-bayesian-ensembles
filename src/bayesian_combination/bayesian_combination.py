@@ -22,7 +22,7 @@ from bayesian_combination.annotator_models.spam import SpamAnnotator
 from bayesian_combination.annotator_models.seq import SequentialAnnotator
 
 
-n_jobs = effective_n_jobs() / 2  # limit the number of parallel jobs. Within each job, numpy can spawn more threads,
+n_jobs = int(effective_n_jobs() / 2)  # limit the number of parallel jobs. Within each job, numpy can spawn more threads,
 # which can cause the total number of CPUs required to exceed the limit.
 
 
