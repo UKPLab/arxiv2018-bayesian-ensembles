@@ -22,6 +22,10 @@ from bayesian_combination.annotator_models.spam import SpamAnnotator
 from bayesian_combination.annotator_models.seq import SequentialAnnotator
 
 
+n_jobs = 8  # limit the number of parallel jobs. Within each job, numpy can spawn more threads, which can cause the
+# total number of CPUs required to exceed the limit.
+
+
 class BC(object):
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
@@ -102,7 +106,7 @@ class BC(object):
 
         print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()))
 
-        #Do we model word distributions as independent features?
+        # Do we model word distributions as independent features?
         self.no_features = not discrete_feature_likelihoods
         self.nu0 = nu0 # prior hyperparameter for word features
 
@@ -156,10 +160,8 @@ class BC(object):
         else:
             print('Bayesian combination: Did not recognise the annotator model %s' % annotator_model)
 
-
-
     def fit_predict(self, C, doc_start=None, features=None, dev_sentences=[], gold_labels=None):
-        '''
+        """
         Fits the Bayesian combination model to a set of annotations from multiple annotators (e.g.,
          crowdsourced annotations). It then predicts the gold-standard labels for these data points.
         The method works by running variational Bayesian approximate inference.
@@ -182,7 +184,7 @@ class BC(object):
         using the method in a purely unsupervised manner.
         :return: posterior distribution over the aggregated labels (array of size LxN), most likely aggregated labels
         (array of size N), probability of the most likely labels (array of size N).
-        '''
+        """
         if self.verbose:
             print('BSC: run() called with annotation matrix with shape = %s' % str(C.shape))
 
@@ -202,8 +204,8 @@ class BC(object):
         self._init_taggers(features, dev_sentences)
         self.workers_converged = False
 
-        # Variational Bayes inference loop -------------------------------------------------------------------------------
-        with Parallel(n_jobs=-1, backend='threading') as parallel:
+        # Variational Bayes inference loop -----------------------------------------------------------------------------
+        with Parallel(n_jobs=n_jobs, backend='threading') as parallel:
 
             while not self._converged() or not self.workers_converged:
                 if self.verbose:
@@ -269,7 +271,6 @@ class BC(object):
 
         return self.Et, labels, plabels
 
-
     def predict(self, doc_start, features):
         '''
         If the model was initialised to include taggers, it can be used to make predictions on data with no annotations.
@@ -289,7 +290,7 @@ class BC(object):
 
         self.LM.C_by_doc = None
 
-        with Parallel(n_jobs=-1, backend='threading') as parallel:
+        with Parallel(n_jobs=n_jobs, backend='threading') as parallel:
 
             doc_start = doc_start.astype(bool)
             self.C = np.zeros((len(doc_start), self.K), dtype=int) - 1  # all blank
@@ -307,7 +308,6 @@ class BC(object):
             labels = self.LM.most_likely_labels(self._feature_ll(self.features))[1]
 
         return q_t, labels
-
 
     def optimize(self, C, doc_start, features=None, dev_sentences=[],
                     gold_labels=None, C_data_initial=None, maxfun=50):
@@ -348,7 +348,6 @@ class BC(object):
 
         return self.Et, self.LM.most_likely_labels(self._feature_ll(self.features))[1]
 
-
     def lowerbound(self):
         '''
         Compute the variational lower bound (ELBO) on the log marginal likelihood.
@@ -382,7 +381,6 @@ class BC(object):
 
         return lb
 
-
     def _init_features(self, features):
         '''
         This built-in feature model treats features as discrete, not distributed representations (embeddings). To handle
@@ -410,7 +408,6 @@ class BC(object):
         # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
         self.features_mat = coo_matrix((np.ones(len(features)), (self.features, np.arange(N)))).tocsr()
 
-
     def _update_features(self):
         if self.no_features:
             return np.zeros((self.N, self.L))
@@ -425,7 +422,6 @@ class BC(object):
         lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
 
         return lnptext_given_t # N x nclasses where N is number of tokens/data points
-
 
     def _predict_features(self, doc_start, features):
         if self.no_features:
@@ -447,7 +443,6 @@ class BC(object):
 
         return lnptext_given_t
 
-
     def _feature_ll(self, features):
         if self.no_features:
             features_ll = None
@@ -459,7 +454,6 @@ class BC(object):
             features_ll = lnERho[features, :]
 
         return features_ll
-
 
     def _init_dataset(self, gold_labels, C, features, doc_start):
         # Save the data, init word model, and init true label array.
@@ -490,8 +484,6 @@ class BC(object):
         self.C = C.astype(int)
         self.blanks = C == -1
 
-
-
     def _init_taggers(self, features, dev_sentences):
         # initialise the integrated taggers
         self.C_data = []
@@ -519,7 +511,6 @@ class BC(object):
 
         self.tagger_updates = 0
 
-
     def _convergence_diff(self):
         if self.use_lb:
 
@@ -529,7 +520,6 @@ class BC(object):
             return self.lb - oldlb
         else:
             return np.max(np.abs(self.Et_old - self.Et))
-
 
     def _converged(self):
         '''

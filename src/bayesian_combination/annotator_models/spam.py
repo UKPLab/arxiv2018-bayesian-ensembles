@@ -6,7 +6,7 @@ from bayesian_combination.annotator_models.annotator_model import Annotator, log
 
 
 class SpamAnnotator(Annotator):
-    # Worker model: MACE-like spammer model --------------------------------------------------------------------------------
+    # Worker model: MACE spammer model ----------------------------------------------------------------------------
 
     # alpha[0,:] and alpha[1,:] are parameters for the spamming probability
     # alpha[2:2+nscores,:] are parameters for the spamming pattern
@@ -24,6 +24,8 @@ class SpamAnnotator(Annotator):
         self.alpha0[1] = alpha0_diags  # diags are bias toward correct answer
 
         self.alpha0_taggers = {}
+        self.alpha = None
+        self.alpha_taggers = {}
         self.lnPi = {}
         self.lnPi_taggers = {}
         for m in range(nModels):
@@ -38,7 +40,7 @@ class SpamAnnotator(Annotator):
         # Returns the initial values for alpha and lnPi
 
         psi_alpha_sum = np.zeros_like(self.alpha0)
-        psi_alpha_sum[0, :] = psi(self.alpha0[0,:] + self.alpha0[1, :])
+        psi_alpha_sum[0, :] = psi(self.alpha0[0, :] + self.alpha0[1, :])
         psi_alpha_sum[1, :] = psi_alpha_sum[0, :]
 
         psi_alpha_sum[2:, :] = psi(np.sum(self.alpha0[2:, :], 0))[None, :]
