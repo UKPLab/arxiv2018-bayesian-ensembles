@@ -19,13 +19,25 @@ classifications of independent data points (e.g., image or document classificati
 The annotators may be experts, crowd workers, or automated classifiers in an ensemble.
 
 The methods that we implement are:
-   * BSC (all variants) -- "A Bayesian Approach for Sequence Tagging with Crowds", Simpson & Gurevych (2019), EMNLP; See below for details on experiments in this paper;
-   * Variational combined supervision (VCS) -- "Low Resource Sequence Tagging with Weak Labels", Simpson et al. (2020), AAAI; See below for details on experiments;
-   * Independent Bayesian Classifier Combination (IBCC-VB) -- Simpson, et al. "Dynamic Bayesian combination of multiple imperfect classifiers", Simpson et al. (2013);
-   * MACE -- "Learning Whom to Trust with MACE", Hovy et al. (2013), NAACL;
-   * Dynamic IBCC (DynIBCC) -- Simpson, et al. "Dynamic Bayesian combination of multiple imperfect classifiers", Simpson et al. (2013);
-   * BCCWords -- "Language understanding in the wild: Combining crowdsourcing and machine learning.", Simpson et al. (2015), WWW;
-   * HeatmapBCC -- "Bayesian heatmaps: probabilistic classification with multiple unreliable information sources.", Simpson et al. (2017), ECML-PKDD.
+   * *BSC (all variants)* -- "A Bayesian Approach for Sequence Tagging with Crowds", Simpson & Gurevych (2019), EMNLP; See below for details on experiments in this paper; 
+   see `src/bayesian_combination/bsc.py`.
+   * *Variational combined supervision (VCS)* -- "Low Resource Sequence Tagging with Weak Labels", Simpson et al. (2020), AAAI; See below for details on experiments;
+   * *Dawid and Skene* -- "Maximum Likelihood Estimation of Observer Error-Rates Using the EM Algorithm" (1979);
+   see `src/baselines/dawid_and_skene.py`.
+   * *Independent Bayesian Classifier Combination (IBCC-VB)* -- Simpson, et al. "Dynamic Bayesian combination of multiple imperfect classifiers", Simpson et al. (2013);
+   this is an approximate Bayesian version of Dawid and Skene;
+   see `src/bayesian_combination/ibcc.py`.
+   * *MACE* -- "Learning Whom to Trust with MACE", Hovy et al. (2013), NAACL;
+   see `src/bayesian_combination/MACE.py`.
+   * *Dynamic IBCC (DynIBCC)* -- Simpson, et al. "Dynamic Bayesian combination of multiple imperfect classifiers", Simpson et al. (2013);
+   this is a version of IBCC that tracks changing reliability of annotators;
+   see `src/bayesian_combination/ibcc.py`.
+   * *BCCWords* -- "Language understanding in the wild: Combining crowdsourcing and machine learning.", Simpson et al. (2015), WWW;
+   this is IBCC with bag-of-words features;
+    see `src/bayesian_combination/ibcc.py`.
+   * *HeatmapBCC* -- "Bayesian heatmaps: probabilistic classification with multiple unreliable information sources.", Simpson et al. (2017), ECML-PKDD; 
+   IBCC combined with a Gaussian process classifier; 
+   see `src/bayesian_combination/ibcc.py`.
 
 This implementation uses a common variational Bayes framework to infer gold labels using
  different annotator models and labelling models. 
@@ -383,6 +395,13 @@ which will use a simpler annotator model.
 Further alternatives are "worker_model='CV'" (confusion vector),
  "worker_model='spam'" (as used by MACE),
 and "worker_model='acc' (a single accuracy value for each worker).
+
+Different models for the methods listed at the top
+of this page can also be constructed using the 
+classes in bayesian_combination package. Alternatively,
+you can create new configurations by instantiating BC directly, 
+e.g., if you want to use dynIBCC with BSC,
+set annotator_model='dyn' and true_label_model='HMM'.
 
 A single call is used to train the model and produce the aggregated labels:
 ~~~python
