@@ -35,7 +35,6 @@ class ConfusionVectorAnnotator(Annotator):
 
         print(self.alpha0)
 
-
     def init_lnPi(self, N):
         # init to prior
         self.alpha = np.copy(self.alpha0)
@@ -45,7 +44,6 @@ class ConfusionVectorAnnotator(Annotator):
 
         # Returns the initial values for alpha and lnPi
         self.lnPi = self.q_pi()
-
 
     def _calc_q_pi(self, alpha):
         '''
@@ -67,7 +65,6 @@ class ConfusionVectorAnnotator(Annotator):
 
         return self.lnpi
 
-
     def update_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
         Update alpha.
@@ -81,7 +78,6 @@ class ConfusionVectorAnnotator(Annotator):
             for l in range(dims[1]):
                 counts = (C == l).T.dot(Tj).reshape(-1)
                 self.alpha[j, l, :] += counts
-
 
     def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
@@ -97,7 +93,6 @@ class ConfusionVectorAnnotator(Annotator):
                 counts = (C[:, l:l+1]).T.dot(Tj).reshape(-1)
                 self.alpha_taggers[model_idx][j, l, :] += counts
 
-
     def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
         if l is None:
             if np.isscalar(Krange):
@@ -112,13 +107,11 @@ class ConfusionVectorAnnotator(Annotator):
 
         return np.sum(result, axis=-1)
 
-
     def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
         if l is None:
             return self.lnPi_taggers[model_idx][:, C, 0]
         else:
             return self.lnPi_taggers[model_idx][l, C, 0]
-
 
     def expand_alpha0(self, C, K, doc_start, nscores):
         '''
@@ -140,7 +133,6 @@ class ConfusionVectorAnnotator(Annotator):
                 self.alpha0_taggers[midx] = np.ones((L, L, 1)) + 1.0 * np.eye(L)[:, :, None]
             elif self.alpha0_taggers[midx].ndim == 2:
                 self.alpha0_taggers[midx] = self.alpha0_taggers[midx][:, :, None]
-
 
     def _calc_EPi(self, alpha):
 

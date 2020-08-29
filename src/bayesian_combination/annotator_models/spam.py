@@ -32,6 +32,7 @@ class SpamAnnotator(Annotator):
 
         self.nModels = nModels
 
+        self.C_l = None
 
     def init_lnPi(self, N):
         # Returns the initial values for alpha and lnPi
@@ -50,7 +51,6 @@ class SpamAnnotator(Annotator):
         for midx in range(self.nModels):
             self.alpha_taggers[midx] = np.copy(self.alpha0_taggers[midx])
 
-
     def _calc_q_pi(self, alpha):
         '''
         Update the annotator models.
@@ -61,7 +61,6 @@ class SpamAnnotator(Annotator):
         psi_alpha_sum[2:, :] = psi(np.sum(alpha[2:, :], 0))[None, :]
 
         return psi(alpha) - psi_alpha_sum
-
 
     def update_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
@@ -98,16 +97,22 @@ class SpamAnnotator(Annotator):
 
         pspamming_j_unnormed = Pi[0, :][None, :] * Pi[C + 2, np.arange(C.shape[1])[None, :]]
 
+        if self.C_l is None or C.shape != self.C_l[-1].shape:
+            self.C_l = {-1: C == -1}
+
+            for l in range(nscores):
+                self.C_l[l] = C == l
+
         for j in range(E_t.shape[1]):
             Tj = E_t[:, j:j+1]
 
-            pknowing_j_unnormed = (Pi[1,:][None, :] * (C == j))
+            pknowing_j_unnormed = (Pi[1, :][None, :] * (C == j))
 
             pknowing_j = pknowing_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
             pspamming_j = pspamming_j_unnormed / (pknowing_j_unnormed + pspamming_j_unnormed)
 
             # The cases where worker has not given a label are not really spam!
-            pspamming_j[C==-1] = 0
+            pspamming_j[self.C_l[-1]] = 0
 
             pknowing += pknowing_j * Tj
             pspamming += pspamming_j * Tj
@@ -119,9 +124,8 @@ class SpamAnnotator(Annotator):
         self.alpha[0, :] = self.alpha0[0, :] + incorrect_count
 
         for l in range(nscores):
-            strategy_count_l = np.sum((C == l) * pspamming, 0)
+            strategy_count_l = np.sum((self.C_l[l]) * pspamming, 0)
             self.alpha[l+2, :] = self.alpha0[l+2, :] + strategy_count_l
-
 
     def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
         '''
@@ -162,7 +166,6 @@ class SpamAnnotator(Annotator):
             strategy_count_l = np.sum((C[:, l:l+1]) * pspamming, 0)
             self.alpha_taggers[model_idx][l + 2, :] = self.alpha0_taggers[model_idx][l + 2, :] + strategy_count_l
 
-
     def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
 
         ll_incorrect = self.lnPi[0, Krange] + self.lnPi[C+2, Krange]
@@ -182,11 +185,11 @@ class SpamAnnotator(Annotator):
                 idx = (C == m).astype(int)
 
                 ll_correct[m] = self.lnPi[1, Krange] * idx
-                ll_correct[m, idx==0] = -np.inf
+                ll_correct[m, idx == 0] = -np.inf
 
             ll_incorrect = np.tile(ll_incorrect, (nscores, 1, 1))
         else:
-            idx = (C == l).astype(int)
+            idx = (self.C_l[l]).astype(int)
             ll_correct = self.lnPi[1, Krange] * idx
             ll_correct[idx == 0] = - np.inf
 
@@ -198,7 +201,6 @@ class SpamAnnotator(Annotator):
             result[blanks] = 0
 
         return np.sum(result, axis=-1)
-
 
     def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
         ll_incorrect = self.lnPi_taggers[model_idx][0, 0] + self.lnPi_taggers[model_idx][C+2, 0]
@@ -214,7 +216,6 @@ class SpamAnnotator(Annotator):
                 ll_correct = - np.inf
 
         return logsumexp([ll_correct, ll_incorrect], axis=0)
-
 
     def expand_alpha0(self, C, K, doc_start, nscores):
         '''
@@ -238,7 +239,6 @@ class SpamAnnotator(Annotator):
                 self.alpha0_taggers[midx][1, :] += 1.0
             elif self.alpha0_taggers[midx].ndim == 1:
                 self.alpha0_taggers[midx] = self.alpha0_taggers[midx][:, None]
-
 
     def _calc_EPi(self, alpha):
         pi = np.zeros_like(alpha)

@@ -13,7 +13,7 @@ import numpy as np
 
 regen_data = False
 gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data)
-#  , debug_subset_size=1000) # include this argument to debug with small dataset
+#, debug_subset_size=1000) # include this argument to debug with small dataset
 
 # ------------------------------------------------------------------------------------------------
 #
