@@ -125,7 +125,7 @@ gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data
 beta0_factor = 1
 alpha0_diags = 10
 alpha0_factor = 10
-best_begin_factor = 10
+best_begin_factor = 1
 output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
                                                                                      alpha0_factor))
 exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
