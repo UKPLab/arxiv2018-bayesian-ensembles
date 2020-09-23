@@ -43,7 +43,7 @@ if plot_integrated:
 
     # corresponding list of data models
     data_models = [
-        ['IF',  'LSTM']
+        ['LSTM']
     ]
 else:
     worker_models = [
@@ -55,11 +55,7 @@ else:
     ]
 
     data_models = [
-        # ['IF'],
-        # ['IF'],
-        # ['IF'],
-        # ['IF'],
-        None #['IF'],
+        None
     ]
 
 inside_labels = [0]
@@ -110,8 +106,8 @@ for w, worker_model in enumerate(worker_models):
         model = BC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_label=outside_label,
                    beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor,
                    beta0_factor=beta0_factor, annotator_model=worker_model, tagging_scheme='IOB2',
-                   taggers='LSTM' if 'LSTM' in data_model else None, true_label_model='HMM',
-                   discrete_feature_likelihoods=data_model == 'IF',
+                   taggers='LSTM' if data_model is not None and 'LSTM' in data_model else None, true_label_model='HMM',
+                   discrete_feature_likelihoods=True,
                    converge_workers_first=data_model is not None and 'LSTM' in data_model)
 
         model.verbose = True

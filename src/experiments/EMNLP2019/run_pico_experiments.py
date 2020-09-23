@@ -13,9 +13,9 @@ import numpy as np
 
 regen_data = False
 gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data(regen_data)
-#, debug_subset_size=1000) # include this argument to debug with small dataset
+# , debug_subset_size=1000) # include this argument to debug with small dataset
 
-# ------------------------------------------------------------------------------------------------
+# # ------------------------------------------------------------------------------------------------
 #
 # # only hmm_Crowd actually uses these hyperparameters
 # beta0_factor = 0.1
@@ -121,23 +121,22 @@ gt, annos, doc_start, features, gt_val, _, _, _ = load_data.load_biomedical_data
 # exp.run_methods(new_data=regen_data)
 #
 # # ------------------------------------------------------------------------------------------------
-
-beta0_factor = 1
-alpha0_diags = 10
-alpha0_factor = 10
-best_begin_factor = 1
-output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
-                                                                                     alpha0_factor))
-exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
-                 alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
-                 max_iter=20, begin_factor=best_begin_factor)
-# run all the methods that don't require tuning here
-exp.methods = [
-                # 'bsc_seq_integrateIF',
-                'bsc_seq_integrateIF_noHMM'
-]
-# this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
-exp.run_methods(new_data=regen_data)
+#
+# beta0_factor = 1
+# alpha0_diags = 10
+# alpha0_factor = 10
+# best_begin_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                      alpha0_factor))
+# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
+#                  max_iter=20, begin_factor=best_begin_factor)
+# # run all the methods that don't require tuning here
+# exp.methods = [
+#                 'bsc_seq_integrateIF',
+# ]
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(new_data=regen_data)
 #
 # # ------------------------------------------------------------------------------------------------
 #
@@ -153,6 +152,24 @@ exp.run_methods(new_data=regen_data)
 # # run all the methods that don't require tuning here
 # exp.methods = [
 #                 'bsc_seq',  # no word features
+# ]
+# # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
+# exp.run_methods(new_data=regen_data)
+#
+# # ------------------------------------------------------------------------------------------------
+#
+# beta0_factor = 1
+# alpha0_diags = 10
+# alpha0_factor = 0.1
+# best_begin_factor = 10
+# output_dir = os.path.join(evaluation.experiment.output_root_dir, 'pico3_%f_%f_%f' % (beta0_factor, alpha0_diags,
+#                                                                                      alpha0_factor))
+# exp = Experiment(output_dir, 3, annos, gt, doc_start, features, annos, gt_val, doc_start, features,
+#                  alpha0_factor=alpha0_factor, alpha0_diags=alpha0_diags, beta0_factor=beta0_factor,
+#                  max_iter=20, begin_factor=best_begin_factor)
+# # run all the methods that don't require tuning here
+# exp.methods = [
+#                 'bsc_seq_integrateIF_noHMM'
 # ]
 # # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 # exp.run_methods(new_data=regen_data)
@@ -191,7 +208,6 @@ exp.run_methods(new_data=regen_data)
 # # this will run task 1 -- train on all crowdsourced data, test on the labelled portion thereof
 # exp.run_methods(new_data=regen_data)
 #
-
 # # ------------------------------------------------------------------------------------------------
 # # tune with small dataset to save time
 # s = 300
