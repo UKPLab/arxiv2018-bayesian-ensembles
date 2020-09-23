@@ -7,7 +7,6 @@ from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
 from joblib import Parallel, cpu_count, effective_n_jobs
 
-#from lample_lstm_tagger.loader import tag_mapping
 from bayesian_combination.annotator_models.acc import AccuracyAnnotator
 from bayesian_combination.annotator_models.cm import ConfusionMatrixAnnotator
 from bayesian_combination.annotator_models.cv import ConfusionVectorAnnotator
