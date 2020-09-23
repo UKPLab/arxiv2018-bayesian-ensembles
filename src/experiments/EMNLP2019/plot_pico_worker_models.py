@@ -63,7 +63,7 @@ else:
     ]
 
 inside_labels = [0]
-outside_labels = [1]
+outside_label = 1
 begin_labels = [2]
 
 L = 3
@@ -107,11 +107,12 @@ for w, worker_model in enumerate(worker_models):
 
         data_model = data_models[w]
 
-        model = BC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_label=outside_labels,
+        model = BC(L=L, K=annos.shape[1], inside_labels=inside_labels, outside_label=outside_label,
                    beginning_labels=begin_labels, alpha0_diags=alpha0_diags, alpha0_factor=alpha0_factor,
-                   beta0_factor=beta0_factor, before_doc_idx=1, annotator_model=worker_model, tagging_scheme='IOB2',
-                   taggers=data_model, true_label_model='HMM',
-                   converge_workers_first=2 if data_model is not None and 'LSTM' in data_model else 0)
+                   beta0_factor=beta0_factor, annotator_model=worker_model, tagging_scheme='IOB2',
+                   taggers='LSTM' if 'LSTM' in data_model else None, true_label_model='HMM',
+                   discrete_feature_likelihoods=data_model == 'IF',
+                   converge_workers_first=data_model is not None and 'LSTM' in data_model)
 
         model.verbose = True
 
