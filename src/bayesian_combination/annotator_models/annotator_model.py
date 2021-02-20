@@ -63,30 +63,6 @@ class Annotator():
         return annotator_acc
 
 
-    def informativeness(self):
-
-        ptj = np.zeros(self.L)
-        for j in range(self.L):
-            ptj[j] = np.sum(self.beta0[:, j]) + np.sum(self.Et == j)
-
-        entropy_prior = -np.sum(ptj * np.log(ptj))
-
-        ptj_c = np.zeros((self.L, self.L, self.K))
-        for j in range(self.L):
-            if self.alpha.ndim == 4:
-                ptj_c[j] = np.sum(self.alpha[j, :, :, :], axis=1) / np.sum(self.alpha[j, :, :, :], axis=(0,1))[None, :] * ptj[j]
-            elif self.alpha.ndim == 3:
-                ptj_c[j] = self.alpha[j, :, :] / np.sum(self.alpha[j, :, :], axis=0)[None, :] * ptj[j]
-            else:
-                print('Warning: informativeness not defined for this annotator model.')
-
-        ptj_giv_c = ptj_c / np.sum(ptj_c, axis=0)[None, :, :]
-
-        entropy_post = -np.sum(ptj_c * np.log(ptj_giv_c), axis=(0,1))
-
-        return entropy_prior - entropy_post
-
-
 def log_dirichlet_pdf(alpha, lnPi, sum_dim):
     x = (alpha - 1) * lnPi
     gammaln_alpha = gammaln(alpha)

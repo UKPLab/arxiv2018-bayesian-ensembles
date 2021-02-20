@@ -14,9 +14,8 @@ class ConfusionVectorAnnotator(Annotator):
 
         self.alpha_shape = (L, L)
 
-        # WORKING SETUP FOR NER AND PICO:
         # for the incorrect answers, the psuedo count splits the alpha0_factor equally
-        # between the incorrect answers and multiplies by 2 (why?)
+        # between the incorrect answers
         alpha0_base = alpha0_factor / (L - 1)
 
         # for the correct answers, the pseudo count is alpha0_factor + alpha0_diags
@@ -33,7 +32,6 @@ class ConfusionVectorAnnotator(Annotator):
 
         self.nModels = nModels
 
-        print(self.alpha0)
 
     def init_lnPi(self, N):
         # init to prior

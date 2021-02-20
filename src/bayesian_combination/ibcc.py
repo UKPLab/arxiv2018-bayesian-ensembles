@@ -6,7 +6,7 @@ from bayesian_combination.bayesian_combination import BC
 
 
 class IBCC(BC):
-    def __init__(self, L=3, K=5, max_iter=20, eps=1e-4,
+    def __init__(self, L=3, K=5, max_iter=200, eps=1e-4,
                      alpha0_diags=1.0, alpha0_factor=1.0, beta0_factor=1.0,
                      verbose=False, use_lowerbound=True):
 

@@ -1,3 +1,7 @@
+all_collected_data/
+crowd_layer/
+glove.6B/
+snow2008_mturk_data_with_orig_files_assembled_201904/
 output
 data/ner
 data/bio

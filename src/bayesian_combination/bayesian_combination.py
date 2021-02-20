@@ -103,7 +103,8 @@ class BC(object):
         if self.use_lb:
             self.lb = -np.inf
 
-        print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()))
+        if self.verbose:
+            print('Parallel can run %i jobs simultaneously, with %i cores' % (effective_n_jobs(), cpu_count()))
 
         # Do we model word distributions as independent features?
         self.no_features = not discrete_feature_likelihoods
@@ -557,3 +558,28 @@ class BC(object):
                 converged = False
 
         return converged
+
+
+    def informativeness(self):
+
+        lnB = self.LM.lnB
+        while lnB.ndim > 1:
+            lnB = np.sum(lnB, axis=0)
+        ptj = lnB / np.sum(lnB)
+
+        entropy_prior = -np.sum(ptj * np.log(ptj))
+
+        ptj_c = np.zeros((self.L, self.L, self.K))
+        for j in range(self.L):
+            if self.A.alpha.ndim == 4:
+                ptj_c[j] = np.sum(self.A.alpha[j, :, :, :], axis=1) / np.sum(self.A.alpha[j, :, :, :], axis=(0,1))[None, :] * ptj[j]
+            elif self.A.alpha.ndim == 3:
+                ptj_c[j] = self.A.alpha[j, :, :] / np.sum(self.A.alpha[j, :, :], axis=0)[None, :] * ptj[j]
+            else:
+                print('Warning: informativeness not defined for this annotator model.')
+
+        ptj_giv_c = ptj_c / np.sum(ptj_c, axis=0)[None, :, :]
+
+        entropy_post = -np.sum(ptj_c * np.log(ptj_giv_c), axis=(0,1))
+
+        return entropy_prior - entropy_post
