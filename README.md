@@ -33,7 +33,7 @@ The methods that we implement are:
    this is a version of IBCC that tracks changing reliability of annotators;
    see `src/bayesian_combination/ibcc.py`.
    * *BCCWords* -- "Language understanding in the wild: Combining crowdsourcing and machine learning.", Simpson et al. (2015), WWW;
-   this is IBCC with bag-of-words features;
+   this is IBCC with bag-of-words features (*note this implementation is incomplete at the moment as each data point is limited to one feature!*);
     see `src/bayesian_combination/ibcc.py`.
    * *HeatmapBCC* -- "Bayesian heatmaps: probabilistic classification with multiple unreliable information sources.", Simpson et al. (2017), ECML-PKDD; 
    IBCC combined with a Gaussian process classifier; 
