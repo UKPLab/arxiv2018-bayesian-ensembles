@@ -30,6 +30,12 @@ class MarkovLabelModel(LabelModel):
         elif tagging_scheme == 'IOB2':
             restricted_labels = inside_labels
             unrestricted_labels = beginning_labels
+        else:  # no special tagging scheme, don't set any priors related to transition rules
+            restricted_labels = None
+            unrestricted_labels = None
+            if outside_label == -1:  # have to restrict the prior state
+                self.beta0[:, outside_label] = 0
+
 
         for i, restricted_label in enumerate(restricted_labels):
             # pseudo-counts for the transitions that are not allowed from outside to inside

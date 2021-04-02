@@ -373,19 +373,18 @@ See the doc strings
 in bayesian_combination.py for more details on configuration.
 
 BC can be run as follows. First,
-construct the object for a labelling task. Let's
- say we have an IOB sequence tagging problem, and wish to use the BSC-seq method.
+construct the object for a labelling task. Let's say we wish to use the BSC-seq method.
  We can either use the BSC subclass:
 ~~~python
-num_classes = 3 # Beginning, Inside and Outside
+num_classes = 5 # number of different tags/labels/states/classes or whatever your application calls them
 
-bc_model = BSC(L=num_classes, K=num_annotators, annotator_model='seq')
+bc_model = BSC(L=num_classes, K=num_annotators, annotator_model='seq', tagging_scheme='none')
 ~~~
 Or, the same thing can be achieved by instantiating Bayesian Combination directly with 
 the correct arguments:
 ~~~python
-bc_model = BC(L=num_classes, K=num_annotators, annotator_model='seq', true_labl_model='HMM',
-                discrete_feature_likelihoods=True)
+bc_model = BC(L=num_classes, K=num_annotators, annotator_model='seq', tagging_scheme='none', 
+              true_label_model='HMM', discrete_feature_likelihoods=True)
 ~~~
 These two are equivalent.
 In the example above, the annotator model is set to 'seq', which
@@ -395,6 +394,20 @@ which will use a simpler annotator model.
 Further alternatives are "worker_model='CV'" (confusion vector),
  "worker_model='spam'" (as used by MACE),
 and "worker_model='acc' (a single accuracy value for each worker).
+
+For many NLP tasks like named entity recogintion, we need to use a tagging scheme like 
+BIO to extract spans of multiple tokens. 
+In that case, we can set the tagging scheme differently to set up the correct priors:
+~~~python
+num_classes = 3 # Beginning, Inside and Outside
+
+bc_model = BSC(L=num_classes, K=num_annotators, annotator_model='seq', tagging_scheme='IOB2')
+~~~
+Or alternatively:
+~~~python
+bc_model = BC(L=num_classes, K=num_annotators, annotator_model='seq', tagging_scheme='IOB2', 
+              true_label_model='HMM', discrete_feature_likelihoods=True)
+~~~
 
 Different models for the methods listed at the top
 of this page can also be constructed using the 

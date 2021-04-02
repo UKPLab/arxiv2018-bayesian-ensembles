@@ -32,7 +32,7 @@ class BC(object):
                  annotator_model='ibcc', taggers=None, tagging_scheme='IOB2', true_label_model='HMM',
                  discrete_feature_likelihoods=True, model_dir=None, embeddings_file=None,
                  verbose=False, use_lowerbound=True, converge_workers_first=False):
-        '''
+        """
         Aggregation method for combining labels from multiple annotators using variational Bayes. Different
         configurations of this class can be used to implement models such as IBCC-VB, MACE, BCCWords, DynIBCC, heatmapBCC
         and BSC-seq. The annotators may be experts, crowds, or automated labelling methods. It can also train a new
@@ -44,9 +44,12 @@ class BC(object):
         :param K: number of annotators.
         :param max_iter: maximum number of VB iterations. If time is limited, it can be good to cap this.
         :param eps: convergence threshold.
-        :param inside_labels: for sequence labelling with BIO/IOB schemes, this indicates which classes correspond to I- tags.
-        :param outside_label: for sequence labelling with BIO/IOB schemes, this indicates which class corresponds to an O tag.
-        :param beginning_labels: for sequence labelling with BIO/IOB schemes, this indicates which classes correspond to B- tags.
+        :param inside_labels: for sequence labelling with BIO/IOB tagging schemes only, this indicates which classes
+        correspond to I-tags.
+        :param outside_label: for sequence labelling with BIO/IOB tagging schemes only, this indicates which class
+        corresponds to an O tag.
+        :param beginning_labels: for sequence labelling with BIO/IOB taggin schemes only, this indicates which classes
+        correspond to B- tags.
         :param alpha0_diags: hyperparameter for annotator reliability model. This controls our prior confidence in the
         annotators' accuracy, so increasing it relative to alpha0_factor puts more initial weight on all annotators.
         Increasing magnitude also strengthens overall confidence in the prior, so small values are recommended.
@@ -65,10 +68,11 @@ class BC(object):
         'CM' (confusion matrix, as in Dawid and Skene 1979), 'seq' (sequential confusion matrix, as in BSC-seq),
         'dyn.initial' (dynamic confusion matrix, as in DynIBCC) or 'dyn.consistent' (a variant of DynIBCC that applies
         the priors to all data points, rather than just the first annotation in the sequence).
-        :param taggers: a list [] of names of automated taggers to be trained using VCS. Can be 'LSTM' (Bi-LSTM-CRF model
+        :param taggers: a list [] of names of automated taggers to be trained using VCS. Can be 'LSTM' (BiLSTM-CRF model
         of Lample et al. 2016), 'GP' (Gaussian process classifier method) or 'IF' (independent features similar to
         Naive Bayes).
-        :param tagging_scheme: For sequential data, may be 'IOB' (B token is only used to separate consecutive spans)
+        :param tagging_scheme: For sequential data, may be 'none',
+        'IOB' (B token is used to separate consecutive spans)
         or 'IOB2' (also known as BIO, all spans start with a B-).
         :param true_label_model: Can be 'HMM' (sequential label model used in BSC-seq) or 'GP' (Gaussian process label
         model used in heatmapBCC) or None (independent labels, as in IBCC or Dawid and Skene).
@@ -84,13 +88,18 @@ class BC(object):
         convergence. If this is set to False, convergence is determined from the target labels, which is quicker to compute.
         :param converge_workers_first: If True, taggers will not be trained and will be excluded until the model has
         converged. This is a typical way to initialise VCS. If False, the taggers will be trained from the first iteration.
-        '''
+        """
 
         self.verbose = verbose
         # tagging_scheme can be 'IOB2' (all annos start with B) or 'IOB' (only annos
         # that follow another start with B).
-        self.L = L # number of classes
-        self.K = K # number of annotators
+        self.L = L  # number of classes
+        if tagging_scheme == 'none':
+            outside_label = -1
+        if outside_label == -1:  # we want to use an additional label to represent initial state probabilities.
+            self.L = self.L + 1
+
+        self.K = K  # number of annotators
 
         # Settings for the VB algorithm:
         self.max_iter = max_iter  # maximum number of VB iterations

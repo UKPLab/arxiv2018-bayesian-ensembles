@@ -6,7 +6,7 @@ from bayesian_combination.annotator_models.cv import ConfusionVectorAnnotator
 
 
 class SequentialAnnotator(ConfusionVectorAnnotator):
-    # Worker model: sequential model of workers-----------------------------------------------------------------------------
+    # Worker model: sequential model of workers-------------------------------------------------------------------------
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels, tagging_scheme,
                  beginning_labels, inside_labels, outside_label, alpha0_B_factor):
@@ -22,7 +22,6 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
         self.rare_transition_pseudocount = 1e-12
         self.C_lm = {}
 
-
     def init_lnPi(self, N):
         # Returns the initial values for alpha and lnPi
         psi_alpha_sum = psi(np.sum(self.alpha0, 1))
@@ -35,20 +34,18 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
         for midx in range(self.nModels):
             self.alpha_taggers[midx] = np.copy(self.alpha0_taggers[midx])
 
-
     def _calc_q_pi(self, alpha):
-        '''
+        """
         Update the annotator models.
-        '''
+        """
         psi_alpha_sum = psi(np.sum(alpha, 1))[:, None, :, :]
         self.lnPi = psi(alpha) - psi_alpha_sum
         return self.lnPi
 
-
     def update_alpha(self, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
-        '''
+        """
         Update alpha.
-        '''
+        """
         # cache all the counts that we only need to compute once
         if len(self.C_lm) == 0:
 
@@ -88,11 +85,10 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                 counts = self.C_lm[l][m].dot(E_t[1:])
                 self.alpha[:, l, m, :] += counts.T
 
-
     def update_alpha_taggers(self, model_idx, E_t, C, doc_start, nscores):  # Posterior Hyperparameters
-        '''
+        """
         Update alpha when C is the votes for one annotator, and each column contains a probability of a vote.
-        '''
+        """
         if model_idx not in self.alpha_taggers:
             self.alpha_taggers[model_idx] = self.alpha0_taggers[model_idx].copy()
         else:
@@ -109,7 +105,6 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                 for m in range(nscores):
                     counts = (C[:, l:l+1][1:, :] * (1 - doc_start[1:]) * C[:, m:m+1][:-1, :]).T.dot(Tj[1:]).reshape(-1)
                     self.alpha_taggers[model_idx][j, l, m, :] += counts
-
 
     def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
         # shouldn't it use the outside factor instead of Cprev if there is a doc start?
@@ -135,13 +130,11 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
 
         return np.sum(result, axis=-1)
 
-
     def read_lnPi_taggers(self, l, C, Cprev, nscores, model_idx):
         if l is None:
             return self.lnPi_taggers[model_idx][:, C, Cprev, 0]
         else:
             return self.lnPi_taggers[model_idx][l, C, Cprev, 0]
-
 
     def expand_alpha0(self, C, K, doc_start, nscores):
         '''
@@ -171,6 +164,13 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
         elif self.tagging_scheme == 'IOB2':
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
+        else:  # no special labels
+            restricted_labels = None
+            unrestricted_labels = None
+            if self.outside_label == -1:  # have to restrict the prior state
+                self.alpha0[:, :, self.outside_label] = 0
+                for midx in range(self.nModels):
+                    self.alpha0_taggers[midx][:, self.outside_label, :] = 0
 
         # The outside labels often need a stronger bias because they are way more frequent
         self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_B_factor
@@ -181,11 +181,12 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
             # Not allowed: from outside to inside
             disallowed_count = self.alpha0[:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
 
-            self.alpha0[:, unrestricted_labels[i], self.outside_label] += disallowed_count # previous experiments use this
+            self.alpha0[:, unrestricted_labels[i], self.outside_label] += disallowed_count # previous expts use this
             self.alpha0[:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
             for midx in range(self.nModels):
-                disallowed_count = self.alpha0_taggers[midx][:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
+                disallowed_count = self.alpha0_taggers[midx][:, restricted_label, self.outside_label] \
+                                   - self.rare_transition_pseudocount
                 self.alpha0_taggers[midx][:, unrestricted_labels[i], self.outside_label] += disallowed_count
                 self.alpha0_taggers[midx][:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
@@ -196,16 +197,21 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                     continue
 
                 # *** These seem to have a positive effect
-                disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label] - self.rare_transition_pseudocount
-                # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative weights between label values
+                disallowed_count = self.alpha0[:, restricted_label, other_unrestricted_label] \
+                                   - self.rare_transition_pseudocount
+                # # pseudocount is (alpha0 - 1) but alpha0 can be < 1. Removing the pseudocount maintains the relative
+                # weights between label values
                 self.alpha0[:, restricted_labels[typeid], other_unrestricted_label] += disallowed_count
                 # set the disallowed transition to as close to zero as possible
                 self.alpha0[:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
 
                 for midx in range(self.nModels):
-                    disallowed_count = self.alpha0_taggers[midx][:, restricted_label, other_unrestricted_label, :] - self.rare_transition_pseudocount
-                    self.alpha0_taggers[midx][:, restricted_labels[typeid], other_unrestricted_label] += disallowed_count # sticks to wrong type
-                    self.alpha0_taggers[midx][:, restricted_label, other_unrestricted_label] = self.rare_transition_pseudocount
+                    disallowed_count = self.alpha0_taggers[midx][:, restricted_label, other_unrestricted_label, :] \
+                                       - self.rare_transition_pseudocount
+                    self.alpha0_taggers[midx][:, restricted_labels[typeid], other_unrestricted_label] \
+                        += disallowed_count # sticks to wrong type
+                    self.alpha0_taggers[midx][:, restricted_label, other_unrestricted_label] \
+                        = self.rare_transition_pseudocount
 
             # Ban jumps between Is of different types
             for typeid, other_restricted_label in enumerate(restricted_labels):
@@ -213,18 +219,21 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                     continue
 
                 # set the disallowed transition to as close to zero as possible
-                # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
+                # disallowed_count = self.alpha0[:, restricted_label, other_restricted_label, :]
+                # - self.rare_transition_pseudocount
                 # self.alpha0[:, other_restricted_label, other_restricted_label, :] += disallowed_count #TMP
                 self.alpha0[:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
 
                 for midx in range(self.nModels):
-                    # disallowed_count = self.alpha0_taggers[midx][:, restricted_label, other_restricted_label, :] - self.rare_transition_pseudocount
-                    # self.alpha0_taggers[midx][:, other_restricted_label, other_restricted_label, :] += disallowed_count  # TMP sticks to wrong type
-                    self.alpha0_taggers[midx][:, restricted_label, other_restricted_label] = self.rare_transition_pseudocount
+                    # disallowed_count = self.alpha0_taggers[midx][:, restricted_label, other_restricted_label, :]
+                    # - self.rare_transition_pseudocount
+                    # self.alpha0_taggers[midx][:, other_restricted_label, other_restricted_label, :]
+                    # += disallowed_count  # TMP sticks to wrong type
+                    self.alpha0_taggers[midx][:, restricted_label, other_restricted_label] \
+                        = self.rare_transition_pseudocount
 
     def _calc_EPi(self, alpha):
         return alpha / np.sum(alpha, axis=1)[:, None, :, :]
-
 
     def lowerbound_terms(self):
         # the dimension over which to sum, i.e. over which the values are parameters of a single Dirichlet
