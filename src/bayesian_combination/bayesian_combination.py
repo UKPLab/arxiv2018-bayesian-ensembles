@@ -24,6 +24,13 @@ from bayesian_combination.annotator_models.seq import SequentialAnnotator
 n_jobs = int(effective_n_jobs() / 2)  # limit the number of parallel jobs. Within each job, numpy can spawn more threads,
 # which can cause the total number of CPUs required to exceed the limit.
 
+def student_t_lnpdf(x, mu, L, nu):
+    D = x.shape[1]
+    lnC1 = gammaln(D/2+nu/2) - gammaln(nu/2)
+    lnC2 = 0.5*np.log(np.linalg.det(L)) - (D/2) * np.log(np.pi * nu)
+    mah2 = np.diag((x-mu) @ L @ (x-mu).T)
+    lnC3 = (-D/2 - nu/2) * np.log(1 + mah2/nu)
+    return lnC1 + lnC2 + lnC3
 
 class BC(object):
 
@@ -118,6 +125,11 @@ class BC(object):
         # Do we model word distributions as independent features?
         self.no_features = not discrete_feature_likelihoods
         self.nu0 = nu0 # prior hyperparameter for word features
+
+        self.beta0 = 1.0
+        self.m0 = np.zeros(2)
+        self.W0 = np.eye(2)
+        self.W0_inv = np.linalg.inv(self.W0)
 
         # True label model: choose whether to use the HMM transition model.
         if true_label_model == 'HMM':
@@ -378,10 +390,36 @@ class BC(object):
             lnpRho = 0
             lnqRho = 0
         else:
-            lnpwords = np.sum(self.ElnRho[self.features, :] * self.Et)
-            nu0 = np.zeros((1, self.L)) + self.nu0
-            lnpRho = np.sum(gammaln(np.sum(nu0)) - np.sum(gammaln(nu0)) + sum((nu0 - 1) * self.ElnRho, 0)) + lnpwords
-            lnqRho = np.sum(gammaln(np.sum(self.nu,0)) - np.sum(gammaln(self.nu),0) + sum((self.nu - 1) * self.ElnRho, 0))
+            lnpX = np.sum(self.ElnRho * self.Et)
+            lnB0 = - self.nu0 / 2 * np.linalg.det(self.W0) \
+                   - self.nu0 * self.D / 2 * np.log(2) \
+                   - self.D * (self.D-1) / 4 * np.log(np.pi) \
+                   - np.sum( gammaln((self.nu0+1+np.arange(1,self.D+1))/2))
+            lnpMuLa = 0
+            lnqMuLa = 0
+            for j in range(self.L):
+                lnLa_ = np.sum(psi((self.nu[j]+1+np.arange(1,self.D+1))/2)) \
+                      + self.D * np.log(2.) + np.log( np.linalg.det(self.W[j]))
+                lnpMuLa += 0.5 * self.D * np.log(self.beta0/2/np.pi) \
+                         + 0.5 * (self.nu0-self.D) * lnLa_ \
+                         + 0.5 * self.beta0 * self.nu[j] * (self.m[j] - self.m0) @ self.W[j] @ (self.m[j] - self.m0) \
+                         + lnB0 \
+                         - 0.5 * self.nu[j] * np.trace(np.linalg.inv(self.W0) @ self.W[j])
+
+                lnB = - self.nu[j] / 2 * np.linalg.det(self.W[j]) \
+                      - self.nu[j] * self.D / 2 * np.log(2) \
+                      - self.D * (self.D - 1) / 4 * np.log(np.pi) \
+                      - np.sum(gammaln((self.nu[j] + 1 + np.arange(1, self.D + 1)) / 2))
+                HqLa = - lnB \
+                       - (self.nu[j] - self.D - 1)/2 * lnLa_ \
+                       + self.nu[j] * self.D / 2
+                lnqMuLa += 0.5 * lnLa_ \
+                         + self.D/2 * np.log(self.beta[j]/2/np.pi) \
+                         - self.D/2 \
+                         - HqLa
+
+            lnpRho = lnpX + lnpMuLa
+            lnqRho = lnqMuLa
 
         lb = lnpCtB - lnq_Cdata + lnpPi - lnqPi - lnqtB + lnpRho - lnqRho
         if self.verbose:
@@ -397,38 +435,59 @@ class BC(object):
         :param features:
         :return:
         '''
-
-        self.feat_map = {} # map features tokens to indices
-        self.features = []  # list of mapped index values for each token
-
-        if self.no_features:
-            return
-
-        N = len(features)
-
-        for feat in features.flatten():
-            if feat not in self.feat_map:
-                self.feat_map[feat] = len(self.feat_map)
-
-            self.features.append( self.feat_map[feat] )
-
-        self.features = np.array(self.features).astype(int)
-
-        # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
-        self.features_mat = coo_matrix((np.ones(len(features)), (self.features, np.arange(N)))).tocsr()
+        self.features = np.array(features)
+        self.D = self.features.shape[1] # dimension of the features
+        return
 
     def _update_features(self):
         if self.no_features:
             return np.zeros((self.N, self.L))
 
-        self.nu = self.nu0 + self.features_mat.dot(self.Et) # nfeatures x nclasses
+        N = []
+        x_ = []
+        NS = []
 
-        # update the expected log word likelihoods
-        self.ElnRho = psi(self.nu) - psi(np.sum(self.nu, 0)[None, :])
+        self.beta = []
+        self.m = []
+        self.nu =[]
+        self.W = []
 
-        # get the expected log word likelihoods of each token
-        lnptext_given_t = self.ElnRho[self.features, :]
+        self.La = []
+        self.fd = []
+
+        ElnRho = []
+        for j in range(self.L):
+            # obtain features' statistics
+            N.append(np.sum(self.Et[:,j]))
+            if N[j] == 0:
+                x_.append(np.dot(self.Et[:,j], self.features) / np.inf)
+            else:
+                x_.append(np.dot(self.Et[:, j], self.features) / N[j])
+            NS.append(self.features.T @ np.diag(self.Et[:,j]) @ self.features)
+
+            # update posterior model parameters
+            self.beta.append(self.beta0 + N[j])
+            self.nu.append(self.nu0 + N[j])
+            self.m.append((self.beta0 * self.m0 + N[j] * x_[j]) / self.beta[j])
+            self.W.append(np.linalg.inv( self.W0_inv + NS[j] + self.beta0 * N[j] / self.beta[j] * np.outer(x_[j] - self.m0, x_[j] - self.m0)))
+
+            # update predictive posterior model parameters
+            if (self.nu[j] + 1 - self.D) < 0:
+                self.La.append(self.W[j] * 0.0) # avoid having Negative definitive La matrix, which causes NaN
+            else:
+                self.La.append((self.nu[j] + 1 - self.D) / (1 + self.beta[j]) * self.W[j])
+            self.fd.append(self.nu[j] - 1 + self.D)
+
+            # compute ERho
+            ElnL = np.sum(psi((self.nu[j]+1+np.arange(1,self.D+1))/2)) + self.D * np.log(2.) + np.log( np.linalg.det(self.W[j]))
+            Ecov = self.D / self.beta[j] + np.diag(self.nu[j] * (self.features - self.m[j][None,:]) @ self.W[j] @ (self.features - self.m[j][None,:]).T)
+            ElnRho.append(ElnL - self.D/2.0 * np.log(2*np.pi) - 0.5 * Ecov)
+            if np.any(np.isnan(ElnRho[-1])):
+                print('_update_features (1): nan detected')
+
+        lnptext_given_t = np.array(ElnRho).T
         lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
+        self.ElnRho = lnptext_given_t
 
         return lnptext_given_t # N x nclasses where N is number of tokens/data points
 
@@ -438,30 +497,31 @@ class BC(object):
             self.features = None
         else:
             # get the expected log word likelihoods of each token
-            self.features = []  # list of mapped index values for each token
-            available = []
-            for feat in features.flatten():
-                if feat not in self.feat_map:
-                    available.append(0)
-                    self.features.append(0)
-                else:
-                    available.append(1)
-                    self.features.append(self.feat_map[feat])
-            lnptext_given_t = self.ElnRho[self.features, :] + np.array(available)[:, None]
+            self.features = np.array(features)
+            # compute ERho
+            ElnRho = []
+            for j in range(self.L):
+                ElnL = np.sum(psi((self.nu[j] + 1 + np.arange(1, self.D + 1)) / 2)) + self.D * np.log(2.) + np.log(np.linalg.det(self.W[j]))
+                Ecov = self.D / self.beta[j] + self.nu[j] * (self.features - self.m[j][None, :]) @ self.W[j] @ (self.features - self.m[j][None, :]).T
+                ElnRho.append(ElnL - self.D / 2.0 * np.log(2 * np.pi) - 0.5 * Ecov)
+            lnptext_given_t = np.array(ElnRho).T
             lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
+            self.ElnRho = lnptext_given_t
 
-        return lnptext_given_t
+        return lnptext_given_t  # N x nclasses where N is number of tokens/data points
 
     def _feature_ll(self, features):
         if self.no_features:
             features_ll = None
         else:
-            ERho = self.nu / np.sum(self.nu, 0)[None, :]  # nfeatures x nclasses
-            lnERho = np.zeros_like(ERho)
-            lnERho[ERho != 0] = np.log(ERho[ERho != 0])
-            lnERho[ERho == 0] = -np.inf
-            features_ll = lnERho[features, :]
-
+            features = np.array(features)
+            features_ll = []
+            for j in range(self.L):
+                features_ll.append(student_t_lnpdf(self.features, self.m[j], self.La[j], self.fd[j]))
+                if np.any(np.isnan(features_ll)):
+                    print('_feature_ll: nan detected')
+            features_ll = np.array(features_ll).T
+            # features_ll -= logsumexp(features_ll, axis=1)[:, None]
         return features_ll
 
     def _init_dataset(self, gold_labels, C, features, doc_start):
