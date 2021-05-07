@@ -31,8 +31,8 @@ class MarkovLabelModel(LabelModel):
             restricted_labels = inside_labels
             unrestricted_labels = beginning_labels
         else:  # no special tagging scheme, don't set any priors related to transition rules
-            restricted_labels = None
-            unrestricted_labels = None
+            restricted_labels = []
+            unrestricted_labels = []
             if outside_label == -1:  # have to restrict the prior state
                 self.beta0[:, outside_label] = 0
 

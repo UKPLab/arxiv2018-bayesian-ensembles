@@ -2,8 +2,6 @@
 Bayesian sequence combination, variational Bayes implementation.
 '''
 import numpy as np
-from scipy.sparse.coo import coo_matrix
-from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
 from joblib import Parallel, cpu_count, effective_n_jobs
 
@@ -19,26 +17,21 @@ from bayesian_combination.label_models.markov_label_model import MarkovLabelMode
 from bayesian_combination.tagger_wrappers.lstm import LSTM
 from bayesian_combination.annotator_models.spam import SpamAnnotator
 from bayesian_combination.annotator_models.seq import SequentialAnnotator
+from bayesian_combination.emission_models.multivariable_gaussian import Multivariable_Gaussian
+from bayesian_combination.emission_models.categorical import Categorical
 
 
 n_jobs = int(effective_n_jobs() / 2)  # limit the number of parallel jobs. Within each job, numpy can spawn more threads,
 # which can cause the total number of CPUs required to exceed the limit.
 
-def student_t_lnpdf(x, mu, L, nu):
-    D = x.shape[1]
-    lnC1 = gammaln(D/2+nu/2) - gammaln(nu/2)
-    lnC2 = 0.5*np.log(np.linalg.det(L)) - (D/2) * np.log(np.pi * nu)
-    mah2 = np.diag((x-mu) @ L @ (x-mu).T)
-    lnC3 = (-D/2 - nu/2) * np.log(1 + mah2/nu)
-    return lnC1 + lnC2 + lnC3
-
 class BC(object):
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
-                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_B_factor=1.0, beta0_factor=1.0, nu0=1,
+                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_B_factor=1.0, beta0_factor=1.0,
                  annotator_model='ibcc', taggers=None, tagging_scheme='IOB2', true_label_model='HMM',
-                 discrete_feature_likelihoods=True, model_dir=None, embeddings_file=None,
-                 verbose=False, use_lowerbound=True, converge_workers_first=False):
+                 discrete_feature_likelihoods=True, D=1, emission_model='cat',
+                 model_dir=None, embeddings_file=None, verbose=False, use_lowerbound=True, converge_workers_first=False,
+                 *args, **kwargs):
         """
         Aggregation method for combining labels from multiple annotators using variational Bayes. Different
         configurations of this class can be used to implement models such as IBCC-VB, MACE, BCCWords, DynIBCC, heatmapBCC
@@ -108,6 +101,8 @@ class BC(object):
 
         self.K = K  # number of annotators
 
+        self.D = D  # feature dimensions
+
         # Settings for the VB algorithm:
         self.max_iter = max_iter  # maximum number of VB iterations
         self.eps = eps  # threshold for convergence
@@ -124,12 +119,6 @@ class BC(object):
 
         # Do we model word distributions as independent features?
         self.no_features = not discrete_feature_likelihoods
-        self.nu0 = nu0 # prior hyperparameter for word features
-
-        self.beta0 = 1.0
-        self.m0 = np.zeros(2)
-        self.W0 = np.eye(2)
-        self.W0_inv = np.linalg.inv(self.W0)
 
         # True label model: choose whether to use the HMM transition model.
         if true_label_model == 'HMM':
@@ -180,6 +169,18 @@ class BC(object):
 
         else:
             print('Bayesian combination: Did not recognise the annotator model %s' % annotator_model)
+
+        # choose emission model
+        emission_model = emission_model.lower()
+        if self.no_features:
+            self.EM = None
+        elif emission_model == 'cat':
+            self.EM = Categorical(self.L, self.D, **kwargs)
+        elif emission_model == 'mg':
+            self.EM = Multivariable_Gaussian(self.L, self.D, **kwargs)
+
+        else:
+            print('Bayesian combination: Did not recognise the emission model %s' % emission_model)
 
     def fit_predict(self, C, doc_start=None, features=None, dev_sentences=[], gold_labels=None):
         """
@@ -255,7 +256,7 @@ class BC(object):
                         if tagger.train_type == 'Bayes':
                             self.C_data[midx] = tagger.fit_predict(self.Et)
                         elif tagger.train_type == 'MLE':
-                            labels = self.LM.most_likely_labels(self._feature_ll(self.features))[1]
+                            labels = self.LM.most_likely_labels(self._feature_ll())[1]
                             self.C_data[midx] = tagger.fit_predict(labels)
 
                         if self.verbose:
@@ -285,7 +286,7 @@ class BC(object):
                 print("BC iteration %i: computing most likely labels..." % self.iter)
             self.Et = self.LM.update_t(parallel, self.C_data)  # update t here so that we get the latest C_data and Et
             # values when computing most likely sequence and when returning Et
-            plabels, labels = self.LM.most_likely_labels(self._feature_ll(self.features))
+            plabels, labels = self.LM.most_likely_labels(self._feature_ll())
 
         if self.verbose:
             print("BC iteration %i: fitting/predicting complete." % self.iter)
@@ -326,7 +327,7 @@ class BC(object):
             self.LM.update_B(features, ln_feature_likelihood, predict_only=True)
             q_t = self.LM.update_t(parallel, C_data)
 
-            labels = self.LM.most_likely_labels(self._feature_ll(self.features))[1]
+            labels = self.LM.most_likely_labels(self._feature_ll())[1]
 
         return q_t, labels
 
@@ -367,7 +368,7 @@ class BC(object):
         print("Optimal hyper-parameters: alpha_0 = %s, nu0 scale = %s" % (np.array2string(np.exp(opt_hyperparams[:-1])),
                                                                           np.array2string(np.exp(opt_hyperparams[-1]))))
 
-        return self.Et, self.LM.most_likely_labels(self._feature_ll(self.features))[1]
+        return self.Et, self.LM.most_likely_labels(self._feature_ll())[1]
 
     def lowerbound(self):
         '''
@@ -390,36 +391,7 @@ class BC(object):
             lnpRho = 0
             lnqRho = 0
         else:
-            lnpX = np.sum(self.ElnRho * self.Et)
-            lnB0 = - self.nu0 / 2 * np.linalg.det(self.W0) \
-                   - self.nu0 * self.D / 2 * np.log(2) \
-                   - self.D * (self.D-1) / 4 * np.log(np.pi) \
-                   - np.sum( gammaln((self.nu0+1+np.arange(1,self.D+1))/2))
-            lnpMuLa = 0
-            lnqMuLa = 0
-            for j in range(self.L):
-                lnLa_ = np.sum(psi((self.nu[j]+1+np.arange(1,self.D+1))/2)) \
-                      + self.D * np.log(2.) + np.log( np.linalg.det(self.W[j]))
-                lnpMuLa += 0.5 * self.D * np.log(self.beta0/2/np.pi) \
-                         + 0.5 * (self.nu0-self.D) * lnLa_ \
-                         + 0.5 * self.beta0 * self.nu[j] * (self.m[j] - self.m0) @ self.W[j] @ (self.m[j] - self.m0) \
-                         + lnB0 \
-                         - 0.5 * self.nu[j] * np.trace(np.linalg.inv(self.W0) @ self.W[j])
-
-                lnB = - self.nu[j] / 2 * np.linalg.det(self.W[j]) \
-                      - self.nu[j] * self.D / 2 * np.log(2) \
-                      - self.D * (self.D - 1) / 4 * np.log(np.pi) \
-                      - np.sum(gammaln((self.nu[j] + 1 + np.arange(1, self.D + 1)) / 2))
-                HqLa = - lnB \
-                       - (self.nu[j] - self.D - 1)/2 * lnLa_ \
-                       + self.nu[j] * self.D / 2
-                lnqMuLa += 0.5 * lnLa_ \
-                         + self.D/2 * np.log(self.beta[j]/2/np.pi) \
-                         - self.D/2 \
-                         - HqLa
-
-            lnpRho = lnpX + lnpMuLa
-            lnqRho = lnqMuLa
+            lnpRho, lnqRho = self.EM.lowerbound(self.Et)
 
         lb = lnpCtB - lnq_Cdata + lnpPi - lnqPi - lnqtB + lnpRho - lnqRho
         if self.verbose:
@@ -430,98 +402,34 @@ class BC(object):
 
     def _init_features(self, features):
         '''
-        This built-in feature model treats features as discrete, not distributed representations (embeddings). To handle
-        distances between feature vectors, it is better to set no_words=True and use a GP label model.
+        Convert features to appropriate format for the specified emission model and store them
         :param features:
         :return:
         '''
-        self.features = np.array(features)
-        self.D = self.features.shape[1] # dimension of the features
+        if not self.no_features:
+            self.EM.init_features(features)
         return
 
     def _update_features(self):
         if self.no_features:
-            return np.zeros((self.N, self.L))
-
-        N = []
-        x_ = []
-        NS = []
-
-        self.beta = []
-        self.m = []
-        self.nu =[]
-        self.W = []
-
-        self.La = []
-        self.fd = []
-
-        ElnRho = []
-        for j in range(self.L):
-            # obtain features' statistics
-            N.append(np.sum(self.Et[:,j]))
-            if N[j] == 0:
-                x_.append(np.dot(self.Et[:,j], self.features) / np.inf)
-            else:
-                x_.append(np.dot(self.Et[:, j], self.features) / N[j])
-            NS.append(self.features.T @ np.diag(self.Et[:,j]) @ self.features)
-
-            # update posterior model parameters
-            self.beta.append(self.beta0 + N[j])
-            self.nu.append(self.nu0 + N[j])
-            self.m.append((self.beta0 * self.m0 + N[j] * x_[j]) / self.beta[j])
-            self.W.append(np.linalg.inv( self.W0_inv + NS[j] + self.beta0 * N[j] / self.beta[j] * np.outer(x_[j] - self.m0, x_[j] - self.m0)))
-
-            # update predictive posterior model parameters
-            if (self.nu[j] + 1 - self.D) < 0:
-                self.La.append(self.W[j] * 0.0) # avoid having Negative definitive La matrix, which causes NaN
-            else:
-                self.La.append((self.nu[j] + 1 - self.D) / (1 + self.beta[j]) * self.W[j])
-            self.fd.append(self.nu[j] - 1 + self.D)
-
-            # compute ERho
-            ElnL = np.sum(psi((self.nu[j]+1+np.arange(1,self.D+1))/2)) + self.D * np.log(2.) + np.log( np.linalg.det(self.W[j]))
-            Ecov = self.D / self.beta[j] + np.diag(self.nu[j] * (self.features - self.m[j][None,:]) @ self.W[j] @ (self.features - self.m[j][None,:]).T)
-            ElnRho.append(ElnL - self.D/2.0 * np.log(2*np.pi) - 0.5 * Ecov)
-            if np.any(np.isnan(ElnRho[-1])):
-                print('_update_features (1): nan detected')
-
-        lnptext_given_t = np.array(ElnRho).T
-        lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
-        self.ElnRho = lnptext_given_t
-
+            lnptext_given_t = np.zeros((self.N, self.L))
+        else:
+            lnptext_given_t = self.EM.update_features(self.Et)
         return lnptext_given_t # N x nclasses where N is number of tokens/data points
 
     def _predict_features(self, doc_start, features):
         if self.no_features:
             lnptext_given_t = np.zeros((len(doc_start), self.L))
-            self.features = None
         else:
-            # get the expected log word likelihoods of each token
-            self.features = np.array(features)
-            # compute ERho
-            ElnRho = []
-            for j in range(self.L):
-                ElnL = np.sum(psi((self.nu[j] + 1 + np.arange(1, self.D + 1)) / 2)) + self.D * np.log(2.) + np.log(np.linalg.det(self.W[j]))
-                Ecov = self.D / self.beta[j] + self.nu[j] * (self.features - self.m[j][None, :]) @ self.W[j] @ (self.features - self.m[j][None, :]).T
-                ElnRho.append(ElnL - self.D / 2.0 * np.log(2 * np.pi) - 0.5 * Ecov)
-            lnptext_given_t = np.array(ElnRho).T
-            lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
-            self.ElnRho = lnptext_given_t
+            lnptext_given_t = self.EM.predict_features(features)
 
         return lnptext_given_t  # N x nclasses where N is number of tokens/data points
 
-    def _feature_ll(self, features):
+    def _feature_ll(self):
         if self.no_features:
             features_ll = None
         else:
-            features = np.array(features)
-            features_ll = []
-            for j in range(self.L):
-                features_ll.append(student_t_lnpdf(self.features, self.m[j], self.La[j], self.fd[j]))
-                if np.any(np.isnan(features_ll)):
-                    print('_feature_ll: nan detected')
-            features_ll = np.array(features_ll).T
-            # features_ll -= logsumexp(features_ll, axis=1)[:, None]
+            features_ll = self.EM.feature_ll(self.EM.features)
         return features_ll
 
     def _init_dataset(self, gold_labels, C, features, doc_start):
