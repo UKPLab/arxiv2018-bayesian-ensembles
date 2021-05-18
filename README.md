@@ -111,6 +111,7 @@ reproduce the experiments or run the method in a new project.
    * `src/baselines` -- implementations of the methods we evaluate BSC against, including the MACE implementation in Java, see NOTICE.txt
    * `src/bayesian_combination` -- the core implementation of the variational Bayes method
    * `src/bayesian_combination/annotator_models` -- various models of annotator reliability
+   * `src/bayesian_conbination/emission_models` -- models for generating the features from true label
    * `src/bayesian_combination/label_models` -- models for sequential labels, classification without features, and classification with features
    * `src/bayesian_combination/tagger_wrappers` -- wrapper classes for integrating automated classifiers using variational combined supervision (VCS)
    * `src/data` -- simualted data generation and loaders for our test datasets
@@ -359,7 +360,7 @@ are as follows:
 
 If you have multiple annotation types you may have more class labels,
 for example, instead of simply I and B, you may have I-type1, B-type1, I-type2, B-type2.
-In this case you must pass pass in a list of values for the inside and beginning tokens to
+In this case you must pass in a list of values for the inside and beginning tokens to
 the constructor.
 
 ### Aggregating Crowdsourced Data
@@ -391,9 +392,9 @@ In the example above, the annotator model is set to 'seq', which
 uses the default sequential annotator model. However, if the results are not looking good
 on some datasets, you may also wish to try "annotator_model='CM'" (this is the confusion matrix in the EMNLP 2019 paper),
 which will use a simpler annotator model.
-Further alternatives are "worker_model='CV'" (confusion vector),
- "worker_model='spam'" (as used by MACE),
-and "worker_model='acc' (a single accuracy value for each worker).
+Further alternatives are "annotator_model='CV'" (confusion vector),
+ "annotator_model='spam'" (as used by MACE),
+and "annotator_model='acc' (a single accuracy value for each worker).
 
 For many NLP tasks like named entity recogintion, we need to use a tagging scheme like 
 BIO to extract spans of multiple tokens. 

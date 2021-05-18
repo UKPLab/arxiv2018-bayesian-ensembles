@@ -2,8 +2,6 @@
 Bayesian sequence combination, variational Bayes implementation.
 '''
 import numpy as np
-from scipy.sparse.coo import coo_matrix
-from scipy.special import logsumexp, psi, gammaln
 from scipy.optimize.optimize import fmin
 from joblib import Parallel, cpu_count, effective_n_jobs
 
@@ -19,19 +17,21 @@ from bayesian_combination.label_models.markov_label_model import MarkovLabelMode
 from bayesian_combination.tagger_wrappers.lstm import LSTM
 from bayesian_combination.annotator_models.spam import SpamAnnotator
 from bayesian_combination.annotator_models.seq import SequentialAnnotator
+from bayesian_combination.emission_models.multivariable_gaussian import Multivariable_Gaussian
+from bayesian_combination.emission_models.categorical import Categorical
 
 
 n_jobs = int(effective_n_jobs() / 2)  # limit the number of parallel jobs. Within each job, numpy can spawn more threads,
 # which can cause the total number of CPUs required to exceed the limit.
 
-
 class BC(object):
 
     def __init__(self, L=3, K=5, max_iter=20, eps=1e-4, inside_labels=[0], outside_label=1, beginning_labels=[2],
-                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_B_factor=1.0, beta0_factor=1.0, nu0=1,
+                 alpha0_diags=1.0, alpha0_factor=1.0, alpha0_B_factor=1.0, beta0_factor=1.0,
                  annotator_model='ibcc', taggers=None, tagging_scheme='IOB2', true_label_model='HMM',
-                 discrete_feature_likelihoods=True, model_dir=None, embeddings_file=None,
-                 verbose=False, use_lowerbound=True, converge_workers_first=False):
+                 discrete_feature_likelihoods=True, D=1, emission_model='cat',
+                 model_dir=None, embeddings_file=None, verbose=False, use_lowerbound=True, converge_workers_first=False,
+                 *args, **kwargs):
         """
         Aggregation method for combining labels from multiple annotators using variational Bayes. Different
         configurations of this class can be used to implement models such as IBCC-VB, MACE, BCCWords, DynIBCC, heatmapBCC
@@ -101,6 +101,8 @@ class BC(object):
 
         self.K = K  # number of annotators
 
+        self.D = D  # feature dimensions
+
         # Settings for the VB algorithm:
         self.max_iter = max_iter  # maximum number of VB iterations
         self.eps = eps  # threshold for convergence
@@ -117,7 +119,6 @@ class BC(object):
 
         # Do we model word distributions as independent features?
         self.no_features = not discrete_feature_likelihoods
-        self.nu0 = nu0 # prior hyperparameter for word features
 
         # True label model: choose whether to use the HMM transition model.
         if true_label_model == 'HMM':
@@ -168,6 +169,18 @@ class BC(object):
 
         else:
             print('Bayesian combination: Did not recognise the annotator model %s' % annotator_model)
+
+        # choose emission model
+        emission_model = emission_model.lower()
+        if self.no_features:
+            self.EM = None
+        elif emission_model == 'cat':
+            self.EM = Categorical(self.L, self.D, **kwargs)
+        elif emission_model == 'mg':
+            self.EM = Multivariable_Gaussian(self.L, self.D, **kwargs)
+
+        else:
+            print('Bayesian combination: Did not recognise the emission model %s' % emission_model)
 
     def fit_predict(self, C, doc_start=None, features=None, dev_sentences=[], gold_labels=None):
         """
@@ -243,7 +256,7 @@ class BC(object):
                         if tagger.train_type == 'Bayes':
                             self.C_data[midx] = tagger.fit_predict(self.Et)
                         elif tagger.train_type == 'MLE':
-                            labels = self.LM.most_likely_labels(self._feature_ll(self.features))[1]
+                            labels = self.LM.most_likely_labels(self._feature_ll())[1]
                             self.C_data[midx] = tagger.fit_predict(labels)
 
                         if self.verbose:
@@ -273,7 +286,7 @@ class BC(object):
                 print("BC iteration %i: computing most likely labels..." % self.iter)
             self.Et = self.LM.update_t(parallel, self.C_data)  # update t here so that we get the latest C_data and Et
             # values when computing most likely sequence and when returning Et
-            plabels, labels = self.LM.most_likely_labels(self._feature_ll(self.features))
+            plabels, labels = self.LM.most_likely_labels(self._feature_ll())
 
         if self.verbose:
             print("BC iteration %i: fitting/predicting complete." % self.iter)
@@ -314,7 +327,7 @@ class BC(object):
             self.LM.update_B(features, ln_feature_likelihood, predict_only=True)
             q_t = self.LM.update_t(parallel, C_data)
 
-            labels = self.LM.most_likely_labels(self._feature_ll(self.features))[1]
+            labels = self.LM.most_likely_labels(self._feature_ll())[1]
 
         return q_t, labels
 
@@ -355,7 +368,7 @@ class BC(object):
         print("Optimal hyper-parameters: alpha_0 = %s, nu0 scale = %s" % (np.array2string(np.exp(opt_hyperparams[:-1])),
                                                                           np.array2string(np.exp(opt_hyperparams[-1]))))
 
-        return self.Et, self.LM.most_likely_labels(self._feature_ll(self.features))[1]
+        return self.Et, self.LM.most_likely_labels(self._feature_ll())[1]
 
     def lowerbound(self):
         '''
@@ -378,10 +391,7 @@ class BC(object):
             lnpRho = 0
             lnqRho = 0
         else:
-            lnpwords = np.sum(self.ElnRho[self.features, :] * self.Et)
-            nu0 = np.zeros((1, self.L)) + self.nu0
-            lnpRho = np.sum(gammaln(np.sum(nu0)) - np.sum(gammaln(nu0)) + sum((nu0 - 1) * self.ElnRho, 0)) + lnpwords
-            lnqRho = np.sum(gammaln(np.sum(self.nu,0)) - np.sum(gammaln(self.nu),0) + sum((self.nu - 1) * self.ElnRho, 0))
+            lnpRho, lnqRho = self.EM.lowerbound(self.Et)
 
         lb = lnpCtB - lnq_Cdata + lnpPi - lnqPi - lnqtB + lnpRho - lnqRho
         if self.verbose:
@@ -392,76 +402,34 @@ class BC(object):
 
     def _init_features(self, features):
         '''
-        This built-in feature model treats features as discrete, not distributed representations (embeddings). To handle
-        distances between feature vectors, it is better to set no_words=True and use a GP label model.
+        Convert features to appropriate format for the specified emission model and store them
         :param features:
         :return:
         '''
-
-        self.feat_map = {} # map features tokens to indices
-        self.features = []  # list of mapped index values for each token
-
-        if self.no_features:
-            return
-
-        N = len(features)
-
-        for feat in features.flatten():
-            if feat not in self.feat_map:
-                self.feat_map[feat] = len(self.feat_map)
-
-            self.features.append( self.feat_map[feat] )
-
-        self.features = np.array(self.features).astype(int)
-
-        # sparse matrix of one-hot encoding, nfeatures x N, where N is number of tokens in the dataset
-        self.features_mat = coo_matrix((np.ones(len(features)), (self.features, np.arange(N)))).tocsr()
+        if not self.no_features:
+            self.EM.init_features(features)
+        return
 
     def _update_features(self):
         if self.no_features:
-            return np.zeros((self.N, self.L))
-
-        self.nu = self.nu0 + self.features_mat.dot(self.Et) # nfeatures x nclasses
-
-        # update the expected log word likelihoods
-        self.ElnRho = psi(self.nu) - psi(np.sum(self.nu, 0)[None, :])
-
-        # get the expected log word likelihoods of each token
-        lnptext_given_t = self.ElnRho[self.features, :]
-        lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
-
+            lnptext_given_t = np.zeros((self.N, self.L))
+        else:
+            lnptext_given_t = self.EM.update_features(self.Et)
         return lnptext_given_t # N x nclasses where N is number of tokens/data points
 
     def _predict_features(self, doc_start, features):
         if self.no_features:
             lnptext_given_t = np.zeros((len(doc_start), self.L))
-            self.features = None
         else:
-            # get the expected log word likelihoods of each token
-            self.features = []  # list of mapped index values for each token
-            available = []
-            for feat in features.flatten():
-                if feat not in self.feat_map:
-                    available.append(0)
-                    self.features.append(0)
-                else:
-                    available.append(1)
-                    self.features.append(self.feat_map[feat])
-            lnptext_given_t = self.ElnRho[self.features, :] + np.array(available)[:, None]
-            lnptext_given_t -= logsumexp(lnptext_given_t, axis=1)[:, None]
+            lnptext_given_t = self.EM.predict_features(features)
 
-        return lnptext_given_t
+        return lnptext_given_t  # N x nclasses where N is number of tokens/data points
 
-    def _feature_ll(self, features):
+    def _feature_ll(self):
         if self.no_features:
             features_ll = None
         else:
-            ERho = self.nu / np.sum(self.nu, 0)[None, :]  # nfeatures x nclasses
-            lnERho = np.zeros_like(ERho)
-            lnERho[ERho != 0] = np.log(ERho[ERho != 0])
-            lnERho[ERho == 0] = -np.inf
-            features_ll = lnERho[features, :]
-
+            features_ll = self.EM.feature_ll(self.EM.features)
         return features_ll
 
     def _init_dataset(self, gold_labels, C, features, doc_start):
