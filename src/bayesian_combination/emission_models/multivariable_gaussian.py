@@ -8,6 +8,9 @@ from bayesian_combination.emission_models.emission_model import Emission
 
 
 def student_t_lnpdf(x, mu, L, nu):
+    '''
+    Return multivariable Student-t log-pdf
+    '''
     D = x.shape[1]
     lnC1 = gammaln(D/2+nu/2) - gammaln(nu/2)
     lnC2 = 0.5*np.log(np.linalg.det(L)) - (D/2) * np.log(np.pi * nu)
@@ -43,9 +46,9 @@ class Multivariable_Gaussian(Emission):
         return
 
     def update_features(self, Et):
-        N = []
-        x_ = []
-        NS = []
+        N = []   # expected number samples for each class
+        x_ = []  # average value for each class
+        NS = []  # N * S, where S is covariance matrix for each class
 
         self.beta = []
         self.m = []

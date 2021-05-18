@@ -111,6 +111,7 @@ reproduce the experiments or run the method in a new project.
    * `src/baselines` -- implementations of the methods we evaluate BSC against, including the MACE implementation in Java, see NOTICE.txt
    * `src/bayesian_combination` -- the core implementation of the variational Bayes method
    * `src/bayesian_combination/annotator_models` -- various models of annotator reliability
+   * `src/bayesian_conbination/emission_models` -- models for generating the features from true label
    * `src/bayesian_combination/label_models` -- models for sequential labels, classification without features, and classification with features
    * `src/bayesian_combination/tagger_wrappers` -- wrapper classes for integrating automated classifiers using variational combined supervision (VCS)
    * `src/data` -- simualted data generation and loaders for our test datasets
