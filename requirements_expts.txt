@@ -1,6 +1,6 @@
 configparser==3.5.0
 cycler==0.10.0
-joblib==0.12.5
+joblib==1.2.0
 kiwisolver==1.0.1
 matplotlib>=2.2.2
 nltk==3.2.5
