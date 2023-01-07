@@ -10,8 +10,6 @@ class AccuracyAnnotator(Annotator):
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
 
-        self.alpha_shape = (2)
-
         # for the incorrect answers, the pseudo count is alpha0_factor
         self.alpha0 = alpha0_factor * np.ones((2))
 

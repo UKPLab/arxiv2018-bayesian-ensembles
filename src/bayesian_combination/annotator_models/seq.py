@@ -12,7 +12,10 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                  beginning_labels, inside_labels, outside_label, alpha0_B_factor):
         super().__init__(alpha0_diags, alpha0_factor, L, nModels)
 
-        self.alpha_shape = (L, L)
+        if outside_label == L:
+            self.num_prev_labels = L + 1
+        else:
+            self.num_prev_labels = L
 
         self.tagging_scheme = tagging_scheme
         self.beginning_labels = beginning_labels
@@ -76,7 +79,7 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
 
             # add counts of where previous tokens are missing.
             if np.any(self.C_eq_l_restart_counts[l]):
-                counts +=  self.C_eq_l_restart_counts[l].dot(E_t[1:])
+                counts += self.C_eq_l_restart_counts[l].dot(E_t[1:])
 
             self.alpha[:, l, self.outside_label, :] += counts.T
 
@@ -107,7 +110,8 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
                     self.alpha_taggers[model_idx][j, l, m, :] += counts
 
     def read_lnPi(self, l, C, Cprev, doc_id, Krange, nscores, blanks):
-        # shouldn't it use the outside factor instead of Cprev if there is a doc start?
+        # if there is a doc start, Cprev should contain the outside_label value or a -1 for a missing value.
+        # In seq.py, this is handled already.
 
         if l is None:
             if np.isscalar(Krange):
@@ -145,11 +149,11 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
 
         # set priors
         if self.alpha0 is None:
-            # dims: true_label[t], current_annoc[t],  previous_anno c[t-1], annotator k
-            self.alpha0 = np.ones((L, nscores, nscores, K)) + 1.0 * np.eye(L)[:, :, None, None]
+            # dims: true_label[t], current_anno c[t],  previous_anno c[t-1], annotator k
+            self.alpha0 = np.ones((L, nscores, self.num_prev_labels, K)) + 1.0 * np.eye(L)[:, :, None, None]
         else:
             self.alpha0 = self.alpha0[:, :, None, None]
-            self.alpha0 = np.tile(self.alpha0, (1, 1, nscores, K))
+            self.alpha0 = np.tile(self.alpha0, (1, 1, self.num_prev_labels, K))
 
         for midx in range(self.nModels):
             if self.alpha0_taggers[midx] is None:
@@ -165,12 +169,8 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
             restricted_labels = self.inside_labels
             unrestricted_labels = self.beginning_labels
         else:  # no special labels
-            restricted_labels = None
-            unrestricted_labels = None
-            if self.outside_label == -1:  # have to restrict the prior state
-                self.alpha0[:, :, self.outside_label] = 0
-                for midx in range(self.nModels):
-                    self.alpha0_taggers[midx][:, self.outside_label, :] = 0
+            restricted_labels = []
+            unrestricted_labels = []
 
         # The outside labels often need a stronger bias because they are way more frequent
         self.alpha0[self.beginning_labels, self.beginning_labels] *= self.alpha0_B_factor
@@ -181,7 +181,7 @@ class SequentialAnnotator(ConfusionVectorAnnotator):
             # Not allowed: from outside to inside
             disallowed_count = self.alpha0[:, restricted_label, self.outside_label] - self.rare_transition_pseudocount
 
-            self.alpha0[:, unrestricted_labels[i], self.outside_label] += disallowed_count # previous expts use this
+            self.alpha0[:, unrestricted_labels[i], self.outside_label] += disallowed_count  # previous expts use this
             self.alpha0[:, restricted_label, self.outside_label] = self.rare_transition_pseudocount
 
             for midx in range(self.nModels):

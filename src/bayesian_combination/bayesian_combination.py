@@ -74,6 +74,8 @@ class BC(object):
         :param tagging_scheme: For sequential data, may be 'none',
         'IOB' (B token is used to separate consecutive spans)
         or 'IOB2' (also known as BIO, all spans start with a B-).
+        If tagging scheme is 'none', then there will be no use of the parameters inside_labels, outside_label,
+        beginning_labels, or alph0_B_factor.
         :param true_label_model: Can be 'HMM' (sequential label model used in BSC-seq) or 'GP' (Gaussian process label
         model used in heatmapBCC) or None (independent labels, as in IBCC or Dawid and Skene).
         :param discrete_feature_likelihoods: if False, the Bayesian combination method will not compute independent
@@ -95,9 +97,16 @@ class BC(object):
         # that follow another start with B).
         self.L = L  # number of classes
         if tagging_scheme == 'none':
-            outside_label = -1
-        if outside_label == -1:  # we want to use an additional label to represent initial state probabilities.
-            self.L = self.L + 1
+            # Sequence tagging models need to select the correct sets of probabilities at the start of the sequence,
+            # i.e., where there is no previous label. We use the outside label to indicate the index of these prior
+            # probabilities within the label model or annotator model. Setting the value to L means that sequential
+            # label/annotator models will create an extra index for these priors, and use L to reference that index.
+            # BIO/IOB tagging schemes will just use the standard outside 'O' class, rather then creating separate priors
+            # for the start of the sequence.
+            outside_label = L
+
+            inside_labels = []
+            beginning_labels = []
 
         self.K = K  # number of annotators
 
@@ -121,13 +130,18 @@ class BC(object):
 
         # True label model: choose whether to use the HMM transition model.
         if true_label_model == 'HMM':
-            self.LM = MarkovLabelModel(np.ones((self.L, self.L)) * beta0_factor, self.L, verbose,
+            if tagging_scheme == 'none':
+                # record initial state probabilities as an additional row in the transition matrix, so use L+1 here
+                num_prev_classes = self.L+1
+            else:
+                num_prev_classes = self.L
+            self.LM = MarkovLabelModel(np.ones((num_prev_classes, self.L)) * beta0_factor, self.L, verbose,
                                        tagging_scheme, beginning_labels, inside_labels,
                                        outside_label)
         elif true_label_model == 'GP':
-            self.LM = GPCLabelModel(np.ones((self.L)) * beta0_factor, self.L, verbose)
+            self.LM = GPCLabelModel(np.ones(self.L) * beta0_factor, self.L, verbose)
         else:
-            self.LM = IndependentLabelModel(np.ones((self.L)) * beta0_factor, self.L, verbose)
+            self.LM = IndependentLabelModel(np.ones(self.L) * beta0_factor, self.L, verbose)
 
         self.Et = None  # current true label estimates
         self.Et_old = None  # previous true labels estimates

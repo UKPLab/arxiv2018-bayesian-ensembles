@@ -16,8 +16,6 @@ class SpamAnnotator(Annotator):
     # lnPi[2:2+nscores, :] = ln p(label given worker is spamming/incorrect)
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
-        self.alpha_shape = (2 + L)
-
         # for incorrect answers and for spamming pattern, pseudocount is alpha0_factor
         self.alpha0 = alpha0_factor * np.ones((2 + L))
         # for corrent answers, pseudocount is alpha0_factor + alpha0_diags

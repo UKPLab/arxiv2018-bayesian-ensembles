@@ -12,8 +12,6 @@ class ConfusionVectorAnnotator(Annotator):
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
 
-        self.alpha_shape = (L, L)
-
         # for the incorrect answers, the psuedo count splits the alpha0_factor equally
         # between the incorrect answers
         alpha0_base = alpha0_factor / (L - 1)

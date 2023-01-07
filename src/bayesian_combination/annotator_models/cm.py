@@ -10,7 +10,6 @@ class ConfusionMatrixAnnotator(ConfusionVectorAnnotator):
 
     def __init__(self, alpha0_diags, alpha0_factor, L, nModels):
         super().__init__(alpha0_diags, alpha0_factor, L, nModels)
-        self.alpha_shape = (L, L)
 
     def init_lnPi(self, N):
         # Returns the initial values for alpha and lnPi
@@ -22,7 +21,6 @@ class ConfusionMatrixAnnotator(ConfusionVectorAnnotator):
         self.alpha_taggers = {}
         for midx in range(self.nModels):
             self.alpha_taggers[midx] = np.copy(self.alpha0_taggers[midx])
-
 
     def _calc_q_pi(self, alpha):
         '''
