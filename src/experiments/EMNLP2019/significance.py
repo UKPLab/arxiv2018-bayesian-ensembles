@@ -3,6 +3,8 @@ from scipy.stats import wilcoxon
 
 '''
 Compute statistical significance of some of the key results in the EMNLP paper.
+
+Prediction files here need to contain scores per example (each sequence). 
 '''
 
 outroot = os.path.expanduser('~/data/bayesian_sequence_combination/output/')
